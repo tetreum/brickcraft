@@ -62,7 +62,9 @@ namespace Brickcraft.UI
             }
 
             // update brick previewer
-            if (selectedItem != null && selectedItem.item.type == Item.Type.Brick) {
+            if (selectedItem == null && BrickCollisionDetector.Instance != null) {
+                Destroy(BrickCollisionDetector.Instance.gameObject);
+            } else if (selectedItem != null && selectedItem.item.type == Item.Type.Brick) {
                 updateBrickPreviewer();
             }
         }

@@ -63,7 +63,7 @@ namespace Brickcraft
                 transform.RotateAround(currentStud, rot, 90);
             }
             if (Input.GetMouseButtonDown(1)) {
-                Server.Instance.spawnBrick(PlayerPanel.Instance.selectedItem.item.id, transform.position, transform.rotation);
+                Server.Instance.spawnBrick(PlayerPanel.Instance.selectedItem.item, transform.position, transform.rotation);
 
                 Player.Instance.removeItem(new UserItem() {
                     id = PlayerPanel.Instance.selectedItem.id,
@@ -84,7 +84,7 @@ namespace Brickcraft
             if (other.name.StartsWith("GridStud")) {
                 return;
             }
-            Debug.Log(other.name);
+
             // prevent resetting those vars each frame
             if (isColliding) {
                 return;
@@ -149,7 +149,7 @@ namespace Brickcraft
             }
 
             GameObject brickObj = hit.collider.transform.parent.gameObject;
-            BrickModel selectedBrickModel = Server.brickModels[PlayerPanel.Instance.selectedItem.item.id];
+            BrickModel selectedBrickModel = PlayerPanel.Instance.selectedItem.item.brickModel;
 
             latestStudGrid = hit.transform;
             latestStud = stud;
@@ -167,7 +167,7 @@ namespace Brickcraft
             Vector3 pos;
 
             // same model with all studs available, just put it over
-            if (brick.type == selectedBrickModel.type ||
+            if (brick.itemId == selectedBrickModel.type ||
                 brick.model.studs.Count == selectedBrickModel.studs.Count) {
                 pos = brickObj.transform.position;
                 pos.y += brick.model.heightInPlates * Server.plateHeight;

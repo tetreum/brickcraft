@@ -1351,6 +1351,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   transparentShader: {fileID: 4800000, guid: b555fbb7f59b3124b833a714142cdfdb, type: 3}
+  brickMaterials:
+  - {fileID: 2100000, guid: ff9f481ac73d3c447afd9f2c3ac1f216, type: 2}
+  - {fileID: 2100000, guid: 4262688da683248418ffcce8bb08bdee, type: 2}
+  - {fileID: 2100000, guid: 6a4fc5ccfe1be9b42a6f917dd8c6ef10, type: 2}
+  - {fileID: 2100000, guid: 558fe859845af3047a2b27f5dde5c8bb, type: 2}
+  - {fileID: 2100000, guid: d1c3ef8dfe5cb814f91c3ba94de7fc07, type: 2}
+  - {fileID: 2100000, guid: e514b70a16480c6419ac1242262ce115, type: 2}
+  - {fileID: 2100000, guid: 5edef92409cecbc4faf65c7b510109c5, type: 2}
+  - {fileID: 2100000, guid: de70de3151d8a9146a7491993b1246e4, type: 2}
 --- !u!1001 &323862911
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7399,6 +7408,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de849660fe1ceb242a3431e8327c72af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  inventorySlots: 36
 --- !u!1 &1978040618
 GameObject:
   m_ObjectHideFlags: 0

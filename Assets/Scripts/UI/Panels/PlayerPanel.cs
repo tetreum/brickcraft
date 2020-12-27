@@ -80,7 +80,7 @@ namespace Brickcraft.UI
             if (selectedItem == null && BrickCollisionDetector.Instance != null) {
                 Destroy(BrickCollisionDetector.Instance.gameObject);
             } else if (selectedItem != null && selectedItem.item.type == Item.Type.Brick) {
-                BrickModel selectedBrickModel = Server.brickModels[selectedItem.item.id];
+                BrickModel selectedBrickModel = selectedItem.item.brickModel;
 
                 if (BrickCollisionDetector.Instance != null) {
                     if (BrickCollisionDetector.Instance.currentBrickType == selectedBrickModel.type) {

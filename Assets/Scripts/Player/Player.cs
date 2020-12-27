@@ -51,7 +51,7 @@ namespace Brickcraft
             Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0));
 
             // debug Ray
-            Debug.DrawRay(ray.origin, ray.direction * rayLength, Color.red);
+            //Debug.DrawRay(ray.origin, ray.direction * rayLength, Color.red);
 
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, rayLength)) {
@@ -77,7 +77,7 @@ namespace Brickcraft
             // has finished digging
             if (span.Seconds >= diggedBrick.model.hardness) {
                 addItem(new UserItem() {
-                    id = diggedBrick.type,
+                    id = diggedBrick.itemId,
                     quantity = 1
                 });
                 Server.Instance.removeBrick(diggedBrick);

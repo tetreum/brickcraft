@@ -6557,6 +6557,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ec16a51751f5494fadc5869185f4a5b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  selectedBackgroundSprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
+  normalBackgroundSprite: {fileID: 10917, guid: 0000000000000000f000000000000000, type: 0}
   fastInventorySlots:
   - {fileID: 491740148}
   - {fileID: 1750266552}

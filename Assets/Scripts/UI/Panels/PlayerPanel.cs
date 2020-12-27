@@ -7,6 +7,8 @@ namespace Brickcraft.UI
     public class PlayerPanel : MonoBehaviour
     {
         public static PlayerPanel Instance;
+        public Sprite selectedBackgroundSprite;
+        public Sprite normalBackgroundSprite;
         public UserItem selectedItem {
             get {
                 var slots = Player.Instance.getInventoryBySlot();
@@ -21,22 +23,27 @@ namespace Brickcraft.UI
 
         public InventorySlot[] fastInventorySlots;
 
-        private int selectedSlot = 28; // by default the first slot from fastInventory starting from the left
+        private int selectedSlot {
+            get {
+                return _selectedSlot;
+            }
+            set {
+                _selectedSlot = value;
+                updateSelectedItemBackground();
+                updateBrickPreviewer();
+            }
+        }
+        private int _selectedSlot;
+        private int firstSlot = 28;
 
         void Awake()
         {
             Instance = this;
+            selectedSlot = firstSlot; // by default the first slot from fastInventory starting from the left
         }
 
         private void OnEnable() {
             reload();
-        }
-
-        void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.Tab)) {
-                switchSelectedItem();
-            }
         }
 
         public void reload() {
@@ -61,30 +68,44 @@ namespace Brickcraft.UI
                 slot.quantity.text = inventory[slotId].quantity.ToString();
             }
 
+            updateBrickPreviewer();
+        }
+
+        public void updateBrickPreviewer() {
+            if (Player.Instance == null) {
+                return;
+            }
+
             // update brick previewer
             if (selectedItem == null && BrickCollisionDetector.Instance != null) {
                 Destroy(BrickCollisionDetector.Instance.gameObject);
             } else if (selectedItem != null && selectedItem.item.type == Item.Type.Brick) {
-                updateBrickPreviewer();
-            }
-        }
+                BrickModel selectedBrickModel = Server.brickModels[selectedItem.item.id];
 
-        public void updateBrickPreviewer() {
-            BrickModel selectedBrickModel = Server.brickModels[selectedItem.item.id];
-
-            if (BrickCollisionDetector.Instance != null) {
-                if (BrickCollisionDetector.Instance.currentBrickType == selectedBrickModel.type) {
-                    return;
+                if (BrickCollisionDetector.Instance != null) {
+                    if (BrickCollisionDetector.Instance.currentBrickType == selectedBrickModel.type) {
+                        return;
+                    }
+                    Destroy(BrickCollisionDetector.Instance.gameObject);
                 }
-                Destroy(BrickCollisionDetector.Instance.gameObject);
-            }
 
-            GameObject brickPreviewer = Instantiate(Server.brickPrefabs[selectedBrickModel.type.ToString()]);
-            brickPreviewer.AddComponent<BrickCollisionDetector>();
+                GameObject brickPreviewer = Instantiate(Server.brickPrefabs[selectedBrickModel.type.ToString()]);
+                brickPreviewer.AddComponent<BrickCollisionDetector>();
+            }
         }
 
-        void switchSelectedItem () {
+        public void switchSelectedItem () {
+            selectedSlot++;
 
+            if (selectedSlot > Player.Instance.inventorySlots) {
+                selectedSlot = firstSlot;
+            }
+        }
+
+        private void updateSelectedItemBackground () {
+            foreach (var slot in fastInventorySlots) {
+                slot.transform.parent.GetComponent<Image>().sprite = int.Parse(slot.transform.parent.name) == selectedSlot ? selectedBackgroundSprite : normalBackgroundSprite;
+            }
         }
     }
 }

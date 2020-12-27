@@ -10,12 +10,14 @@ namespace Brickcraft
     {
         public static Player Instance;
 
+        [HideInInspector]
+        public int inventorySlots = 36;
+
         private float rayLength = 5f;
         private GameObject lookedBrick;
         private Brick diggedBrick;
         private DateTime? activityStartTime;
         private List<UserItem> inventory = new List<UserItem>();
-        private int inventorySlots = 36;
 
         private float _duration = 0.5f;
         private float _timer = 0f;
@@ -38,6 +40,9 @@ namespace Brickcraft
             }
             if (Input.GetKeyDown(KeyCode.I)) {
                 Menu.Instance.togglePanel("InventoryPanel");
+            }
+            if (Input.GetKeyDown(KeyCode.Tab)) {
+                PlayerPanel.Instance.switchSelectedItem();
             }
         }
 

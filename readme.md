@@ -1,3 +1,7 @@
+[![Logo](https://github.com/tetreum/brickcraft/raw/main/preview.gif)](https://github.com/tetreum/brickcraft/raw/main/preview.gif)
+
+[![Logo](https://github.com/tetreum/brickcraft/raw/main/Assets/Textures/Logo.png)](https://github.com/tetreum/brickcraft/raw/main/Assets/Textures/Logo.png)
+
 # Brickcraft
 
 WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
@@ -5,6 +9,7 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 
 
 ## Credits
-Tapping sound effect - https://freesound.org/people/rioforce/sounds/233654/
-Dig + remove block sound effect - https://freesound.org/people/Agaxly/sounds/213005/
-Brick models - https://www.mecabricks.com/
+
+- Tapping sound effect - https://freesound.org/people/rioforce/sounds/233654/
+- Dig + remove block sound effect - https://freesound.org/people/Agaxly/sounds/213005/
+- Brick models - https://www.mecabricks.com/

@@ -38,6 +38,13 @@ namespace Brickcraft
                 materialName = "BrightGreen",
                 name = "A brick"
             } },
+            {5, new Item(){
+                id = 5,
+                type = Item.Type.Brick,
+                brickModelId = 3003,
+                materialName = "TransparentBlue",
+                name = "Glass 2x2"
+            } },
         };
 
         public const float studSize = 0.398f;

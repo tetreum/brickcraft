@@ -22,6 +22,9 @@ namespace Brickcraft
             Instance = this;
 
             gameObject.name = "Previewer";
+			// lower it's scale, so we don't trigger false collision positives
+			// with nearby bricks
+            gameObject.transform.localScale = new Vector3(0.999f, 0.999f, 0.999f);
 
             // ignore raycasts
             int ignoreRayCastLayer = (int)Game.Layers.IgnoreRaycast;

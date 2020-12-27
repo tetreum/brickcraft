@@ -1,15 +1,17 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class Brick
+namespace Brickcraft
 {
-    public string id;
-    public int type;
-    public GameObject gameObject;
+    public class Brick
+    {
+        public string id;
+        public int type;
+        public GameObject gameObject;
 
-    public BrickModel model {
-        get {
-            return Server.brickModels[type];
+        public BrickModel model {
+            get {
+                return Server.brickModels[type];
+            }
         }
     }
 }

@@ -1,16 +1,19 @@
 ﻿using UnityEngine;
 
-public class Game : MonoBehaviour
+namespace Brickcraft
 {
-    public static Game Instance;
-
-    public Shader transparentShader;
-    public enum Layers
+    public class Game : MonoBehaviour
     {
-        IgnoreRaycast = 2
-    }
+        public static Game Instance;
 
-    private void Awake() {
-        Instance = this;
+        public Shader transparentShader;
+        public enum Layers
+        {
+            IgnoreRaycast = 2
+        }
+
+        private void Awake() {
+            Instance = this;
+        }
     }
 }

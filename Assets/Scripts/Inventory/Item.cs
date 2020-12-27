@@ -1,18 +1,21 @@
 using UnityEngine;
 
-public class Item
+namespace Brickcraft
 {
-    public enum Type
+    public class Item
     {
-        Brick = 1
-    }
-    public int id;
-    public Type type;
-    public string name;
+        public enum Type
+        {
+            Brick = 1
+        }
+        public int id;
+        public Type type;
+        public string name;
 
-    public Texture2D icon {
-        get {
-            return Resources.Load<Texture2D>("Textures/Bricks/" + id);
+        public Texture2D icon {
+            get {
+                return Resources.Load<Texture2D>("Textures/Bricks/" + id);
+            }
         }
     }
 }

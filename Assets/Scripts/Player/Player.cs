@@ -6,7 +6,6 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     public static Player Instance;
-    public BrickModel selectedItem;
 
     private float rayLength = 5f;
     private GameObject lookedBrick;
@@ -49,7 +48,9 @@ public class Player : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, rayLength)) {
             if (hit.collider.name.StartsWith("GridStud")) {
-                BrickCollisionDetector.Instance.lookingAtStud(hit);
+                if (BrickCollisionDetector.Instance != null) {
+                    BrickCollisionDetector.Instance.lookingAtStud(hit);
+                }
                 lookedBrick = hit.transform.parent.gameObject;
             } else if (hit.transform.tag == "Block") {
                 lookedBrick = hit.transform.gameObject;

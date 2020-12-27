@@ -4,8 +4,8 @@ public class BrickCollisionDetector : MonoBehaviour
 {
     public static BrickCollisionDetector Instance;
 
-    public GameObject brickPreviewer;
-    public Shader transparentShader;
+    [HideInInspector]
+    public int currentBrickType;
 
     private Material m;
     public Shader originalShader;
@@ -17,14 +17,36 @@ public class BrickCollisionDetector : MonoBehaviour
 
     private void Awake() {
         Instance = this;
-    }
 
-    private void Start() {
-        setupPreviewer();
+        gameObject.name = "Previewer";
+
+        // ignore raycasts
+        int ignoreRayCastLayer = (int)Game.Layers.IgnoreRaycast;
+        gameObject.layer = ignoreRayCastLayer;
+
+        foreach (Transform trans in gameObject.GetComponentsInChildren<Transform>()) {
+            trans.gameObject.layer = ignoreRayCastLayer;
+        }
+
+        m = GetComponent<Renderer>().material;
+        originalShader = m.shader;
+        m.shader = Game.Instance.transparentShader;
+
+        Collider[] colliders = GetComponents<Collider>();
+
+        foreach (Collider collider in colliders) {
+            collider.isTrigger = true;
+        }
+
+        Rigidbody rigid = gameObject.AddComponent<Rigidbody>();
+        rigid.isKinematic = true;
+        setVisible(false);
     }
 
     private void Update() {
-        if (isColliding) {
+        if (PlayerPanel.Instance.selectedItem == null || 
+            PlayerPanel.Instance.selectedItem.item.type != Item.Type.Brick ||
+            isColliding) {
             return;
         }
 
@@ -35,10 +57,16 @@ public class BrickCollisionDetector : MonoBehaviour
             } else {
                 rot = Input.GetAxis("Mouse ScrollWheel") > 0f ? Vector3.forward : Vector3.back;
             }
-            brickPreviewer.transform.RotateAround(currentStud, rot, 90);
+            transform.RotateAround(currentStud, rot, 90);
         }
         if (Input.GetMouseButtonDown(1)) {
-            Server.Instance.spawnBrick(Player.Instance.selectedItem.type, brickPreviewer.transform.position, brickPreviewer.transform.rotation);
+            Server.Instance.spawnBrick(PlayerPanel.Instance.selectedItem.item.id, transform.position, transform.rotation);
+
+            Player.Instance.removeItem(new UserItem() {
+                id = PlayerPanel.Instance.selectedItem.id,
+                health = PlayerPanel.Instance.selectedItem.health,
+                quantity = 1
+            });
 
             resetVars();
         }
@@ -106,6 +134,11 @@ public class BrickCollisionDetector : MonoBehaviour
     }
 
     public void lookingAtStud(RaycastHit hit) {
+        // player is not holding a brick
+        if (PlayerPanel.Instance.selectedItem == null || PlayerPanel.Instance.selectedItem.item.type != Item.Type.Brick) {
+            return;
+        }
+
         var stud = hitPointToStud(hit);
 
         if (hit.transform == latestStudGrid && stud == latestStud) {
@@ -113,6 +146,7 @@ public class BrickCollisionDetector : MonoBehaviour
         }
 
         GameObject brickObj = hit.collider.transform.parent.gameObject;
+        BrickModel selectedBrickModel = Server.brickModels[PlayerPanel.Instance.selectedItem.item.id];
 
         latestStudGrid = hit.transform;
         latestStud = stud;
@@ -122,7 +156,7 @@ public class BrickCollisionDetector : MonoBehaviour
         currentStud.y -= (Server.studSize / 2);
 
         if (!Server.bricks.ContainsKey(brickObj.name)) {
-            Debug.LogError("Brick not found in server list");
+            Debug.LogError("Brick not found in server list " + brickObj.name);
             return;
         }
         Brick brick = Server.bricks[brickObj.name];
@@ -130,8 +164,8 @@ public class BrickCollisionDetector : MonoBehaviour
         Vector3 pos;
 
         // same model with all studs available, just put it over
-        if (brick.type == Player.Instance.selectedItem.type ||
-            brick.model.studs.Count == Player.Instance.selectedItem.studs.Count) {
+        if (brick.type == selectedBrickModel.type ||
+            brick.model.studs.Count == selectedBrickModel.studs.Count) {
             pos = brickObj.transform.position;
             pos.y += brick.model.heightInPlates * Server.plateHeight;
             pos.y += 0.001f; // to make sure they don't collide, so we don't get a false isColliding=true
@@ -156,36 +190,17 @@ public class BrickCollisionDetector : MonoBehaviour
         move(pos, rotation);
     }
 
-    void setupPreviewer() {
-        brickPreviewer = GameObject.Find("Previewer");
-        Player.Instance.selectedItem = Server.brickModels[3003];
-
-        m = brickPreviewer.GetComponent<Renderer>().material;
-        originalShader = m.shader;
-        m.shader = transparentShader;
-
-        Collider[] colliders = brickPreviewer.GetComponents<Collider>();
-
-        foreach (Collider collider in colliders) {
-            collider.isTrigger = true;
-        }
-
-        Rigidbody rigid = brickPreviewer.AddComponent<Rigidbody>();
-        rigid.isKinematic = true;
-        setVisible(false);
-    }
-
     public void move(Vector3 pos, Quaternion rotation) {
         if (lastPos == pos) {
             return;
         }
-        brickPreviewer.transform.position = pos;
-        brickPreviewer.transform.rotation = rotation;
+        transform.position = pos;
+        transform.rotation = rotation;
         setVisible(true);
         lastPos = pos;
     }
 
     private void setVisible (bool isVisible) {
-        brickPreviewer.GetComponent<MeshRenderer>().enabled = isVisible;
+        GetComponent<MeshRenderer>().enabled = isVisible;
     }
 }

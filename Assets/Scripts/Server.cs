@@ -37,10 +37,13 @@ public class Server : MonoBehaviour
 
     void Awake() {
         Instance = this;
-        setupBrickModels();
 
-        setupTest();
+        setupBrickModels();
         processPrefabs();
+    }
+
+    private void Start() {
+        setupTest();
     }
 
     void processPrefabs() {
@@ -50,33 +53,11 @@ public class Server : MonoBehaviour
     }
 
     void setupTest () {
-        Brick brick = new Brick();
-        brick.id = "3003";
-        brick.type = 3003;
-        brick.gameObject = GameObject.Find(brick.id);
-
-        bricks.Add(brick.id, brick);
-
-        brick = new Brick();
-        brick.id = "3022";
-        brick.type = 3022;
-        brick.gameObject = GameObject.Find(brick.id);
-
-        bricks.Add(brick.id, brick);
-
-        brick = new Brick();
-        brick.id = "3024";
-        brick.type = 3024;
-        brick.gameObject = GameObject.Find(brick.id);
-
-        bricks.Add(brick.id, brick);
-
-        brick = new Brick();
-        brick.id = "22885";
-        brick.type = 22885;
-        brick.gameObject = GameObject.Find(brick.id);
-
-        bricks.Add(brick.id, brick);
+        spawnBrick(3003, new Vector3(3.327f, 0, -4.196f), Quaternion.identity);
+        spawnBrick(3003, new Vector3(1.468601f, 0, -4.383173f), Quaternion.identity);
+        spawnBrick(3024, new Vector3(2.374763f, 0.372f, -3.981043f), Quaternion.identity);
+        spawnBrick(3022, new Vector3(0.1108012f, 0.355f, -4.368471f), Quaternion.identity);
+        spawnBrick(22885, new Vector3(-1.03f, 0.15f, -4.299f), Quaternion.identity);
     }
 
     public void spawnBrick (int model, Vector3 position, Quaternion rotation) {

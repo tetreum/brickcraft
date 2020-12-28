@@ -90,7 +90,7 @@ namespace Brickcraft.UI
                 }
 
                 GameObject brickPreviewer = Instantiate(Server.brickPrefabs[selectedBrickModel.type.ToString()]);
-                brickPreviewer.AddComponent<BrickCollisionDetector>();
+                brickPreviewer.AddComponent<BrickCollisionDetector>().setCurrentBrickType(selectedBrickModel.type);
             }
         }
 

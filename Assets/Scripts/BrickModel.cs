@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Brickcraft
 {
@@ -11,6 +12,7 @@ namespace Brickcraft
         public int type;
         public int heightInPlates;
         public Category category;
+        public Vector3 pivot = Vector3.zero; // the point from where we will rotate/place it
         public float hardness = 4; //seconds with bare hands
         public Dictionary<int, Dictionary<int, int[]>> studs = new Dictionary<int, Dictionary<int, int[]>>();
     }

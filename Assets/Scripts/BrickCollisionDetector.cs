@@ -34,9 +34,10 @@ namespace Brickcraft
                 pivot.gameObject.layer = ignoreRayCastLayer;
             }
             transform.SetParent(pivot);
-            
-			// lower it's scale, so we don't trigger false collision positives
-			// with nearby bricks
+            pivot.position = new Vector3(0, 999, 0); // send it far away from player view while not in use
+
+            // lower it's scale, so we don't trigger false collision positives
+            // with nearby bricks
             transform.localScale = new Vector3(0.999f, 0.999f, 0.999f);
             gameObject.layer = ignoreRayCastLayer;
 
@@ -56,7 +57,7 @@ namespace Brickcraft
 
             Rigidbody rigid = gameObject.AddComponent<Rigidbody>();
             rigid.isKinematic = true;
-            setVisible(false);
+            setValid(false);
         }
 
         public void setCurrentBrickType(int brickType) {
@@ -66,8 +67,7 @@ namespace Brickcraft
 
         private void Update() {
             if (PlayerPanel.Instance.selectedItem == null || 
-                PlayerPanel.Instance.selectedItem.item.type != Item.Type.Brick ||
-                isColliding) {
+                PlayerPanel.Instance.selectedItem.item.type != Item.Type.Brick) {
                 return;
             }
             if (Input.GetAxis("Mouse ScrollWheel") != 0f && lastPos != Vector3.zero) {
@@ -79,7 +79,7 @@ namespace Brickcraft
                 }
                 pivot.RotateAround(currentStud, rot, 90);
             }
-            if (Input.GetMouseButtonDown(1)) {
+            if (Input.GetMouseButtonDown(1) && !isColliding) {
                 Server.Instance.spawnBrick(PlayerPanel.Instance.selectedItem.item, transform.position, transform.rotation);
 
                 Player.Instance.removeItem(new UserItem() {
@@ -98,6 +98,7 @@ namespace Brickcraft
         }
 
         void OnTriggerStay(Collider other) {
+            // ignore collisions with studs
             if (other.name.StartsWith("GridStud")) {
                 return;
             }
@@ -108,12 +109,12 @@ namespace Brickcraft
             }
 
             isColliding = true;
-            setVisible(false);
+            setValid(false);
         }
 
         void OnTriggerExit(Collider other) {
             isColliding = false;
-            setVisible(true);
+            setValid(true);
         }
 
         private StudInfo hitPointToStud(RaycastHit hit) {
@@ -201,12 +202,12 @@ namespace Brickcraft
             pivot.position = pos;
             pivot.rotation = rotation;
             transform.localRotation = Quaternion.identity; // localy reset child rotation
-            setVisible(true);
+            setValid(true);
             lastPos = pos;
         }
 
-        private void setVisible (bool isVisible) {
-            GetComponent<MeshRenderer>().enabled = isVisible;
+        private void setValid (bool isValid) {
+            m.SetTexture("_MainTex", isValid ? null : Game.Instance.redTexture);
         }
     }
 }

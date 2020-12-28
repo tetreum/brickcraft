@@ -7,6 +7,7 @@ namespace Brickcraft
         public static Game Instance;
 
         public Shader transparentShader;
+        public Texture2D redTexture; // used to display invalid/colliding Brick previews
 
         public Material[] brickMaterials;
 

@@ -14,6 +14,11 @@ namespace Brickcraft.UI
 
         private void OnEnable() {
             reload();
+            Game.unlockMouse();
+        }
+
+        private void OnDisable() {
+            Game.lockMouse();
         }
 
         public void reload () {

@@ -21,12 +21,11 @@ namespace Brickcraft
         }
 
         private void Start() {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            lockMouse();
         }
 
         private void OnDestroy() {
-            Cursor.lockState = CursorLockMode.None;
+            unlockMouse(); // unity editor is buggy and keeps mouse locked even after stopping the game...
         }
 
         public Material getBrickMaterial (string name) {
@@ -36,6 +35,15 @@ namespace Brickcraft
                 }
             }
             return null;
+        }
+
+        public static void lockMouse () {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+
+        public static void unlockMouse () {
+            Cursor.lockState = CursorLockMode.None;
         }
     }
 }

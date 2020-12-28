@@ -20,6 +20,15 @@ namespace Brickcraft
             Instance = this;
         }
 
+        private void Start() {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+
+        private void OnDestroy() {
+            Cursor.lockState = CursorLockMode.None;
+        }
+
         public Material getBrickMaterial (string name) {
             foreach (Material material in brickMaterials) {
                 if (material.name == name) {

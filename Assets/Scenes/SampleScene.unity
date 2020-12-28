@@ -1352,6 +1352,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   transparentShader: {fileID: 4800000, guid: b555fbb7f59b3124b833a714142cdfdb, type: 3}
+  redTexture: {fileID: 2800000, guid: 9e406c0ee27498342b3eee83c130a741, type: 3}
   brickMaterials:
   - {fileID: 2100000, guid: ff9f481ac73d3c447afd9f2c3ac1f216, type: 2}
   - {fileID: 2100000, guid: 4262688da683248418ffcce8bb08bdee, type: 2}

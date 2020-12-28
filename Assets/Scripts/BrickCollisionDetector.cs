@@ -122,7 +122,7 @@ namespace Brickcraft
             StudInfo stud = new StudInfo();
 
             // get grid dimensions
-            string[] tmp = hit.collider.name.Replace("GridStud ", "").Split('x');
+            string[] tmp = hit.collider.name.Replace("GridStud ", "").Replace("GridStudBottom ", "").Split('x');
             stud.gridDimensions = new Vector2Int(int.Parse(tmp[0]), int.Parse(tmp[1]));
 
             // 1x1 are easy xD
@@ -174,6 +174,12 @@ namespace Brickcraft
             latestStud = stud.gridPosition;
 
             Vector3 studPos = hit.collider.transform.TransformPoint(stud.center);
+
+            // height needs to be corrected for bottom studs
+            if (hit.collider.name.Contains("Bottom")) {
+                studPos.y -= PlayerPanel.Instance.selectedItem.item.brickModel.heightInPlates * Server.plateHeight;
+            }
+
             currentStud = studPos;
 
             if (!Server.bricks.ContainsKey(brickObj.name)) {

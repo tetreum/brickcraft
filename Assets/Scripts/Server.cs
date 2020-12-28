@@ -77,7 +77,7 @@ namespace Brickcraft
         }
 
         void setupTest() {
-            spawnBrick(Server.items[1], new Vector3(3.327f, 0, -4.196f), Quaternion.identity);
+            spawnBrick(Server.items[1], new Vector3(3.327f, 3, -4.196f), Quaternion.identity);
             spawnBrick(Server.items[1], new Vector3(1.468601f, 0, -4.383173f), Quaternion.identity);
             spawnBrick(Server.items[2], new Vector3(2.374763f, 0.372f, -3.981043f), Quaternion.identity);
             spawnBrick(Server.items[3], new Vector3(0.1108012f, 0.355f, -4.368471f), Quaternion.identity);

@@ -72,8 +72,11 @@ namespace Brickcraft
             if (activityStartTime == null) {
                 diggedBrick = Server.bricks[lookedBrick.name];
                 activityStartTime = DateTime.Now;
+
+                // fix z-fighting
                 Vector3 hitPoint = latestHit.point;
                 hitPoint.z += lookedBrick.transform.position.z > 0 ? 0.001f : -0.001f;
+                hitPoint.y += lookedBrick.transform.position.y > 0 ? -0.001f : 0.001f;
                 hitPoint.x += lookedBrick.transform.position.x > 0 ? -0.001f : 0.001f;
                 Game.breakAnimation.showAt(hitPoint, Quaternion.FromToRotation(Vector3.back, latestHit.normal));
             }

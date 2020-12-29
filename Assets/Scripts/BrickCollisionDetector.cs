@@ -71,9 +71,9 @@ namespace Brickcraft
                 PlayerPanel.Instance.selectedItem.item.type != Item.Type.Brick) {
                 return;
             }
-            if (Input.GetAxis("Mouse ScrollWheel") != 0f && lastPos != Vector3.zero) {
+            if (Input.GetAxis("Mouse ScrollWheel") != 0f && lastPos != Vector3.zero && latestStudGrid != null) {
                 Vector3 rot;
-                if (latestStudGrid.rotation == Quaternion.identity) {
+                if (latestStudGrid.localRotation == Quaternion.identity) {
                     rot = Input.GetAxis("Mouse ScrollWheel") > 0f ? Vector3.up : Vector3.down;
                 } else {
                     rot = Input.GetAxis("Mouse ScrollWheel") > 0f ? Vector3.forward : Vector3.back;
@@ -168,9 +168,16 @@ namespace Brickcraft
             if (hit.transform == latestStudGrid && stud.gridPosition == latestStud) {
                 return;
             }
-
             GameObject brickObj = hit.collider.transform.parent.gameObject;
-            
+
+            Quaternion rot = pivot.rotation; // kepp current rotation
+
+            // if old stud and new stud don't have the same rotation,
+            // pivot rotation will be invalid, so we reset it to new stud's rotation
+            if (latestStudGrid == null || hit.transform.localRotation != latestStudGrid.localRotation) {
+                rot = hit.transform.localRotation;
+            }
+
             latestStudGrid = hit.transform;
             latestStud = stud.gridPosition;
 
@@ -199,7 +206,7 @@ namespace Brickcraft
                 move(pos, Quaternion.identity);
                 return;
             }*/
-            move(currentStud, pivot.rotation);
+            move(currentStud, rot);
         }
 
         public void move(Vector3 pos, Quaternion rotation) {

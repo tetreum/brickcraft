@@ -13,6 +13,9 @@ namespace Brickcraft
         [HideInInspector]
         public int inventorySlots = 36;
 
+        [HideInInspector]
+        RaycastHit latestHit;
+
         private float rayLength = 5f;
         private GameObject lookedBrick;
         private Brick diggedBrick;
@@ -53,15 +56,14 @@ namespace Brickcraft
             // debug Ray
             //Debug.DrawRay(ray.origin, ray.direction * rayLength, Color.red);
 
-            RaycastHit hit;
-            if (Physics.Raycast(ray, out hit, rayLength)) {
-                if (hit.collider.name.StartsWith("GridStud")) {
+            if (Physics.Raycast(ray, out latestHit, rayLength)) {
+                if (latestHit.collider.name.StartsWith("GridStud")) {
                     if (BrickCollisionDetector.Instance != null) {
-                        BrickCollisionDetector.Instance.lookingAtStud(hit);
+                        BrickCollisionDetector.Instance.lookingAtStud(latestHit);
                     }
-                    lookedBrick = hit.transform.parent.gameObject;
-                } else if (hit.transform.tag == "Block") {
-                    lookedBrick = hit.transform.gameObject;
+                    lookedBrick = latestHit.transform.parent.gameObject;
+                } else if (latestHit.transform.tag == "Block") {
+                    lookedBrick = latestHit.transform.gameObject;
                 }
             }
         }
@@ -70,6 +72,10 @@ namespace Brickcraft
             if (activityStartTime == null) {
                 diggedBrick = Server.bricks[lookedBrick.name];
                 activityStartTime = DateTime.Now;
+                Vector3 hitPoint = latestHit.point;
+                hitPoint.z += lookedBrick.transform.position.z > 0 ? 0.001f : -0.001f;
+                hitPoint.x += lookedBrick.transform.position.x > 0 ? -0.001f : 0.001f;
+                Game.breakAnimation.showAt(hitPoint, Quaternion.FromToRotation(Vector3.back, latestHit.normal));
             }
             DateTime currentTime = DateTime.Now;
             TimeSpan span = currentTime.Subtract((DateTime)activityStartTime);
@@ -88,6 +94,7 @@ namespace Brickcraft
                 if (_timer >= _duration) {
                     _timer = 0f;
                     SoundManager.Instance.play(SoundManager.EFFECT_DIG);
+                    Game.breakAnimation.advance();
                 }
             }
         }
@@ -95,6 +102,7 @@ namespace Brickcraft
         void stopDigging () {
             diggedBrick = null;
             activityStartTime = null;
+            Game.breakAnimation.hide();
         }
 
         public void addItem (UserItem userItem) {

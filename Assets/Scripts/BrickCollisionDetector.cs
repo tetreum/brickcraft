@@ -14,7 +14,6 @@ namespace Brickcraft
         public int currentBrickType;
 
         private Material m;
-        public Shader originalShader;
         private bool isColliding = false;
         private Vector3 lastPos;
         private Vector3 currentStud;
@@ -45,9 +44,11 @@ namespace Brickcraft
                 trans.gameObject.layer = ignoreRayCastLayer;
             }
 
-            m = GetComponent<Renderer>().material;
-            originalShader = m.shader;
-            m.shader = Game.Instance.transparentShader;
+            Renderer renderer = GetComponent<Renderer>();
+            // disable shadows to make it easier to see when placing
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.sharedMaterial = Game.Instance.transparentMaterial;
+            m = renderer.sharedMaterial;
 
             Collider[] colliders = GetComponents<Collider>();
 
@@ -198,7 +199,7 @@ namespace Brickcraft
                 move(pos, Quaternion.identity);
                 return;
             }*/
-            move(currentStud, latestStudGrid.rotation);
+            move(currentStud, pivot.rotation);
         }
 
         public void move(Vector3 pos, Quaternion rotation) {
@@ -207,13 +208,13 @@ namespace Brickcraft
             }
             pivot.position = pos;
             pivot.rotation = rotation;
-            transform.localRotation = Quaternion.identity; // localy reset child rotation
+            transform.localRotation = Quaternion.identity; // localy reset child rotation as it should always be identity
             setValid(true);
             lastPos = pos;
         }
 
         private void setValid (bool isValid) {
-            m.SetTexture("_MainTex", isValid ? null : Game.Instance.redTexture);
+            m.SetColor("_BaseColor", isValid ? Color.white : Color.red);
         }
     }
 }

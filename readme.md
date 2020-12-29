@@ -37,3 +37,4 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 - Tapping sound effect - https://freesound.org/people/rioforce/sounds/233654/
 - Dig + remove block sound effect - https://freesound.org/people/Agaxly/sounds/213005/
 - Brick models - https://www.mecabricks.com/
+- Break texture - MooCwzRck - https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/resource-packs/1223258-16x128x-1-4-5-compatible-okami-texture-pack?page=5

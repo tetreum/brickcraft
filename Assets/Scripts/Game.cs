@@ -1,13 +1,15 @@
-﻿using UnityEngine;
+﻿using Brickcraft.Bricks;
+using UnityEngine;
 
 namespace Brickcraft
 {
     public class Game : MonoBehaviour
     {
         public static Game Instance;
+        public static BreakAnimation breakAnimation;
 
-        public Shader transparentShader;
-        public Texture2D redTexture; // used to display invalid/colliding Brick previews
+        public Material transparentMaterial;
+        public GameObject breakAnimationPrefab;
 
         public Material[] brickMaterials;
 
@@ -18,6 +20,8 @@ namespace Brickcraft
 
         private void Awake() {
             Instance = this;
+
+            breakAnimation = new BreakAnimation();
         }
 
         private void Start() {

@@ -11,6 +11,7 @@ namespace Brickcraft
         public int id;
         public int brickModelId;
         public string materialName;
+        public int layer;
         public Type type;
         public string name;
 

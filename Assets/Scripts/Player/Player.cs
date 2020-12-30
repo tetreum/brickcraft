@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Brickcraft.UI;
+using UnityStandardAssets.Characters.FirstPerson;
 
 namespace Brickcraft
 {
@@ -16,6 +17,14 @@ namespace Brickcraft
         [HideInInspector]
         RaycastHit latestHit;
 
+        [HideInInspector]
+        public bool isOnWater = false;
+
+        [HideInInspector]
+        public FirstPersonController firstPersonController;
+        [HideInInspector]
+        public TriggerDetector triggerDetector;
+
         private float rayLength = 5f;
         private GameObject lookedBrick;
         private Brick diggedBrick;
@@ -27,6 +36,8 @@ namespace Brickcraft
 
         private void Awake() {
             Instance = this;
+            firstPersonController = GetComponent<FirstPersonController>();
+            triggerDetector = GetComponentInChildren<TriggerDetector>();
         }
 
         private void Start() {

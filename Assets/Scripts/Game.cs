@@ -15,7 +15,9 @@ namespace Brickcraft
 
         public enum Layers
         {
-            IgnoreRaycast = 2
+            Default = 0,
+            IgnoreRaycast = 2,
+            Water = 4
         }
 
         private void Awake() {

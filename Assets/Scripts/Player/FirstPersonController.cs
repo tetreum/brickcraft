@@ -1,7 +1,7 @@
-using System;
 using UnityEngine;
 using UnityStandardAssets.Utility;
 using Random = UnityEngine.Random;
+using Brickcraft;
 
 namespace UnityStandardAssets.Characters.FirstPerson
 {
@@ -13,9 +13,9 @@ namespace UnityStandardAssets.Characters.FirstPerson
         [SerializeField] private float m_WalkSpeed;
         [SerializeField] private float m_RunSpeed;
         [SerializeField] [Range(0f, 1f)] private float m_RunstepLenghten;
-        [SerializeField] private float m_JumpSpeed;
-        [SerializeField] private float m_StickToGroundForce;
-        [SerializeField] private float m_GravityMultiplier;
+        public float m_JumpSpeed;
+        public float m_StickToGroundForce;
+        public float m_GravityMultiplier;
         [SerializeField] private MouseLook m_MouseLook;
         [SerializeField] private bool m_UseFovKick;
         [SerializeField] private FOVKick m_FovKick = new FOVKick();
@@ -42,10 +42,16 @@ namespace UnityStandardAssets.Characters.FirstPerson
         private float m_NextStep;
         private bool m_Jumping;
         private AudioSource m_AudioSource;
+        private float originalGravityMultiplier;
+        private float originalStickToGroundForce;
+        private float originalJumpSpeed;
 
         private void Awake() {
             originalWalkSpeed = m_WalkSpeed;
             originalRunSpeed = m_RunSpeed;
+            originalGravityMultiplier = m_GravityMultiplier;
+            originalStickToGroundForce = m_StickToGroundForce;
+            originalJumpSpeed = m_JumpSpeed;
         }
 
         // Use this for initialization
@@ -71,7 +77,22 @@ namespace UnityStandardAssets.Characters.FirstPerson
             // the jump state needs to read here to make sure it is not missed
             if (!m_Jump)
             {
-                m_Jump = Input.GetButtonDown("Jump");
+                if (Player.Instance.isOnWater) {
+                    m_Jump = Input.GetButton("Jump") || Input.GetButtonDown("Jump");
+                } else {
+                    m_Jump = Input.GetButtonDown("Jump");
+                }
+            }
+
+            if (Player.Instance.isOnWater) {
+                if (m_Jump) {
+                    m_GravityMultiplier = 0;
+                    m_StickToGroundForce = 0.8f;
+                    m_JumpSpeed = 1;
+                } else {
+                    m_GravityMultiplier = 0.1f;
+                    m_StickToGroundForce = 0.2f;
+                }
             }
 
             if (!m_PreviouslyGrounded && m_CharacterController.isGrounded)
@@ -87,6 +108,12 @@ namespace UnityStandardAssets.Characters.FirstPerson
             }
 
             m_PreviouslyGrounded = m_CharacterController.isGrounded;
+        }
+
+        public void resetGravity () {
+            m_GravityMultiplier = originalGravityMultiplier;
+            m_StickToGroundForce = originalStickToGroundForce;
+            m_JumpSpeed = originalJumpSpeed;
         }
 
         public bool setOverWeightSpeed (bool isOverWeight) {
@@ -146,6 +173,12 @@ namespace UnityStandardAssets.Characters.FirstPerson
             else
             {
                 m_MoveDir += Physics.gravity*m_GravityMultiplier*Time.fixedDeltaTime;
+
+                if (m_Jump && Player.Instance.isOnWater && Player.Instance.triggerDetector.waterBlocks.Count > 1) {
+                    m_MoveDir.y = m_JumpSpeed;
+                    m_Jump = false;
+                    m_Jumping = true;
+                }
             }
             m_CollisionFlags = m_CharacterController.Move(m_MoveDir*Time.fixedDeltaTime);
 

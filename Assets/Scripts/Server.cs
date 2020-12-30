@@ -56,7 +56,7 @@ namespace Brickcraft
                 id = 7,
                 type = Item.Type.Brick,
                 brickModelId = 3003,
-                materialName = "TransparentBlue",
+                materialName = "Water",
                 layer = (int)Game.Layers.Water,
                 name = "Water 2x2"
             } },
@@ -92,12 +92,12 @@ namespace Brickcraft
         }
 
         void setupTest() {
-            spawnBrick(Server.items[1], new Vector3(3.327f, 3, -4.196f), Quaternion.identity);
-            spawnBrick(Server.items[1], new Vector3(1.468601f, 0, -4.383173f), Quaternion.identity);
-            spawnBrick(Server.items[2], new Vector3(2.374763f, 0.372f, -3.981043f), Quaternion.identity);
-            spawnBrick(Server.items[3], new Vector3(0.1108012f, 0.355f, -4.368471f), Quaternion.identity);
-            spawnBrick(Server.items[4], new Vector3(-1.03f, 0.15f, -4.299f), Quaternion.identity);
-            spawnBrick(Server.items[6], new Vector3(-2.72f, 0.15f, -4.15f), Quaternion.identity);
+            spawnBrick(Server.items[1], new Vector3(3.327f, 3, -4.196f), Quaternion.identity, true);
+            spawnBrick(Server.items[1], new Vector3(1.468601f, 0, -4.383173f), Quaternion.identity, true);
+            spawnBrick(Server.items[2], new Vector3(2.374763f, 0.372f, -3.981043f), Quaternion.identity, true);
+            spawnBrick(Server.items[3], new Vector3(0.1108012f, 0.355f, -4.368471f), Quaternion.identity, true);
+            spawnBrick(Server.items[4], new Vector3(-1.03f, 0.15f, -4.299f), Quaternion.identity, true);
+            spawnBrick(Server.items[6], new Vector3(-2.72f, 0.15f, -4.15f), Quaternion.identity, true);
 
             generateCube(Server.items[1], new Vector3(10, 1, 10), new Vector3(5.615f, 0f, -3.732f));
 
@@ -110,6 +110,7 @@ namespace Brickcraft
             generateCube(Server.items[8], new Vector3(13, 10, 2), new Vector3(14.023f, -4.824f, -5.323999f));
             generateCube(Server.items[8], new Vector3(2, 10, 12), new Vector3(24.371f, -4.824f, -5.323999f));
             generateCube(Server.items[8], new Vector3(15, 10, 2), new Vector3(14.023f, -4.824f, 4.228f));
+            generateCube(Server.items[8], new Vector3(10, 1, 10), new Vector3(16.411f, -4.824f, -3.732f));
 
             // dirt
             //generateCube(Server.items[1], new Vector3(100, 11, 100), new Vector3(14.023f, -4.824f, 5.82f));
@@ -124,7 +125,7 @@ namespace Brickcraft
             for (int x = 0; x < cubeDimensions.x; x++) {
                 for (int y = 0; y < cubeDimensions.y; y++) {
                     for (int z = 0; z < cubeDimensions.z; z++) {
-                        spawnBrick(item, new Vector3(startingPos.x + (x * brickWidth), startingPos.y + (y * brickHeight), startingPos.z + (z * brickWidth)), Quaternion.identity);
+                        spawnBrick(item, new Vector3(startingPos.x + (x * brickWidth), startingPos.y + (y * brickHeight), startingPos.z + (z * brickWidth)), Quaternion.identity, true);
                     }
                 }
             }
@@ -144,7 +145,7 @@ namespace Brickcraft
                     continue;
                 }
                 pos.x -= 2;
-                brick = spawnBrick(item, pos, Quaternion.identity);
+                brick = spawnBrick(item, pos, Quaternion.identity, true);
                 brick.gameObject.layer = (int)Game.Layers.Default;
                 boxCollider = brick.gameObject.GetComponent<BoxCollider>();
                 boxCollider.isTrigger = true;
@@ -154,18 +155,23 @@ namespace Brickcraft
             }
         }
 
-        public Brick spawnBrick(Item item, Vector3 position, Quaternion rotation) {
+        public Brick spawnBrick(Item item, Vector3 position, Quaternion rotation, bool fromServer = false) {
             GameObject brickObj = Instantiate(brickPrefabs[item.brickModelId.ToString()], position, rotation);
             Material brickMaterial = item.material;
 
+            MeshRenderer meshRenderer = brickObj.GetComponent<MeshRenderer>();
+
             if (brickMaterial != null) {
-                brickObj.GetComponent<MeshRenderer>().material = brickMaterial;
+                meshRenderer.material = brickMaterial;
             }
             if (item.layer > 0) {
                 brickObj.layer = item.layer;
                 foreach (Transform tr in brickObj.transform) {
                     tr.gameObject.layer = item.layer;
                 }
+            }
+            if ((Game.Layers)item.layer == Game.Layers.Water) {
+                meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             }
 
             Brick brick = new Brick();
@@ -176,7 +182,10 @@ namespace Brickcraft
             bricks.Add(brick.id, brick);
 
             brickObj.name = brick.id;
-            SoundManager.Instance.play(SoundManager.EFFECT_TAPPING);
+
+            if (!fromServer) {
+                SoundManager.Instance.play(SoundManager.EFFECT_TAPPING);
+            }
 
             return brick;
         }

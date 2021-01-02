@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Brickcraft
 {
@@ -82,7 +83,9 @@ namespace Brickcraft
         }
 
         private void Start() {
-            setupTest();
+            if (SceneManager.GetActiveScene().name == "SampleScene") {
+                setupTest();
+            }
         }
 
         void processPrefabs() {

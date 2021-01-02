@@ -25,7 +25,8 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 2. The icon is stored at https://github.com/tetreum/brickcraft/tree/main/Assets/Resources/Textures/Bricks
 3. Prefab must be listed at Server -> prefabs scene object.
 4. Model specs must be added at Server.cs#setupBrickModels() (https://github.com/tetreum/brickcraft/blob/main/Assets/Scripts/Server.cs#L146)
-2. Items using it must be added at Server.cs#items var (https://github.com/tetreum/brickcraft/blob/main/Assets/Scripts/Server.cs#L12)
+5. Items using it must be added at Server.cs#items var (https://github.com/tetreum/brickcraft/blob/main/Assets/Scripts/Server.cs#L12)
+6. To generate it's icon, head to /Scenes/IconGenerator & simply hit Play. Items with missing icons will have their icon generated.
 
 ## How can i add a new brick material/texture?
 

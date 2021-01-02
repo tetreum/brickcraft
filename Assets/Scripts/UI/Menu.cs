@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using System.Runtime.InteropServices;
+using Brickcraft;
 
 public class Menu : MonoBehaviour {
 
@@ -24,6 +25,10 @@ public class Menu : MonoBehaviour {
 
     public void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode) {
         switch (scene.name) {
+			case "IconGenerator":
+				hideAllPanels();
+				Game.unlockMouse();
+				break;
 			default:
                 showPanel("PlayerPanel");
 				break;

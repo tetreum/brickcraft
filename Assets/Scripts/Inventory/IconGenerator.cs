@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEditor;
+using UnityEngine.Rendering.HighDefinition;
 
 /* Based on 
 https://answers.unity.com/questions/1601619/access-or-remove-background-color-of-assetpreview.html
@@ -14,6 +15,13 @@ namespace Brickcraft
         private Rect rectReadPicture;
         private int iconSize = 100;
         private Quaternion cameraRotation = Quaternion.Euler(new Vector3(45f, 0, 0));
+        private Color32 greenChroma = new Color32(0, 255, 0, 255);
+        private Color32 blueChroma = new Color32(0, 0, 255, 255);
+        private HDAdditionalCameraData cam;
+
+        private void Awake() {
+            cam = Camera.main.GetComponent<HDAdditionalCameraData>();
+        }
 
         private void Start() {
             renderTexture = new RenderTexture(iconSize, iconSize, 24);
@@ -32,10 +40,18 @@ namespace Brickcraft
         }
 
         private bool generateIcon(Item item, bool forceWrite = false) {
-            string iconPath = "Resources/Textures/Bricks/" + item.id + ".png";
+            string iconPath = "/Resources/Textures/Bricks/" + item.id + ".png";
 
             if (!forceWrite && System.IO.File.Exists(Application.dataPath + iconPath)) {
                 return false;
+            }
+
+            string itemName = item.name.ToLower();
+
+            if (itemName.Contains("water") || itemName.Contains("glass")) {
+                cam.backgroundColorHDR = blueChroma;
+            } else {
+                cam.backgroundColorHDR = greenChroma;
             }
 
             GameObject obj = Server.Instance.spawnBrick(item, Vector3.zero, Quaternion.identity, true).gameObject;
@@ -52,8 +68,7 @@ namespace Brickcraft
             // force render to make sure the new brick appears
             Camera.main.Render();
 
-            iconPath = "Assets/" + iconPath;
-            
+            iconPath = "Assets" + iconPath;
             texture.ReadPixels(rectReadPicture, 0, 0);
             Color32[] colors = texture.GetPixels32();
             int i = 0;

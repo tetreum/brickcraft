@@ -40,11 +40,15 @@ namespace Brickcraft.UI
                     continue;
                 }
                 InventorySlot slot = raycast.gameObject.GetComponent<InventorySlot>();
+                CraftingSlot craftingSlot = raycast.gameObject.GetComponent<CraftingSlot>();
 
-                if (slot == null) {
-                    continue;
+                if (slot != null) {
+                    Player.Instance.switchInventorySlots(int.Parse(originalParent.name), int.Parse(raycast.gameObject.transform.parent.name));
+                    break;
+                } else if (craftingSlot != null) {
+                    craftingSlot.setCurrentItem(int.Parse(originalParent.name));
+                    break;
                 }
-                Player.Instance.switchInventorySlots(int.Parse(originalParent.name), int.Parse(raycast.gameObject.transform.parent.name));
             }
             transform.position = initialPos;
             transform.SetParent(originalParent);

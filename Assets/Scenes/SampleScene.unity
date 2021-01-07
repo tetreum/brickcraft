@@ -465,7 +465,7 @@ GameObject:
   - component: {fileID: 1396293392}
   - component: {fileID: 1396293393}
   m_Layer: 1
-  m_Name: GameObject
+  m_Name: TriggerDetector
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

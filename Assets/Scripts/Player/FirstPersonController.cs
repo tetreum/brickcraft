@@ -54,7 +54,6 @@ namespace UnityStandardAssets.Characters.FirstPerson
             originalJumpSpeed = m_JumpSpeed;
         }
 
-        // Use this for initialization
         private void Start()
         {
             m_CharacterController = GetComponent<CharacterController>();
@@ -69,8 +68,6 @@ namespace UnityStandardAssets.Characters.FirstPerson
 			m_MouseLook.Init(transform , m_Camera.transform);
         }
 
-
-        // Update is called once per frame
         private void Update()
         {
             RotateView();
@@ -139,7 +136,6 @@ namespace UnityStandardAssets.Characters.FirstPerson
             m_AudioSource.Play();
             m_NextStep = m_StepCycle + .5f;
         }
-
 
         private void FixedUpdate()
         {

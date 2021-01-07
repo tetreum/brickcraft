@@ -198,5 +198,9 @@ namespace Brickcraft
             }
             return items;
         }
+
+        public List<UserItem> getInventory () {
+            return inventory;
+        }
     }
 }

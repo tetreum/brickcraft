@@ -3,8 +3,7 @@ using UnityEngine;
 
 namespace Brickcraft
 {
-    public class Game : MonoBehaviour
-    {
+    public class Game : MonoBehaviour {
         public static Game Instance;
         public static BreakAnimation breakAnimation;
 
@@ -12,6 +11,23 @@ namespace Brickcraft
         public GameObject breakAnimationPrefab;
 
         public Material[] brickMaterials;
+        public Recipe[] craftingRecipes = new Recipe[] {
+            new Recipe() {
+                itemId = 6,
+                ingredients = new Ingredient[] {
+                    new Ingredient() {
+                        itemId = 1,
+                        quantity = 1,
+                        slot = 1,
+                    },
+                    new Ingredient() {
+                        itemId = 1,
+                        quantity = 1,
+                        slot = 3,
+                    }
+                }
+            }
+        };
 
         public enum Layers
         {
@@ -50,6 +66,7 @@ namespace Brickcraft
 
         public static void unlockMouse () {
             Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
     }
 }

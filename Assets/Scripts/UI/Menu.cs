@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using System.Runtime.InteropServices;
 using Brickcraft;
+using Brickcraft.UI;
 
 public class Menu : MonoBehaviour {
 
@@ -21,6 +22,8 @@ public class Menu : MonoBehaviour {
         DontDestroyOnLoad(transform.gameObject);
         DontDestroyOnLoad(GameObject.Find("EventSystem"));
         SceneManager.sceneLoaded += OnLevelFinishedLoading;
+
+		InventoryPanel.Instance = getPanel("InventoryPanel").GetComponent<InventoryPanel>();
     }
 
     public void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode) {

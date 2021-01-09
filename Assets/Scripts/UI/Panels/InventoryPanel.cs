@@ -9,6 +9,7 @@ namespace Brickcraft.UI
         public static InventoryPanel Instance;
         public InventorySlot[] inventorySlots;
         public CraftingSlot[] craftingSlots;
+        public CraftingOutputSlot craftingOutputSlot;
         private void Awake() {
             Instance = this;
         }
@@ -40,12 +41,35 @@ namespace Brickcraft.UI
                 slot.GetComponent<RawImage>().texture = inventory[slotId].item.icon;
                 slot.quantity.text = inventory[slotId].quantity.ToString();
             }
+
+            foreach (CraftingSlot craftingSlot in craftingSlots) {
+                if (craftingSlot.currentItem == null) {
+                    continue;
+                }
+                // material got consumed
+                if (!inventory.ContainsKey(craftingSlot.currentItem.slot)) {
+                    craftingSlot.setVisible(false);
+
+                    // he cannot longer craft then
+                    craftingOutputSlot.setVisible(false);
+                    continue;
+                }
+                // to update it's quantitty
+                if (craftingSlot.quantity.text != inventory[craftingSlot.currentItem.slot].quantity.ToString()) {
+                    craftingSlot.setCurrentItem(craftingSlot.currentItem.slot);
+
+                    // we do not longer know if has enough materials, so lets refresh the possible craft
+                    showPossibleCrafting();
+                }
+            }
         }
 
         void resetCraftingSlots() {
             foreach (CraftingSlot slot in craftingSlots) {
                 slot.setVisible(false);
             }
+
+            craftingOutputSlot.setVisible(false);
         }
 
         public void showPossibleCrafting () {
@@ -77,12 +101,32 @@ namespace Brickcraft.UI
                 }
                 
                 if (found) {
-                    Debug.Log(recipe.itemId + " matches");
-                    break;
+                    craftingOutputSlot.currentRecipe = recipe;
+                    craftingOutputSlot.setVisible(true);
+                    return;
                 }
             }
 
-            
+            craftingOutputSlot.setVisible(false);
+        }
+
+        public void craftRecipe (Recipe recipe, int slotId) {
+            foreach (Ingredient ingredient in recipe.ingredients) {
+                Player.Instance.removeItem(new UserItem() {
+                    id = ingredient.itemId,
+                    quantity = ingredient.quantity,
+                });
+            }
+
+            Player.Instance.addItem(new UserItem() {
+                id = recipe.itemId,
+                quantity = recipe.quantity,
+                health = 100,
+                slot = slotId,
+            });
+
+            // refresh possible crafting as user may not longer have enough materials to keep crafting
+            showPossibleCrafting(); 
         }
     }
 }

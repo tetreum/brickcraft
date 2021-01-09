@@ -152,7 +152,11 @@ namespace Brickcraft
             }
         
             inventory.Add(userItem);
-            PlayerPanel.Instance.reload();
+            InventoryPanel.Instance.reload();
+
+            if (userItem.slot > 27) {
+                PlayerPanel.Instance.reload();
+            }
         }
         public void removeItem (UserItem userItem) {
             foreach (UserItem item in inventory) {
@@ -162,7 +166,11 @@ namespace Brickcraft
                     if (item.quantity < 1) {
                         inventory.Remove(item);
                     }
-                    PlayerPanel.Instance.reload();
+
+                    InventoryPanel.Instance.reload();
+                    if (item.slot > 27) {
+                        PlayerPanel.Instance.reload();
+                    }
                     return;
                 }
             }
@@ -197,6 +205,12 @@ namespace Brickcraft
                 items.Add(item.slot, item);
             }
             return items;
+        }
+
+        public bool isInventorySlotAvailable (int slotId) {
+            Dictionary<int, UserItem> items = getInventoryBySlot();
+
+            return !items.ContainsKey(slotId);
         }
 
         public List<UserItem> getInventory () {

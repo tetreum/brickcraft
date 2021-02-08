@@ -68,6 +68,13 @@ namespace Brickcraft
                 materialName = "BrickYellow",
                 name = "Sand 2x2"
             } },
+            {9, new Item(){
+                id = 9,
+                type = Item.Type.Brick,
+                brickModelId = 4186,
+                materialName = "MediumNougat",
+                name = "Dirt 48x48"
+            } },
         };
 
         public const float studSize = 0.398f;
@@ -102,7 +109,7 @@ namespace Brickcraft
             spawnBrick(Server.items[4], new Vector3(-1.03f, 0.15f, -4.299f), Quaternion.identity, true);
             spawnBrick(Server.items[6], new Vector3(-2.72f, 0.15f, -4.15f), Quaternion.identity, true);
 
-            generateCube(Server.items[1], new Vector3(10, 1, 10), new Vector3(5.615f, 0f, -3.732f));
+            generateCube(Server.items[9], new Vector3(3, 1, 5), new Vector3(-41f, 0f, -24f));
 
             // water
             generateCube(Server.items[7], new Vector3(10, 10, 10), new Vector3(16.411f, -4.824f, -3.732f));
@@ -122,8 +129,8 @@ namespace Brickcraft
         }
 
         private void generateCube (Item item, Vector3 cubeDimensions, Vector3 startingPos) {
-            float brickWidth = Server.studSize * 2;
-            float brickHeight = Server.plateHeight * 3;
+            float brickWidth = Server.studSize * (item.id == 9 ? 48 : 2);
+            float brickHeight = Server.plateHeight * item.brickModel.heightInPlates;
 
             for (int x = 0; x < cubeDimensions.x; x++) {
                 for (int y = 0; y < cubeDimensions.y; y++) {
@@ -274,6 +281,19 @@ namespace Brickcraft
             brick.type = 3001;
             brick.heightInPlates = 3;
             brick.category = BrickModel.Category.Brick;
+            brick.pivot = new Vector3(-(Server.studSize / 2) * 3, 0, -(Server.studSize / 2));
+            brick.studs = new Dictionary<int, Dictionary<int, int[]>>() {
+                {0, new Dictionary<int, int[]>() {
+                        {0, new int[]{ } },
+                    }
+                }
+            };
+            brickModels.Add(brick.type, brick);
+
+            brick = new BrickModel();
+            brick.type = 4186;
+            brick.heightInPlates = 1;
+            brick.category = BrickModel.Category.Plate;
             brick.pivot = new Vector3(-(Server.studSize / 2) * 3, 0, -(Server.studSize / 2));
             brick.studs = new Dictionary<int, Dictionary<int, int[]>>() {
                 {0, new Dictionary<int, int[]>() {

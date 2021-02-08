@@ -11,6 +11,13 @@ namespace Brickcraft
         public GameObject breakAnimationPrefab;
 
         public Material[] brickMaterials;
+        public enum Layers
+        {
+            Default = 0,
+            IgnoreRaycast = 2,
+            Water = 4
+        }
+
         public Recipe[] craftingRecipes = new Recipe[] {
             new Recipe() {
                 itemId = 6,
@@ -23,18 +30,11 @@ namespace Brickcraft
                     new Ingredient() {
                         itemId = 1,
                         quantity = 1,
-                        slot = 3,
+                        slot = 2,
                     }
                 }
             }
         };
-
-        public enum Layers
-        {
-            Default = 0,
-            IgnoreRaycast = 2,
-            Water = 4
-        }
 
         private void Awake() {
             Instance = this;

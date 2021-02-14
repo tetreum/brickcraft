@@ -1,3 +1,4 @@
+using Brickcraft.Utils;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -116,8 +117,18 @@ namespace Brickcraft.World
 							// we are checking the top face of the block, so see if the top is exposed
 							if (top == 0)
 							{
-								if (WorldBehaviour.newSystem) {
+								if (WorldBehaviour.mode == 2) {
 									spawnBrick(block, new Vector3(x, y, z));
+								} else if (WorldBehaviour.mode == 3) {
+									int vertexIndex = vertices.Count;
+									FaceMap faceMap = WorldBehaviour.meshMap["top"];
+
+									foreach (Vector3 vertice in faceMap.vertices) {
+										vertices.Add(new Vector3(vertice.x + x, vertice.y + y, vertice.z + z));
+									}
+									foreach (int index in faceMap.triangles) {
+										triangles.Add(index + vertexIndex);
+									}
 								} else {
 									int vertexIndex = vertices.Count;
 									vertices.Add(new Vector3(x, y + 1, z));
@@ -174,8 +185,18 @@ namespace Brickcraft.World
 						
 							if (front == 0)
 							{
-								if (WorldBehaviour.newSystem) {
+								if (WorldBehaviour.mode == 2) {
 									spawnBrick(block, new Vector3(x, y, z));
+								} else if (WorldBehaviour.mode == 3) {
+									int vertexIndex = vertices.Count;
+									FaceMap faceMap = WorldBehaviour.meshMap["front"];
+
+									foreach (Vector3 vertice in faceMap.vertices) {
+										vertices.Add(new Vector3(vertice.x + x, vertice.y + y, vertice.z + z));
+									}
+									foreach (int index in faceMap.triangles) {
+										triangles.Add(index + vertexIndex);
+									}
 								} else {
 									int vertexIndex = vertices.Count;
 									vertices.Add(new Vector3(x, y, z));
@@ -234,8 +255,18 @@ namespace Brickcraft.World
 		
 							if (right == 0)
 							{
-								if (WorldBehaviour.newSystem) {
+								if (WorldBehaviour.mode == 2) {
 									spawnBrick(block, new Vector3(x, y, z));
+								} else if (WorldBehaviour.mode == 3) {
+									int vertexIndex = vertices.Count;
+									FaceMap faceMap = WorldBehaviour.meshMap["right"];
+
+									foreach (Vector3 vertice in faceMap.vertices) {
+										vertices.Add(new Vector3(vertice.x + x, vertice.y + y, vertice.z + z));
+									}
+									foreach (int index in faceMap.triangles) {
+										triangles.Add(index + vertexIndex);
+									}
 								} else {
 									int vertexIndex = vertices.Count;
 									vertices.Add(new Vector3(x + 1, y, z));
@@ -294,8 +325,18 @@ namespace Brickcraft.World
 						
 							if (back == 0)
 							{
-								if (WorldBehaviour.newSystem) {
+								if (WorldBehaviour.mode == 2) {
 									spawnBrick(block, new Vector3(x, y, z));
+								} else if (WorldBehaviour.mode == 3) {
+									int vertexIndex = vertices.Count;
+									FaceMap faceMap = WorldBehaviour.meshMap["back"];
+
+									foreach (Vector3 vertice in faceMap.vertices) {
+										vertices.Add(new Vector3(vertice.x + x, vertice.y + y, vertice.z + z));
+									}
+									foreach (int index in faceMap.triangles) {
+										triangles.Add(index + vertexIndex);
+									}
 								} else {
 									int vertexIndex = vertices.Count;
 									vertices.Add(new Vector3(x + 1, y, z + 1));
@@ -355,8 +396,18 @@ namespace Brickcraft.World
 						
 							if (left == 0)
 							{
-								if (WorldBehaviour.newSystem) {
+								if (WorldBehaviour.mode == 2) {
 									spawnBrick(block, new Vector3(x, y, z));
+								} else if (WorldBehaviour.mode == 3) {
+									int vertexIndex = vertices.Count;
+									FaceMap faceMap = WorldBehaviour.meshMap["left"];
+
+									foreach (Vector3 vertice in faceMap.vertices) {
+										vertices.Add(new Vector3(vertice.x + x, vertice.y + y, vertice.z + z));
+									}
+									foreach (int index in faceMap.triangles) {
+										triangles.Add(index + vertexIndex);
+									}
 								} else {
 									int vertexIndex = vertices.Count;
 									vertices.Add(new Vector3(x, y, z + 1));
@@ -409,8 +460,18 @@ namespace Brickcraft.World
 						
 							if (bottom == 0)
 							{
-								if (WorldBehaviour.newSystem) {
+								if (WorldBehaviour.mode == 2) {
 									spawnBrick(block, new Vector3(x, y, z));
+								} else if (WorldBehaviour.mode == 3) {
+									int vertexIndex = vertices.Count;
+									FaceMap faceMap = WorldBehaviour.meshMap["bottom"];
+
+									foreach (Vector3 vertice in faceMap.vertices) {
+										vertices.Add(new Vector3(vertice.x + x, vertice.y + y, vertice.z + z));
+									}
+									foreach (int index in faceMap.triangles) {
+										triangles.Add(index + vertexIndex);
+									}
 								} else {
 									int vertexIndex = vertices.Count;
 									vertices.Add(new Vector3(x, y, z + 1));
@@ -469,7 +530,7 @@ namespace Brickcraft.World
 				chunkEntry.ParentChunk = chunk;
 				chunkEntry.SliceIndex = i;
 
-				if (WorldBehaviour.newSystem) {
+				if (WorldBehaviour.mode == 2) {
 					Dictionary<byte, Vector3[]> meshList = new Dictionary<byte, Vector3[]>();
 					foreach (byte block in meshes.Keys) {
 						meshList.Add(block, meshes[block].ToArray());

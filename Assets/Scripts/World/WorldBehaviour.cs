@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System;
 using NUnit.Framework.Constraints;
+using Brickcraft.Utils;
 
 // Highly based on https://github.com/chraft/chunk-light-tester
 namespace Brickcraft.World
@@ -39,8 +40,18 @@ namespace Brickcraft.World
 		public static readonly int MapMinCoords = MapMinChunkX * 16;
 		public static readonly int MapMaxCoords = MapMaxChunkX * 16;
 
-		public static bool newSystem = true;
-	
+		public static Dictionary<string, FaceMap> meshMap;
+		public static int mode = 3;
+		/*
+		 * 1 = Original - minecraft
+		 * 2 = MeshCombine
+		 * 3 = Original like, grabbing only proper triangles & vertices
+		 */
+
+		private void Awake() {
+			meshMap = (new FaceMapper(obj)).getMapping();
+		}
+
 		void Start () {
 			BlockMaterial = (Material)Resources.Load ("Materials/BlockVertex", typeof(Material));
 			AtlasTexture = (Texture2D)Resources.Load("Textures/Terrain");
@@ -171,7 +182,7 @@ namespace Brickcraft.World
 			GameObject chunkSliceObject = chunkEntry.ParentChunk.ChunkSliceObjects[chunkEntry.SliceIndex];
 			MeshFilter filter = chunkSliceObject.GetComponent<MeshFilter>();
 
-			if (newSystem) {
+			if (mode == 2) {
 
 				List<CombineInstance> combinedMeshes = new List<CombineInstance>();
 

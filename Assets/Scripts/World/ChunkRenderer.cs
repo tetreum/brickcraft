@@ -512,7 +512,6 @@ namespace Brickcraft.World
 				);
 				vertices.Add(pos);
 				colors.Add(color);
-				Debug.Log(vertice.z);
 				uvs.Add(new Vector2(vertice.x, vertice.z));
 			}
 			foreach (int index in faceMap.triangles) {

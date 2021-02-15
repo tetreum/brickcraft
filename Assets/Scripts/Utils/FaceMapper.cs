@@ -25,10 +25,10 @@ namespace Brickcraft.Utils {
             coordMap = new Dictionary<Transform, Vector3>() {
                 {obj.Find("Top"), new Vector3(0, 1, 0)},
                 {obj.Find("Bottom"), new Vector3(0, -1, 0)},
-                {obj.Find("Right"), new Vector3(0, 0, -1)},
-                {obj.Find("Left"), new Vector3(0, 0, 1)},
-                {obj.Find("Front"), new Vector3(1, 0, 0)},
-                {obj.Find("Back"), new Vector3(-1, 0, 0)},
+                {obj.Find("Right"), new Vector3(1, 0, 0)},
+                {obj.Find("Left"), new Vector3(-1, 0, 0)},
+                {obj.Find("Front"), new Vector3(0, 0, -1)},
+                {obj.Find("Back"), new Vector3(0, 0, 1)},
             };
         }
 

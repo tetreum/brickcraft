@@ -1,4 +1,5 @@
 using Brickcraft.Utils;
+using NUnit.Framework.Constraints;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,10 +23,11 @@ namespace Brickcraft.World
 		public void RenderChunk(Chunk chunk)
 		{
 			WorldBehaviour world = chunk.World;
-			
-/*			Stopwatch watch = new Stopwatch();
-			watch.Start();*/
-			
+
+			/*	Stopwatch watch = new Stopwatch();
+				watch.Start();
+			*/
+
 			int minSliceIndex = chunk.MinSliceIndex;
 			int lowestY = chunk.LowestY;
 				
@@ -120,15 +122,7 @@ namespace Brickcraft.World
 								if (WorldBehaviour.mode == 2) {
 									spawnBrick(block, new Vector3(x, y, z));
 								} else if (WorldBehaviour.mode == 3) {
-									int vertexIndex = vertices.Count;
-									FaceMap faceMap = WorldBehaviour.meshMap["top"];
-
-									foreach (Vector3 vertice in faceMap.vertices) {
-										vertices.Add(new Vector3(vertice.x + x, vertice.y + y, vertice.z + z));
-									}
-									foreach (int index in faceMap.triangles) {
-										triangles.Add(index + vertexIndex);
-									}
+									addBrickFace("top", block, x, y, z);
 								} else {
 									int vertexIndex = vertices.Count;
 									vertices.Add(new Vector3(x, y + 1, z));
@@ -143,11 +137,6 @@ namespace Brickcraft.World
 									triangles.Add(vertexIndex+2);
 									triangles.Add(vertexIndex+3);
 									triangles.Add(vertexIndex);
-								
-									/*triangles.Add(vertexIndex);
-									triangles.Add(vertexIndex+1);
-									triangles.Add(vertexIndex+2);
-									triangles.Add(vertexIndex+3);*/
 								
 							
 									float attenuation = (light / 15.0f);
@@ -168,6 +157,7 @@ namespace Brickcraft.World
 									uvs.Add(new Vector2(xMin, yMin));
 									uvs.Add(new Vector2(xMax, yMin));							
 									uvs.Add(new Vector2(xMax, yMax));
+									
 								}
 							}
 						
@@ -188,15 +178,7 @@ namespace Brickcraft.World
 								if (WorldBehaviour.mode == 2) {
 									spawnBrick(block, new Vector3(x, y, z));
 								} else if (WorldBehaviour.mode == 3) {
-									int vertexIndex = vertices.Count;
-									FaceMap faceMap = WorldBehaviour.meshMap["front"];
-
-									foreach (Vector3 vertice in faceMap.vertices) {
-										vertices.Add(new Vector3(vertice.x + x, vertice.y + y, vertice.z + z));
-									}
-									foreach (int index in faceMap.triangles) {
-										triangles.Add(index + vertexIndex);
-									}
+									addBrickFace("front", block, x, y, z);
 								} else {
 									int vertexIndex = vertices.Count;
 									vertices.Add(new Vector3(x, y, z));
@@ -211,22 +193,13 @@ namespace Brickcraft.World
 									triangles.Add(vertexIndex+2);
 									triangles.Add(vertexIndex+3);
 									triangles.Add(vertexIndex);
-								
-									/*triangles.Add(vertexIndex);
-									triangles.Add(vertexIndex+1);
-									triangles.Add(vertexIndex+2);
-									triangles.Add(vertexIndex+3);*/
-
+									
 									colors.Add(firstSideColor);
 									colors.Add(firstSideColor);
 									colors.Add(firstSideColor);
 									colors.Add(firstSideColor);
 								
 									Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, BlockFace.Side);
-									/*uvs.Add(new Vector2(coords.x + epsilon, coords.y + epsilon));
-									uvs.Add(new Vector2(coords.x + epsilon, coords.y + coords.height - epsilon));
-									uvs.Add(new Vector2(coords.x + coords.width - epsilon, coords.y + coords.height - epsilon));
-									uvs.Add(new Vector2(coords.x + coords.width - epsilon, coords.y + epsilon));*/
 								
 									float yMax = coords.y + coords.height - epsilon;
 									float xMax = coords.x + coords.width - epsilon;
@@ -237,6 +210,7 @@ namespace Brickcraft.World
 									uvs.Add(new Vector2(xMin, yMax));
 									uvs.Add(new Vector2(xMax, yMax));							
 									uvs.Add(new Vector2(xMax, yMin));
+									
 								}
 							}
 						
@@ -258,15 +232,7 @@ namespace Brickcraft.World
 								if (WorldBehaviour.mode == 2) {
 									spawnBrick(block, new Vector3(x, y, z));
 								} else if (WorldBehaviour.mode == 3) {
-									int vertexIndex = vertices.Count;
-									FaceMap faceMap = WorldBehaviour.meshMap["right"];
-
-									foreach (Vector3 vertice in faceMap.vertices) {
-										vertices.Add(new Vector3(vertice.x + x, vertice.y + y, vertice.z + z));
-									}
-									foreach (int index in faceMap.triangles) {
-										triangles.Add(index + vertexIndex);
-									}
+									addBrickFace("right", block, x, y, z);
 								} else {
 									int vertexIndex = vertices.Count;
 									vertices.Add(new Vector3(x + 1, y, z));
@@ -281,11 +247,6 @@ namespace Brickcraft.World
 									triangles.Add(vertexIndex+2);
 									triangles.Add(vertexIndex+3);
 									triangles.Add(vertexIndex);
-								
-									/*triangles.Add(vertexIndex);
-									triangles.Add(vertexIndex+1);
-									triangles.Add(vertexIndex+2);
-									triangles.Add(vertexIndex+3);*/
 							
 									colors.Add(secondSideColor);
 									colors.Add(secondSideColor);
@@ -303,10 +264,7 @@ namespace Brickcraft.World
 									uvs.Add(new Vector2(xMin, yMax));
 									uvs.Add(new Vector2(xMax, yMax));							
 									uvs.Add(new Vector2(xMax, yMin));
-									/*uvs.Add(new Vector2(coords.x + epsilon, coords.y + epsilon));
-									uvs.Add(new Vector2(coords.x + epsilon, coords.y + coords.height - epsilon));
-									uvs.Add(new Vector2(coords.x + coords.width - epsilon, coords.y + coords.height - epsilon));
-									uvs.Add(new Vector2(coords.x + coords.width - epsilon, coords.y + epsilon));*/
+									
 								}
 							}
 						
@@ -328,15 +286,7 @@ namespace Brickcraft.World
 								if (WorldBehaviour.mode == 2) {
 									spawnBrick(block, new Vector3(x, y, z));
 								} else if (WorldBehaviour.mode == 3) {
-									int vertexIndex = vertices.Count;
-									FaceMap faceMap = WorldBehaviour.meshMap["back"];
-
-									foreach (Vector3 vertice in faceMap.vertices) {
-										vertices.Add(new Vector3(vertice.x + x, vertice.y + y, vertice.z + z));
-									}
-									foreach (int index in faceMap.triangles) {
-										triangles.Add(index + vertexIndex);
-									}
+									addBrickFace("back", block, x, y, z);
 								} else {
 									int vertexIndex = vertices.Count;
 									vertices.Add(new Vector3(x + 1, y, z + 1));
@@ -351,11 +301,6 @@ namespace Brickcraft.World
 									triangles.Add(vertexIndex+2);
 									triangles.Add(vertexIndex+3);
 									triangles.Add(vertexIndex);
-								
-									/*triangles.Add(vertexIndex);
-									triangles.Add(vertexIndex+1);
-									triangles.Add(vertexIndex+2);
-									triangles.Add(vertexIndex+3);*/
 							
 									colors.Add(firstSideColor);
 									colors.Add(firstSideColor);
@@ -373,11 +318,7 @@ namespace Brickcraft.World
 									uvs.Add(new Vector2(xMin, yMax));
 									uvs.Add(new Vector2(xMax, yMax));							
 									uvs.Add(new Vector2(xMax, yMin));
-
-									/*uvs.Add(new Vector2(coords.x + epsilon, coords.y + epsilon));
-									uvs.Add(new Vector2(coords.x + epsilon, coords.y + coords.height - epsilon));
-									uvs.Add(new Vector2(coords.x + coords.width - epsilon, coords.y + coords.height - epsilon));
-									uvs.Add(new Vector2(coords.x + coords.width - epsilon, coords.y + epsilon));*/
+									
 								}
 							}
 						
@@ -399,15 +340,7 @@ namespace Brickcraft.World
 								if (WorldBehaviour.mode == 2) {
 									spawnBrick(block, new Vector3(x, y, z));
 								} else if (WorldBehaviour.mode == 3) {
-									int vertexIndex = vertices.Count;
-									FaceMap faceMap = WorldBehaviour.meshMap["left"];
-
-									foreach (Vector3 vertice in faceMap.vertices) {
-										vertices.Add(new Vector3(vertice.x + x, vertice.y + y, vertice.z + z));
-									}
-									foreach (int index in faceMap.triangles) {
-										triangles.Add(index + vertexIndex);
-									}
+									addBrickFace("left", block, x, y, z);
 								} else {
 									int vertexIndex = vertices.Count;
 									vertices.Add(new Vector3(x, y, z + 1));
@@ -422,11 +355,6 @@ namespace Brickcraft.World
 									triangles.Add(vertexIndex+2);
 									triangles.Add(vertexIndex+3);
 									triangles.Add(vertexIndex);
-								
-									/*triangles.Add(vertexIndex);
-									triangles.Add(vertexIndex+1);
-									triangles.Add(vertexIndex+2);
-									triangles.Add(vertexIndex+3);*/
 							
 									colors.Add(secondSideColor);
 									colors.Add(secondSideColor);
@@ -444,10 +372,7 @@ namespace Brickcraft.World
 									uvs.Add(new Vector2(xMin, yMax));
 									uvs.Add(new Vector2(xMax, yMax));							
 									uvs.Add(new Vector2(xMax, yMin));
-									/*uvs.Add(new Vector2(coords.x + epsilon, coords.y + epsilon));
-									uvs.Add(new Vector2(coords.x + epsilon, coords.y + coords.height - epsilon));
-									uvs.Add(new Vector2(coords.x + coords.width - epsilon, coords.y + coords.height - epsilon));
-									uvs.Add(new Vector2(coords.x + coords.width - epsilon, coords.y + epsilon));*/
+									
 								}
 							}
 						
@@ -463,15 +388,7 @@ namespace Brickcraft.World
 								if (WorldBehaviour.mode == 2) {
 									spawnBrick(block, new Vector3(x, y, z));
 								} else if (WorldBehaviour.mode == 3) {
-									int vertexIndex = vertices.Count;
-									FaceMap faceMap = WorldBehaviour.meshMap["bottom"];
-
-									foreach (Vector3 vertice in faceMap.vertices) {
-										vertices.Add(new Vector3(vertice.x + x, vertice.y + y, vertice.z + z));
-									}
-									foreach (int index in faceMap.triangles) {
-										triangles.Add(index + vertexIndex);
-									}
+									addBrickFace("bottom", block, x, y, z);
 								} else {
 									int vertexIndex = vertices.Count;
 									vertices.Add(new Vector3(x, y, z + 1));
@@ -486,11 +403,6 @@ namespace Brickcraft.World
 									triangles.Add(vertexIndex+2);
 									triangles.Add(vertexIndex+3);
 									triangles.Add(vertexIndex);
-								
-									/*triangles.Add(vertexIndex);
-									triangles.Add(vertexIndex+1);
-									triangles.Add(vertexIndex+2);
-									triangles.Add(vertexIndex+3);*/
 							
 									colors.Add(bottomColor);
 									colors.Add(bottomColor);
@@ -507,11 +419,7 @@ namespace Brickcraft.World
 									uvs.Add(new Vector2(xMin, yMax));
 									uvs.Add(new Vector2(xMax, yMax));							
 									uvs.Add(new Vector2(xMax, yMin));
-
-									/*uvs.Add(new Vector2(coords.x + epsilon, coords.y + epsilon));
-									uvs.Add(new Vector2(coords.x + epsilon, coords.y + coords.height - epsilon));
-									uvs.Add(new Vector2(coords.x + coords.width - epsilon, coords.y + coords.height - epsilon));
-									uvs.Add(new Vector2(coords.x + coords.width - epsilon, coords.y + epsilon));*/
+									
 								}
 							}
 						}
@@ -570,6 +478,46 @@ namespace Brickcraft.World
 			}
 			//watch.Stop();
 			//UnityEngine.Debug.Log ("Total Elapsed " + ((double)watch.ElapsedTicks / (double)Stopwatch.Frequency) + "ms");
+		}
+
+		void addBrickFace (string face, byte block, int x, int y, int z) {
+			int vertexIndex = vertices.Count;
+			FaceMap faceMap = WorldBehaviour.meshMap[face];
+			Color color;
+
+			switch (face) {
+				case "top":
+					color = topColor;
+					break;
+				case "bottom":
+					color = bottomColor;
+					break;
+				case "front":
+				case "back":
+					color = firstSideColor;
+					break;
+				case "left":
+				case "right":
+					color = secondSideColor;
+					break;
+				default:
+					throw new System.Exception("wrong face name: " + face);
+			}
+
+			foreach (Vector3 vertice in faceMap.vertices) {
+				Vector3 pos = new Vector3(
+					vertice.x + (x * Server.brickWidth),
+					vertice.y + (y * Server.brickHeight),
+					vertice.z + (z * Server.brickWidth)
+				);
+				vertices.Add(pos);
+				colors.Add(color);
+				Debug.Log(vertice.z);
+				uvs.Add(new Vector2(vertice.x, vertice.z));
+			}
+			foreach (int index in faceMap.triangles) {
+				triangles.Add(index + vertexIndex);
+			}
 		}
 
 		void spawnBrick (byte block, Vector3 pos) {

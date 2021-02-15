@@ -64,7 +64,14 @@ namespace Brickcraft.World
 					meshRenderer.material.mainTexture = WorldBehaviour.AtlasTexture;
 					meshRenderer.sharedMaterial = WorldBehaviour.BlockMaterial;
 					newObject.AddComponent(typeof(MeshFilter));
-					newObject.transform.position = new Vector3(ChunkObject.transform.position.x, ChunkObject.transform.position.y + (i * Chunk.SliceHeight), ChunkObject.transform.position.z);
+
+					Vector3 pos = new Vector3(ChunkObject.transform.position.x, ChunkObject.transform.position.y + (i * Chunk.SliceHeight), ChunkObject.transform.position.z);
+					if (WorldBehaviour.mode == 3) {
+						pos.x = pos.x * Server.brickWidth;
+						pos.y = pos.y * Server.brickHeight;
+						pos.z = pos.z * Server.brickWidth;
+					}
+					newObject.transform.position = pos;
 					newObject.transform.parent = ChunkObject.transform;
 
 					slice.renderer = meshRenderer;

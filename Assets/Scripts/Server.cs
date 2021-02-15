@@ -79,6 +79,8 @@ namespace Brickcraft
 
         public const float studSize = 0.398f;
         public const float plateHeight = (0.478f / 3);
+        public const float brickHeight = 0.478f;
+        public const float brickWidth = 0.796f; // 2x2
 
         public GameObject[] prefabs;
 

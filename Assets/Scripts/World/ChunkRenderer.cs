@@ -417,7 +417,7 @@ namespace Brickcraft.World
 								
 									uvs.Add(new Vector2(xMin, yMin));
 									uvs.Add(new Vector2(xMin, yMax));
-									uvs.Add(new Vector2(xMax, yMax));							
+									uvs.Add(new Vector2(xMax, yMax));
 									uvs.Add(new Vector2(xMax, yMin));
 									
 								}
@@ -511,8 +511,8 @@ namespace Brickcraft.World
 					vertice.z + (z * Server.brickWidth)
 				);
 				vertices.Add(pos);
-				//colors.Add(color);
-				//uvs.Add(new Vector2(vertice.x, vertice.z));
+				colors.Add(color);
+				uvs.Add(new Vector2(vertice.x, vertice.z));
 			}
 			foreach (int index in faceMap.triangles) {
 				triangles.Add(index + vertexIndex);

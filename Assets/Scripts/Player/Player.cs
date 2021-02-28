@@ -42,6 +42,12 @@ namespace Brickcraft
 
         private void Start() {
             PlayerPanel.Instance.reload();
+
+            // temporal for testing
+            addItem(new UserItem() {
+                id = 1,
+                quantity = 100,
+            });
         }
 
         private void Update() {
@@ -68,7 +74,12 @@ namespace Brickcraft
             //Debug.DrawRay(ray.origin, ray.direction * rayLength, Color.red);
 
             if (Physics.Raycast(ray, out latestHit, rayLength)) {
-                if (latestHit.collider.name.StartsWith("GridStud")) {
+                if (latestHit.collider.name.StartsWith("ChunkSlice")) {
+                    if (BrickCollisionDetector.Instance != null && BrickCollisionDetector.Instance.isLookingAtWorldStud(latestHit)) {
+                        BrickCollisionDetector.Instance.lookingAtStud(latestHit);
+                    }
+                    lookedBrick = latestHit.transform.parent.gameObject;
+                } else if (latestHit.collider.name.StartsWith("GridStud")) {
                     if (BrickCollisionDetector.Instance != null) {
                         BrickCollisionDetector.Instance.lookingAtStud(latestHit);
                     }

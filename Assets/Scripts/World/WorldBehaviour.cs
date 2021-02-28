@@ -60,9 +60,6 @@ namespace Brickcraft.World
 				Debug.Log("Terrain texture not loaded");
 			}
 		
-			GameObject camera = Camera.main.gameObject;
-			camera.transform.position = new Vector3(0,160,0);
-		
 			ChunkMeshThreadEntry[] chunkEntries = new ChunkMeshThreadEntry[ChunksNum];
 
 			ChunkGenManager chunkGenManager = new ChunkGenManager(MapMinChunkX, MapMaxChunkX + 1, 6, this, 13284938921, chunkEntries);
@@ -84,51 +81,24 @@ namespace Brickcraft.World
 		{
 			return (ushort)((x + 127) << 8 | (z + 127));
 		}
-	
-		private void CalculateStartLight()
-		{
-			for(int x = MapMinChunkX; x < MapMaxChunkX + 1; ++x)
-			{
-				for(int z = MapMinChunkX; z < MapMaxChunkX + 1; ++z)
-				{
-					Chunk chunk = ChunksMap[ChunkIndexFromCoords(x,z)];
-					chunk.RecalculateSkyLight();
-				}
-			}
-		}
-	
-		private void CalculateTestLight()
-		{
-			for(int x = MapMinChunkX; x < MapMaxChunkX; ++x)
-			{
-				for(int z = MapMinChunkX; z < MapMaxChunkX; ++z)
-				{
-					Chunk chunk = ChunksMap[ChunkIndexFromCoords(x,z)];
-					chunk.RecalculateTestSkyLight();
-				}
-			}
-		}
-	
-		void Update () {
-			/*
-			foreach (Chunk chunk in ChunksMap) {
-				if (chunk == null) {
-					continue;
-				}
-				foreach (ChunkSlice slice in chunk.Slices) {
-					if (slice.IsEmpty) {
+
+		/*
+			void Update () {
+
+				foreach (Chunk chunk in ChunksMap) {
+					if (chunk == null) {
 						continue;
 					}
-					slice.FrustrumCulling();
+					foreach (ChunkSlice slice in chunk.Slices) {
+						if (slice.IsEmpty) {
+							continue;
+						}
+						slice.FrustrumCulling();
+					}
 				}
-			}*/
-			
-			if (Input.GetKeyUp(KeyCode.Escape))
-				Application.Quit();
-			else if(Input.GetKeyUp(KeyCode.L))
-				CalculateTestLight();
-		}
-	
+			}
+			*/
+
 		void FixedUpdate()
 		{	
 			++accumulator;
@@ -146,6 +116,10 @@ namespace Brickcraft.World
 				{
 					ChunkSliceBuildEntry chunkEntry = ChunkSlicesWorkingQueue.Dequeue();
 					BuildChunkSliceMesh(chunkEntry);
+
+					if (ChunkSlicesWorkingQueue.Count == 0) {
+						Server.Instance.spawnPlayer();
+					}
 				}
 			
 				lock(SliceLock)
@@ -247,6 +221,7 @@ namespace Brickcraft.World
 				mesh.RecalculateBounds();
 
 				filter.mesh = mesh;
+				chunkSliceObject.GetComponent<MeshCollider>().sharedMesh = mesh;
 			}
 			chunkEntry.ParentChunk.ClearDirtySlices();
 		}
@@ -266,7 +241,38 @@ namespace Brickcraft.World
 	
 		public Chunk GetChunk(int x, int z)
 		{
-			return ChunksMap[ChunkIndexFromCoords(x,z)];
+			return ChunksMap[ChunkIndexFromCoords(x, z)];
+		}
+
+		public static Chunk WorldCoordinateToChunk(Vector3 coordinates) {
+			coordinates /= Chunk.SliceHeight;
+			return ChunksMap[ChunkIndexFromCoords(Mathf.RoundToInt(coordinates.x), Mathf.RoundToInt(coordinates.z))];
+		}
+
+		public static BlockType WorldCoordinateToBlock(Vector3 coordinates) {
+			Chunk chunk = WorldCoordinateToChunk(coordinates);
+			coordinates /= Chunk.SliceHeight;
+
+			if (chunk == null) { 
+				return BlockType.NULL; // We return NULL so that is different from air and we don't build side faces of the blocks
+			}
+
+			return chunk.GetBlockType(Mathf.RoundToInt(coordinates.x) & 0xF, Mathf.RoundToInt(coordinates.y), Mathf.RoundToInt(coordinates.z) & 0xF);
+
+			/*
+			return new Vector3Int(
+				Chunk.CorrectBlockCoordinate(Mathf.RoundToInt(coordinates.x % Chunk.SliceHeight)),
+				Chunk.CorrectBlockCoordinate(Mathf.RoundToInt(coordinates.y % Chunk.SliceHeight)),
+				Chunk.CorrectBlockCoordinate(Mathf.RoundToInt(coordinates.z % Chunk.SliceHeight))
+			);*/
+		}
+
+		public static Vector3 WorldCoordinateToBlockCoordinate(Vector3 coordinates) {
+			return new Vector3(
+				Mathf.RoundToInt(coordinates.x) * Server.brickWidth,
+				Mathf.RoundToInt(coordinates.y) * Server.brickHeight,
+				Mathf.RoundToInt(coordinates.z) * Server.brickWidth
+			);
 		}
 	}
 }

@@ -46,7 +46,7 @@ namespace Brickcraft.World
 		{
 			ChunkObject = new GameObject(String.Format("X {0} Z {1}", X, Z));
 		
-			ChunkObject.transform.position = new Vector3(X*16,0,Z*16);
+			ChunkObject.transform.position = new Vector3(X * 16, 0, Z * 16);
 		}
 	
 		public void InitRenderableSlices()
@@ -64,6 +64,7 @@ namespace Brickcraft.World
 					meshRenderer.material.mainTexture = WorldBehaviour.AtlasTexture;
 					meshRenderer.sharedMaterial = WorldBehaviour.BlockMaterial;
 					newObject.AddComponent(typeof(MeshFilter));
+					newObject.AddComponent<MeshCollider>();
 
 					Vector3 pos = new Vector3(ChunkObject.transform.position.x, ChunkObject.transform.position.y + (i * Chunk.SliceHeight), ChunkObject.transform.position.z);
 					if (WorldBehaviour.mode == 3) {
@@ -376,12 +377,12 @@ namespace Brickcraft.World
 		public void RecalculateHeight()
 		{
 			LowestY = 255;
-		HeightMap = new byte[16, 16];
-		for (int x = 0; x < 16; x++)
-		{
-			for (int z = 0; z < 16; z++)
-				RecalculateHeight(x, z);
-		}
+			HeightMap = new byte[16, 16];
+			for (int x = 0; x < 16; x++)
+			{
+				for (int z = 0; z < 16; z++)
+					RecalculateHeight(x, z);
+			}
 		
 			MinSliceIndex = (LowestY / Chunk.SliceHeight) - 1;
 		}
@@ -393,8 +394,8 @@ namespace Brickcraft.World
 			for (height = 127; height > 0 && (GetBlockType(x, height - 1, z) == 0 || (blockType = GetBlockType(x, height - 1, z)) == BlockType.Leaves || blockType == BlockType.Water || blockType == BlockType.Still_Water); height--) ;
 			HeightMap[x, z] = (byte)height;
 
-		if (height < LowestY)
-			LowestY = height;
+			if (height < LowestY)
+				LowestY = height;
 		}
 	
 		public void ClearDirtySlices()
@@ -405,6 +406,9 @@ namespace Brickcraft.World
 				if(slice != null && !slice.IsEmpty)
 					slice.ClearDirtyLight();
 			}
+		}
+		public static int CorrectBlockCoordinate(int axis) {
+			return axis >= 0 ? axis : (axis + Chunk.SliceHeight);
 		}
 	}
 }

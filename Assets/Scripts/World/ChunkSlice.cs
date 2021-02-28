@@ -12,7 +12,7 @@ namespace Brickcraft.World
 		
 		public static readonly short TotalBlockNumber = (short)(SizeX * SizeY * SizeZ);
 		
-		private byte[] _Types = new byte[SizeX*SizeY*SizeZ];
+		private byte[] _Types = new byte[SizeX * SizeY * SizeZ];
 		private NibbleArray _Skylight = new NibbleArray(TotalBlockNumber / 2);
 		
 		private short solidBlocks;

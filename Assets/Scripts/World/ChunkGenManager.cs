@@ -53,18 +53,17 @@ namespace Brickcraft.World
 				genWait[i] = new ManualResetEvent(false);
 
 				ChunkGenThreadEntry chunkGenEntry = new ChunkGenThreadEntry(currStartX, currEndX, GenPool, (chunkGen, x) => {
-				int xComponent = (x + Math.Abs(fromChunkX)) * (toChunkX - fromChunkX);
-				for(int z = fromChunkX; z < toChunkX; ++z)
-				{
-					ushort index = WorldBehaviour.ChunkIndexFromCoords(x,z);
-					Chunk chunk = new Chunk(x,z, worldManager, (z + x) % 2 == 0? Color.black : Color.gray);
-					chunkGen.GenerateChunk(chunk, x, z);
+					int xComponent = (x + Math.Abs(fromChunkX)) * (toChunkX - fromChunkX);
+					for(int z = fromChunkX; z < toChunkX; ++z)
+					{
+						ushort index = WorldBehaviour.ChunkIndexFromCoords(x, z);
+						Chunk chunk = new Chunk(x,z, worldManager, (z + x) % 2 == 0 ? Color.black : Color.gray);
+						chunkGen.GenerateChunk(chunk, x, z);
 				
-					int entryIndex = xComponent + (z + Math.Abs(fromChunkX));
-					chunkEntries[entryIndex] = new ChunkMeshThreadEntry(chunk);
-					WorldBehaviour.ChunksMap[index] = chunk;
-				}
-			
+						int entryIndex = xComponent + (z + Math.Abs(fromChunkX));
+						chunkEntries[entryIndex] = new ChunkMeshThreadEntry(chunk);
+						WorldBehaviour.ChunksMap[index] = chunk;
+					}
 				});
 			
 				ThreadPool.QueueUserWorkItem(new WaitCallback(chunkGenEntry.ThreadCallback), genWait[i]);

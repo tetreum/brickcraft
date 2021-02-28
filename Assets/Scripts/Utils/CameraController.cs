@@ -11,6 +11,9 @@ public class CameraController : MonoBehaviour
     }
 
     void Update() {
+        if (!enabled) {
+            return;
+        }
         movementSpeed = Mathf.Max(movementSpeed += Input.GetAxis("Mouse ScrollWheel"), 0.0f);
         if (Input.GetAxis("Vertical") != 0) {
             transform.Translate(Vector3.forward * movementSpeed * Input.GetAxis("Vertical"));

@@ -83,6 +83,7 @@ namespace Brickcraft
         public const float brickWidth = 0.796f; // 2x2
 
         public GameObject[] prefabs;
+        public GameObject playerPrefab;
 
         void Awake() {
             Instance = this;
@@ -95,6 +96,10 @@ namespace Brickcraft
             if (SceneManager.GetActiveScene().name == "SampleScene") {
                 setupTest();
             }
+        }
+
+        public void spawnPlayer () {
+            Instantiate(playerPrefab, new Vector3(0, 160, 0), Quaternion.identity);
         }
 
         void processPrefabs() {

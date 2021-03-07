@@ -1,5 +1,7 @@
 [![Preview](https://github.com/tetreum/brickcraft/raw/main/Preview/preview.gif)](https://github.com/tetreum/brickcraft/raw/main/Preview/preview.gif)
 
+[![Preview](https://github.com/tetreum/brickcraft/raw/main/Preview/world.gif)](https://github.com/tetreum/brickcraft/raw/main/Preview/world.gif)
+
 [![Logo](https://github.com/tetreum/brickcraft/raw/main/Assets/Textures/Logo.png)](https://github.com/tetreum/brickcraft/raw/main/Assets/Textures/Logo.png)
 
 # Brickcraft
@@ -39,4 +41,5 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 - Dig + remove block sound effect - https://freesound.org/people/Agaxly/sounds/213005/
 - Brick models - https://www.mecabricks.com/
 - Break texture - MooCwzRck - https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/resource-packs/1223258-16x128x-1-4-5-compatible-okami-texture-pack?page=5
-- World chunk system - https://github.com/chraft/chunk-light-tester/
+- World chunk system - Smjert - https://github.com/chraft/chunk-light-tester/
+- Logo font/style - Sverdlychenko Studio - http://sverdlychenko.com/en/lego-font-design/

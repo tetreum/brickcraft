@@ -20,6 +20,10 @@ namespace Brickcraft.World
 		private Dictionary<byte, List<Vector3>> meshes = new Dictionary<byte, List<Vector3>>();
 		private Dictionary<Vector3, bool> added = new Dictionary<Vector3, bool>();
 
+		// collider mesh
+		private List<Vector3> colliderVertices = new List<Vector3>();
+		private List<int> colliderTriangles = new List<int>();
+
 		public void RenderChunk(Chunk chunk)
 		{
 			WorldBehaviour world = chunk.World;
@@ -438,6 +442,9 @@ namespace Brickcraft.World
 				chunkEntry.ParentChunk = chunk;
 				chunkEntry.SliceIndex = i;
 
+				chunkEntry.ColliderVertices = colliderVertices.ToArray();
+				chunkEntry.ColliderTriangles = colliderTriangles.ToArray();
+
 				if (WorldBehaviour.mode == 2) {
 					Dictionary<byte, Vector3[]> meshList = new Dictionary<byte, Vector3[]>();
 					foreach (byte block in meshes.Keys) {
@@ -453,6 +460,9 @@ namespace Brickcraft.World
 				uvs.Clear();
 				meshes.Clear();
 				added.Clear();
+
+				colliderVertices.Clear();
+				colliderTriangles.Clear();
 
 				lock (WorldBehaviour.ChunkQueueLock)
 					WorldBehaviour.ChunkSlicesToBuild.Enqueue(chunkEntry);
@@ -538,6 +548,21 @@ namespace Brickcraft.World
 			}
 			foreach (int index in faceMap.triangles) {
 				triangles.Add(index + vertexIndex);
+			}
+
+			// Mesh collider, it is way more simple than the normal mesh, as it hasn't the studs
+			vertexIndex = colliderVertices.Count;
+			FaceMap colliderFaceMap = WorldBehaviour.colliderMeshMap[face];
+			foreach (Vector3 vertice in colliderFaceMap.vertices) {
+				Vector3 pos = new Vector3(
+					vertice.x + (x * Server.brickWidth),
+					vertice.y + (y * Server.brickHeight),
+					vertice.z + (z * Server.brickWidth)
+				);
+				colliderVertices.Add(pos);
+			}
+			foreach (int index in colliderFaceMap.triangles) {
+				colliderTriangles.Add(index + vertexIndex);
 			}
 		}
 

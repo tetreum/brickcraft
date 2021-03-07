@@ -27,6 +27,7 @@ namespace Brickcraft.World
 
 		public Mesh cubeMesh;
 		public Transform obj;
+		public Transform brickColliderObj;
 
 		private int accumulator;
 	
@@ -41,6 +42,7 @@ namespace Brickcraft.World
 		public static readonly int MapMaxCoords = MapMaxChunkX * 16;
 
 		public static Dictionary<string, FaceMap> meshMap;
+		public static Dictionary<string, FaceMap> colliderMeshMap;
 		public static int mode = 3;
 		/*
 		 * 1 = Original - minecraft
@@ -50,6 +52,7 @@ namespace Brickcraft.World
 
 		private void Awake() {
 			meshMap = (new FaceMapper(obj)).getMapping();
+			colliderMeshMap = (new FaceMapper(brickColliderObj)).getMapping();
 		}
 
 		void Start () {
@@ -221,6 +224,15 @@ namespace Brickcraft.World
 				mesh.RecalculateBounds();
 
 				filter.mesh = mesh;
+
+				// generate a much simpler collider mesh
+				mesh = new Mesh();
+				mesh.vertices = chunkEntry.ColliderVertices;
+				mesh.triangles = chunkEntry.ColliderTriangles;
+
+				mesh.RecalculateNormals();
+				mesh.RecalculateBounds();
+
 				chunkSliceObject.GetComponent<MeshCollider>().sharedMesh = mesh;
 			}
 			chunkEntry.ParentChunk.ClearDirtySlices();

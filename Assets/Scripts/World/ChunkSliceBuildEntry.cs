@@ -11,6 +11,9 @@ namespace Brickcraft.World
 		public Vector2[] Uvs;
 		public Chunk ParentChunk;
 		public int SliceIndex;
+
+		public Vector3[] ColliderVertices;
+		public int[] ColliderTriangles;
 		public Dictionary<byte, Vector3[]> meshes;
 	}
 }

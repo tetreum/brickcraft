@@ -20,6 +20,7 @@ namespace Brickcraft
         private Vector3 currentStud;
         private Transform latestStudGrid;
         private Vector2Int latestStud;
+        private bool isHighAgainstTerrain = false;
 
         private void Awake() {
             Instance = this;
@@ -82,7 +83,9 @@ namespace Brickcraft
                 pivot.RotateAround(currentStud, rot, 90);
             }
             if (Input.GetMouseButtonDown(1) && !isColliding) {
-                Server.Instance.spawnBrick(PlayerPanel.Instance.selectedItem.item, transform.position, transform.rotation);
+                Vector3 pos = transform.position;
+                pos.y -= isHighAgainstTerrain ? 0.001f : 0.006f; // ugly hack to lower bricks pos
+                Server.Instance.spawnBrick(PlayerPanel.Instance.selectedItem.item, pos, transform.rotation);
 
                 Player.Instance.removeItem(new UserItem() {
                     id = PlayerPanel.Instance.selectedItem.id,
@@ -103,13 +106,6 @@ namespace Brickcraft
             // ignore collisions with studs
             if (other.name.StartsWith("GridStud")) {
                 return;
-            } else if (other.name.StartsWith("ChunkSlice")) {
-                /*
-                RaycastHit hit;
-                Physics.Raycast(transform.position, other.transform.position, out hit);
-                var pos = other.gameObject.GetComponent<Collider>().ClosestPointOnBounds(transform.position);
-                Debug.Log(other.transform.InverseTransformPoint(pos) + "-" + transform.InverseTransformPoint(pos));
-                */
             }
 
             // prevent resetting those vars each frame
@@ -134,10 +130,13 @@ namespace Brickcraft
             if (hit.collider.name.StartsWith("GridStud")) {
                 string[] tmp = hit.collider.name.Replace("GridStud ", "").Replace("GridStudBottom ", "").Split('x');
                 stud.gridDimensions = new Vector2Int(int.Parse(tmp[0]), int.Parse(tmp[1]));
+
+                isHighAgainstTerrain = false;
             } else {
                 // is looking at world stud
                 // so grid is a 16x16 (chunk slice) made by 2x2 bricks
                 stud.gridDimensions = new Vector2Int(Chunk.SliceHeight * 2, Chunk.SliceHeight * 2);
+                isHighAgainstTerrain = true;
             }
 
             // 1x1 are easy xD
@@ -148,7 +147,7 @@ namespace Brickcraft
             // convert world coords to local ones
             Vector3 localHitpoint = hit.collider.transform.InverseTransformPoint(hit.point);
 
-            if (hit.collider.name.StartsWith("ChunkSlice")) { // chunkSlices have center wrongly set
+            if (isHighAgainstTerrain) { // chunkSlices have center wrongly set
                 Vector3 localCenter = hit.collider.transform.InverseTransformPoint(hit.collider.transform.GetComponent<Collider>().bounds.center);
                 localHitpoint -= localCenter;
             }
@@ -231,13 +230,12 @@ namespace Brickcraft
             // height needs to be corrected for bottom studs
             if (hit.collider.name.Contains("Bottom")) {
                 studPos.y -= PlayerPanel.Instance.selectedItem.item.brickModel.heightInPlates * Server.plateHeight;
-            } else if (hit.collider.name.StartsWith("ChunkSlice")) { // chunkSlices have center wrongly set
+            } else if (isHighAgainstTerrain) { // chunkSlices have center wrongly set
                 Vector3 localCenter = hit.collider.transform.InverseTransformPoint(hit.collider.transform.GetComponent<Collider>().bounds.center);
                 studPos += localCenter;
                 studPos.y = hit.point.y;
-                studPos.y -= 0.089f; // supper ugly hack
             }
-            
+
             currentStud = studPos;
 
             GameObject brickObj = hit.collider.transform.parent.gameObject;

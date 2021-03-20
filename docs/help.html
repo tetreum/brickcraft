@@ -1,0 +1,80 @@
+<h2>Current issues / Stuck on</h2>
+
+<p>Small list of issues that are preventing me from further progress.</p>
+
+<ul>
+    <li><a href="#wrong-uvs">Set correct uvs on terrain mesh</a></li>
+    <li><a href="#broken-terrain-mesh">Terrain mesh is randomly broken because of brick's top face</a></li>
+    <li><a href="#remove-terrain-bricks">Ability to remove terrain bricks</a></li>
+</ul>
+
+<h3 id="wrong-uvs">Set correct uvs on terrain mesh</h3>
+
+<p>Terrain is using a single texture:</p>
+<p><img src="https://github.com/tetreum/brickcraft/raw/main/Assets/Resources/Textures/Terrain.png"></p>
+
+<p>But i don't now how to set the uvs in order to use it properly.<br>
+If i set all vertices, the entire texture is used, which is not what i'm looking for:
+</p>
+<img src="https://i.imgur.com/qhKWNES.png">
+
+<p>With my latest attempt it looks like</p>
+<img src="https://i.imgur.com/UZJQpQu.png">
+<p>Each face has only 1 color => good. But it's not the same color across all faces and also it's always the wrong color => fail.</p>
+
+<p>Here is the code that handles uvs setup: <a href="https://github.com/tetreum/brickcraft/blob/main/Assets/Scripts/World/ChunkRenderer.cs#L546" target="_blank" rel="nofollow">ChunkRenderer.cs#L546</a>
+</p>
+
+<hr>
+
+<h3 id="broken-terrain-mesh">Terrain mesh is randomly broken because of brick's top face</h3>
+
+<p>
+    In order to generate the terrain mesh, i grab the brick model and i use planes to delimitate each face.
+</p>
+<img src="https://i.imgur.com/XuwjStb.png">
+<p>Notice the blue planes "cutting" each face.</p>
+<p>Then i use a <a href="https://github.com/tetreum/brickcraft/blob/main/Assets/Scripts/Utils/FaceMapper.cs" target="_blank" rel="nofollow">small class</a> that iterates over all brick mesh's vertices to know to which face do they belong.</p>
+<p>
+    After that, when building a mesh slice, i just add the visible brick faces of each case at
+    <a href="https://github.com/tetreum/brickcraft/blob/main/Assets/Scripts/World/ChunkRenderer.cs#L495" target="_blank" rel="nofollow">ChunkRenderer.cs#L495</a>
+</p>
+
+<p>If top face is properly cut:</p>
+<img src="https://i.imgur.com/XuwjStb.png">
+
+<p>Then it randomly breaks:</p>
+<img src="https://i.imgur.com/yYOjSjG.png">
+
+<p>If only studs are set as top face:</p>
+<img src="https://i.imgur.com/s0gMxMJ.png">
+
+<p>It doesn't break:</p>
+<img src="https://i.imgur.com/NGUxIuA.png">
+
+<p>
+    Notice how all other faces are also rendering properly now. Yet they haven't been edited.
+</p>
+<p></p>
+    How the heck can they "randomly" break?<br>
+    If vertices that are used both in top and lateral faces are the problem, why do they not always break?<br>
+    What am i missing out?......<br>
+</p>
+
+<p>The terrain generation scene is <a href="https://github.com/tetreum/brickcraft/blob/main/Assets/Scenes/WorldGenerationTest.unity" target="_blank" rel="nofollow">/Scenes/WorldGenerationTest.unity</a></p>
+
+<p>This is the obj being used: <a href="https://raw.githubusercontent.com/tetreum/brickcraft/main/Assets/Models/Bricks/3003/3003.obj" target="_blank" rel="nofollow">/Models/Bricks/3003/3003.obj</a>
+</p>
+
+<hr>
+
+<h3 id="remove-terrain-bricks">Remove terrain bricks</h3>
+
+<p>Well, basic feature not made yet.</p>
+
+<p>
+    Digging takes places at <a href="https://github.com/tetreum/brickcraft/blob/34bb70f1a5f7438acf396b9c10a50b8dae50c8a2/Assets/Scripts/Player/Player.cs#L53">/Scripts/Player/Player.cs#L53</a>.
+    <br>
+    And <a href="https://github.com/tetreum/brickcraft/blob/main/Assets/Scripts/World/WorldBehaviour.cs#L259">/Scripts/World/WorldBehaviour.cs#L259</a> has some methods to transform coords to Chunks.
+</p>
+

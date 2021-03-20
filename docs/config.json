@@ -1,0 +1,12 @@
+{
+    "title": "Brickcraft",
+    "logo": "https://i.imgur.com/Ns1x0fQ.png",
+    "entries" : [
+        {
+            "slug": "devblog-1-estudiando-los-bricks",
+            "title": "Devblog 1 - Estudiando los bricks",
+            "preview": "Estas navidades quería montar un set de Lego navideño con unos amigos, pero con el tema COVID por en medio no ha sido posible. Así que me ha dado por hacer un juego donde podamos montar...",
+            "date": "2021-03-20T17:22:00Z"
+        }
+    ]
+}

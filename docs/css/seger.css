@@ -1,0 +1,56 @@
+a, a:focus, a:hover, a:active {
+    text-decoration: none;
+    color: #4183C4;
+}
+a:hover {
+    color: #266aad;
+}
+.btn-link {
+    text-decoration: none;
+}
+h1 {
+    font-weight: 800;
+    line-height: 1.1;
+}
+.post-title {
+    color: #404040;
+}
+.post-title:focus, .post-title:hover {
+    color: #0085A1;
+}
+.post-meta {
+    color: #808080;
+    font-style: italic;
+}
+.social-share-section .bi-linkedin {
+    color: #fff;
+    background-color: #007bb6;
+}
+.social-share-section .bi-facebook {
+    color: #fff;
+    background-color: #38529a;
+}
+.social-share-section .bi-twitter {
+    color: #fff;
+    background-color: #55acee;
+}
+.social-share-section .bi-telegram {
+    color: #fff;
+    background-color: #2fa9e1;
+}
+.social-share-section .bi-whatsapp {
+    color: #fff;
+    background-color: #24cc63;
+}
+.social-share-section .bi-envelope {
+    color: #000;
+    background-color: #f7f7f7;
+}
+article {
+    padding-bottom: 2em;
+    border-bottom: 1px solid #eee;
+    margin: 1em 0 15px;
+}
+article img, article video {
+    max-width: 100%;
+}

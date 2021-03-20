@@ -1,0 +1,50 @@
+<div class="container">
+    <form id="blog-editor">
+        <div class="form-group">
+            <label for="existing-entry-selector">Entry</label>
+            <select id="existing-entry-selector" class="form-control">
+              <option value="">New entry</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" class="form-control" id="title" placeholder="" required>
+        </div>
+        <div class="form-group">
+            <label for="date">Date</label>
+            <input type="datetime-local" class="form-control" id="date" required>
+        </div>
+        <br>
+        <div class="form-group">    
+            <textarea id="editor" name="editor"></textarea>
+        </div>
+        <br>
+        <button type="submit" class="btn btn-primary">Generate entry</button>
+        <a id="preview" target="_blank" class="btn btn-secondary">Preview</a>
+        
+        
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jodit/3.6.1/jodit.min.css"/>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jodit/3.6.1/jodit.min.js"></script>
+        <style>
+            #output textarea {
+                height: 30vh;
+            }
+        </style>
+        <script src="js/editor.js"></script>
+    </form>
+    <hr>
+    <div id="output" class="row d-none">
+        <div class="col-6">
+            <label for="post-summary">
+                config.json -> entries
+            </label>
+            <textarea id="post-summary" class="form-control"></textarea>
+        </div>
+        <div class="col-6">
+            <label for="post-html">
+                
+            </label>
+            <textarea id="post-html" class="form-control"></textarea>
+        </div>
+    </div>
+</div>

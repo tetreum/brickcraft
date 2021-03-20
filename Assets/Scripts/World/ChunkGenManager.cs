@@ -28,7 +28,7 @@ namespace Brickcraft.World
 		public void Generate()
 		{
 			ManualResetEvent[] genWait = new ManualResetEvent[threadsNum];
-			ThreadPool.SetMaxThreads(threadsNum,threadsNum);
+			ThreadPool.SetMaxThreads(threadsNum, threadsNum);
 		
 			int totalLoops = (Math.Abs(fromChunkX) + Math.Abs(toChunkX));
 			int basePartition = totalLoops / threadsNum;

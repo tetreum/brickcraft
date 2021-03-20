@@ -68,11 +68,7 @@ namespace Brickcraft.World
 			ChunkGenManager chunkGenManager = new ChunkGenManager(MapMinChunkX, MapMaxChunkX + 1, 6, this, 13284938921, chunkEntries);
 		
 			chunkGenManager.Generate();
-			/*
-			CalculateStartLight();
-		
-			LightAlgorithmRecorder.InitPlayback();
-			*/
+
 			for(int x = 0; x < ChunksNum; ++x)
 			{
 				chunkEntries[x].Init();

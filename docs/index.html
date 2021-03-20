@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=Akaya+Telivigala&display=swap" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+        <title>Loading</title>
+        <link href="css/seger.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container-fluid d-flex min-vh-100 flex-column p-0">
+            <nav class="navbar navbar-light bg-light justify-content-between navbar-expand-lg">
+              <div class="container-fluid">
+                <a class="navbar-brand" href="?">
+                  <div id="global-loader" style="display: none"><i class="fas fa-spinner fa-spin"></i></div>
+                </a>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="?/help">HELP WANTED</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="?">Home</a>
+                    </li>
+                </ul>
+              </div>
+            </nav>
+            <main id="main-container" role="main" class="flex-fill d-flex flex-column">
+            </main>
+            <footer class="pl-5 pt-3">
+                <div class="row p-0 m-0">
+                    <div class="col-12 text-center">
+                        Made with <a href="#" target="_blank" rel="nofollow">Seger</a>
+                    </div>
+                </div>
+            </footer>
+        </div>
+        <script type="text/template" id="tpl-home">
+            <div class="container section-home">
+                <div class="row">
+    		        <div class="col-12">
+                    <% entries.forEach(entry => { %>
+                        <article>
+                            <a href="<%= entry.url %>" class="post-title">
+                                <h2><%= entry.title %></h2>
+                            </a>
+                            <p class="post-meta">
+                                Posted on <%= seger.formatDate(entry.date) %>
+                            </p>
+                            <div class="post-entry">
+                                <%= entry.preview %>
+                                <a href="<%= entry.url %>" class="post-read-more">Read More</a>
+                            </div>
+                        </article>
+                    <% }) %>
+                    </div>
+                </div>
+            </div>
+        </script>
+        <script type="text/template" id="tpl-post">
+            <div>
+                <header>
+                    <div class="container-md">
+                        <div class="row text-center mt-3">
+                            <h1><%= entry.title %></h1>
+                        </div>
+                    </div>
+                </header>
+                <div class="container-md">
+                    <article>
+                    <%= entry.html %>
+                    </article>
+                    <div class="row">
+                        <div class="col-6">
+                        <% if (relatedPosts.previous) { %>
+                            <a href="<%= relatedPosts.previous.url %>" class="btn btn-link bi bi-arrow-left"> Previous entry: <%= relatedPosts.previous.title %></a>
+                        <% } %>
+                        </div>
+                        <div class="col-6">
+                        <% if (relatedPosts.next) { %>
+                            <a href="<%= relatedPosts.next.url %>" class="float-end btn btn-link bi bi-arrow-right"> Next entry: <%= relatedPosts.next.title %></a>
+                        <% } %>
+                        </div>
+                    </div>
+                    <section class="social-share-section text-center">
+                        <a href="https://twitter.com/intent/tweet?text=<%= encodeURIComponent(entry.title) %>&amp;url=<%= encodeURIComponent(location.href) %>" class="btn bi-twitter" title="Share on Twitter" target="_blank"></a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u=<%= encodeURIComponent(location.href) %>" class="btn bi-facebook" title="Share on Facebook" target="_blank"></a>
+                        <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=<%= encodeURIComponent(location.href) %>" class="btn bi-linkedin" title="Share on LinkedIn" target="_blank"></a>
+                        <a href="whatsapp://send?text=<%= encodeURIComponent(location.href) %>" data-action="share/whatsapp/share" class="btn bi-whatsapp" title="Share on Whatsapp" target="_blank"></a>
+                        <a href="https://telegram.me/share/url?url=<%= encodeURIComponent(location.href) %>&text=<%= encodeURIComponent(location.title) %>" class="btn bi-telegram" title="Share on Telegram" target="_blank"></a>
+                        <a href="mailto:?subject=<%= encodeURIComponent("look at this blog") %>&amp;body=<%= encodeURIComponent(location.href) %>" class="btn bi-envelope" title="Share on Email" target="_blank"></a>
+                    </section>
+                </div>
+            </div>
+        </script>
+        <script type="text/template" id="tpl-404">
+            <div class="container-md text-center align-middle">
+                <div class="row">
+                    <h2>404 - Page not found</h2>
+                    <p>The requested page could not be found.</p>
+                    <p><a href="?/">Head to homepage</a></p>
+                </div>
+            </div>
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/underscore@1.11.0/underscore-min.js"></script>
+        <script src="js/seger.js"></script>
+        <script>
+            window.seger = new Seger();
+        </script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.0/font/bootstrap-icons.css">
+    </body>
+</html>

@@ -10,6 +10,10 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 
 [![Preview](https://github.com/tetreum/brickcraft/raw/main/Preview/1.png)](https://github.com/tetreum/brickcraft/raw/main/Preview/1.png)
 
+## Blog
+
+[https://tetreum.github.io/brickcraft/](https://tetreum.github.io/brickcraft/)
+
 ## Controls
 
 - WASD - Move character
@@ -19,6 +23,10 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 - Left click - Remove blocks
 - Right click (having a block selected in inventory) - Adds a block
 - Mouse wheel (having a block selected in inventory) - Rotates block
+
+## How can i help?
+
+[https://tetreum.github.io/brickcraft/?/help](https://tetreum.github.io/brickcraft/?/help)
 
 
 ## How can i add a new model?

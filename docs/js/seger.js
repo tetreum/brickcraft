@@ -72,7 +72,8 @@ class Seger {
             // not clicking a local link
             if (a == null || 
                 !a.href.startsWith(location.origin + location.pathname) ||
-                a.target.length > 0
+                a.target.length > 0 ||
+                (a.href.startsWith(location.href.replace(location.hash, "")) && a.href.includes('#')) // same url but with an anchor
             ) {
                 return;
             }

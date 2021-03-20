@@ -72,14 +72,19 @@ class Seger {
             // not clicking a local link
             if (a == null || 
                 !a.href.startsWith(location.origin + location.pathname) ||
-                a.target.length > 0 ||
-                (a.href.startsWith(location.href.replace(location.hash, "")) && a.href.includes('#')) // same url but with an anchor
+                a.target.length > 0
             ) {
                 return;
             }
             // avoid redirecting but change the url
             e.preventDefault();
             history.pushState({}, '', a.href);
+            
+            // same url but with an anchor
+            if (a.href.startsWith(location.href.replace(location.hash, "")) && a.href.includes('#')) {
+                document.getElementById(a.href.split('#')[1]).scrollIntoView();
+                return;
+            }
             
             const route = this.getRoute(new URL(a.href).search);
             

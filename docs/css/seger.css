@@ -59,6 +59,6 @@ article {
         max-width: 72vw !important;
     }
     img {
-      height: auto;
+      height: auto !important;
     }
   }

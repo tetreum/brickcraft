@@ -12,6 +12,9 @@ h1 {
     font-weight: 800;
     line-height: 1.1;
 }
+img, video {
+    max-width: 100%;
+}
 .post-title {
     color: #404040;
 }
@@ -51,6 +54,11 @@ article {
     border-bottom: 1px solid #eee;
     margin: 1em 0 15px;
 }
-article img, article video {
-    max-width: 100%;
-}
+@media (max-width: 600px) {
+    .navbar-brand img {
+        max-width: 72vw !important;
+    }
+    img {
+      height: auto;
+    }
+  }

@@ -17,14 +17,19 @@
                 <a class="navbar-brand" href="?">
                   <div id="global-loader" style="display: none"><i class="fas fa-spinner fa-spin"></i></div>
                 </a>
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="?/help">HELP WANTED</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="?">Home</a>
-                    </li>
-                </ul>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#top-menu" aria-controls="top-menu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div id="top-menu" class="collapse navbar-collapse">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="?/help">HELP WANTED</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="?">Home</a>
+                        </li>
+                    </ul>
+                </div>
               </div>
             </nav>
             <main id="main-container" role="main" class="flex-fill d-flex flex-column">
@@ -104,6 +109,7 @@
                 </div>
             </div>
         </script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/underscore@1.11.0/underscore-min.js"></script>
         <script src="js/seger.js"></script>
         <script>

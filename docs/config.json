@@ -7,6 +7,12 @@
             "title": "Devblog 1 - Estudiando los bricks",
             "preview": "Estas navidades quería montar un set de Lego navideño con unos amigos, pero con el tema COVID por en medio no ha sido posible. Así que me ha dado por hacer un juego donde podamos montar...",
             "date": "2021-03-20T17:22:00Z"
+        },
+        {
+            "slug": "devblog-2-texturas",
+            "title": "Devblog 2 - Texturas",
+            "preview": "Continuamos con el maldito sistema de inventarioAl final, para moverse entre los distintos slots del fast inventory he optado por usar la tecla TAB.He hecho que cambie el background del item seleccion...",
+            "date": "2021-03-23T16:44:00Z"
         }
     ]
 }

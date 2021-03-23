@@ -1,0 +1,85 @@
+<p style="text-align: center;">
+    <strong><a href="https://www.indiedb.com/games/brickcraft/news/devblog-2-textures" rel="nofollow">ENGLISH VERSION</a></strong>
+</p>
+<h2>Continuamos con el maldito sistema de inventario</h2>
+<p>Al final, para moverse entre los distintos slots del fast inventory he optado por usar la tecla TAB.<br>
+
+    He hecho que cambie el background del item seleccionado para que se entienda. Y también que el previewer del brick a poner se actualice conforme a la nueva selección.</p><p><img src="https://i.imgur.com/Zyeiuzq.gif" alt="" style="width: 765px; height: 612px;"></p><p>
+    
+    
+    
+    También he aprovechado para refactorizar los bricks que había en la escena. Hasta ahora estaban literalmente puestos allí, cosa que no debe ser así. Se supone que será el servidor el que se encargue de spawnear los bricks. Y así lo he hecho.</p><p><img src="https://i.imgur.com/NcaWuJT.png" alt="" style="width: 706px; height: 179px;"></p>
+    
+    
+    <h2>Rompiendo bloques y tipos de bloques</h2>
+    <p>Ahora que ya tengo un sistema de inventario (aunque no con todas las características que había indicado en un inicio), seguramente optaré por empezar a añadir color a los bloques, haciendo que impliquen un type distinto igual que en minecraft. Es decir, que marrón sea dirt y cueste menos de quitar que uno de metal por ejemplo.</p><p><br>
+    
+    Revisando cómo lo hace minecraft (<a href="https://minecraft.gamepedia.com/Breaking" rel="nofollow">https://minecraft.gamepedia.com/Breaking</a>), se basan en darle a cada bloque un valor llamado "hardness", el cual va de 0 a 100. Y en función de este valor y la herramienta que lleve en la mano, se tarda más o menos en picar los bloques.</p><p><br>
+    
+    De nuevo me daba pereza, así que en vez de usar esa misma escala, he creado un valor hardness para cada brick, el cual es directamente el número de segundos que tarda en picarlo a mano. Si el juego llegara a tener herramientas, pues le descontaría segundos.<br>
+    
+    Quería añadir también el efecto de rotura que hace minecraft:</p><p><img src="https://i.imgur.com/qbynSAu.gif" alt="" style="width: 507px; height: 284px;"><br>
+    
+    
+    Pero me parece que es irse por las ramas teniendo en cuenta el estado actual.</p><br>
+    <h2>Texturas</h2><p>He hecho que los bloques puedan tener su propia textura. La putada es que al hacerlo, paso a necesitar un icono para cada bloque en lugar de los genéricos que ya tenía.<br>
+    Mi primera aproximación ha sido la de pillar la imagen genérica del brick y meterle la pintura correspondiente. Como se puede observar ha sido un fiasco.</p><p><img src="https://i.imgur.com/FF6yncT.png" alt="" style=""><br>
+    
+    
+    
+    Toca generar un render ingame, lo que es bastante coñazo. De modo que sólo lo he hecho con el primero.</p><p><img src="https://i.imgur.com/IlExufv.png" alt="" style=""><br>
+    
+    
+    
+    Cuando quiera meter todos los bloques, haré una pequeña escena en la que aparezca en el centro cada item y se saque un screenshot automáticamente. <br>Sólo me quedará ver cómo borrar el background o si puedo poner un color sólido y decirle que es el alpha.<br>
+    
+    </p><h2>Revisitando el sistema de construcción</h2><p>Tras esto no he podido evitar ponerme a construir una casita y............. ha quedado fatal.</p><p><img src="https://i.imgur.com/ImNf25h.png" alt="" style="width: 1152px; height: 757px;"><br>
+    
+    
+    
+    </p><p>El patrón de 1 stud de espacio entre brick y brick no lo he hecho apropósito, es que directamente no me dejaba poner nada allí. También parece que según como, mete mucho espacio entre los bloques apilados, suficiente para que se vea y quede mal :S<br>
+    Cagontó volvemos a la base del juego, el sistema de construcción.</p><p><br>
+    
+    Creo que el primer problema se debe a que los bloques ocupan su espacio perfectamente, así que se tocan entre ellos y el sistema lo detecta como colisión.</p><p><img src="https://i.imgur.com/Ck9yE0K.png" alt="" style="width: 1157px; height: 964px;"><br>
+    
+    
+    Megazoom de 2 bricks para mostrar visualmente el problema.<br>
+    
+    </p><p>- Un apaño sería tocar el collider de los bloques para que sea ligeramente más pequeño que el modelo.<br>
+    - Otro apaño que sería hacer que la escala del preview fuera más pequeña que el model final.<br>
+    - Y la forma correcta (supongo) sería que al detectar una colisión, mire que % de la superfície está metida dentro del otro bloque y descartar las que entren menos de un 1%.<br>
+    
+    </p><p>Obviamente la forma correcta implica hacer cáculos y blablabla, así que haré el segundo apaño y cruzaré los dedos para que no tenga consecuencias a largo plazo.</p><p><img src="https://i.imgur.com/W3v0Sc5.png" alt="" style="width: 1631px; height: 783px;"><br>
+    
+    
+    
+    </p><p>JejejejejejejjejejejejeJEJEJEJEJEJE. Empieza a tomar forma.</p><p><br>
+    
+    
+    Tras hacer esto me he fijado que para glass he usado un brick de 2x2 que no tiene el menor sentido porque se ve su interior. Y buscando un model de ventana en mecabricks.com (el lugar de donde pillo los models) he visto otra cosa que me gusta aún menos.<br>
+    Como nombre de modelo, he estado poniendo el que salía en la web, pensando en que era el estándar:</p><p><img src="https://i.imgur.com/v6Qo68H.png" alt="" style="width: 391px; height: 130px;"><br>
+    
+    
+    
+    </p><p>Sín embargo, para las ventanas salía esto como nombre:</p><p><img src="https://i.imgur.com/uAwx265.png" alt="" style="width: 391px; height: 202px;"><br>
+    
+    
+    </p><p>Y google no me devolvía ningún resultado... He seguido buscando y mi conclusión es que cuando el nombre es numérico lo tienen bien y cuando salen mierdas como la del ejemplo, tengo que buscar en google otra fuente como <a href="https://www.bricklink.com/v2/catalog/catalogitem.page?P=60593#T=C" rel="nofollow">https://www.bricklink.com/v2/catalog...ge?P=60593#T=C</a><br>
+    para tener su id correcta.</p><p><br>
+    
+    
+    Seguramente os preguntaréis, "¿Y qué importa que sea un número u otro si durante la partida no se ve?"<br>
+    En cierto modo sí, da igual. Peeeeeeeeeeeeero, si mantengo los identificadores correctos, doy margen a que se puedan hacer cosas como:<br>
+    - Montar en virtual X set de Lego, sólo necesitas las ids de los bricks (que en webs como bricklink tiene las de cada set), la cantidad necesaria y ya te puedes liar a ello!<br>
+    - Exportar M.O.Cs. Los MOCS son "My Own Creation". Creaciones que hacen los usuarios online y que te venden las instrucciones de cómo montarlos. Aquí podéis ver de lo que hablo <a href="https://rebrickable.com/mocs/#hottest" rel="nofollow">https://rebrickable.com/mocs/#hottest</a><br>
+    
+    </p><p>Y volviendo a la imagen, recordemos:</p><p><img src="https://i.imgur.com/W3v0Sc5.png" alt="" style="width: 1388px; height: 666px;"><br>
+    
+    
+    </p><p>Si os fijáis, no he cerrado la parte de arriba de la puerta. El motivo es sencillo: en Minecraft puedes poner bloques a la izquierda o derecha de otros, que se aguantan mágicamente y siguen siendo coherentes. Pero en Lego?... No puedo habilitar esta mágica porque rompería toda la lógica de los studs.<br>
+    Lo que hay que hacer es que la rotación chuchurría que hice, deje de serlo.</p>
+    <p style="text-align: center;">
+        <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+            <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+            https://github.com/tetreum/brickcraft</a>
+    </p>

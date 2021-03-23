@@ -1,0 +1,45 @@
+<p>He añadido un nuevo bloque, el de agua. No se expande progresivamente, pero sí es "líquido" para el jugador.<br>
+    Para hacerlo posible, hay que jugar con las físicas, ya que cuando estás bajo el agua el movimiento es más lento y puedes flotar.<br>
+
+    </p><p>Necesitamos un bloque que no colisione con el jugador, mientras a su vez colisiona con el jugador para saber que está dentro del mismo.<br>
+    ¿Cómo resolvemos esta incongruencia? Usando distintas capas físicas.<br>
+    En Unity las físicas trabajan sobre múltiples capas y podemos des/marcar cuáles colisionan entre si:</p>
+<p><img src="https://i.imgur.com/0Da1Pvw.png" alt="" style="width: 401px; height: 322px;"></p>
+<p>
+
+
+    El jugador se encuentra en la capa Default, la cual hemos hecho que no colisione con los objetos que estén en la capa de agua. Con esto ya podemos atravesar/estar dentro del agua.<br>
+    Ahora toca detectar que estamos en ella. Para ello crearemos un objeto dentro del jugador con la misma forma, pero alteraremos el collider y lo pondremos en otra capa.<br>
+
+    </p><p>En unity puedes hacer que un collider colisione o no contra otros colliders y, mediante eventos, puedes saber cuando otro objeto lo está atravesando. <br>Ejemplo de un collider normal pasando a modo trigger:</p>
+<p><img src="https://i.imgur.com/iOCz1Kr.gif" alt="" style="width: 512px; height: 382px;"></p>
+<p>
+
+
+    Teniendo el collider en modo trigger, nos dedicaremos a revisar cada objeto que penetra el jugador para saber si es un brick de tipo agua y nos lo apuntaremos en un listado. Es importante tener el listado y no apuntarse simplemente si está o no dentro del agua, porque el agua está compuesta por múltiples bloques, lo que significa que no para de "entrar y salir" mientras realmente sigue en el agua.</p>
+<p><img src="https://i.imgur.com/bPwehCh.png" alt="" style="width: 628px; height: 492px;"></p>
+<p>
+
+
+    Y en base a la cantidad de bloques que tenemos constancia que está tocando en ese momento, nos podemos hacer una idea de si está completamente zambullido o sólo tiene los piececitos.<br>
+
+    </p><p>Ahora que ya podemos atravesar el agua y saber que estamos dentro de esta, sólo nos queda alterar las físicas/la gravedad del jugador.<br>
+
+    </p><p>Cuando esté dentro del agua, la gravedad quedará reducida a 1/4 y además podrá mantener presionada la tecla ESPACIO para subir a flote. También variaremos la gravedad en función de si está pulsando o no la tecla ESPACIO de modo que pueda subir con facilidad, pero si deja de presionarla, se vaya al fondo.</p><p><img src="https://i.imgur.com/4czZq4X.png" alt="" style="width: 464px; height: 255px;"></p><p>
+
+
+    Con esto obtendremos un comportamiento similar al Minecraft, donde si mantienes el ESPACIO apretado en el agua, subes hasta sólo quedar los piececitos y vuelves a caer un poco constantemente.</p><p><img src="https://i.imgur.com/LNn0FSU.gif" alt="" style="width: 688px; height: 351px;"></p><p>
+
+
+    Mediante un shader se podría llegar a tener una superfície más animada, rollo:</p><p><img src="https://i.imgur.com/s8LdHMl.gif" alt="" style="width: 627px; height: 491px;"></p><p>
+
+    Pero no es mi terreno.<br>
+
+    </p><p>Seguramente ya no haya updates durante una buena temporada.<br>
+    Quiero intentar cargar el mapa mediante chunks y asegurarme de que sólo se renderiza lo que se muestra en pantalla.<br>
+    No pinta que sea cosa de un par de días :(</p>
+    <p style="text-align: center;">
+        <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+            <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+            https://github.com/tetreum/brickcraft</a>
+    </p>

@@ -1,0 +1,79 @@
+<p>Tras revisar el sistema de rotación lo primero en lo que me he fijado es en el eje de rotación.<br>
+    Este debería ser el centro exacto del stud, pero como podéis ver aquí, actualmente es el centro del brick:</p><p><img src="https://i.imgur.com/IxBWyjO.png" alt="" style="width: 617px; height: 642px;"></p><p>
+    
+    
+    Con esto no lograremos más que rotarlo sobre si mismo, cuando lo que queremos es que gire como una puerta.<br>
+    El problema residía en cómo calculaba el centro del stud (que no del brick). Lo hacia partiendo de que 0,0 (x,y) eran uno de los lados del brick y no es así, 0,0 es el centro. Por lo que lo correcto sería</p><p><img src="https://i.imgur.com/aNNKHC3.png" alt="" style="width: 1039px; height: 984px;"></p><p>
+    
+    
+    Que plasmado a código se convierte en:</p><p><img src="https://i.imgur.com/VvNGgRP.png" alt="" style="width: 1003px; height: 124px;"><br>
+    
+    
+    Si sóis un poco avispados habréis detectado que estoy cometiendo un nuevo error. Este cálculo sólo sirve exactamente para los GridStuds de 2x2. Ejemplo:</p><p><img src="https://i.imgur.com/uELhPAx.png" alt="" style="width: 539px; height: 482px;"></p><p>
+    
+    
+    Y de hecho soy un poco tontico, previamente ya he calculado en otro sitio qué stud es en base al área que cada uno ocupa. Puedo ir allí y añadir 2 líneas más que me calculen el centro.</p><p><img src="https://i.imgur.com/3Ft5Tjt.png" alt="" style="width: 806px; height: 309px;"></p><p>
+    
+    
+    (Las únicas novedades son stud.center.x y stud.center.y)<br>
+    
+    Tras cambiar esto, he cogido un brick de 1x1 e ido a ponerlo esperando que estuviera justo en 1 stud. Resultado:</p><p><img src="https://i.imgur.com/J8Obsm0.png" alt="" style="width: 431px; height: 417px;"></p><p>
+    
+    
+    Maaaal.<br>
+    Lo anterior está ahora perfecto, así que sigo indagando y encuentro otro error.<br>
+    
+    Si os acordáis, hice que el constructor fuera algo "inteligente" y si detectaba el mismo model o el mismo número de studs, lo ponía centrado para que quedarán uno encima del otro.<br>
+    El problema es que no estaba mirando el número de studs, sino la cantidad de GridStuds que hay en los 2 models. Y claro, estas 2 piezas, tienen 1 sólo grid cada una, así que entraba dentro de la condición.<br>
+    
+    Ya está, ¿Ahora sí no? Caaaassi:</p><p><img src="https://i.imgur.com/etZWQzX.png" alt="" style="width: 474px; height: 414px;"></p><p>
+    
+    
+    La parte de cálculos ya no podía fallar, de modo que la cagada estaba en otro sitio y sospechaba que era en los GridStuds. Y así es.<br>
+    Para indicar las medidas que ocupaba cada GridStud edité la escala del cubo en lugar de editar las dimensiones del collider.<br>
+    
+    Para que entendáis el error los que no usáis Unity:<br>
+    Todos los objetos que hay en una escena, tienen un componente llamado Transform. El transform contiene los datos de localización, a decir: posición, rotación y escala.</p><p><img src="https://i.imgur.com/TgrqI3m.png" alt="" style="width: 571px; height: 154px;"></p><p>
+    
+    
+    Normalmente la escala no se toca, pero si la tocas, debes tener en cuenta que estás alterando todos los vectores/posiciones que generes desde esta.<br>
+    
+    En el componente del collider puedes tocar sus dimensiones:</p><p><img src="https://i.imgur.com/nMmjvyo.png" alt="" style="width: 557px; height: 221px;"></p><p>
+    
+    De modo que cuando estás añadiendo colisiones a un objeto mediante el collider, lo normal es tocar las dimensiones del collider, no el objeto en si.<br>
+    
+    Yo había tocado las escalas, de ahí la desviación respecto al centro:<br>
+    
+    
+    Ala, repasito a toodos los bricks que tengo para ponerlo bien.</p><p><img src="https://i.imgur.com/sBE7ZYe.png" alt="" style="width: 469px; height: 421px;"></p><p>
+    
+    
+    Autoaplauso por arreglar todos los fails.</p><p><img src="https://i.imgur.com/EsELfsh.gif" alt="" style="width: 300px;"></p><p>
+    
+    
+    Ahora toca hacer que la pieza gire usando esa posición como punto de pivotaje.<br>
+    
+    En Unity no puedes (o no he sabido encontrar cómo) cambiar on runtime el centro de un objeto, por lo que lo apañaremos a base de crear un objeto vacío temporal en esa posición y pondremos como child la pieza a rotar con la desviación necesaria.</p><p><img src="https://i.imgur.com/3gPYNkl.gif" alt="" style="width: 823px; height: 442px;"></p><p>
+    
+    
+    
+    Es un poco lata porque implica indicar para cada model cual es su vector de pivotaje y no se me ocurre nada para hacerlo de forma automática y eficiente. Pero el resultado es inmejorable.</p><p><img src="https://i.imgur.com/QqzDwVt.png" alt="" style="width: 1157px; height: 590px;"></p><p>
+    
+    
+    
+    ¡Ya puedo hacer el arco!<br>
+    Al hacer esto he visto oooootra cosita que no he tenido en cuenta.. Los bricks también se pueden conectar por abajo. Quería poner un bloque en el cuadrado del arco, pero dicha opción no está soportada por el sistema actual xD</p><p><img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/Paris_Tuileries_Garden_Facepalm_statue.jpg" alt="" style="width: 490px; height: 327px;"></p><p>
+    
+    
+    
+    Antes de ponerme con ese marrón repasaré un detalle del preview del brick.<br>
+    Actualmente, cuando pones el brick en una posición imposible/de colisión, este desaparece de golpe:</p><p><img src="https://i.imgur.com/O8Z0Pbm.gif" alt="" style="width: 560px; height: 420px;"></p><p>
+    
+    No se entiende, parece un error del juego.<br>
+    Creo que más que esconderlo, tendría que mostrarlo semitransparente pero en rojo.<br>
+    </p>
+    <p style="text-align: center;">
+        <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+            <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+            https://github.com/tetreum/brickcraft</a>
+    </p>

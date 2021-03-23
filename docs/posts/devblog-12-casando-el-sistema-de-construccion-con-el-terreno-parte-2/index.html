@@ -1,0 +1,60 @@
+<p>Retomamos donde lo dejamos: El sistema de construcción detecta colisiones con el terreno constantemente.</p><p><img src="https://i.imgur.com/1nTfNNi.gif" alt="" style="width: 757px; height: 426px;"><br>(Rojo es que no deja construir, blanco es que sí).</p><p><br>
+
+    Como indiqué, puede haber 2 tipos de colisiones, verticales que son "esperadas" (pues el brick choca contra los studs de otro brick) y horizontales, que son colisiones de verdad ya que se dan al atravesarse los modelos.<br>
+    Para poder arreglar algo así deberíamos revisar todos los puntos de intersección entre los 2 objetos y descartar los verticales. Pero estamos tratando de arreglar un problema derivado de otro problema.<br>
+    
+    </p><p>El problema real es que para generar el collider de cada chunk, estoy usando el mesh que se muestra. Eso significa que Unity tiene en cuenta los studs de los bricks, haciendo que sea una operación costosa de la hostia, además de no deseada.</p><p><img src="https://i.imgur.com/qktiyhp.png" alt="" style="width: 937px; height: 600px;"></p><p><img src="https://i.imgur.com/wJf7xO7.png" alt="" style="width: 940px; height: 564px;"></p><p>
+    
+    
+    
+    Tan doloroso de generar como parece.<br>
+    
+    Si recordáis, los GridStuds de nuestros bricks son colliders cuadrados:</p><p><img src="https://i.imgur.com/dKxSr8B.png" alt="" style="width: 614px; height: 645px;"><br>
+    
+    (lo verde)<br>
+    En ningún momento tenemos en cuenta la forma de los studs, nos da igual. Y con el terreno deberíamos hacer lo mismo.<br>
+    
+    ¿Cómo lo vamos a hacer? Creando un nueevo modelo que sea un cubo puro y duro. Pillamos el brick y le quitamos los studs y la parte de abajo. Así tiene las mismas medidas, pero es un cubo.</p><p><img src="https://i.imgur.com/1g6j6fd.png" alt="" style="width: 700px; height: 509px;"></p><p>
+    
+    
+    Y nos toca editar la generación de chunks, para que se creen 2 meshes, 1 que tenga en cuenta los studs y otra que no.</p><p><img src="https://i.imgur.com/wtTp0pT.png" alt="" style="width: 689px; height: 487px;"></p><p>
+    
+    Casi todo es copy&paste de lo que ya teníamos hecho, sólo hay que quitar la parte de uvs y colores ya que nos da igual.<br>
+    
+    Probamos a generar y el terreno y... Joder, menuda diferencia con la velocidad de carga, ya no es tan dolorosa como antes.</p><p><img src="https://i.imgur.com/VF8uwbv.png" alt="" style="width: 876px; height: 596px;"></p><p><img src="https://i.imgur.com/2LPlcBN.png" alt="" style="width: 875px; height: 540px;"></p><p>
+    
+    
+    
+    Con esta jugada hemos conseguido varias cosas:<br>
+    - Reducir los tiempos de carga al simplificar la malla que se usa para generar los colliders<br>
+    - No tener colisiones verticales.<br>
+    - Mejorar el "caminado". Al tener colisiones los studs, parecía que andases por el monte, con minimontañitas todo el rato. Ahora pese a tener forma, el terreno es plano al andar.<br>
+    
+    </p><p>Ahora que no tenemos colisiones verticales, el sistema de detección de colisiones debería funcionar sín requerir ninguna edición.</p><p><img src="https://i.imgur.com/DE5EVfz.gif" alt="" style="width: 870px; height: 490px;"></p><p>
+    
+    
+    Si os fijáis, en la última parte del vídeo no puedo colocar bricks entre el terreno y otros bricks.</p><p><img src="https://i.imgur.com/IA6Co8N.gif" alt="" style="width: 438px; height: 275px;"></p><p>
+    
+    
+    
+    Esto es por algo que he evitado tratar en todo momento: Los bricks del mapa se ponen a distinta altura que los puestos por el jugador.<br>
+    
+    </p><p>Entre los bricks del jugador hay siempre un pequeño espacio, que a mi parecer, le da un toque más "Lego":</p><p><img src="https://i.imgur.com/fjpoEtK.png" alt="" style="width: 1288px; height: 734px;"></p><p>
+    
+    
+    Si los pusiera como en el mapa, creo que se perdería parte de la esencia/gracia:</p><p><img src="https://i.imgur.com/7gRamac.png" alt="" style="width: 590px; height: 568px;"></p><p><img src="https://i.imgur.com/bmkIlya.png" alt="" style="width: 589px; height: 622px;"></p><p>
+    
+    
+    
+    
+    Mucho a mi pesar, me temo que no tengo alternativa, porque ese espacio lo podía poner cuando tooodas las caras del modelo se renderizan. En el terreno no hacemos eso, así que si pongo el espacio, se vería literalmente transparente/el mapa por dentro.</p><p><img src="https://i.imgur.com/DmUTtvp.gif" alt="" style="width: 948px; height: 537px;"></p><p><img src="https://i.imgur.com/UCJWQpv.gif" alt="" style="width: 679px; height: 383px;"></p><p>
+    
+    
+    
+    
+    Lo celebro muy pronto porque no lo he mostrado en el vídeo, pero los bricks que conectas desde el culo de otro brick aún tienen una altura errónea. A ver si puedo arreglarlo easy.</p>
+    <p style="text-align: center;">
+        <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+            <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+            https://github.com/tetreum/brickcraft</a>
+    </p>

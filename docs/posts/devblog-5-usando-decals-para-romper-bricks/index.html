@@ -1,0 +1,122 @@
+<p>Al final me decidí por hacer la animación de cuando empiezas a romper un bloque. Si no me equivoco, la técnica de sobreponer texturas encima de otras se llama decal.<br>
+    Un ejemplo podrían ser los impactos de bala en un escenario.</p>
+<p><img src="https://i.imgur.com/Pb6i7HE.png" alt="" style="width: 709px; height: 562px;"></p>
+<p><img src="https://i.imgur.com/f9Di4BZ.png" alt="" style="width: 706px; height: 435px;"></p>
+<p>
+
+
+    Se adaptan la forma de la superfície y mediante parallax permiten dar un efecto de perforación y todo.</p>
+<p><img src="https://i.imgur.com/MX1lAwn.png" alt="" style="width: 907px; height: 457px;"></p>
+<p>
+
+
+    Por desgracia todo el tema gráficos no lo controlo en absoluto (los decals se suelen aplicar usando Shaders y dependen de la pipeline de renderizado que hayas elegido. Yo ni sé las diferencias entre pipelines).<br>
+
+    </p><p>De modo que haré algo mucho más simple sín detalles como la profundidad o adaptarse a la forma.<br>
+    Será una textura que pondré allí donde el jugador pique.<br>
+
+    </p><p>Empezamos buscando un sprite de rotura:</p>
+<p><img src="https://i.imgur.com/uLYdtvS.png" alt="" style="width: 581px; height: 58px;"></p>
+<p>
+
+
+    Lo guardamos como textura, asignamos la textura a un material y ajustamos en él la transparencia de fondo y el offset a modo de que sólo se vea una parte de la textura.<br>
+
+    </p><p>Ahora queda la parte chunga, el código.<br>
+    Mi idea es crear una class que gestione su posicionamiento y movimiento. En todo momento tendremos 1 sola animación que iremos moviendo al brick que corresponda.<br>
+
+    </p><p>La class deberá tener los "frames"/offsets de la textura en los que se ve cada imagen. Sólo meteremos la animación en la escena si esta se llega a usar, así no hay objetos de más.<br>
+
+    </p><p>Cada cierto tiempo mientras picas ya estoy reproduciendo un efecto de sonido, aprovechamos ese sitio para avanzar la animación:</p>
+<p><img src="https://i.imgur.com/0V2n3lZ.png" alt="" style="width: 657px; height: 169px;"></p>
+<p>
+
+
+    Para determinar dónde ponerla, usaremos el raycasting que se ha hecho anteriormente para saber qué bloque quiere picar. De él podemos extraer el punto de impacto y el ángulo. No podemos usar el punto de impacto directamente, porque este es exactamente donde se encuentra la cara del modelo del brick. Lo que deriva en un problema conocido como "z fighting":</p>
+<p><img src="https://i.imgur.com/uGQDOmU.gif" alt="" style="width: 681px; height: 544px;"></p>
+<p>
+
+
+    No se aprecia muy bien, pero es el parpadeo que hay, la lucha por mostrar la textura del bloque o la de la rotura.<br>
+
+    Como fix podemos usar la ubicación del modelo, en función de dónde esté, moveremos muy poquiiito la animación hacia delante/atrás:</p>
+<p><img src="https://i.imgur.com/qWOoU7x.png" alt="" style="width: 798px; height: 85px;"></p>
+<p>
+
+
+    Mucho mejor:<br>
+
+
+    Con esto sólo nos queda un detalle, el tamaño de la animación:</p>
+<p><img src="https://i.imgur.com/ecul1XT.png" alt="" style="width: 675px; height: 434px;"></p>
+<p>
+
+
+    No se me ocurre ningún fix. Si siempre mostráramos la animación en el centro de la cara, sería cuestión de usar la altura de esta, pero el hit point puede ser en cualquier punto de brick, por lo que siempre terminará sobresaliendo si no se usa un decal <br>
+
+    </p><p>Habrá que ponerse en serio en el tema gráficos y empezar a entender de qué va el tema, hora de informarse:</p>
+<p>
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/j1cadH71rtg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""><br></iframe>
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/5MuA92xUJCA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""><br></iframe>
+</p>
+<p>
+
+
+
+
+
+    Tras esto queda claro que hay 2 caminos entre los que elegir en cuanto a pipelines:<br>
+    - URP: Pensado para mobile y 2d, con nuevas herramientas y luces para 2d.<br>
+    - HDRP: Pensado para pc/consolas, con soporte para RTX, nuevos tipos de luces, fabric shader, sistema de decals incluído, etc..<br>
+    - BuiltIn: El sistema que usa actualmente el proyecto.</p><p><br>
+
+    Y al menos a mi, aún más claro cuál elegir -> HDRP.<br>
+    El juego no es 2d y el foco es que funcione en mi portátil gamer, no en el móvil. Yo no seré quién use todas las novedades de HDRP, pero los decals es algo que quiero.<br>
+
+    </p><p>He migrado el proyecto a HDRP. Se han roto cosas como el preview del bloque a poner por el camino, pero creo que ya está todo arreglado.<br>
+
+    </p><p>Ya podemos volver al tema original, el decal.<br>
+    En HDRP hay un componente llamado Decal Projector gracias a él podremos meter nuestra textura por encima del bloque sín que sobresalga de forma extraña.<br>
+    La class que había programado para spawnear la textura, posicionarla y animarla sirve casi perfectamente con el Decal Projector. Menos mal, no hemos perdido el tiempo.</p>
+<p><img src="https://i.imgur.com/GOAxlCF.gif" alt="" style="width: 567px; height: 552px;"></p>
+<p>
+
+
+    ¡Ya no sobresale!<br>
+
+    </p><p>Es feo a matar el dibujo.<br>
+
+    Molaría más algo así + profundidad:</p>
+<p><img src="https://1067544234.rsc.cdn77.org/photoThumbnail/2014-09/13761-141558/damage-decals-high-resolution-decal-damaged-texture_640v640.png" alt="" style="width: 449px; height: 304px;"></p>
+<p>
+
+    Una pena que estas cosas no se me den bien.</p><p><br>
+</p><h2>
+    Mini mejora en construcción</h2>
+<p>Me he fijado en otra cosa que tocaba bastante la moral y es que cada vez que apuntabas a un stud distinto, la rotación del objeto se perdía, de modo que era una lucha constante:</p>
+<p><img src="https://i.imgur.com/s4rB9vj.gif" alt="" style="width: 781px; height: 385px;"></p>
+<p>
+
+
+    Tras un retoque el comportamiento ya es más natural:</p>
+<p><img src="https://i.imgur.com/grNWdCr.gif" alt="" style="width: 778px; height: 384px;"></p>
+<p>
+
+
+    He vuelto a construir la casita para ver si había alguna diferencia gráfica:</p>
+<p><img src="https://i.imgur.com/fjpoEtK.png" alt="" style="width: 1045px; height: 596px;"></p>
+<p>
+
+
+    Iluminación/pipeline antigua:</p>
+<p><img src="https://i.imgur.com/XjAM0zg.png" alt="" style="width: 1040px; height: 627px;"></p>
+<p>
+
+
+    Parece más algo más quemada, aunque me gusta que se vean colores vivos y no los deprimentes de antes.</p>
+
+<p style="text-align: center;">
+    <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+        <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+        https://github.com/tetreum/brickcraft</a>
+</p>

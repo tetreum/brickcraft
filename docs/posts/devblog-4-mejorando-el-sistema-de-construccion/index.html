@@ -1,0 +1,58 @@
+<p><br>
+
+    Como dije anteriormente, la siguiente mejora es que cuando pones un brick mal, el sistema de lo diga visualmente.<br>
+    No tiene mucho misterio, cambio la textura del preview por una roja cuando hay colisión y listo:</p><p><img src="https://i.imgur.com/oo8iv0i.gif" alt="" style="width: 546px; height: 304px;"></p><p>
+    
+    
+    Mucho mejor, se entiende perfectamente qué ocurre.</p><p><br>
+    
+    Tras esto nos podemos centrar en el plato principal: Poder colocar bloques por debajo de otros.</p><p><br>
+    
+    Si quisiéramos hacerlo 100% bien, cubrir todos los casos, habría que tener en cuenta los conectores que tienen los 2 bloques para saber si uno tiene bottom y el otro un top.<br>
+    Pinta bastante matada, de modo que optaremos por algo que funcionará en como mínimo los más simples.<br>
+    
+    La estructura actual de un bloque es:</p><p><img src="https://i.imgur.com/LCuuVUH.png" alt="" style="width: 206px; height: 49px;"></p><p>
+    
+    
+    El modelo y como child, los GridStuds que tenga.<br>
+    Para ahorrarme un componente en cada GridStud que me indique sus dimensiones, lo pongo en su nombre y luego lo parseo.<br>
+    Dado que como máximo siempre se interactuará con 1 bloque (en cuanto a determinar sus studs/usarlos), creo que es una aproximación muy óptima aunque dificulte un poco la accesibilidad a esos datos.<br>
+    
+    </p><p>Pues bien, ¿Cómo hacemos que el sistema de GridStuds que ya tenemos sea compatible con bricks que se enchufan por el culo?<br>
+    
+    </p><p>Ya he comentado la forma perfecta de hacerlo, ahora comento la que he hecho:<br>
+    
+    </p><p>La única diferencia que hay entre conectar un bloque desde arriba o desde abajo es la altura del punto de pivotaje.<br>
+    Sólo necesitamos restarle la altura del bloque que queremos conectar por debajo y voilà.<br>
+    Para saber cuándo hay que hacer esta resta, debemos poder diferenciar entre un GridStud de arriba y uno de abajo. Con ampliar el nombre a Bottom bastará:</p><p><img src="https://i.imgur.com/PfJV4xd.png" alt="" style="width: 255px; height: 82px;"></p><p>
+    
+    
+    Suerte que al hacer el modelo de datos de cada brick nos apuntamos la altura de estos :)</p><p><img src="https://i.imgur.com/CvhRgEk.png" alt="" style="width: 855px; height: 94px;"></p><p>
+    
+    
+    Gracias al esquema que seguía el nombre hasta ahora, no hay que arreglar más que 1 línea de código; ya que en todos sitios se detectaban los studs mirando si el nombre del objeto empezaba por GridStud. Algo que no ha cambiado:</p><p><img src="https://i.imgur.com/iZjSboo.png" alt="" style="width: 575px; height: 31px;"></p><p>
+    
+    
+    Arreglamos el punto en el que se parseaba el nombre del stud y ya lo tendríamos:</p><p><img src="https://i.imgur.com/l98dJOZ.png" alt="" style="width: 873px; height: 76px;"></p><p>
+    
+    
+    Prueba rápida:</p><p><img src="https://i.imgur.com/ooEb282.gif" alt="" style="width: 718px; height: 534px;"></p><p><img src="https://i.imgur.com/XjAM0zg.png" alt="" style="width: 1322px; height: 798px;"></p><p>
+    
+    
+    
+    HEHEHEHE<br>
+    
+    Llegados este punto no sé muy bien por dónde tirar.<br>
+    - Buscar cómo hacer el detalle del brick rompiéndose al romperlo<br>
+    - Mirar el tema gráficos, a ver si puedo hacerlos más cartoon y si queda bien<br>
+    - Mirar el tema iluminación, realmente no sé si son los gráficos o la iluminación lo que le da una pinta lúgubre en vez de "animada"/"viva".<br>
+    - Añadir tropocientos modelos de bricks<br>
+    - Hacerlo multiplayer.</p><p><br>
+    
+    Antes de añadir tropocientos bricks creo que hay que implementar el multiplayer, ya que de seguro implicará retocar los que ya tenemos de algún modo u otro.</p><p>De momento he tenido suficiente por hoy.<br>
+</p>
+<p style="text-align: center;">
+    <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+        <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+        https://github.com/tetreum/brickcraft</a>
+</p>

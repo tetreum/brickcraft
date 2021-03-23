@@ -1,0 +1,82 @@
+<p>En minecraft el sistema de construcción es muy simple, ya que cualquier cara de un bloque sirve. En nuestro caso no es así.<br>
+    Si os acordáis, para generar el terreno, hemos unido los bricks en una sola malla/modelo. Así que cuando hacemos clic para construir sobre ese modelo, sabemos que el jugador está mirando a un trozo de terreno. Pero no a qué brick exactamente.<br>
+
+</p>
+<p>Cuando el jugador haga clic para construir, tendremos que:<br>
+    1. Determinar qué parte del terreno está mirando.<br>
+    2. Si está mirando una superfície horizontal o vertical (para saber si es una cara superior/inferior o un lateral).<br>
+    3. Determinar qué stud está mirando.<br>
+
+</p>
+<p>Para poder saber si está mirando una parte del terreno, vamos a necesitar que el terreno tenga colliders.<br>
+    Por suerte esta parte es "mágica" ya que se encarga Unity de ello (y seguro que no será lo más óptimo xD). Añadimos un collider a cada chunk y luego por código le indicamos al collider que use la mesh del chunk en cuestión:</p>
+<p><img src="https://i.imgur.com/5pnhUro.png" alt="" style="width: 656px; height: 31px;"></p>
+<p>
+
+
+    La generación automática del collider se hace notar bastante. Durante la generación del terreno, todo va más lento.<br>
+
+</p>
+<p>Ahora ya podemos pisar y detectar el terreno. Pasamos a determinar qué estamos mirando.<br>
+
+</p>
+<p>Cuando hacemos raycasting, además del nombre del objeto, sabemos exactamente a qué triángulo de la malla le hemos dado.</p>
+<p><img src="https://i.imgur.com/p4cHk1G.png" alt="" style="width: 607px; height: 455px;"></p>
+<p>
+
+    Con el nombre del objeto sabemos ya conocemos qué parte del terreno mira. Queda determinar si es una superfície horizontal o vertical y para ello usaremos el triángulo.<br>
+    Como recordaréis, cada triángulo está compuesto por 3 vértices. Si la "y" de todos ellos es la misma, significa que están alineados horizontalmente pero eso no es suficiente. Queremos tener en cuenta los studs y el truco que podemos usar es que son circulares, lo que significa que ninguno de sus vectores será igual ya que todos tendrán una ligera diferencia.</p>
+<p><img src="https://i.imgur.com/G5L0985.png" alt="" style="width: 845px; height: 217px;"></p>
+<p>
+
+
+    Perfecto, ahora sabemos que está mirando a la parte superior o inferior de un brick del terreno. Falta determinar exactamente a qué stud.<br>
+
+</p>
+<p>Cada parte del terreno puede tener una forma muy distinta:</p>
+<p><img src="https://i.imgur.com/UZJQpQu.png" alt="" style="width: 859px; height: 590px;"></p>
+<p>
+
+
+    Pero es algo que si os dáis cuenta, nos da absolutamente igual, ya que cada chunk de terreno sigue siendo un grid de studs, sólo que algunos están a diferente altura.</p>
+<p><img src="https://i.imgur.com/dz57ADo.png" alt="" style="width: 857px; height: 628px;"></p>
+<p>
+
+    Podemos imaginar que son todos llanos para hacer los cálculos.<br>
+
+</p>
+<p>De este modo podemos usar el sistema que ya teníamos programado para determinar a qué stud mira. O eso pensaba yo.<br>
+    Resulta que el centro de cada terreno está mal. Eso hace que toooodos los cálculos tengan una desviación.<br>
+    Lo correcto sería comprender por qué hay esta desviación. A mi entender es por la diferencia de que hablamos de una matriz tridimensional entera y a última hora yo hago retoques para que sea decimal.<br>
+    Voy por el camino rápido y lo que hago es determinar qué desviación hay respecto al centro y corregirla.</p>
+<p><img src="https://i.imgur.com/c17cdOw.png" alt="" style="width: 1009px; height: 94px;"></p>
+<p>
+
+
+    Arreglada la desviación, tenemos que hacer otro retoque. Hasta ahora, el sistema de construcción esperaba que cada grid de studs, tuviera un collider propio, el cual indicaba en su nombre las dimensiones del mismo.<br>
+    Esto aquí no pasa, como he comentado, tenemos 1 solo collider para cada trozo de terreno y este rara vez es llano. Por suerte no va a ser un problema ¿Por qué? Porque cada chunk/trozo de terreno tiene literalmente las mismas dimensiones: 16x16 bricks de 2x2. Es decir, es un grid de 32 x 32 studs.<br>
+    Añadimos esta "excepción" al sistema y listo.</p>
+<p><img src="https://i.imgur.com/IBCEDBV.png" alt="" style="width: 1008px; height: 208px;"></p>
+<p>
+
+
+    Tras esto podemos hacer una prueba rápida:</p>
+<p>
+    <jodit-media data-jodit-temp="1" contenteditable="false" draggable="true" data-jodit_fake_wrapper="1" style="display: block; width: 960px; height: 541px;"><jodit-media data-jodit-temp="1" contenteditable="false" draggable="true" data-jodit_fake_wrapper="1" style="display: block; width: 960px; height: 541px;"><video controls="" muted="" autoplay="">
+            <source src="https://i.imgur.com/omEigz9.mp4" type="video/mp4">
+        </video></jodit-media></jodit-media>
+    </p><p><br></p><p><img src="https://i.imgur.com/JQwILRN.gif" alt="" style="width: 703px; height: 316px;">
+</p>
+<p>
+
+    HoHoHo. Puede parecer una tontería visto lo que ya teníamos hasta el momento, pero esque no tiene nada que ver. Como ya he comentado, para poder saber a qué stud miraba el jugador en el sistema de construcción, usábamos colliders puestos específicamente donde están los studs.<br>
+    En el terreno no los tenemos, nos los hemos imaginado y hemos trabajado sobre ellos.<br>
+
+    </p><p>Por desgracia esto no es todo, como se puede observar en el vídeo, el sistema marca todas las posiciones en rojo/no edificables. Esto es porque el brick está colisionando con el terreno y aún no le hemos explicado qué es el terreno.<br>
+    Hay que editar la detección de colisiones para que, cuando sea contra el terreno, determine si es una colisión horizontal o vertical. La horizontal es la que esperamos (pieza sobre otra), la vertical es la no deseada (pieza atravesando terreno).
+</p>
+<p style="text-align: center;">
+    <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+        <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+        https://github.com/tetreum/brickcraft</a>
+</p>

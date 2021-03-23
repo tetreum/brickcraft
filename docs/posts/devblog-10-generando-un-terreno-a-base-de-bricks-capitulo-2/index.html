@@ -1,0 +1,89 @@
+<p>Nos quedamos en que el modelo era demasiado detallado para un juego.<br>
+    Como dije, no tengo ni idea de modelar (ni ganas), de modo que opté por el camino más fácil -> Sketchup.<br>
+    Sketchup es probablemente la peor herramienta a usar para esto, prueba de ello es que después de reducir la cantidad de triángulos y vértices, el modelo pesaba más....... Anyway.<br>
+    Con la liposucción pasamos de:<br>
+    - Edges: 1136<br>
+    - Faces: 624<br>
+    a:<br>
+    - Edges: 800<br>
+    - Faces: 420</p>
+<p><img src="https://i.imgur.com/s9Dg3Rz.png" alt="" style="width: 675px; height: 468px;"></p>
+<p>
+
+    Visualmente se nota. Qué le vamos a hacer.<br>
+
+    Otra putada de Sketchup es que por mucho que le digas, revienta la escala del modelo.<br>
+    Cualquier modelo que importaba de mecabricks, lo escalaba siempre igual:</p>
+<p><img src="https://i.imgur.com/ht5Ujkb.png" alt="" style="width: 489px; height: 91px;"></p>
+<p>
+
+
+    El nuevo modelo he tenido que ir toqueteando hasta que más o menos parece igual:</p>
+<p><img src="https://i.imgur.com/Hwsfpbq.png" alt="" style="width: 487px; height: 86px;"><br>
+
+    Que asco me da Sketchup.<br>
+
+    </p><p>En fin, la reducción no ha sido muy grande, pero no sé de dónde sacar más triangulitos.<br>
+    Hora de la verdad.<br>
+    ¿Tendrán todas las caras la misma cantidad de triángulos (menos la superior y la inferior)?<br>
+    Top face: 570<br>
+    Bottom face: 72<br>
+    Remaining faces: 2<br>
+
+    </p><p>¡Hell yeah!¡Los laterales han dejado de ser un despilfarro!</p><p><br>
+
+    Si generamos ahora el mundo obtenemos esto:</p>
+<p><img src="https://i.imgur.com/ubdj5Q3.png" alt="" style="width: 1168px; height: 818px;"></p>
+<p><img src="https://i.imgur.com/iTYCjkL.png" alt="" style="width: 1170px; height: 800px;"></p>
+<p>
+
+
+
+    Un mundo de bricks, pero con algunos problemas:<br>
+    - Hay espacios entre los bricks<br>
+    - Si miráis la parte inferior derecha de la imagen, veréis que los laterales de los bricks no se están renderizando<br>
+    - Algunos triángulos están rotos/descolocados<br>
+
+    </p><p>El primer error es debido a que la matriz que hemos creado está basada en números enteros y las dimensiones de los bricks no son enteras.<br>
+    Si multiplicamos la posición de colocación por el ancho / alto del brick, obtendremos la posición ajustada.<br>
+
+    </p><p>El segundo error es por cómo he asignado yo cada cara. Yo seguía la lógica de top|bottom|left|right|front|back. Pero realmente no es así, sino que empezamos con la cara 0, luego 1, 2...Total, que se arregla tocando el FaceMapper que hice.<br>
+
+    </p><p>Sobre el tercer error........ No tengo ni puta idea de por qué sucede. Sí que he comprobado que si corto la cara superior más por arriba, de modo que sólo haya los studs, todo se renderiza bien. Así que algún problema hay con el modelo:</p>
+<p><img src="https://i.imgur.com/tMR1Baz.png" alt="" style="width: 1008px; height: 659px;"></p>
+<p><img src="https://i.imgur.com/sq0JkHU.png" alt="" style="width: 836px; height: 468px;"></p>
+<p>
+
+
+
+    Arreglamos lo arreglable y volvemos a probar suerte:</p>
+<p><iframe width="560" height="315" src="https://www.youtube.com/embed/qblDKO3d3EY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""><br></iframe><p><img src="https://i.imgur.com/79dmcRo.png" alt="" style="width: 533px; height: 279px;"></p></p>
+<p>
+
+
+
+
+
+    Lo siguiente que debería hacer es centrarme en pintar los bloques.<br>
+    Recordemos que hemos unido los bloques en 1 sola malla/modelo. Así que sólo tenemos 1 textura.<br>
+    Esta textura tendrá toooooodos los colores posibles y nosotros tendremos que ajustar el material para que muestre el de la superficie correcta en cada caso.<br>
+    Véase:</p><p><img src="https://i.imgur.com/Wa8vsAh.png" alt="" style="width: 245px; height: 245px;"></p><p>
+
+
+    ¿Cómo? No lo sé. Si de normal no tengo ni idea de lo que estoy haciendo, con esta parte tengo aún menos.<br>
+    Lo he tocado un poco y he logrado que salga color, no el correcto, pero al menos no es el gris default.</p><p><img src="https://i.imgur.com/3wsCiBn.png" alt="" style="width: 701px; height: 400px;"></p><p>
+
+
+    (Si os fijáis, los laterales son azules o verdes y la parte superior es marrón, cuando debería ser todo el mismo color).<br>
+
+
+    </p><p>Saltándome esta parte, habrá que ponerse con la parte más complicada de todas: Casar el sistema de construcción que he creado, con el mundo generado.<br>
+
+    </p><p>Ah, el otro día vi esto:</p><p><img src="https://i.imgur.com/oK5wyhY.png" alt="" style="width: 745px; height: 496px;"><br>
+
+    Y creo que lo usaré como inspiración para los modelos de los jugadores. No es el muñeco de lego, así que no tiene copyright y tiene el estilo brick.</p>
+    <p style="text-align: center;">
+        <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+            <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+            https://github.com/tetreum/brickcraft</a>
+    </p>

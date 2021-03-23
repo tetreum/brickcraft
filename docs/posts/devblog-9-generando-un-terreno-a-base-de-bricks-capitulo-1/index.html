@@ -1,0 +1,118 @@
+<p>Veamos, algo que me gustaría que este juego tenga es terreno a explorar como el de Minecraft, con sus cuevas, montañas, mares, etc..<br>
+    Como ya había contado al principio, para hacer algo así, primero tenemos que generar una matriz tridimensional en la que decidimos qué de qué tipo es cada bloque (tierra, agua, aire, etc..)</p><p><img src="https://i.imgur.com/T9DGuMC.png" alt="" style="width: 617px; height: 352px;"></p><p>
+    
+    
+    Es algo que no quería hacer en un principio porque en el mundo de los bricks, hay más formas que cuadrados. Pero a tomar por culo, usaré sólo 1 modelo de brick cuadrado para generar todo el entorno.<br>
+    Ahora que ya hemos renunciado a nuestros principios de diversidad (de bloques) podemos avanzar.</p><p><br>
+    
+    Una vez tenemos generada la matriz nos toca la parte más complicada, renderizarla.<br>
+    No podemos renderizarla entera, no habría GPU capaz de cargar tantos bricks (y sería una gilipollez), debemos optar por un sistema de chunks.<br>
+    Esto no es más que dividir la matriz, en matrices más pequeñas. Así las podemos cargar o descargar conforme el jugador se mueve por el mapa.<br>
+    Esto sería un chunk, una área delimitada por "x", "z" y no por "y":</p><p><img src="https://i.imgur.com/YnKUgP8.jpg" alt="" style="width: 300px;"></p><p>
+    
+    
+    Con esta subdivisión ahora debemos preocuparnos por entender qué bloques están "expuestos". Mirad dónde está el jugador en esa imagen.<br>
+    ¿Qué sentido tiene que rendericemos los bloques que hay después del suelo si no puede verlos?<br>
+    Debemos determinar qué bloques son los que están expuestos y renderizar sólo estos:</p><p><img src="https://i.imgur.com/uYayydY.png" alt="" style="width: 646px; height: 340px;"></p><p>
+    
+    
+    Y lueeeego, hay que poner el foco en el modelo en si. Un cuadrado tiene múltiples caras, el jugador rara vez las verá todas (bloques de agua). Por ejemplo, desde este ángulo, sólo se ven 3:</p><p><img src="https://i.imgur.com/Hm221nP.png" alt="" style="width: 300px;"></p><p>
+    
+    Y ni eso, los bloques van a estar rodeados por otros bloques, así que es tontería que rendericemos el modelo entero.</p><p><br>
+    
+    Para resumir pues:<br>
+    Necesitamos generar una matriz, dividirla por chunks, en cada chunk determinar los bloques expuestos y en cada bloque expuesto, determinar las caras visibles.<br>
+    Una vez sepamos esto, deberemos arrancar del modelo dicha cara y unirla en un nuevo modelo en el que únicamente meteremos todas las caras expuestas del chunk.<br>
+    Para cortar la cara de un modelo habrá que comprender cómo es/funciona una malla/modelo/mesh.<br>
+    
+    </p><h2>Entendiendo las mallas/meshes</h2><p>Una malla es un conjunto de puntos (vértices) que, conectados entre si, forman triángulos. Para saber hacia dónde está mirando/pintado cada triángulo usamos vectores (normals) y finalmente también mapeamos cómo se aplica el material (textura) a la malla.<br>
+    
+    Vale, la explicación ha quedado infumable. Probemos con un ejemplo más visual.</p><p><img src="https://i.imgur.com/4TbZtLN.png" alt="" style="width: 815px; height: 359px;"></p><p>
+    
+    La cara de un cubo, es un cuadrado, el cual está formado por 2 triángulos. Cada uno creado por 3 vértices de un total de 4 que tiene toda la cara.<br>
+    
+    Si quisiéramos hacer la cara de un cuadrado en Unity (ignorando hacia dónde miran los triángulos y de qué color son) haríamos esto:</p><p><img src="https://i.imgur.com/KsyXJ1I.png" alt="" style="width: 519px; height: 529px;"></p><p>
+    
+    
+    ¿Cómo determinamos que triángulos conforman una cara de la mesh?<br>
+    
+    Buena pregunta, no tengo ni idea. Pero se me ocurre un apaño para salir del paso.<br>
+    Fijaos en la forma de un brick básico:</p><p><img src="https://i.imgur.com/Hm221nP.png" alt="" style="width: 300px;"></p><p>
+    
+    
+    En este caso, para conocer los triángulos de cada cara, lo que podemos hacer es meter un plano que haga de "delimitador", cualquier vértice que esté después de dicho límite, formará parte de la cara en cuestión.</p><p><img src="https://i.imgur.com/1ZdUkYF.png" alt="" style="width: 555px; height: 512px;"></p><p>
+    
+    Si os fijáis, cada plano azul está justo antes del final de una cara.<br>
+    Bien, ahora hay que programar algo que vaya iterando todos los triángulos de la mesh con cada delimitador para saber a qué cara pertenecen.<br>
+    En Unity los datos de la mesh los tenemos en el siguiente formato:<br>
+    Código:<br>
+    int[] triangles;<br>
+    Vector3[] vertices;<br>
+    Los triángulos se apuntan mediante un listado de números enteros, los cuáles hacen únicamente de referencia al listado de vértices.<br>
+    Me explico:<br>
+    Código:<br>
+    int[] triangles sería una lista tal que así: [0,1,2,2,3,0]<br>
+    Vector3[] vertices sería<br>
+    [<br>
+    0 => Vector3(0, 0, 0),<br>
+    1 => Vector3(0, 0, 1),<br>
+    2 => Vector3(1, 0, 1),<br>
+    3 => Vector3(1, 0, 0)<br>
+    ]<br>
+    Para que lo visualizéis:</p><p><img src="https://i.imgur.com/thb0dcM.png" alt="" style="width: 716px; height: 506px;"></p><p>
+    
+    
+    Como ya sabemos, cada triángulo está formado por 3 vértices, así que para obtener un triángulo del listado de triangles, cada vez pillaremos 3 valores:<br>
+    - El primer triángulo será 0,1,2<br>
+    - El segundo 2,3,0<br>
+    
+    Esto son solo los índices a coger del listado de vértices, así que ahora sabemos que el primer triángulo, el de la izquierda, está formado por los vértices:<br>
+    0 => Vector3(0, 0, 0)<br>
+    1 => Vector3(0, 0, 1)<br>
+    2 => Vector3(1, 0, 1)<br>
+    
+    Y el segundo:<br>
+    2 => Vector3(1, 0, 1)<br>
+    3 => Vector3(1, 0, 0)<br>
+    0 => Vector3(0, 0, 0)<br>
+    
+    Lo cual deberíais poder corroborar fácilmente con la imagen que he puesto.<br>
+    
+    Hacemos una prueba rápida para obtener los triángulos de cada cara:</p><p><img src="https://i.imgur.com/vKAHzoe.png" alt="" style="width: 692px; height: 734px;"></p><p>
+    
+    Y........... W-T-F..<br>
+    
+    Estos son los resultados:<br>
+    Top face: 784<br>
+    Bottom face: 80<br>
+    Left face: 8<br>
+    Right face: 8<br>
+    Front face: 4<br>
+    Back face: 4</p><p><br>
+    
+    La cara superior es normal que tenga bastantes triángulos porque tiene los studs (pero aún así tiene demasiados). La de abajo.. bueno mira porque tiene las redondas del clutch.</p><p><br>
+    
+    Pero...¿¿¿¿¿Qué cojones pasa con las caras laterales?????????<br>
+    Estamos hablando de un cubo, ¿cómo puede tener distinta cantidad de triángulos por lateral? y ¿¿!!cómo puede ser que sea más grande de 2!!!??</p><p><br>
+    
+    Está claro que algo he hecho mal, así que monto un script rápido para que pinte directamente sobre el modelo los vértices y................</p><p><img src="https://i.imgur.com/0dhespE.png" alt="" style="width: 520px; height: 494px;"></p><p>
+    
+    No se entiende mucho porque como ya estáis viendo, la cara superior, con los studs, está llena de vértices. Y también se ve fácilmente el círcuclo inferior de la pieza.<br><br>
+    
+    Si "arrancamos" los laterales de las caras vemos que no, que mi sistema para separar triángulos funciona correctamente:</p><p><img src="https://i.imgur.com/FMoCCn3.png" alt="" style="width: 493px; height: 616px;"></p><p>
+    
+    Una de las caras tiene 8 triángulos</p><p><img src="https://i.imgur.com/hA8FVzk.png" alt="" style="width: 440px; height: 657px;"></p><p>
+    
+    Otra vemos que 4.<br>
+    Os recuerdo que estamos contando triángulos:</p><p><img src="https://i.imgur.com/5UtsxY4.png" alt="" style="width: 458px; height: 573px;"></p><p>
+    
+    
+    De modo que el problema es el modelo en si, tiene más triángulos de los que realmente necesita.</p><p><br>
+    
+    La única forma de arreglarlo es optimizando el modelo, abrirlo en algún editor 3d como Blender y quitar triángulos. El tema es que yo no tengo ni idea de modelar. Así que aquí ando, atrapado.<br>
+    A ver si encuentro a quien pedirle que me retoque el modelo.</p><p><img src="https://i.imgur.com/LmWecwR.png" alt="" style="width: 555px; height: 625px;"></p>
+    <p style="text-align: center;">
+        <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+            <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+            https://github.com/tetreum/brickcraft</a>
+    </p>

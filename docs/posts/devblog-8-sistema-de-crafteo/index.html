@@ -1,0 +1,37 @@
+<p>Otra parte importante de este tipo de juegos es el poder combinar múltiples items para crear otros nuevos y Brickcraft no será menos. Por desgracia este update es más rollo, ya que hay poco de cálculo y mucho de código, aunque he intentado mostrar el mínimo.<br>
+
+</p><p>Empezando con la UI haré de nuevo algo super creativo y nunca visto hasta ahora:</p><p><img src="https://i.imgur.com/OwTQh1K.png" alt="" style="width: 661px; height: 419px;"></p><p>
+
+
+Con la parte fácil hecha, toca ir al código.<br>
+
+</p><p>Hay que crear la estructura de datos de las recetas, la cual debería contener el id del item que se creará, la cantidad del mismo y los ingredientes necesarios. Para los ingredientes tendremos otra estructura, ya que no podemos reciclar ninguna existente, porque en un principio pensaríamos que sólo es el item y la cantidad, pero nos estamos olvidando del slot, ya que para craftear objetos obligaremos a que los pongan en cierto orden.</p><p><img src="https://i.imgur.com/EX1tDB9.png" alt="" style="width: 616px; height: 306px;"></p><p>
+
+
+
+Dicho y hecho.<br>
+
+También nos tendremos que apuntar las recetas en algún sitio claro está.</p><p><img src="https://i.imgur.com/ZXl7s9c.png" alt="" style="width: 555px; height: 461px;"></p><p>
+
+
+El primer crafteo del juego será combinar 2 bricks de 2x2 para generar uno de 2x4.<br>
+
+</p><p>Ahora necesitamos volver a centrarnos en la UI. Los 4 slots de crafteo serán distintos a los de inventario. El jugador debe poder poner allí objetos pero no sacarlos de vuelta al inventario. Para descartarlos, los podrá arrastrar fuera del inventario.<br>
+Cada vez que arrastre un item en un slot de crafteo, tendremos que iterar sobre tooodas las recetas para ver si puede craftear alguno de ellos.<br>
+Aquí podemos hacer alguna triquiñuela para ir más rápidos, como ir mirando si el total de items que ha metido, encaja con el total de ingredientes de la receta.</p><p><img src="https://i.imgur.com/rrq1Fb0.png" alt="" style="width: 609px; height: 725px;"></p><p>
+
+
+Cuando encontremos una receta que puede craftear, se la presentaremos visualmente y en caso de que arrastre el item a su inventario, procederemos a quitarle todos los ingredientes y añadirle el nuevo objeto.</p><p><img src="https://i.imgur.com/lruB3sC.png" alt="" style="width: 672px; height: 311px;"></p><p>
+
+
+Actualizaremos también la UI, para reflejar si se ha quedado sín algún material o al menos mostrar cuánto han bajado.<br>
+
+Resultado:</p><p><img src="https://i.imgur.com/AxfrWbu.gif" alt="" style="width: 694px; height: 507px;"></p><p>
+
+
+Debería bloquear la cámara porque es un poco wtf que se vaya moviendo mientras estás mirando el inventario xD</p>
+<p style="text-align: center;">
+    <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+        <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+        https://github.com/tetreum/brickcraft</a>
+</p>

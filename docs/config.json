@@ -3,16 +3,76 @@
     "logo": "https://i.imgur.com/Ns1x0fQ.png",
     "entries" : [
         {
-            "slug": "devblog-1-estudiando-los-bricks",
-            "title": "Devblog 1 - Estudiando los bricks",
-            "preview": "Estas navidades quería montar un set de Lego navideño con unos amigos, pero con el tema COVID por en medio no ha sido posible. Así que me ha dado por hacer un juego donde podamos montar...",
-            "date": "2021-03-20T17:22:00Z"
+            "slug": "devblog-12-casando-el-sistema-de-construccion-con-el-terreno-parte-2",
+            "title": "Devblog 12 - Casando el sistema de construcción con el terreno - Parte 2",
+            "preview": "Retomamos donde lo dejamos: El sistema de construcción detecta colisiones con el terreno constantemente.(Rojo es que no deja construir, blanco es que sí).Como indiqué, puede haber 2 tipos de colisione...",
+            "date": "2021-03-07T17:54:00Z"
+        },
+        {
+            "slug": "devblog-11-casando-el-sistema-de-construccion-con-el-terreno-parte-1",
+            "title": "Devblog 11 - Casando el sistema de construcción con el terreno - Parte 1",
+            "preview": "En minecraft el sistema de construcción es muy simple, ya que cualquier cara de un bloque sirve. En nuestro caso no es así. Si os acordáis, para generar el terreno, hemos unido los bricks en una sola ...",
+            "date": "2021-02-28T17:54:00Z"
+        },
+        {
+            "slug": "devblog-10-generando-un-terreno-a-base-de-bricks-capitulo-2",
+            "title": "Devblog 10 - Generando un terreno a base de bricks - Capítulo 2",
+            "preview": "Nos quedamos en que el modelo era demasiado detallado para un juego. Como dije, no tengo ni idea de modelar (ni ganas), de modo que opté por el camino más fácil -> Sketchup. Sketchup es probablemen...",
+            "date": "2021-02-21T17:54:00Z"
+        },
+        {
+            "slug": "devblog-9-generando-un-terreno-a-base-de-bricks-capitulo-1",
+            "title": "Devblog 9 - Generando un terreno a base de bricks - Capítulo 1",
+            "preview": "Veamos, algo que me gustaría que este juego tenga es terreno a explorar como el de Minecraft, con sus cuevas, montañas, mares, etc..Como ya había contado al principio, para hacer algo así, primero ten...",
+            "date": "2021-02-14T17:54:00Z"
+        },
+        {
+            "slug": "devblog-8-sistema-de-crafteo",
+            "title": "Devblog 8 - Sistema de crafteo",
+            "preview": "Otra parte importante de este tipo de juegos es el poder combinar múltiples items para crear otros nuevos y Brickcraft no será menos. Por desgracia este update es más rollo, ya que hay poco de cálculo...",
+            "date": "2021-01-09T17:54:00Z"
+        },
+        {
+            "slug": "devblog-7-generacion-de-iconos",
+            "title": "Devblog 7 - Generación de iconos",
+            "preview": "Dado que el progreso en la generación del mapa vía chunks es nulo, he decidido avanzar por este lado. Como había comentado en entradas anteriores, se necesita un sistema para generar los iconos de cad...",
+            "date": "2021-01-02T17:54:00Z"
+        },
+        {
+            "slug": "devblog-6-nadando-entre-bricks",
+            "title": "Devblog 6 - Nadando entre bricks",
+            "preview": "He añadido un nuevo bloque, el de agua. No se expande progresivamente, pero sí es \"líquido\" para el jugador. Para hacerlo posible, hay que jugar con las físicas, ya que cuando estás bajo el agua el mo...",
+            "date": "2021-01-01T17:54:00Z"
+        },
+        {
+            "slug": "devblog-5-usando-decals-para-romper-bricks",
+            "title": "Devblog 5 - Usando decals para romper bricks",
+            "preview": "Al final me decidí por hacer la animación de cuando empiezas a romper un bloque. Si no me equivoco, la técnica de sobreponer texturas encima de otras se llama decal. Un ejemplo podrían ser los impacto...",
+            "date": "2020-12-31T17:54:00Z"
+        },
+        {
+            "slug": "devblog-4-mejorando-el-sistema-de-construccion",
+            "title": "Devblog 4 - Mejorando el sistema de construcción",
+            "preview": "Como dije anteriormente, la siguiente mejora es que cuando pones un brick mal, el sistema de lo diga visualmente.No tiene mucho misterio, cambio la textura del prev...",
+            "date": "2020-12-30T17:54:00Z"
+        },
+        {
+            "slug": "devblog-3-arreglando-el-sistema-de-rotacion",
+            "title": "Devblog 3 - Arreglando el sistema de rotación",
+            "preview": "Tras revisar el sistema de rotación lo primero en lo que me he fijado es en el eje de rotación.Este debería ser el centro exacto del stud, pero como podéis ver aquí, a...",
+            "date": "2020-12-29T17:54:00Z"
         },
         {
             "slug": "devblog-2-texturas",
             "title": "Devblog 2 - Texturas",
-            "preview": "Continuamos con el maldito sistema de inventarioAl final, para moverse entre los distintos slots del fast inventory he optado por usar la tecla TAB.He hecho que cambie el background del item seleccion...",
-            "date": "2021-03-23T16:44:00Z"
+            "preview": "Al final, para moverse entre los distintos slots del fast inventory he optado por usar la tecla TAB.He hecho que cambie el background del item seleccion...",
+            "date": "2020-12-28T16:44:00Z"
+        },
+        {
+            "slug": "devblog-1-estudiando-los-bricks",
+            "title": "Devblog 1 - Estudiando los bricks",
+            "preview": "Estas navidades quería montar un set de Lego navideño con unos amigos, pero con el tema COVID por en medio no ha sido posible. Así que me ha dado por hacer un juego donde podamos montar...",
+            "date": "2020-12-27T17:22:00Z"
         }
     ]
 }

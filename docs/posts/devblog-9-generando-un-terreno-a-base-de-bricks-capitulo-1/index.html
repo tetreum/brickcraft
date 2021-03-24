@@ -46,19 +46,23 @@
     Bien, ahora hay que programar algo que vaya iterando todos los triángulos de la mesh con cada delimitador para saber a qué cara pertenecen.<br>
     En Unity los datos de la mesh los tenemos en el siguiente formato:<br>
     Código:<br>
-    int[] triangles;<br>
-    Vector3[] vertices;<br>
+    <pre>
+        int[] triangles;
+        Vector3[] vertices;
+    </pre>
     Los triángulos se apuntan mediante un listado de números enteros, los cuáles hacen únicamente de referencia al listado de vértices.<br>
     Me explico:<br>
     Código:<br>
-    int[] triangles sería una lista tal que así: [0,1,2,2,3,0]<br>
-    Vector3[] vertices sería<br>
-    [<br>
-    0 => Vector3(0, 0, 0),<br>
-    1 => Vector3(0, 0, 1),<br>
-    2 => Vector3(1, 0, 1),<br>
-    3 => Vector3(1, 0, 0)<br>
-    ]<br>
+    <pre>
+    int[] triangles sería una lista tal que así: [0,1,2,2,3,0]
+    Vector3[] vertices sería
+    [
+        0 => Vector3(0, 0, 0),
+        1 => Vector3(0, 0, 1),
+        2 => Vector3(1, 0, 1),
+        3 => Vector3(1, 0, 0)
+    ]
+    </pre>
     Para que lo visualizéis:</p><p><img src="https://i.imgur.com/thb0dcM.png" alt="" style="width: 716px; height: 506px;"></p><p>
     
     

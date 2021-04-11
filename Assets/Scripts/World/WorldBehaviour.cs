@@ -2,7 +2,6 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Threading;
 using System;
-using NUnit.Framework.Constraints;
 using Brickcraft.Utils;
 
 // Highly based on https://github.com/chraft/chunk-light-tester
@@ -207,6 +206,7 @@ namespace Brickcraft.World
 			} else {
 				// Build the Mesh:
 				Mesh mesh = new Mesh();
+				mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 				mesh.vertices = chunkEntry.Vertices;
 				//mesh.SetIndices(chunkEntry.Triangles, MeshTopology.Quads, 0);
 

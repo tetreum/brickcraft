@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/WorldGenerationTest.unity
+    guid: 416242a0ec86d5c4eb76da73e0d1e6d9
   m_configObjects: {}

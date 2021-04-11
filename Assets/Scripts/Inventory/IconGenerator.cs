@@ -6,6 +6,7 @@ using UnityEngine.Rendering.HighDefinition;
 https://answers.unity.com/questions/1601619/access-or-remove-background-color-of-assetpreview.html
 https://forum.unity.com/threads/fit-object-exactly-into-perspective-cameras-field-of-view-focus-the-object.496472/
 */
+#if UNITY_EDITOR
 namespace Brickcraft
 {
     public class IconGenerator : MonoBehaviour
@@ -95,3 +96,4 @@ namespace Brickcraft
         }
     }
 }
+#endif

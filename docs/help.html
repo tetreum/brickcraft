@@ -5,8 +5,8 @@
 
     <ul>
         <li><a href="#wrong-uvs">Set correct uvs on terrain mesh</a></li>
-        <li><a href="#broken-terrain-mesh">Terrain mesh is randomly broken because of brick's top face</a></li>
         <li><a href="#remove-terrain-bricks">Ability to remove terrain bricks</a></li>
+        <li><a href="#broken-terrain-mesh"><s>Terrain mesh is randomly broken because of brick's top face</s> [FIXED BY stone-SJH]</a></li> 
     </ul>
 
     <h3 id="wrong-uvs">Set correct uvs on terrain mesh</h3>
@@ -29,7 +29,9 @@
     <hr>
 
     <h3 id="broken-terrain-mesh">Terrain mesh is randomly broken because of brick's top face</h3>
-
+    <p>FIXED BY <a href="https://github.com/stone-SJH" rel="nofollow">stone-SJH</a> on <a href="https://github.com/tetreum/brickcraft/pull/2" rel="nofollow">https://github.com/tetreum/brickcraft/pull/2</a> <br>
+    Turns out model wasn't the problem. It was about meshes with huge vertices count. That's why it seemed "random".
+    </p>
     <p>
         In order to generate the terrain mesh, i grab the brick model and i use planes to delimitate each face.
     </p>

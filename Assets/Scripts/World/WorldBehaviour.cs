@@ -115,7 +115,7 @@ namespace Brickcraft.World
 					ChunkSliceBuildEntry chunkEntry = ChunkSlicesWorkingQueue.Dequeue();
 					BuildChunkSliceMesh(chunkEntry);
 
-					if (ChunkSlicesWorkingQueue.Count == 0) {
+					if (ChunkSlicesWorkingQueue.Count == 0 && Player.Instance == null) {
 						Server.Instance.spawnPlayer();
 					}
 				}

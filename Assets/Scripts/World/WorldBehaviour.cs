@@ -206,6 +206,7 @@ namespace Brickcraft.World
 			} else {
 				// Build the Mesh:
 				Mesh mesh = new Mesh();
+				mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 				mesh.vertices = chunkEntry.Vertices;
 				//mesh.SetIndices(chunkEntry.Triangles, MeshTopology.Quads, 0);
 

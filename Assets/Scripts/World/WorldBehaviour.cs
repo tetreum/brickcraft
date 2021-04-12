@@ -185,7 +185,7 @@ namespace Brickcraft.World
 						blockCombined.transform = chunkSliceObject.transform.localToWorldMatrix;
 						combinedMeshes.Add(blockCombined);
 					} catch (Exception e) {
-						Debug.Log("Fail");
+						Debug.Log("Fail " + e.Message);
 						chunkEntry.ParentChunk.ClearDirtySlices();
 						return;
 					}
@@ -198,7 +198,7 @@ namespace Brickcraft.World
 
 					filter.mesh = finalMesh;
 				} catch (Exception e) {
-					Debug.Log("Fail");
+					Debug.Log("Fail " + e.Message);
 					chunkEntry.ParentChunk.ClearDirtySlices();
 					return;
 				}
@@ -206,7 +206,11 @@ namespace Brickcraft.World
 			} else {
 				// Build the Mesh:
 				Mesh mesh = new Mesh();
-				mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+
+				if (chunkEntry.Vertices.Length > 65535) {
+					mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+				}
+				
 				mesh.vertices = chunkEntry.Vertices;
 				//mesh.SetIndices(chunkEntry.Triangles, MeshTopology.Quads, 0);
 

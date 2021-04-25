@@ -539,11 +539,23 @@ namespace Brickcraft.World
 				vertices.Add(pos);
 				colors.Add(color);
 
+				// temporal | testing | dunno what im doing here
 				if (face == "top" || face == "bottom") {
 					uvs.Add(new Vector2(xt.x, zt.x));
-				} else {
-					uvs.Add(new Vector2(xt.y, zt.y));
 				}
+			}
+			if (face != "top" && face != "bottom") {
+				Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, BlockFace.Side);
+
+				float yMax = coords.y + coords.height;
+				float xMax = coords.x + coords.width;
+				float xMin = coords.x;
+				float yMin = coords.y;
+
+				uvs.Add(new Vector2(xMin, yMin));
+				uvs.Add(new Vector2(xMin, yMax));
+				uvs.Add(new Vector2(xMax, yMax));
+				uvs.Add(new Vector2(xMax, yMin));
 			}
 			foreach (int index in faceMap.triangles) {
 				triangles.Add(index + vertexIndex);

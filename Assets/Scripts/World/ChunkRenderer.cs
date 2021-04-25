@@ -541,7 +541,13 @@ namespace Brickcraft.World
 
 				// temporal | testing | dunno what im doing here
 				if (face == "top" || face == "bottom") {
-					uvs.Add(new Vector2(xt.x, zt.x));
+					Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, face == "top" ? BlockFace.Top : BlockFace.Bottom);
+
+					float yMax = coords.y + coords.height;
+					float xMax = coords.x + coords.width;
+					float xMin = coords.x;
+					float yMin = coords.y;
+					uvs.Add(new Vector2(vertice.x < xt.x ? xMin : xMax, vertice.z < zt.x ? yMin : yMax));
 				}
 			}
 			if (face != "top" && face != "bottom") {

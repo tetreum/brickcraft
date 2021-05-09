@@ -19,21 +19,33 @@ public class Menu : MonoBehaviour {
 
     void Awake() {
 		Instance = this;
-        DontDestroyOnLoad(transform.gameObject);
-        DontDestroyOnLoad(GameObject.Find("EventSystem"));
+		
+        //DontDestroyOnLoad(transform.gameObject);
+        //DontDestroyOnLoad(GameObject.Find("EventSystem"));
+		
         SceneManager.sceneLoaded += OnLevelFinishedLoading;
 
 		InventoryPanel.Instance = getPanel("InventoryPanel").GetComponent<InventoryPanel>();
     }
+	private void OnDestroy() {
+		SceneManager.sceneLoaded -= OnLevelFinishedLoading;
+	}
 
-    public void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode) {
+	public void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode) {
         switch (scene.name) {
+			case "Main":
+				showPanel("MainPanel");
+				break;
 			case "IconGenerator":
 				hideAllPanels();
 				Game.unlockMouse();
 				break;
+			case "Test":
+				showPanel("PlayerPanel");
+				Server.Instance.spawnPlayer(new Vector3(1.480856f, 5, -0.7904243f), Quaternion.identity);
+				break;
 			default:
-                showPanel("PlayerPanel");
+                showPanel("LoadingPanel");
 				break;
 		}
 		/*

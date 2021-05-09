@@ -55,6 +55,8 @@ namespace Brickcraft.World
 		}
 
 		void Start () {
+			Menu.Instance.showPanel("LoadingPanel");
+
 			BlockMaterial = (Material)Resources.Load ("Materials/BlockVertex", typeof(Material));
 			AtlasTexture = (Texture2D)Resources.Load("Textures/Terrain");
 		
@@ -116,7 +118,8 @@ namespace Brickcraft.World
 					BuildChunkSliceMesh(chunkEntry);
 
 					if (ChunkSlicesWorkingQueue.Count == 0 && Player.Instance == null) {
-						Server.Instance.spawnPlayer();
+						Server.Instance.spawnPlayer(new Vector3(0, 160, 0), Quaternion.identity);
+						Menu.Instance.showPanel("PlayerPanel");
 					}
 				}
 			

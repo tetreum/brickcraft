@@ -93,13 +93,13 @@ namespace Brickcraft
         }
 
         private void Start() {
-            if (SceneManager.GetActiveScene().name == "SampleScene") {
+            if (SceneManager.GetActiveScene().name == "Test") {
                 setupTest();
             }
         }
 
-        public void spawnPlayer () {
-            Instantiate(playerPrefab, new Vector3(0, 160, 0), Quaternion.identity);
+        public void spawnPlayer (Vector3 pos, Quaternion rot) {
+            Instantiate(playerPrefab, pos, rot);
         }
 
         void processPrefabs() {

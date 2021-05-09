@@ -11,6 +11,22 @@ namespace Brickcraft
     {
         public static Player Instance;
 
+        public enum FreezeReason
+        {
+            Driving = 1,
+            Dialog = 2,
+            ESCMenu = 3,
+            ViewingInventory = 4,
+            Looting = 5,
+        }
+
+        public bool isFrozen {
+            get {
+                return (freezeReason != null);
+            }
+        }
+        public FreezeReason? freezeReason;
+
         [HideInInspector]
         public int inventorySlots = 36;
 
@@ -64,6 +80,28 @@ namespace Brickcraft
             if (Input.GetKeyDown(KeyCode.Tab)) {
                 PlayerPanel.Instance.switchSelectedItem();
             }
+            if (Input.GetKeyDown(KeyCode.Escape)) {
+                Menu.Instance.togglePanel("ESCPanel");
+            }
+        }
+
+        public void freeze(FreezeReason reason) {
+            if (isFrozen) {
+                return;
+            }
+            freezeReason = reason;
+            firstPersonController.enabled = false;
+        }
+
+        public void unFreeze(FreezeReason reason) {
+            unFreeze();
+        }
+
+        public void unFreeze() {
+            freezeReason = null;
+            try {
+                firstPersonController.enabled = true;
+            } catch { }
         }
 
         void frontRaycast () {
@@ -92,6 +130,9 @@ namespace Brickcraft
 
         void dig () {
             if (activityStartTime == null) {
+                if (!Server.bricks.ContainsKey(lookedBrick.name)) {
+                    return;
+                }
                 diggedBrick = Server.bricks[lookedBrick.name];
                 activityStartTime = DateTime.Now;
 

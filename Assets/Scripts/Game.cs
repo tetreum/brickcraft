@@ -42,10 +42,6 @@ namespace Brickcraft
             breakAnimation = new BreakAnimation();
         }
 
-        private void Start() {
-            lockMouse();
-        }
-
         private void OnDestroy() {
             unlockMouse(); // unity editor is buggy and keeps mouse locked even after stopping the game...
         }

@@ -18,10 +18,12 @@ namespace Brickcraft.UI
             resetCraftingSlots();
             reload();
             Game.unlockMouse();
+            Player.Instance.freeze(Player.FreezeReason.ViewingInventory);
         }
 
         private void OnDisable() {
             Game.lockMouse();
+            Player.Instance.unFreeze(Player.FreezeReason.ViewingInventory);
         }
 
         public void reload () {

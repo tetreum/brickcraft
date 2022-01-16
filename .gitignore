@@ -12,9 +12,9 @@ sysinfo.txt
 Assets/BuildReports/
 UserSettings/
  
-# ===================================== #
-# Visual Studio / MonoDevelop generated #
-# ===================================== #
+# ============================================= #
+# Visual Studio / MonoDevelop generated / Rider #
+# ============================================= #
 [Ee]xported[Oo]bj/
 /*.userprefs
 /*.csproj
@@ -25,6 +25,7 @@ UserSettings/
 /*.unityproj
 /*.booproj
 .vs/
+.idea/
  
 # ============ #
 # OS generated #

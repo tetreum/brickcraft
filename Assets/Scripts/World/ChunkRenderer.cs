@@ -155,12 +155,12 @@ namespace Brickcraft.World
 									float xMax = coords.x + coords.width - epsilon;
 									float xMin = coords.x + epsilon;
 									float yMin = coords.y + epsilon;
-								
+
+									uvs.Add(new Vector2(xMax, yMax));
 									uvs.Add(new Vector2(xMin, yMax));
 									uvs.Add(new Vector2(xMin, yMin));
-									uvs.Add(new Vector2(xMax, yMin));							
-									uvs.Add(new Vector2(xMax, yMax));
-									
+									uvs.Add(new Vector2(xMax, yMin));
+
 								}
 							}
 						
@@ -209,11 +209,11 @@ namespace Brickcraft.World
 									float xMin = coords.x + epsilon;
 									float yMin = coords.y + epsilon;
 								
-									uvs.Add(new Vector2(xMin, yMin));
+									uvs.Add(new Vector2(xMax, yMax));
 									uvs.Add(new Vector2(xMin, yMax));
-									uvs.Add(new Vector2(xMax, yMax));							
+									uvs.Add(new Vector2(xMin, yMin));
 									uvs.Add(new Vector2(xMax, yMin));
-									
+
 								}
 							}
 						
@@ -262,12 +262,11 @@ namespace Brickcraft.World
 									float xMax = coords.x + coords.width - epsilon;
 									float xMin = coords.x + epsilon;
 									float yMin = coords.y + epsilon;
-								
-									uvs.Add(new Vector2(xMin, yMin));
+
+									uvs.Add(new Vector2(xMax, yMax));
 									uvs.Add(new Vector2(xMin, yMax));
-									uvs.Add(new Vector2(xMax, yMax));							
+									uvs.Add(new Vector2(xMin, yMin));
 									uvs.Add(new Vector2(xMax, yMin));
-									
 								}
 							}
 						
@@ -316,12 +315,12 @@ namespace Brickcraft.World
 									float xMax = coords.x + coords.width - epsilon;
 									float xMin = coords.x + epsilon;
 									float yMin = coords.y + epsilon;
-								
-									uvs.Add(new Vector2(xMin, yMin));
-									uvs.Add(new Vector2(xMin, yMax));
-									uvs.Add(new Vector2(xMax, yMax));							
-									uvs.Add(new Vector2(xMax, yMin));
 									
+									uvs.Add(new Vector2(xMax, yMax));
+									uvs.Add(new Vector2(xMin, yMax));
+									uvs.Add(new Vector2(xMin, yMin));
+									uvs.Add(new Vector2(xMax, yMin));
+
 								}
 							}
 						
@@ -370,10 +369,10 @@ namespace Brickcraft.World
 									float xMax = coords.x + coords.width - epsilon;
 									float xMin = coords.x + epsilon;
 									float yMin = coords.y + epsilon;
-								
-									uvs.Add(new Vector2(xMin, yMin));
+
+									uvs.Add(new Vector2(xMax, yMax));
 									uvs.Add(new Vector2(xMin, yMax));
-									uvs.Add(new Vector2(xMax, yMax));							
+									uvs.Add(new Vector2(xMin, yMin));
 									uvs.Add(new Vector2(xMax, yMin));
 									
 								}
@@ -543,24 +542,25 @@ namespace Brickcraft.World
 				if (face == "top" || face == "bottom") {
 					Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, face == "top" ? BlockFace.Top : BlockFace.Bottom);
 
-					float yMax = coords.y + coords.height;
-					float xMax = coords.x + coords.width;
-					float xMin = coords.x;
-					float yMin = coords.y;
+					float yMax = (coords.y + coords.height) - 0.125f;
+					float xMax = (coords.x + coords.width) - 0.125f;
+					float xMin = coords.x + 0.125f;
+					float yMin = coords.y + 0.125f;
+
 					uvs.Add(new Vector2(vertice.x < xt.x ? xMin : xMax, vertice.z < zt.x ? yMin : yMax));
 				}
 			}
 			if (face != "top" && face != "bottom") {
 				Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, BlockFace.Side);
 
-				float yMax = coords.y + coords.height;
-				float xMax = coords.x + coords.width;
-				float xMin = coords.x;
-				float yMin = coords.y;
+				float yMax = (coords.y + coords.height) - 0.125f;
+				float xMax = (coords.x + coords.width) - 0.125f;
+				float xMin = coords.x + 0.125f;
+				float yMin = coords.y + 0.125f;
 
-				uvs.Add(new Vector2(xMin, yMin));
-				uvs.Add(new Vector2(xMin, yMax));
 				uvs.Add(new Vector2(xMax, yMax));
+				uvs.Add(new Vector2(xMin, yMax));
+				uvs.Add(new Vector2(xMin, yMin));
 				uvs.Add(new Vector2(xMax, yMin));
 			}
 			foreach (int index in faceMap.triangles) {

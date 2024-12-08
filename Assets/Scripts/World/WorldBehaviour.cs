@@ -29,15 +29,15 @@ namespace Brickcraft.World
 		public Transform brickColliderObj;
 
 		private int accumulator;
-	
-		private int ChunksNum = 26*26;
-	
-		private int chunkRendered;
-	
-		public static readonly int MapMinChunkX = -13;
-		public static readonly int MapMaxChunkX = 12;
-	
-		public static readonly int MapMinCoords = MapMinChunkX * 16;
+
+        private int ChunksNum = 26 * 26;
+
+        private int chunkRendered;
+
+        public static readonly int MapMinChunkX = -13;
+        public static readonly int MapMaxChunkX = 12;
+
+        public static readonly int MapMinCoords = MapMinChunkX * 16;
 		public static readonly int MapMaxCoords = MapMaxChunkX * 16;
 
 		public static Dictionary<string, FaceMap> meshMap;
@@ -57,11 +57,11 @@ namespace Brickcraft.World
 		void Start () {
 			Menu.Instance.showPanel("LoadingPanel");
 
-			BlockMaterial = (Material)Resources.Load ("Materials/BlockVertex", typeof(Material));
-			AtlasTexture = (Texture2D)Resources.Load("Textures/Terrain");
+			BlockMaterial = (Material)Resources.Load ("Materials/Block_Triplanar", typeof(Material));
+			//AtlasTexture = (Texture2D)Resources.Load("Textures/Terrain");
 		
 			if(AtlasTexture == null) {
-				Debug.Log("Terrain texture not loaded");
+				//Debug.Log("Terrain texture not loaded");
 			}
 		
 			ChunkMeshThreadEntry[] chunkEntries = new ChunkMeshThreadEntry[ChunksNum];

@@ -21,6 +21,7 @@ namespace Brickcraft
         private Transform latestStudGrid;
         private Vector2Int latestStud;
         private bool isHighAgainstTerrain = false;
+        private StudInfo hitStud;
 
         private void Awake() {
             Instance = this;
@@ -84,7 +85,12 @@ namespace Brickcraft
             }
             if (Input.GetMouseButtonDown(1) && !isColliding) {
                 Vector3 pos = transform.position;
-                pos.y -= isHighAgainstTerrain ? 0.001f : 0.006f; // ugly hack to lower bricks pos
+
+                if (hitStud.isBottom) {
+                    pos.y += 0.004f; // i cant justify the number, just that it repeats as offset on every test
+                } else {
+                    pos.y -= isHighAgainstTerrain ? 0.001f : 0.006f; // ugly hack to lower bricks pos
+                }
                 Server.Instance.spawnBrick(PlayerPanel.Instance.selectedItem.item, pos, transform.rotation);
 
                 Player.Instance.removeItem(new UserItem() {
@@ -128,6 +134,7 @@ namespace Brickcraft
 
             // get grid dimensions
             if (hit.collider.name.StartsWith("GridStud")) {
+                stud.isBottom = hit.collider.name.Contains("Bottom");
                 string[] tmp = hit.collider.name.Replace("GridStud ", "").Replace("GridStudBottom ", "").Split('x');
                 stud.gridDimensions = new Vector2Int(int.Parse(tmp[0]), int.Parse(tmp[1]));
 
@@ -212,6 +219,7 @@ namespace Brickcraft
             if (hit.transform == latestStudGrid && stud.gridPosition == latestStud) {
                 return;
             }
+            hitStud = stud;
 
             Quaternion rot = pivot.rotation; // keep current rotation
 

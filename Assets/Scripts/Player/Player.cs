@@ -83,6 +83,25 @@ namespace Brickcraft
             if (Input.GetKeyDown(KeyCode.Escape)) {
                 Menu.Instance.togglePanel("ESCPanel");
             }
+            if (Input.GetKeyDown(KeyCode.Alpha1)) {
+                PlayerPanel.Instance.selectFastSlot(0);
+            } else if (Input.GetKeyDown(KeyCode.Alpha2)) {
+                PlayerPanel.Instance.selectFastSlot(1);
+            } else if (Input.GetKeyDown(KeyCode.Alpha3)) {
+                PlayerPanel.Instance.selectFastSlot(2);
+            } else if (Input.GetKeyDown(KeyCode.Alpha4)) {
+                PlayerPanel.Instance.selectFastSlot(3);
+            } else if (Input.GetKeyDown(KeyCode.Alpha5)) {
+                PlayerPanel.Instance.selectFastSlot(4);
+            } else if (Input.GetKeyDown(KeyCode.Alpha6)) {
+                PlayerPanel.Instance.selectFastSlot(5);
+            } else if (Input.GetKeyDown(KeyCode.Alpha7)) {
+                PlayerPanel.Instance.selectFastSlot(6);
+            } else if (Input.GetKeyDown(KeyCode.Alpha8)) {
+                PlayerPanel.Instance.selectFastSlot(7);
+            } else if (Input.GetKeyDown(KeyCode.Alpha9)) {
+                PlayerPanel.Instance.selectFastSlot(8);
+            }
         }
 
         public void freeze(FreezeReason reason) {

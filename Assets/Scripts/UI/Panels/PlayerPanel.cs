@@ -98,9 +98,19 @@ namespace Brickcraft.UI
         public void switchSelectedItem () {
             selectedSlot++;
 
-            if (selectedSlot > Player.Instance.inventorySlots) {
+            if (selectedSlot < firstSlot || selectedSlot > Player.Instance.inventorySlots) {
                 selectedSlot = firstSlot;
             }
+        }
+        public void selectFastSlot(int slotNumber) {
+            int newSlotNumber = firstSlot + slotNumber;
+
+            // has toggled the current slot, wants to unselect
+            if (newSlotNumber == selectedSlot) {
+                newSlotNumber = -1;
+            }
+
+            selectedSlot = newSlotNumber;
         }
 
         private void updateSelectedItemBackground () {

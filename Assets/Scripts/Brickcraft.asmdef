@@ -1,0 +1,17 @@
+{
+    "name": "Brickcraft",
+    "rootNamespace": "",
+    "references": [
+        "GUID:bd74f87719a4f4f4ca45cd4be8711016",
+        "GUID:457756d89b35d2941b3e7b37b4ece6f1"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

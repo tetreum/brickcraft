@@ -1,9 +1,9 @@
 using UnityEngine;
-using UnityStandardAssets.Utility;
 using Random = UnityEngine.Random;
-using Brickcraft;
+using UnityStandardAssets.Characters.FirstPerson;
+using UnityStandardAssets.Utility;
 
-namespace UnityStandardAssets.Characters.FirstPerson
+namespace Brickcraft
 {
     [RequireComponent(typeof (CharacterController))]
     [RequireComponent(typeof (AudioSource))]

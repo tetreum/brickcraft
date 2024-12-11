@@ -82,23 +82,21 @@ namespace Brickcraft.World
 			return (ushort)((x + 127) << 8 | (z + 127));
 		}
 
-		/*
-			void Update () {
+		void Update () {
 
-				foreach (Chunk chunk in ChunksMap) {
-					if (chunk == null) {
+			foreach (Chunk chunk in ChunksMap) {
+				if (chunk == null) {
+					continue;
+				}
+				foreach (ChunkSlice slice in chunk.Slices) {
+					if (slice.IsEmpty) {
 						continue;
 					}
-					foreach (ChunkSlice slice in chunk.Slices) {
-						if (slice.IsEmpty) {
-							continue;
-						}
-						slice.FrustrumCulling();
-					}
+					slice.FrustrumCulling();
 				}
 			}
-			*/
-
+		}
+	
 		void FixedUpdate()
 		{	
 			++accumulator;

@@ -103,15 +103,12 @@ namespace Brickcraft.World
 		}
 
 		public void FrustrumCulling() {
+			if (!Camera.main) {
+				return;
+			}
 			var visible = Vector3.Distance(bounds.center, Camera.main.transform.position) <= (10 * Chunk.SliceHeight);
-			visible = true;
 
-			float dot = Vector3.Dot((bounds.center - Camera.main.transform.position), Camera.main.transform.forward);
-
-			renderer.enabled = (Random.value < dot);
-			return;
-
-			if (visible) {
+            if (visible) {
 				Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
 				visible = GeometryUtility.TestPlanesAABB(planes, bounds);
 			}

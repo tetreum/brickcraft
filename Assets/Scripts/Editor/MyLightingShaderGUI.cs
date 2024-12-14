@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if UNITY_EDITOR
+using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEditor;
 
@@ -353,3 +354,4 @@ public class MyLightingShaderGUI : MyBaseShaderGUI {
 		EditorGUI.indentLevel -= 2;
 	}
 }
+#endif

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if UNITY_EDITOR
+using UnityEngine;
 using UnityEditor;
 
 public class MyBaseShaderGUI : ShaderGUI {
@@ -57,3 +58,4 @@ public class MyBaseShaderGUI : ShaderGUI {
 		editor.RegisterPropertyChangeUndo(label);
 	}
 }
+#endif

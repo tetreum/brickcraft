@@ -1,4 +1,5 @@
 using UnityEngine;
+using Brickcraft.World;
 
 namespace Brickcraft.Bricks
 {
@@ -76,7 +77,9 @@ namespace Brickcraft.Bricks
         private BrickPlacement computePlacement(RaycastHit hit, BrickModel model) {
             Vector3Int normal = dominantAxis(hit.normal);
             Vector3Int size = BrickPlacement.SizeFor(model, rotation);
-            Vector3 gridPoint = BrickGrid.WorldToGrid(hit.point);
+            // relative to the floating origin, which is a whole number of chunks so block snapping still works
+            Vector3 gridPoint = BrickGrid.WorldToLocalGrid(hit.point);
+            Vector3Int originCell = FloatingOrigin.Cell;
             Vector3Int adjacent = BrickGrid.WorldToCell(hit.point + (Vector3)normal * SurfaceOffset);
             bool snapToBlocks = !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift);
             Vector3Int origin = Vector3Int.zero;
@@ -96,9 +99,9 @@ namespace Brickcraft.Bricks
                 } else {
                     // center the brick on the crosshair
                     float start = gridPoint[axis] - size[axis] / 2f;
-                    origin[axis] = snapToBlocks
+                    origin[axis] = originCell[axis] + (snapToBlocks
                         ? Mathf.RoundToInt(start / BrickGrid.StudsPerBlock) * BrickGrid.StudsPerBlock
-                        : Mathf.RoundToInt(start);
+                        : Mathf.RoundToInt(start));
                 }
             }
 

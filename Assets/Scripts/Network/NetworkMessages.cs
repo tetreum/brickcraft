@@ -10,7 +10,7 @@ namespace Brickcraft.Network
     public struct WorldInfoMessage : NetworkMessage
     {
         public long seed;
-        public Vector3 spawn;
+        public Vector2Int spawnChunk;
 
         /// <summary>Chunks drawn around the player, the server sends one more ring for their borders.</summary>
         public int viewDistance;

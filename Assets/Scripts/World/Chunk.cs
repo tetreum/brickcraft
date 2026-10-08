@@ -73,8 +73,13 @@ namespace Brickcraft.World
 			if (ChunkObject != null)
 				return;
 
+			// relative to the floating origin, subtracted while still integers
 			ChunkObject = new GameObject(String.Format("X {0} Z {1}", X, Z));
-			ChunkObject.transform.position = new Vector3(X * 16, 0, Z * 16);
+			ChunkObject.transform.position = new Vector3(
+				(X - FloatingOrigin.Chunk.x) * 16 * Server.brickWidth,
+				0,
+				(Z - FloatingOrigin.Chunk.y) * 16 * Server.brickWidth
+			);
 		}
 
 		/// <summary>Destroys the chunk's game objects and meshes, its block data stays.</summary>
@@ -128,12 +133,8 @@ namespace Brickcraft.World
 			newObject.AddComponent<MeshFilter>();
 			newObject.AddComponent<MeshCollider>();
 
-			newObject.transform.position = new Vector3(
-				X * 16 * Server.brickWidth,
-				i * Chunk.SliceHeight * Server.brickHeight,
-				Z * 16 * Server.brickWidth
-			);
-			newObject.transform.parent = ChunkObject.transform;
+			newObject.transform.SetParent(ChunkObject.transform, false);
+			newObject.transform.localPosition = new Vector3(0, i * Chunk.SliceHeight * Server.brickHeight, 0);
 
 			slice.renderer = meshRenderer;
 			slice.CreateBoundsBox(newObject.transform);

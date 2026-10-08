@@ -18,8 +18,9 @@ namespace Brickcraft.Bricks
 
         public static readonly Vector3 CellSize = new Vector3(Server.studSize, Server.plateHeight, Server.studSize);
 
-        // World position of the corner of cell (0,0,0), which is also the corner of world block (0,0,0).
-        // World block (0,0,0) has its pivot at the world origin, so its corner is half a block back.
+        // Unity position of the corner of the floating origin's cell (FloatingOrigin.Cell), which is also
+        // the corner of a world block. Blocks have their pivot at the center of their footprint, so the
+        // corner is half a block back.
         public static readonly Vector3 Origin = new Vector3(-Server.brickWidth / 2, 0, -Server.brickWidth / 2);
 
         private static readonly Dictionary<Vector3Int, Brick> occupiedCells = new Dictionary<Vector3Int, Brick>();
@@ -28,17 +29,23 @@ namespace Brickcraft.Bricks
             occupiedCells.Clear();
         }
 
-        public static Vector3 CellToWorld(Vector3 cell) {
-            return Origin + Vector3.Scale(cell, CellSize);
+        // Cells are integers, exact anywhere in the world. They're converted to Unity positions relative to
+        // the floating origin, subtracting it while still integers, so floats stay small (see FloatingOrigin).
+
+        /// <summary>Unity position of a cell's corner, plus an offset in cells.</summary>
+        public static Vector3 CellToWorld(Vector3Int cell, Vector3 offset = default) {
+            Vector3 relative = (Vector3)(cell - FloatingOrigin.Cell) + offset;
+            return Origin + Vector3.Scale(relative, CellSize);
         }
 
-        public static Vector3 WorldToGrid(Vector3 position) {
+        /// <summary>Position in cells relative to the floating origin's cell (add FloatingOrigin.Cell once rounded).</summary>
+        public static Vector3 WorldToLocalGrid(Vector3 position) {
             Vector3 p = position - Origin;
             return new Vector3(p.x / CellSize.x, p.y / CellSize.y, p.z / CellSize.z);
         }
 
         public static Vector3Int WorldToCell(Vector3 position) {
-            return Vector3Int.FloorToInt(WorldToGrid(position));
+            return Vector3Int.FloorToInt(WorldToLocalGrid(position)) + FloatingOrigin.Cell;
         }
 
         public static Vector3Int CellToBlock(Vector3Int cell) {

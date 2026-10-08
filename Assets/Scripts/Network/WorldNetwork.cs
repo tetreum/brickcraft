@@ -39,10 +39,13 @@ namespace Brickcraft.Network
         private class ClientInterest
         {
             public readonly HashSet<Vector2Int> sentChunks = new HashSet<Vector2Int>();
+
+            // where the player will appear: the world spawn, or where it left last time
+            public Vector2Int spawnChunk;
         }
 
         private static WorldChanges serverChanges;
-        private static Vector3 spawnPosition;
+        private static Vector2Int spawnChunk;
         private static readonly Dictionary<NetworkConnectionToClient, ClientInterest> interests = new Dictionary<NetworkConnectionToClient, ClientInterest>();
         private static readonly HashSet<Vector2Int> serverChunks = new HashSet<Vector2Int>();
         private static float nextServerUpdate;
@@ -51,20 +54,22 @@ namespace Brickcraft.Network
             get { return WorldBehaviour.Instance.ViewDistance + 1; }
         }
 
+        /// <param name="spawn">absolute position players spawn at</param>
         public static void StartServer(WorldStorage storage, long unsavedSeed, Vector3 spawn) {
             Storage = storage;
             Seed = storage != null ? storage.Seed : unsavedSeed;
             serverChanges = storage != null ? storage.Changes : new WorldChanges();
-            spawnPosition = spawn;
             interests.Clear();
             serverChunks.Clear();
 
             NetworkServer.RegisterHandler<JoinWorldMessage>(onJoinWorld);
 
+            spawnChunk = WorldBehaviour.ChunkAt(FloatingOrigin.ToLocal(spawn));
+
             WorldBehaviour world = WorldBehaviour.Instance;
             if (world != null) {
                 world.Initialize(Seed, serverChanges, storage != null ? storage.EnsureLoaded : (Action<Vector2Int>)null);
-                world.SpawnPosition = spawn;
+                world.SpawnChunk = spawnChunk;
                 world.ChunkGenerated += onServerChunkGenerated;
                 world.ChunkUnloaded += onServerChunkUnloaded;
             }
@@ -131,7 +136,7 @@ namespace Brickcraft.Network
             Dictionary<NetworkConnectionToClient, Vector2Int> centers = new Dictionary<NetworkConnectionToClient, Vector2Int>();
 
             foreach (NetworkConnectionToClient conn in interests.Keys) {
-                Vector2Int center = WorldBehaviour.ChunkAt(conn.identity != null ? conn.identity.transform.position : spawnPosition);
+                Vector2Int center = conn.identity != null ? WorldBehaviour.ChunkAt(conn.identity.transform.position) : interests[conn].spawnChunk;
                 centers[conn] = center;
                 addArea(wanted, center, loadRadius);
                 addArea(kept, center, loadRadius + UnloadMargin);
@@ -223,11 +228,17 @@ namespace Brickcraft.Network
             if (!conn.isReady) {
                 NetworkServer.SetClientReady(conn);
             }
-            interests[conn] = new ClientInterest();
+            // returning players stream in around where they left
+            ClientInterest interest = new ClientInterest() { spawnChunk = spawnChunk };
+            if (conn.authenticationData is ConnectedPlayer player && BrickcraftNetworkManager.HasSavedPosition(player.record)) {
+                PlayerRecord record = player.record;
+                interest.spawnChunk = WorldBehaviour.ChunkAt(FloatingOrigin.ToLocal(record.LastX.Value, record.LastY.Value, record.LastZ.Value));
+            }
+            interests[conn] = interest;
 
             conn.Send(new WorldInfoMessage() {
                 seed = Seed,
-                spawn = spawnPosition,
+                spawnChunk = interest.spawnChunk,
                 viewDistance = WorldBehaviour.Instance != null ? WorldBehaviour.Instance.ViewDistance : 0,
             });
 
@@ -267,7 +278,7 @@ namespace Brickcraft.Network
         private static bool hasRequestedWorld;
         private static bool hasWorldInfo;
         private static bool isSpawnAreaReady;
-        private static Vector3 spawn;
+        private static Vector2Int spawn;
 
         // changes of the chunks the server sent us
         private static WorldChanges clientChanges;
@@ -314,7 +325,7 @@ namespace Brickcraft.Network
             WorldBehaviour world = WorldBehaviour.Instance;
 
             if (world != null) {
-                Vector2Int center = WorldBehaviour.ChunkAt(spawn);
+                Vector2Int center = spawn;
 
                 for (int x = -SpawnAreaRadius; x <= SpawnAreaRadius; x++) {
                     for (int z = -SpawnAreaRadius; z <= SpawnAreaRadius; z++) {
@@ -334,7 +345,7 @@ namespace Brickcraft.Network
         }
 
         private static void onWorldInfo(WorldInfoMessage message) {
-            spawn = message.spawn;
+            spawn = message.spawnChunk;
             hasWorldInfo = true;
 
             WorldBehaviour world = WorldBehaviour.Instance;
@@ -348,7 +359,7 @@ namespace Brickcraft.Network
                 world.ChunkGenerated += onClientChunkGenerated;
                 world.ChunkUnloaded += onClientChunkUnloaded;
             }
-            world.SpawnPosition = message.spawn;
+            world.SpawnChunk = message.spawnChunk;
             world.IsLoadingSpawn = true;
         }
 

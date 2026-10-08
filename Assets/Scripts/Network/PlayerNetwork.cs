@@ -22,6 +22,14 @@ namespace Brickcraft.Network
         [SyncVar]
         public string playerName;
 
+        // Absolute spawn point, set by the server. Mirror's spawn message carries the server's local
+        // position, which means nothing with another floating origin, and owners of client authoritative
+        // objects don't get their initial transform state, so the local player places itself from these.
+        [SyncVar] public double spawnX;
+        [SyncVar] public double spawnY;
+        [SyncVar] public double spawnZ;
+        [SyncVar] public float spawnYaw;
+
         private PlayerInventory inventory;
 
         private void Awake() {
@@ -35,7 +43,23 @@ namespace Brickcraft.Network
         }
 
         public override void OnStartLocalPlayer() {
+            // before the first position is sent, and before mouse look reads the rotation in Start
+            transform.SetPositionAndRotation(FloatingOrigin.ToLocal(spawnX, spawnY, spawnZ), Quaternion.Euler(0, spawnYaw, 0));
+
+            // the character controller keeps its own position, it would move the player back otherwise
+            Physics.SyncTransforms();
+
             GetComponent<Player>().onStartLocalPlayer();
+        }
+
+        [Server]
+        public void ServerSetSpawn(Vector3 localPosition, float yaw) {
+            // sync vars become properties once weaved, they can't be out parameters
+            FloatingOrigin.ToAbsolute(localPosition, out double x, out double y, out double z);
+            spawnX = x;
+            spawnY = y;
+            spawnZ = z;
+            spawnYaw = yaw;
         }
 
         private void setupRemotePlayer() {
@@ -101,7 +125,7 @@ namespace Brickcraft.Network
                 return;
             }
             BlockType blockType = WorldBehaviour.Instance.GetBlockType(block);
-            Vector3 blockCenter = BrickGrid.CellToWorld(BrickGrid.BlockToCell(block) + new Vector3(1, 1.5f, 1));
+            Vector3 blockCenter = BrickGrid.CellToWorld(BrickGrid.BlockToCell(block), new Vector3(1, 1.5f, 1));
 
             if (!BlockDatabase.Get(blockType).isBreakable || !isInReach(blockCenter)) {
                 return;

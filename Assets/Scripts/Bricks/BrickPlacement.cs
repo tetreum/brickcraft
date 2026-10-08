@@ -55,7 +55,7 @@ namespace Brickcraft.Bricks
         public Vector3 Position {
             get {
                 Vector3Int size = Size;
-                return BrickGrid.CellToWorld(origin + new Vector3(size.x / 2f, 0, size.z / 2f));
+                return BrickGrid.CellToWorld(origin, new Vector3(size.x / 2f, 0, size.z / 2f));
             }
         }
 

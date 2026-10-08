@@ -27,6 +27,18 @@ namespace Brickcraft.Network
         public long LastSeenAt { get; set; }
         public int TimesJoined { get; set; }
         public long PlayTimeSeconds { get; set; }
+
+        // where the player was in the world when it last left, absolute coordinates; null until then
+        public double? LastX { get; set; }
+        public double? LastY { get; set; }
+        public double? LastZ { get; set; }
+
+        /// <summary>Direction the player's body faced, in degrees around Y.</summary>
+        public float? LastYaw { get; set; }
+
+        public bool HasLastPosition {
+            get { return LastX.HasValue && LastY.HasValue && LastZ.HasValue; }
+        }
     }
 
     [Table("player_sessions")]
@@ -115,6 +127,15 @@ namespace Brickcraft.Network
             connection.Insert(player);
 
             return player;
+        }
+
+        /// <summary>Remembers where the player is, to put it back there next time.</summary>
+        public void SavePosition(PlayerRecord player, double x, double y, double z, float yaw) {
+            player.LastX = x;
+            player.LastY = y;
+            player.LastZ = z;
+            player.LastYaw = yaw;
+            connection.Update(player);
         }
 
         // -------- sessions --------

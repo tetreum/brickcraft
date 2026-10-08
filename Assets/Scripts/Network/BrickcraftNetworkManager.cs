@@ -25,7 +25,7 @@ namespace Brickcraft.Network
             }
         }
 
-        [Tooltip("Where players spawn when the scene has no NetworkStartPosition")]
+        [Tooltip("Where players spawn when the scene has no NetworkStartPosition, in absolute coordinates")]
         public Vector3 defaultSpawnPosition = new Vector3(0, 160, 0);
 
         // the player's pivot is at the middle of its body
@@ -116,6 +116,14 @@ namespace Brickcraft.Network
             }
         }
 
+        // the host's player objects are destroyed before the server stops, so save them first
+        public override void OnStopHost() {
+            foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {
+                endSession(conn);
+            }
+            base.OnStopHost();
+        }
+
         public override void OnStopServer() {
             foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {
                 endSession(conn);
@@ -136,6 +144,10 @@ namespace Brickcraft.Network
                 if (WorldNetwork.Storage != null) {
                     WorldNetwork.Storage.SaveInBackground();
                 }
+                // so a crash doesn't send players back much
+                foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {
+                    savePosition(conn);
+                }
             }
         }
 
@@ -151,6 +163,7 @@ namespace Brickcraft.Network
 
         private void endSession(NetworkConnectionToClient conn) {
             if (conn.authenticationData is ConnectedPlayer player && !player.hasLeft) {
+                savePosition(conn);
                 player.hasLeft = true;
                 Database.EndSession(player.record, player.session);
                 Debug.Log(player.record.Name + " left");
@@ -167,23 +180,48 @@ namespace Brickcraft.Network
         }
 
         public override void OnServerAddPlayer(NetworkConnectionToClient conn) {
+            ConnectedPlayer connected = (ConnectedPlayer)conn.authenticationData;
             Transform start = GetStartPosition();
-            Vector3 position = start != null ? start.position : defaultSpawnPosition;
+            Vector3 position = start != null ? start.position : FloatingOrigin.ToLocal(defaultSpawnPosition);
             Quaternion rotation = start != null ? start.rotation : Quaternion.identity;
 
-            // drop players just above the ground instead of from the sky
-            if (start == null && WorldBehaviour.Instance != null && WorldBehaviour.Instance.IsGenerated(WorldBehaviour.ChunkAt(position))) {
+            if (HasSavedPosition(connected.record)) {
+                // back where it left
+                PlayerRecord record = connected.record;
+                position = FloatingOrigin.ToLocal(record.LastX.Value, record.LastY.Value, record.LastZ.Value);
+                rotation = Quaternion.Euler(0, record.LastYaw ?? 0, 0);
+            } else if (start == null && WorldBehaviour.Instance != null && WorldBehaviour.Instance.IsGenerated(WorldBehaviour.ChunkAt(position))) {
+                // drop players just above the ground instead of from the sky
                 position.y = WorldBehaviour.Instance.GetSurfaceHeight(position) + SpawnHeightAboveGround;
             }
 
-            ConnectedPlayer connected = (ConnectedPlayer)conn.authenticationData;
             GameObject player = Instantiate(playerPrefab, position, rotation);
             player.name = playerPrefab.name + " [" + connected.record.Name + "]";
 
-            player.GetComponent<PlayerNetwork>().playerName = connected.record.Name;
+            PlayerNetwork network = player.GetComponent<PlayerNetwork>();
+            network.playerName = connected.record.Name;
+            network.ServerSetSpawn(position, rotation.eulerAngles.y);
             loadInventory(player.GetComponent<PlayerInventory>(), connected.record);
 
             NetworkServer.AddPlayerForConnection(conn, player);
+        }
+
+        /// <summary>
+        /// Players come back where they left, but only in the generated world: the test scene shares
+        /// the players database but is another place.
+        /// </summary>
+        public static bool HasSavedPosition(PlayerRecord record) {
+            return record.HasLastPosition && WorldBehaviour.Instance != null;
+        }
+
+        // absolute position and facing direction, saved as doubles so they're exact however far
+        private void savePosition(NetworkConnectionToClient conn) {
+            if (WorldBehaviour.Instance == null || conn.identity == null || !(conn.authenticationData is ConnectedPlayer player) || player.hasLeft) {
+                return;
+            }
+            Transform transform = conn.identity.transform;
+            FloatingOrigin.ToAbsolute(transform.position, out double x, out double y, out double z);
+            Database.SavePosition(player.record, x, y, z, transform.eulerAngles.y);
         }
 
         private void loadInventory(PlayerInventory inventory, PlayerRecord record) {

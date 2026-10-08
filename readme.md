@@ -38,6 +38,8 @@ The server owns the world. Clients generate the terrain from the server's seed a
 
 The world has no edges, it's streamed around the players: the server keeps the chunks around every player loaded (`ViewDistance` on the World object, 8 chunks by default, plus a ring for their borders) and unloads the rest. Each client gets the chunks around its own player, nearest first, and live changes only for the chunks it has. Players spawn as soon as the chunks around the spawn are ready, and are held in place if they ever get to ground that isn't loaded yet.
 
+To stay precise however far players go, the game uses a floating origin: game logic works in integer cells, blocks and chunks, Unity positions are relative to a chunk near the local player (subtracted while still integers), and when the player gets about 400 units away the origin moves and the scene shifts with it. Each peer has its own origin, so player positions are sent as absolute coordinates.
+
 Players are identified by the name typed in the menu plus their machine id (`SystemInfo.deviceUniqueIdentifier`): the first machine that uses a name owns it on that server, so nobody else can play with it.
 
 ### Saves
@@ -54,7 +56,7 @@ Changed chunks are written on a background thread every 30 seconds (`autosaveInt
 
 The server keeps a SQLite database (`players.db`, via [unity-sqlite-net](https://github.com/gilzoide/unity-sqlite-net)) with:
 
-- `players`: everyone that joined, with their hashed machine id, number of joins and play time.
+- `players`: everyone that joined, with their hashed machine id, number of joins, play time, and where they were (absolute position and facing) when they left, saved on disconnect and with every autosave. Players come back there next time, the world streams in around that spot.
 - `player_sessions`: every join, with its address and when the player joined and left.
 - `inventory_items`: each player's inventory. Inventories only change on the server and are synced to their owner; new players get the `starterItems` of the NetworkManager.
 

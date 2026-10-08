@@ -65,7 +65,7 @@ namespace Brickcraft.World
 		public long? Seed { get; private set; }
 
 		/// <summary>Where chunks are drawn around until the local player exists.</summary>
-		public Vector3 SpawnPosition { get; set; }
+		public Vector2Int SpawnChunk { get; set; }
 
 		/// <summary>True while the area around the spawn is loading, uploads get a bigger budget.</summary>
 		public bool IsLoadingSpawn { get; set; }
@@ -86,6 +86,7 @@ namespace Brickcraft.World
 
 		private void Awake() {
 			Instance = this;
+			FloatingOrigin.Reset();
 		}
 
 		void Start () {
@@ -197,7 +198,10 @@ namespace Brickcraft.World
 			if (!Seed.HasValue)
 				return;
 
-			Vector2Int center = ChunkAt(Player.Instance != null ? Player.Instance.transform.position : SpawnPosition);
+			if (Player.Instance != null)
+				FloatingOrigin.Recenter(Player.Instance.transform.position);
+
+			Vector2Int center = Player.Instance != null ? ChunkAt(Player.Instance.transform.position) : SpawnChunk;
 
 			foreach (Chunk chunk in chunks.Values) {
 				if (!chunk.HasMesh)

@@ -250,6 +250,9 @@ namespace Brickcraft.Network
         public override void OnStartClient() {
             base.OnStartClient();
             WorldNetwork.StartClient();
+
+            UI.ChatPanel.ClearHistory();
+            NetworkClient.RegisterHandler<ChatMessage>(UI.ChatPanel.OnChatMessage);
         }
 
         public override void OnStopClient() {

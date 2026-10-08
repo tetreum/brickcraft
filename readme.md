@@ -21,6 +21,7 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 - TAB - Switch between fast inventory slots
 - 1-9 - Select a fast inventory slot
 - I - Open inventory
+- Enter - Chat (the "Chat" input of the Input Manager), Enter again to send, Escape to cancel
 - Left click (hold) - Remove placed bricks and terrain blocks
 - Right click (having a block selected in inventory) - Adds a block
 - Mouse wheel / R (having a block selected in inventory) - Rotates block

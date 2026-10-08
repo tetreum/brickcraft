@@ -20,6 +20,7 @@ namespace Brickcraft
             ViewingInventory = 4,
             Looting = 5,
             LoadingWorld = 6,
+            Chatting = 7,
         }
 
         public bool isFrozen {
@@ -109,6 +110,11 @@ namespace Brickcraft
                 } else {
                     stopDigging();
                 }
+            }
+
+            // the keys typed in the chat (or the Escape closing it) aren't shortcuts
+            if (ChatPanel.IsTyping || ChatPanel.WasClosedThisFrame) {
+                return;
             }
             if (Input.GetKeyDown(KeyCode.I)) {
                 Menu.Instance.togglePanel("InventoryPanel");

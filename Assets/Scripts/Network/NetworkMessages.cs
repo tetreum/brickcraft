@@ -35,6 +35,13 @@ namespace Brickcraft.Network
         public int chunkZ;
     }
 
+    /// <summary>Server to clients: a chat message, already checked by the server.</summary>
+    public struct ChatMessage : NetworkMessage
+    {
+        public string sender;
+        public string text;
+    }
+
     /// <summary>Server to client: a world block changed (dug or placed).</summary>
     public struct BlockChangedMessage : NetworkMessage
     {

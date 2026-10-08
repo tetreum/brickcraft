@@ -139,6 +139,38 @@ namespace Brickcraft.Network
             }
         }
 
+        // a message every half a second at most
+        private const double ChatInterval = 0.5;
+        private double nextChatTime;
+
+        [Command]
+        public void CmdChat(string text) {
+            text = cleanChatText(text);
+
+            if (text.Length == 0 || NetworkTime.time < nextChatTime) {
+                return;
+            }
+            nextChatTime = NetworkTime.time + ChatInterval;
+
+            Debug.Log("[Chat] " + playerName + ": " + text);
+            NetworkServer.SendToReady(new ChatMessage() { sender = playerName, text = text });
+        }
+
+        // one line of printable text, no longer than the chat allows
+        private static string cleanChatText(string text) {
+            if (text == null) {
+                return "";
+            }
+            System.Text.StringBuilder clean = new System.Text.StringBuilder(text.Length);
+
+            foreach (char c in text) {
+                clean.Append(char.IsControl(c) ? ' ' : c);
+            }
+            string result = clean.ToString().Trim();
+
+            return result.Length > UI.ChatPanel.MaxMessageLength ? result.Substring(0, UI.ChatPanel.MaxMessageLength) : result;
+        }
+
         [Server]
         private bool isInReach(Vector3 position) {
             return Vector3.Distance(transform.position, position) <= MaxReach;

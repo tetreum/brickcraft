@@ -48,7 +48,20 @@ namespace Brickcraft.UI
 
         /// <summary>Client handler of the messages the server relays.</summary>
         public static void OnChatMessage(ChatMessage message) {
-            history.Add(new Line() { time = Time.unscaledTime, text = message.sender + ": " + message.text });
+            addLine(message.sender + ": " + message.text);
+        }
+
+        /// <summary>Client handler of the events the server announces, like players joining or leaving.</summary>
+        public static void OnChatEvent(ChatEventMessage message) {
+            string text = ChatEvents.Describe(message);
+
+            if (text != null) {
+                addLine(text);
+            }
+        }
+
+        private static void addLine(string text) {
+            history.Add(new Line() { time = Time.unscaledTime, text = text });
 
             if (history.Count > HistorySize) {
                 history.RemoveAt(0);

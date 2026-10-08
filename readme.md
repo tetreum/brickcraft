@@ -41,6 +41,8 @@ The world has no edges, it's streamed around the players: the server keeps the c
 
 To stay precise however far players go, the game uses a floating origin: game logic works in integer cells, blocks and chunks, Unity positions are relative to a chunk near the local player (subtracted while still integers), and when the player gets about 400 units away the origin moves and the scene shifts with it. Each peer has its own origin, so player positions are sent as absolute coordinates.
 
+Besides player messages, the chat shows events: players joining, leaving, being kicked or banned. The server sends a `ChatEventMessage` saying what happened (type, player, who did it, reason) and each client words it (`ChatEvents.Describe`); to add an event, add a `ChatEventType`, its sentence in `Describe`, and send it with `ChatEvents.Send`.
+
 The first player to join a save without admins (the host, starting singleplayer or a server) becomes its admin; everyone else joins as a `user`.
 
 Admins can type commands in the chat:

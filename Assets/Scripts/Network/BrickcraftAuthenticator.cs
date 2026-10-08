@@ -22,6 +22,10 @@ namespace Brickcraft.Network
         public PlayerRecord record;
         public PlayerSessionRecord session;
         public bool hasLeft;
+        /// <summary>Its player spawned, the others were told it joined.</summary>
+        public bool hasJoined;
+        /// <summary>The others were already told why it's leaving (kicked, banned).</summary>
+        public bool leaveAnnounced;
     }
 
     /// <summary>

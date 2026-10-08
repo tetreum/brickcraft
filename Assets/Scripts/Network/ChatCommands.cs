@@ -105,7 +105,8 @@ namespace Brickcraft.Network
                 return;
             }
 
-            announce(player.record.Name + " was kicked by " + admin.record.Name + withReason(reason));
+            player.leaveAnnounced = true;
+            ChatEvents.Send(new ChatEventMessage() { type = ChatEventType.Kicked, player = player.record.Name, by = admin.record.Name, reason = reason });
             disconnect(conn, "You were kicked by " + admin.record.Name + withReason(reason));
         }
 
@@ -132,7 +133,10 @@ namespace Brickcraft.Network
             }
 
             BrickcraftNetworkManager.Instance.Database.SetBanned(player, true, reason);
-            announce(player.Name + " was banned by " + admin.record.Name + withReason(reason));
+            if (online != null) {
+                online.leaveAnnounced = true;
+            }
+            ChatEvents.Send(new ChatEventMessage() { type = ChatEventType.Banned, player = player.Name, by = admin.record.Name, reason = reason });
             Debug.Log(player.Name + " (" + player.Id + ") was banned by " + admin.record.Name + withReason(reason));
 
             if (conn != null) {
@@ -265,10 +269,6 @@ namespace Brickcraft.Network
 
         private static void reply(NetworkConnectionToClient conn, string text) {
             conn.Send(new ChatMessage() { sender = ServerName, text = text });
-        }
-
-        private static void announce(string text) {
-            NetworkServer.SendToReady(new ChatMessage() { sender = ServerName, text = text });
         }
     }
 }

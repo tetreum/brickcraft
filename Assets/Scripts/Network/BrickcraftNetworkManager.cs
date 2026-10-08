@@ -119,14 +119,14 @@ namespace Brickcraft.Network
         // the host's player objects are destroyed before the server stops, so save them first
         public override void OnStopHost() {
             foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {
-                endSession(conn);
+                endSession(conn, false);
             }
             base.OnStopHost();
         }
 
         public override void OnStopServer() {
             foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {
-                endSession(conn);
+                endSession(conn, false);
             }
             WorldNetwork.StopServer();
             Database.Dispose();
@@ -156,17 +156,22 @@ namespace Brickcraft.Network
         }
 
         public override void OnServerDisconnect(NetworkConnectionToClient conn) {
-            endSession(conn);
+            endSession(conn, true);
             WorldNetwork.ServerDisconnect(conn);
             base.OnServerDisconnect(conn);
         }
 
-        private void endSession(NetworkConnectionToClient conn) {
+        // announce is false when the whole server stops, nobody would be left to read it
+        private void endSession(NetworkConnectionToClient conn, bool announce) {
             if (conn.authenticationData is ConnectedPlayer player && !player.hasLeft) {
                 savePosition(conn);
                 player.hasLeft = true;
                 Database.EndSession(player.record, player.session);
                 Debug.Log(player.record.Name + " left");
+
+                if (announce && player.hasJoined && !player.leaveAnnounced) {
+                    ChatEvents.Send(new ChatEventMessage() { type = ChatEventType.Left, player = player.record.Name }, conn);
+                }
             }
         }
 
@@ -205,6 +210,9 @@ namespace Brickcraft.Network
             loadInventory(player.GetComponent<PlayerInventory>(), connected.record);
 
             NetworkServer.AddPlayerForConnection(conn, player);
+
+            connected.hasJoined = true;
+            ChatEvents.Send(new ChatEventMessage() { type = ChatEventType.Joined, player = connected.record.Name });
         }
 
         /// <summary>
@@ -254,6 +262,7 @@ namespace Brickcraft.Network
 
             UI.ChatPanel.ClearHistory();
             NetworkClient.RegisterHandler<ChatMessage>(UI.ChatPanel.OnChatMessage);
+            NetworkClient.RegisterHandler<ChatEventMessage>(UI.ChatPanel.OnChatEvent);
 
             disconnectReason = null;
             NetworkClient.RegisterHandler<DisconnectReasonMessage>(message => disconnectReason = message.reason);

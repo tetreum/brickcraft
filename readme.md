@@ -55,13 +55,15 @@ Admins can type commands in the chat:
 
 `NICK|ID` is a player name (any case) or, if no name matches, a player id. Admins can't kick or ban themselves, other admins or the host.
 
+The game version is Player Settings → Version (`GameVersion.Current`), shown in the main menu. Clients can only join servers running exactly the same version, otherwise the menu says which version the server runs, so bump it on every release that changes what goes over the network.
+
 Players are identified by the name typed in the menu plus their machine id (`SystemInfo.deviceUniqueIdentifier`): the first machine that uses a name owns it on that server, so nobody else can play with it.
 
 ### Saves
 
 Everything is saved in `<persistentDataPath>/saves/<save name>/` (`saveName` on the NetworkManager, `world` by default):
 
-- `world.dat`: the world's seed, the generator version and when it was created and last saved.
+- `world.dat`: the world's seed, the generator version, when it was created and last saved, and which game versions created it and played it last.
 - `regions/r.<x>.<z>.bcr`: what players changed (blocks and bricks), in region files of 32x32 chunks. The terrain itself is never saved, it's generated again from the seed and the changes are applied on top, so a save only grows with what players do, not with the size of the world. Each chunk record is compressed and can be rewritten alone; new versions are written before the old ones are released, so a crash can't leave half a chunk. Regions nobody changed have no file.
 
 Regions are streamed with the world: the changes of a region are read when the server loads its first chunk, and saved and dropped from memory when it unloads its last one, so memory only holds the areas around players.

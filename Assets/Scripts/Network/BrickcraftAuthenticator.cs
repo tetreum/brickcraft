@@ -6,6 +6,8 @@ namespace Brickcraft.Network
 {
     public struct AuthRequestMessage : NetworkMessage
     {
+        /// <summary>GameVersion.Current of the client. Keep it the first field, so any version can read it.</summary>
+        public string version;
         public string name;
         public string machineId;
     }
@@ -53,7 +55,9 @@ namespace Brickcraft.Network
             }
 
             GameDatabase database = BrickcraftNetworkManager.Instance.Database;
-            string error = PlayerIdentity.ValidateName(request.name);
+            string error = request.version != GameVersion.Current
+                ? "The server runs version " + GameVersion.Current + ", you have " + (string.IsNullOrEmpty(request.version) ? "an unknown version" : request.version)
+                : PlayerIdentity.ValidateName(request.name);
             PlayerRecord player = null;
 
             if (error == null) {
@@ -129,6 +133,7 @@ namespace Brickcraft.Network
         public override void OnClientAuthenticate() {
             LastRejection = null;
             NetworkClient.Send(new AuthRequestMessage() {
+                version = GameVersion.Current,
                 name = PlayerIdentity.Name,
                 machineId = PlayerIdentity.MachineId,
             });

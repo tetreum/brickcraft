@@ -9,7 +9,8 @@ namespace Brickcraft.World
 {
     /// <summary>
     /// A saved world on disk, owned by the server:
-    ///   world.dat                 header: format version, seed, generator version, timestamps
+    ///   world.dat                 header: format version, seed, generator version, timestamps,
+    ///                             game versions that created and last saved it
     ///   regions/r.[x].[z].bcr     changes of each chunk, see <see cref="RegionFile"/>
     ///
     /// The terrain itself is never stored, it's generated again from the seed. Saves only contain
@@ -30,11 +31,17 @@ namespace Brickcraft.World
         public const ushort GeneratorVersion = 2;
 
         private const uint Magic = 0x44574342; // "BCWD"
-        private const ushort FormatVersion = 1;
+        // 2: game versions
+        private const ushort FormatVersion = 2;
 
         public string Folder { get; private set; }
         public long Seed { get; private set; }
         public long CreatedAt { get; private set; }
+
+        /// <summary>The game version that created the world, null for worlds older than that.</summary>
+        public string CreatedWithVersion { get; private set; }
+        /// <summary>The game version that played the world last, before this session.</summary>
+        public string LastSavedWithVersion { get; private set; }
 
         /// <summary>The changes of the loaded regions.</summary>
         public WorldChanges Changes { get; private set; }
@@ -59,9 +66,11 @@ namespace Brickcraft.World
 
             if (File.Exists(Path.Combine(folder, HeaderFile))) {
                 storage.readHeader();
+                storage.writeHeader(); // so it records this version even if nothing changes
             } else {
                 storage.Seed = newSeed;
                 storage.CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                storage.CreatedWithVersion = GameVersion.Current;
                 storage.writeHeader();
                 UnityEngine.Debug.Log("Created world " + folder + " with seed " + newSeed);
             }
@@ -275,6 +284,13 @@ namespace Brickcraft.World
                 Seed = reader.ReadInt64();
                 ushort generator = reader.ReadUInt16();
                 CreatedAt = reader.ReadInt64();
+                reader.ReadInt64(); // last saved
+
+                if (format >= 2) {
+                    CreatedWithVersion = reader.ReadString();
+                    LastSavedWithVersion = reader.ReadString();
+                }
+                UnityEngine.Debug.Log("World created with version " + (CreatedWithVersion ?? "unknown") + ", last saved with " + (LastSavedWithVersion ?? "unknown"));
 
                 if (generator != GeneratorVersion) {
                     UnityEngine.Debug.LogWarning("The world was created with another version of the generator, saved changes may not line up with the terrain");
@@ -294,6 +310,8 @@ namespace Brickcraft.World
                 writer.Write(GeneratorVersion);
                 writer.Write(CreatedAt);
                 writer.Write(DateTimeOffset.UtcNow.ToUnixTimeSeconds()); // last saved
+                writer.Write(CreatedWithVersion ?? "unknown");
+                writer.Write(GameVersion.Current);
             }
 
             if (File.Exists(path)) {

@@ -7,6 +7,7 @@ public class MainPanel : MonoBehaviour
     public InputField addressInput;
     public InputField nameInput;
     public Text messageText;
+    public Text versionText;
 
     private static bool hasReadCommandLine;
 
@@ -14,6 +15,9 @@ public class MainPanel : MonoBehaviour
     public static string PendingMessage;
 
     private void OnEnable () {
+        if (versionText != null) {
+            versionText.text = "v" + Brickcraft.GameVersion.Current;
+        }
         if (nameInput != null) {
             nameInput.text = PlayerIdentity.Name;
         }

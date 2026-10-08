@@ -16,6 +16,9 @@ namespace Brickcraft.World
 		public int SliceIndex;
 		public int ChunkVersion;
 
+		// queued by a chunk render job, counted in the chunk's PendingSliceUploads
+		public bool CountsAsPending;
+
 		public Vector3[] ColliderVertices;
 		public int[] ColliderTriangles;
 	}

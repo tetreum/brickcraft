@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2292960563258503447}
   - component: {fileID: 6044885389343897855}
   - component: {fileID: 958512585996616361}
+  - component: {fileID: 5228763039519626170}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -87,7 +88,7 @@ MonoBehaviour:
   disconnectInactiveConnections: 0
   disconnectInactiveTimeout: 60
   exceptionsDisconnect: 1
-  authenticator: {fileID: 0}
+  authenticator: {fileID: 5228763039519626170}
   offlineScene: Assets/Scenes/Main.unity
   onlineScene: Assets/Scenes/WorldGenerationTest.unity
   offlineSceneLoadDelay: 0
@@ -111,3 +112,25 @@ MonoBehaviour:
   timeInterpolationGui: 0
   defaultSpawnPosition: {x: 0, y: 160, z: 0}
   seed: 13284938921
+  saveName: world
+  starterItems:
+  - itemId: 1
+    quantity: 100
+--- !u!114 &5228763039519626170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8272556154158791771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adec28c9c5cf31b49bcecbe5cd0e7ebd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  OnServerAuthenticated:
+    m_PersistentCalls:
+      m_Calls: []
+  OnClientAuthenticated:
+    m_PersistentCalls:
+      m_Calls: []

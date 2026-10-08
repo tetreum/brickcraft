@@ -19,6 +19,7 @@ namespace Brickcraft
             ESCMenu = 3,
             ViewingInventory = 4,
             Looting = 5,
+            LoadingWorld = 6,
         }
 
         public bool isFrozen {
@@ -29,7 +30,7 @@ namespace Brickcraft
         public FreezeReason? freezeReason;
 
         [HideInInspector]
-        public int inventorySlots = 36;
+        public int inventorySlots = Brickcraft.Inventory.SlotCount;
 
         [HideInInspector]
         RaycastHit latestHit;
@@ -45,7 +46,7 @@ namespace Brickcraft
         private float rayLength = 5f;
         private bool hasHit;
         private BrickPlacer brickPlacer;
-        private List<UserItem> inventory = new List<UserItem>();
+        private PlayerInventory inventory;
 
         // what the player is looking at: either a placed brick or a world block
         private Brick lookedBrick;
@@ -68,6 +69,7 @@ namespace Brickcraft
             firstPersonController = GetComponent<FirstPersonController>();
             triggerDetector = GetComponentInChildren<TriggerDetector>();
             network = GetComponent<PlayerNetwork>();
+            inventory = GetComponent<PlayerInventory>();
         }
 
         // every player in the game has this component, but only the local one is controlled from here
@@ -86,15 +88,14 @@ namespace Brickcraft
 
         private void Start() {
             PlayerPanel.Instance.reload();
-
-            // temporal for testing
-            addItem(new UserItem() {
-                id = 1,
-                quantity = 100,
-            });
         }
 
         private void Update() {
+            // remote players are disabled once spawned, but on the host they can tick once before that
+            if (Instance != this) {
+                return;
+            }
+            waitForGround();
             frontRaycast();
 
             if (isFrozen) {
@@ -148,7 +149,23 @@ namespace Brickcraft
         }
 
         public void unFreeze(FreezeReason reason) {
-            unFreeze();
+            if (freezeReason == reason) {
+                unFreeze();
+            }
+        }
+
+        // the world streams in around the player; if it walks faster than that, keep it from falling through
+        private void waitForGround() {
+            if (WorldBehaviour.Instance == null) {
+                return;
+            }
+            bool isGroundLoaded = WorldBehaviour.Instance.IsWalkable(WorldBehaviour.ChunkAt(transform.position));
+
+            if (!isGroundLoaded && !isFrozen) {
+                freeze(FreezeReason.LoadingWorld);
+            } else if (isGroundLoaded && freezeReason == FreezeReason.LoadingWorld) {
+                unFreeze(FreezeReason.LoadingWorld);
+            }
         }
 
         public void unFreeze() {
@@ -250,89 +267,15 @@ namespace Brickcraft
             Game.breakAnimation.hide();
         }
 
-        public void addItem (UserItem userItem) {
-            List<int> takenSlots = new List<int>();
-
-            foreach (UserItem item in inventory) {
-                takenSlots.Add(item.slot);
-                if (item.id == userItem.id && item.health == userItem.health) {
-                    item.quantity += userItem.quantity;
-                    PlayerPanel.Instance.reload();
-                    return;
-                }
-            }
-            if (inventory.Count >= inventorySlots) {
-                return;
-            }
-            if (userItem.slot == 0) { // not set
-                int[] allSlots = Enumerable.Range(1, inventorySlots).ToArray();
-                int[] availableSlots = allSlots.Except(takenSlots).ToArray();
-                bool insertedInFastInventory = false;
-
-                // whenever its possible insert new items in fast inventory
-                foreach (var slot in availableSlots) {
-                    if (slot > 27) {
-                        userItem.slot = slot;
-                        insertedInFastInventory = true;
-                        break;
-                    }
-                }
-                if (!insertedInFastInventory) {
-                    userItem.slot = availableSlots[0];
-                }
-            }
-        
-            inventory.Add(userItem);
-            InventoryPanel.Instance.reload();
-
-            if (userItem.slot > 27) {
-                PlayerPanel.Instance.reload();
-            }
-        }
-        public void removeItem (UserItem userItem) {
-            foreach (UserItem item in inventory) {
-                if (item.id == userItem.id && item.health == userItem.health) {
-                    item.quantity -= userItem.quantity;
-
-                    if (item.quantity < 1) {
-                        inventory.Remove(item);
-                    }
-
-                    InventoryPanel.Instance.reload();
-                    if (item.slot > 27) {
-                        PlayerPanel.Instance.reload();
-                    }
-                    return;
-                }
-            }
-        }
+        // the server owns the inventory (see Network.PlayerInventory), this just asks it to move a stack
         public void switchInventorySlots (int slot1, int slot2) {
-            UserItem item1 = null;
-            UserItem item2 = null;
-
-            foreach (UserItem item in inventory) {
-                if (item.slot == slot1) {
-                    item1 = item;
-                } else if (item.slot == slot2) {
-                    item2 = item;
-                }
-            }
-
-            if (item1 != null) {
-                item1.slot = slot2;
-            }
-            if (item2 != null) {
-                item2.slot = slot1;
-            }
-
-            InventoryPanel.Instance.reload();
-            PlayerPanel.Instance.reload();
+            inventory.CmdSwapSlots(slot1, slot2);
         }
 
         public Dictionary<int, UserItem> getInventoryBySlot () {
             Dictionary<int, UserItem> items = new Dictionary<int, UserItem>();
 
-            foreach (var item in inventory) {
+            foreach (var item in getInventory()) {
                 items.Add(item.slot, item);
             }
             return items;
@@ -344,8 +287,19 @@ namespace Brickcraft
             return !items.ContainsKey(slotId);
         }
 
+        /// <summary>The items the server synced to us.</summary>
         public List<UserItem> getInventory () {
-            return inventory;
+            List<UserItem> items = new List<UserItem>(inventory.items.Count);
+
+            foreach (InventoryItem item in inventory.items) {
+                items.Add(new UserItem() {
+                    id = item.itemId,
+                    quantity = item.quantity,
+                    health = item.health,
+                    slot = item.slot,
+                });
+            }
+            return items;
         }
     }
 }

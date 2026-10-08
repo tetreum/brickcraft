@@ -7,17 +7,26 @@ namespace Brickcraft.Network
 {
     /// <summary>
     /// Network side of a player. Players ask the server to change the world through commands,
-    /// the server checks them, applies them through <see cref="WorldNetwork"/> and tells the
-    /// player which items it used or got.
+    /// the server checks them, applies them through <see cref="WorldNetwork"/> and updates the
+    /// player's <see cref="PlayerInventory"/>.
     ///
     /// Only the local player runs the first person controls; the others are just a body
     /// moved by their NetworkTransform.
     /// </summary>
-    [RequireComponent(typeof(Player))]
+    [RequireComponent(typeof(Player), typeof(PlayerInventory))]
     public class PlayerNetwork : NetworkBehaviour
     {
         // how far from the player the server accepts changes, a bit more than the player's reach
         private const float MaxReach = 8f;
+
+        [SyncVar]
+        public string playerName;
+
+        private PlayerInventory inventory;
+
+        private void Awake() {
+            inventory = GetComponent<PlayerInventory>();
+        }
 
         public override void OnStartClient() {
             if (!isLocalPlayer) {
@@ -56,7 +65,7 @@ namespace Brickcraft.Network
 
         [Command]
         public void CmdPlaceBrick(int itemId, int health, Vector3Int origin, byte rotation) {
-            if (!Server.items.TryGetValue(itemId, out Item item) || item.type != Item.Type.Brick) {
+            if (!Server.items.TryGetValue(itemId, out Item item) || item.type != Item.Type.Brick || !inventory.ServerHas(itemId, 1, health)) {
                 return;
             }
             BrickPlacement placement = new BrickPlacement(item.brickModel, origin, rotation);
@@ -73,7 +82,8 @@ namespace Brickcraft.Network
             if (!placedAsWorldBlock) {
                 WorldNetwork.ServerPlaceBrick(item, placement);
             }
-            TargetItemUsed(itemId, health);
+            inventory.ServerRemove(itemId, 1, health);
+            TargetBrickPlaced();
         }
 
         [Command]
@@ -82,7 +92,7 @@ namespace Brickcraft.Network
                 return;
             }
             WorldNetwork.ServerRemoveBrick(brick);
-            TargetItemReceived(brick.itemId);
+            inventory.ServerAdd(brick.itemId, 1);
         }
 
         [Command]
@@ -100,7 +110,7 @@ namespace Brickcraft.Network
                 Item item = Server.getItemForBlock(blockType);
 
                 if (item != null) {
-                    TargetItemReceived(item.id);
+                    inventory.ServerAdd(item.id, 1);
                 }
             }
         }
@@ -113,21 +123,8 @@ namespace Brickcraft.Network
         // -------- server to the player's client --------
 
         [TargetRpc]
-        private void TargetItemUsed(int itemId, int health) {
-            Player.Instance.removeItem(new UserItem() {
-                id = itemId,
-                health = health,
-                quantity = 1
-            });
+        private void TargetBrickPlaced() {
             SoundManager.Instance.play(SoundManager.EFFECT_TAPPING);
-        }
-
-        [TargetRpc]
-        private void TargetItemReceived(int itemId) {
-            Player.Instance.addItem(new UserItem() {
-                id = itemId,
-                quantity = 1
-            });
         }
     }
 }

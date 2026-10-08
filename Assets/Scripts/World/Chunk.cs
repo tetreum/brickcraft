@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 // Highly based on https://github.com/chraft/chunk-light-tester
 namespace Brickcraft.World
@@ -27,6 +28,24 @@ namespace Brickcraft.World
 
 		// bumped by every block change, so meshes computed from older data are thrown away
 		public int Version;
+
+		public enum ChunkState { Generating, Generated, Unloaded }
+
+		/// <summary>Set by the main thread; block data can only be read once Generated.</summary>
+		public volatile ChunkState State = ChunkState.Generating;
+
+		// meshing: a render job runs, then its slices are uploaded one by one
+		public bool HasMesh;
+		public volatile bool IsMeshJobDone;
+		public int PendingSliceUploads;
+
+		/// <summary>Set once the first mesh is fully uploaded, stays while it's only being remeshed.</summary>
+		public bool HasColliders;
+
+		/// <summary>The current mesh job and all its slices are uploaded.</summary>
+		public bool IsMeshReady {
+			get { return HasMesh && IsMeshJobDone && Volatile.Read(ref PendingSliceUploads) == 0; }
+		}
 	
 		public bool ProcessingLight{
 			get;
@@ -51,9 +70,36 @@ namespace Brickcraft.World
 	
 		public void InitGameObject()
 		{
+			if (ChunkObject != null)
+				return;
+
 			ChunkObject = new GameObject(String.Format("X {0} Z {1}", X, Z));
-		
 			ChunkObject.transform.position = new Vector3(X * 16, 0, Z * 16);
+		}
+
+		/// <summary>Destroys the chunk's game objects and meshes, its block data stays.</summary>
+		public void DestroyMesh()
+		{
+			for (int i = 0; i < NumSlices; ++i)
+			{
+				GameObject sliceObject = ChunkSliceObjects[i];
+
+				if (sliceObject == null)
+					continue;
+
+				UnityEngine.Object.Destroy(sliceObject.GetComponent<MeshFilter>().sharedMesh);
+				UnityEngine.Object.Destroy(sliceObject.GetComponent<MeshCollider>().sharedMesh);
+				UnityEngine.Object.Destroy(sliceObject);
+				ChunkSliceObjects[i] = null;
+				Slices[i].renderer = null;
+			}
+			if (ChunkObject != null)
+				UnityEngine.Object.Destroy(ChunkObject);
+
+			ChunkObject = null;
+			HasMesh = false;
+			HasColliders = false;
+			IsMeshJobDone = false;
 		}
 	
 		public void InitRenderableSlices()
@@ -95,92 +141,6 @@ namespace Brickcraft.World
 			return newObject;
 		}
 	
-		private int Depth;
-		private const int MaxRecursionDepth = 100;
-		public Queue<BlockEntry> BlockToRecalculate = new Queue<BlockEntry>();
-	
-		public byte ChooseAndReturnNewLight(byte x, byte y, byte z, byte[] skylights, byte[] heights)
-		{
-			byte light = skylights[0];
-			if(x < 15)
-			{
-				skylights[1] = GetSkylight(x+1, y, z);
-				heights[1] = HeightMap[x+1,z];
-			}
-			else if((X << 4) + 16 <= WorldBehaviour.MapMaxCoords)
-			{
-				Chunk chunk = World.GetChunk(X + 1, Z);
-				skylights[1] = chunk.GetSkylight(0,y,z);
-				heights[1] = chunk.HeightMap[0,z];
-			}
-		
-			if(light < (skylights[1] - 1))
-				light = (byte)(skylights[1] - 1);
-		
-			if(x > 0)
-			{
-				skylights[2] = GetSkylight(x-1, y, z);
-				heights[2] = HeightMap[x-1,z];
-			}
-			else if((X << 4) - 1 >= WorldBehaviour.MapMinCoords)
-			{
-				Chunk chunk = World.GetChunk(X - 1, Z);
-				skylights[2] = chunk.GetSkylight(15,y,z);
-				heights[2] = chunk.HeightMap[15,z];
-			}
-		
-			if(light < (skylights[2] - 1))
-				light = (byte)(skylights[2] - 1);
-		
-			if(z < 15)
-			{
-				skylights[3] = GetSkylight(x, y, z+1);
-				heights[3] = HeightMap[x,z+1];
-			}
-			else if((Z << 4) + 16 <= WorldBehaviour.MapMaxCoords)
-			{
-				Chunk chunk = World.GetChunk(X, Z + 1);
-				skylights[3] = chunk.GetSkylight(x,y,0);
-				heights[3] = chunk.HeightMap[x,0];
-			}
-		
-			if(light < (skylights[3] - 1))
-				light = (byte)(skylights[3] - 1);
-		
-			if(z > 0)
-			{
-				skylights[4] = GetSkylight(x, y, z-1);
-				heights[4] = HeightMap[x,z-1];
-			}
-			else if((Z << 4) - 1 >= WorldBehaviour.MapMinCoords)
-			{
-				Chunk chunk = World.GetChunk(X, Z - 1);
-				skylights[4] = chunk.GetSkylight(x,y,15);
-				heights[4] = chunk.HeightMap[x,15];
-			}
-		
-			if(light < (skylights[4] - 1))
-				light = (byte)(skylights[4] - 1);
-		
-			if(y < 255)
-				skylights[5] = GetSkylight(x,y+1,z);
-			else
-				skylights[5] = 15;
-		
-			// We prefer vertical light because it doesn't diminish it's power
-			if(light < skylights[5])
-				light = skylights[5];
-		
-			if(y > 0)
-				skylights[6] = GetSkylight(x,y-1,z);
-			else
-				skylights[6] = 6;
-		
-			if(light < skylights[6])
-				light = skylights[6];
-		
-			return light;
-		}
 		public byte GetSkylight(int x, int y, int z)
 		{
 			ChunkSlice slice = Slices[y / Chunk.SliceHeight];

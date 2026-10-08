@@ -86,6 +86,7 @@ GameObject:
   - component: {fileID: 551498836476170856}
   - component: {fileID: 683294709906027500}
   - component: {fileID: 2434868824313402696}
+  - component: {fileID: 3064525323806781627}
   m_Layer: 2
   m_Name: FPSController
   m_TagString: Player
@@ -465,6 +466,23 @@ MonoBehaviour:
   syncMethod: 0
   syncDirection: 0
   syncMode: 0
+  syncInterval: 0
+  playerName: 
+--- !u!114 &3064525323806781627
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4573967098094624393}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 192d7dd1310b42c48886897b7e1d7446, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncMethod: 0
+  syncDirection: 0
+  syncMode: 1
   syncInterval: 0
 --- !u!1 &4573967099470554938
 GameObject:

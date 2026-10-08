@@ -5,7 +5,7 @@ using System.Threading;
 namespace Brickcraft.World
 {
     /// <summary>
-    /// Measures how long each step of loading the world takes, and logs it once the world is ready.
+    /// Measures how long loading the area around the spawn takes, and logs it once players can walk on it.
     /// Thread safe, the chunk threads add their own timings.
     /// </summary>
     public static class WorldLoadProfiler
@@ -59,7 +59,7 @@ namespace Brickcraft.World
         }
 
         public static void Finish() {
-            Phase("meshes uploaded, world ready");
+            Phase("spawn area ready");
             UnityEngine.Debug.Log(
                 "World loaded in " + toMs(clock.ElapsedTicks).ToString("0") + " ms\n" + phases +
                 "  meshing CPU time (all threads): " + toMs(chunkMeshingTicks).ToString("0") + " ms\n" +

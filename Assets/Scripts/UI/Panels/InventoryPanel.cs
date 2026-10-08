@@ -112,23 +112,11 @@ namespace Brickcraft.UI
             craftingOutputSlot.setVisible(false);
         }
 
+        // the server crafts it, the inventory refreshes once it's synced back
         public void craftRecipe (Recipe recipe, int slotId) {
-            foreach (Ingredient ingredient in recipe.ingredients) {
-                Player.Instance.removeItem(new UserItem() {
-                    id = ingredient.itemId,
-                    quantity = ingredient.quantity,
-                });
-            }
+            int recipeIndex = System.Array.IndexOf(Game.Instance.craftingRecipes, recipe);
 
-            Player.Instance.addItem(new UserItem() {
-                id = recipe.itemId,
-                quantity = recipe.quantity,
-                health = 100,
-                slot = slotId,
-            });
-
-            // refresh possible crafting as user may not longer have enough materials to keep crafting
-            showPossibleCrafting(); 
+            Player.Instance.GetComponent<Network.PlayerInventory>().CmdCraft(recipeIndex, slotId);
         }
     }
 }

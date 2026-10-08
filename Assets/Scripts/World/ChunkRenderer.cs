@@ -26,7 +26,6 @@ namespace Brickcraft.World
 			public Vector3 offset;
 		}
 
-		private List<int> indexesToDelete = new List<int>();
 		private List<VisibleSide> visibleSides = new List<VisibleSide>();
 
 		public void RenderChunk(Chunk chunk, bool detailed)
@@ -57,36 +56,21 @@ namespace Brickcraft.World
 			{
 				ChunkSlice chunkSlice = chunk.Slices[i];
 
+				// nothing below the lowest surface around can be seen
 				if(i < minSliceIndex)
-				{
-					for(int index = i; index >= 0; --index)
-						indexesToDelete.Add(index);
 					break;
-				}
 
 				if(chunkSlice.IsEmpty)
-				{
-					indexesToDelete.Add(i);
 					continue;
-				}
 
 				int minHeight = chunk.MinSliceIndex == chunkSlice.Index ? (chunk.LowestY & Chunk.SliceHeightLimit) : 0;
 
 				ChunkSliceBuildEntry chunkEntry = RenderSlice(chunk, i, detailed, version, minHeight);
+				chunkEntry.CountsAsPending = true;
+				Interlocked.Increment(ref chunk.PendingSliceUploads);
 
 				lock (WorldBehaviour.ChunkQueueLock)
 					WorldBehaviour.ChunkSlicesToBuild.Enqueue(chunkEntry);
-			}
-			if(indexesToDelete.Count > 0)
-			{
-				lock(WorldBehaviour.SliceLock)
-				{
-					ChunkSlicesDeleteEntry chunkSliceEntry = new ChunkSlicesDeleteEntry();
-					chunkSliceEntry.indexesToDelete = indexesToDelete.ToArray();
-					chunkSliceEntry.parentChunk = chunk;
-
-					WorldBehaviour.SlicesToDelete.Enqueue(chunkSliceEntry);
-				}
 			}
 		}
 

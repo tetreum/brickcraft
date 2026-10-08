@@ -238,7 +238,20 @@ namespace Brickcraft
             isDigging = true;
             digTime = 0f;
             _timer = 0f;
-            Game.breakAnimation.showAt(latestHit.point, Quaternion.FromToRotation(Vector3.back, latestHit.normal));
+            Game.breakAnimation.showAt(diggedBounds(), latestHit.normal);
+        }
+
+        // what the cracks cover: the whole brick or block, not just the face under the crosshair
+        Bounds diggedBounds () {
+            if (diggedBrick != null) {
+                return diggedBrick.placement.WorldBounds;
+            }
+            Vector3Int cell = BrickGrid.BlockToCell(diggedBlock.Value);
+            Bounds bounds = new Bounds();
+            bounds.SetMinMax(
+                BrickGrid.CellToWorld(cell),
+                BrickGrid.CellToWorld(cell + new Vector3Int(BrickGrid.StudsPerBlock, BrickGrid.PlatesPerBlock, BrickGrid.StudsPerBlock)));
+            return bounds;
         }
 
         // the server removes it and gives us the item

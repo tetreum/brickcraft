@@ -119,9 +119,6 @@ namespace Brickcraft
             if (Input.GetKeyDown(KeyCode.I)) {
                 Menu.Instance.togglePanel("InventoryPanel");
             }
-            if (Input.GetKeyDown(KeyCode.Tab)) {
-                PlayerPanel.Instance.switchSelectedItem();
-            }
             if (Input.GetKeyDown(KeyCode.Escape)) {
                 Menu.Instance.togglePanel("ESCPanel");
             }

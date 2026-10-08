@@ -22,6 +22,13 @@ namespace Brickcraft.Network
         [SyncVar]
         public string playerName;
 
+        // shown in the player list
+        [SyncVar] public string role;
+        [SyncVar] public int pingMs;
+
+        private const float PingUpdateInterval = 2f;
+        private float nextPingUpdate;
+
         // Absolute spawn point, set by the server. Mirror's spawn message carries the server's local
         // position, which means nothing with another floating origin, and owners of client authoritative
         // objects don't get their initial transform state, so the local player places itself from these.
@@ -34,6 +41,14 @@ namespace Brickcraft.Network
 
         private void Awake() {
             inventory = GetComponent<PlayerInventory>();
+        }
+
+        private void Update() {
+            // the server measures every connection's round trip time
+            if (isServer && connectionToClient != null && Time.unscaledTime >= nextPingUpdate) {
+                nextPingUpdate = Time.unscaledTime + PingUpdateInterval;
+                pingMs = (int)(connectionToClient.rtt * 1000);
+            }
         }
 
         public override void OnStartClient() {

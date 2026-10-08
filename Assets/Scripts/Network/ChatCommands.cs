@@ -185,6 +185,10 @@ namespace Brickcraft.Network
 
             if (conn != null) {
                 reply(conn, admin.record.Name + " made you " + newRole);
+
+                if (conn.identity != null) {
+                    conn.identity.GetComponent<PlayerNetwork>().role = newRole; // the player list shows it
+                }
             }
         }
 

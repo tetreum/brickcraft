@@ -200,6 +200,7 @@ namespace Brickcraft.Network
 
             PlayerNetwork network = player.GetComponent<PlayerNetwork>();
             network.playerName = connected.record.Name;
+            network.role = connected.record.Role;
             network.ServerSetSpawn(position, rotation.eulerAngles.y);
             loadInventory(player.GetComponent<PlayerInventory>(), connected.record);
 

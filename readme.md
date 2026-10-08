@@ -18,7 +18,7 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 
 - WASD - Move character
 - Space - Jump
-- TAB - Switch between fast inventory slots
+- TAB (hold) - Player list (the "PlayerList" input of the Input Manager)
 - 1-9 - Select a fast inventory slot
 - I - Open inventory
 - Enter - Chat (the "Chat" input of the Input Manager), Enter again to send, Escape to cancel

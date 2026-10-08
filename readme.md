@@ -41,6 +41,8 @@ The world has no edges, it's streamed around the players: the server keeps the c
 
 To stay precise however far players go, the game uses a floating origin: game logic works in integer cells, blocks and chunks, Unity positions are relative to a chunk near the local player (subtracted while still integers), and when the player gets about 400 units away the origin moves and the scene shifts with it. Each peer has its own origin, so player positions are sent as absolute coordinates.
 
+The first player to join a save without admins (the host, starting singleplayer or a server) becomes its admin; everyone else joins as a `user`.
+
 Players are identified by the name typed in the menu plus their machine id (`SystemInfo.deviceUniqueIdentifier`): the first machine that uses a name owns it on that server, so nobody else can play with it.
 
 ### Saves
@@ -57,7 +59,7 @@ Changed chunks are written on a background thread every 30 seconds (`autosaveInt
 
 The server keeps a SQLite database (`players.db`, via [unity-sqlite-net](https://github.com/gilzoide/unity-sqlite-net)) with:
 
-- `players`: everyone that joined, with their hashed machine id, number of joins, play time, and where they were (absolute position and facing) when they left, saved on disconnect and with every autosave. Players come back there next time, the world streams in around that spot.
+- `players`: everyone that joined, with their hashed machine id, role (`user` or `admin`), experience, number of joins, play time, and where they were (absolute position and facing) when they left, saved on disconnect and with every autosave. Players come back there next time, the world streams in around that spot.
 - `player_sessions`: every join, with its address and when the player joined and left.
 - `inventory_items`: each player's inventory. Inventories only change on the server and are synced to their owner; new players get the `starterItems` of the NetworkManager.
 

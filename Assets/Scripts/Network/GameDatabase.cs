@@ -6,6 +6,12 @@ using UnityEngine;
 
 namespace Brickcraft.Network
 {
+    public static class PlayerRoles
+    {
+        public const string User = "user";
+        public const string Admin = "admin";
+    }
+
     [Table("players")]
     public class PlayerRecord
     {
@@ -27,6 +33,15 @@ namespace Brickcraft.Network
         public long LastSeenAt { get; set; }
         public int TimesJoined { get; set; }
         public long PlayTimeSeconds { get; set; }
+
+        public long Experience { get; set; }
+
+        /// <summary>See <see cref="PlayerRoles"/>.</summary>
+        public string Role { get; set; } = PlayerRoles.User;
+
+        public bool IsAdmin {
+            get { return Role == PlayerRoles.Admin; }
+        }
 
         // where the player was in the world when it last left, absolute coordinates; null until then
         public double? LastX { get; set; }
@@ -95,6 +110,10 @@ namespace Brickcraft.Network
             connection.CreateTable<PlayerSessionRecord>();
             connection.CreateTable<InventoryItemRecord>();
 
+            // columns added to existing databases start empty
+            connection.Execute("UPDATE players SET Role = ? WHERE Role IS NULL", PlayerRoles.User);
+            connection.Execute("UPDATE players SET Experience = 0 WHERE Experience IS NULL");
+
             // sessions left open by a server that didn't shut down cleanly
             connection.Execute("UPDATE player_sessions SET LeftAt = JoinedAt WHERE LeftAt = 0");
         }
@@ -123,10 +142,20 @@ namespace Brickcraft.Network
                 TokenHash = machineIdHash,
                 CreatedAt = now,
                 LastSeenAt = now,
+                Role = PlayerRoles.User,
             };
             connection.Insert(player);
 
             return player;
+        }
+
+        public bool HasAdmin() {
+            return connection.Table<PlayerRecord>().Where(p => p.Role == PlayerRoles.Admin).Count() > 0;
+        }
+
+        public void SetRole(PlayerRecord player, string role) {
+            player.Role = role;
+            connection.Update(player);
         }
 
         /// <summary>Remembers where the player is, to put it back there next time.</summary>

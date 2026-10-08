@@ -72,11 +72,17 @@ namespace Brickcraft.Network
                 return;
             }
 
+            // whoever joins a save without admins first (the host, starting singleplayer or a server) runs it
+            if (!database.HasAdmin()) {
+                database.SetRole(player, PlayerRoles.Admin);
+                Debug.Log(player.Name + " is the admin of this save");
+            }
+
             conn.authenticationData = new ConnectedPlayer() {
                 record = player,
                 session = database.StartSession(player, conn.address),
             };
-            Debug.Log(player.Name + " joined (player " + player.Id + ", " + player.TimesJoined + " times)");
+            Debug.Log(player.Name + " joined (player " + player.Id + ", " + player.Role + ", " + player.TimesJoined + " times)");
 
             conn.Send(new AuthResponseMessage() { accepted = true });
             ServerAccept(conn);

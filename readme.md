@@ -58,6 +58,8 @@ Admins can type commands in the chat:
 - `/role NICK|ID [role]`: shows a player's role, or changes it (`user` or `admin`). Admins can't change their own.
 - `/additem ITEM [count] [NICK|ID]`: gives `count` (1 by default) of the item with id `ITEM` to a player, yourself by default. Offline players get them in their saved inventory. `/additem ITEM NICK` works too, but a number after the item is always the count, so give a player by id with `/additem ITEM count ID`.
 
+Admins also get an ALL tab in the inventory: every item of the game, searchable by name or id, 30 per page. Clicking one adds it to their inventory.
+
 `NICK|ID` is a player name (any case) or, if no name matches, a player id. Admins can't kick or ban themselves, other admins or the host.
 
 The game version is Player Settings → Version (`GameVersion.Current`), shown in the main menu. Clients can only join servers running exactly the same version, otherwise the menu says which version the server runs, so bump it on every release that changes what goes over the network.
@@ -100,7 +102,7 @@ Blocks/marble/
     top.png         optional, overrides texture.png on that side (also side.png, bottom.png)
     model.obj       optional terrain model, the default 2x2 brick otherwise
     collider.obj    optional collider, model.obj (or the default brick collider) otherwise
-    icon.png        inventory icon of the block's item
+    icon.png        inventory icon of the block's item (its top or main texture if missing)
 ```
 
 `block.json`:
@@ -127,7 +129,7 @@ Blocks/marble/
 - `hardness`: seconds to dig it with bare hands. `breakable: false` makes it undiggable.
 - `replaceable`: bricks can be placed inside it (like water).
 - `transparent`: sky light goes through it (like leaves or water).
-- `item`: optional item that places the block back. It needs an item id not used in Server.cs#items. Its icon is `icon.png`, which /Scenes/IconGenerator generates if missing.
+- `item`: optional item that places the block back. It needs an item id not used in Server.cs#items. Its icon is `icon.png`, which /Scenes/IconGenerator generates if missing; until then the game uses the block's `top.png` or `texture.png`.
 - `dropItemId`: item given when dug. Defaults to the block's own item, `0` and no item means nothing.
 
 Every field but `id` and `name` is optional.

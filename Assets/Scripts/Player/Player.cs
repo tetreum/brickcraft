@@ -119,8 +119,8 @@ namespace Brickcraft
                 }
             }
 
-            // the keys typed in the chat (or the Escape closing it) aren't shortcuts
-            if (ChatPanel.IsTyping || ChatPanel.WasClosedThisFrame) {
+            // the keys typed in the chat or another text field (or the Escape closing the chat) aren't shortcuts
+            if (ChatPanel.IsTyping || ChatPanel.WasClosedThisFrame || isTypingInField()) {
                 return;
             }
             if (GameInput.GetButtonDown(GameInput.Inventory, KeyCode.I)) {
@@ -133,6 +133,14 @@ namespace Brickcraft
             if (slot != -1) {
                 PlayerPanel.Instance.selectFastSlot(slot);
             }
+        }
+
+        private static bool isTypingInField() {
+            GameObject selected = UnityEngine.EventSystems.EventSystem.current != null
+                ? UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject
+                : null;
+            UnityEngine.UI.InputField field = selected != null ? selected.GetComponent<UnityEngine.UI.InputField>() : null;
+            return field != null && field.isFocused;
         }
 
         public void freeze(FreezeReason reason) {

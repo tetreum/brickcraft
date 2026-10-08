@@ -12,6 +12,8 @@ namespace Brickcraft.Network
     {
         public readonly SyncList<InventoryItem> items = new SyncList<InventoryItem>();
 
+        private const int MaxAdminAdd = 1000;
+
         // server only: the database row of the player this inventory belongs to
         private int playerId;
 
@@ -97,6 +99,22 @@ namespace Brickcraft.Network
             }
             Inventory.Add(items, recipe.itemId, recipe.quantity, 100, targetSlot);
             save();
+        }
+
+        /// <summary>Admins only: adds items out of nothing (the ALL tab of the inventory).</summary>
+        [Command]
+        public void CmdAdminAdd(int itemId, int quantity) {
+            ConnectedPlayer player = connectionToClient.authenticationData as ConnectedPlayer;
+
+            if (player == null || !player.record.IsAdmin || !Server.items.TryGetValue(itemId, out Item item) || quantity < 1 || quantity > MaxAdminAdd) {
+                return;
+            }
+            if (!Inventory.Add(items, itemId, quantity)) {
+                connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "Your inventory is full" });
+                return;
+            }
+            save();
+            UnityEngine.Debug.Log(player.record.Name + " took " + quantity + " x " + item.name + " (" + itemId + ") from the ALL tab");
         }
 
         // -------- client --------

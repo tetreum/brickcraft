@@ -10,15 +10,67 @@ namespace Brickcraft.UI
         public InventorySlot[] inventorySlots;
         public CraftingSlot[] craftingSlots;
         public CraftingOutputSlot craftingOutputSlot;
+
+        [Header("Tabs")]
+        public Button inventoryTab;
+        public Button allTab;
+        /// <summary>What the inventory tab shows: the inventory grid and the crafting area.</summary>
+        public GameObject[] inventoryViews;
+        /// <summary>What the ALL tab (admins only) shows, see AllItemsTab.</summary>
+        public GameObject allItemsView;
+
+        private static readonly Color SelectedTab = Color.white;
+        private static readonly Color UnselectedTab = new Color(0.75f, 0.75f, 0.75f, 1f);
+
         private void Awake() {
             Instance = this;
+            inventoryTab.onClick.AddListener(showInventory);
+            allTab.onClick.AddListener(showAll);
         }
 
         private void OnEnable() {
             resetCraftingSlots();
             reload();
+            showInventory();
             Game.unlockMouse();
             Player.Instance.freeze(Player.FreezeReason.ViewingInventory);
+        }
+
+        private void Update() {
+            bool isAdmin = isLocalPlayerAdmin();
+
+            if (allTab.gameObject.activeSelf != isAdmin) {
+                allTab.gameObject.SetActive(isAdmin);
+            }
+            // the role can change while it's open
+            if (!isAdmin && allItemsView.activeSelf) {
+                showInventory();
+            }
+        }
+
+        private static bool isLocalPlayerAdmin() {
+            return Player.Instance != null && Player.Instance.network.role == Network.PlayerRoles.Admin;
+        }
+
+        public void showInventory() {
+            showTab(false);
+        }
+
+        public void showAll() {
+            if (isLocalPlayerAdmin()) {
+                showTab(true);
+            }
+        }
+
+        private void showTab(bool all) {
+            foreach (GameObject view in inventoryViews) {
+                view.SetActive(!all);
+            }
+            allItemsView.SetActive(all);
+            allTab.gameObject.SetActive(isLocalPlayerAdmin());
+
+            inventoryTab.GetComponent<Image>().color = all ? UnselectedTab : SelectedTab;
+            allTab.GetComponent<Image>().color = all ? SelectedTab : UnselectedTab;
         }
 
         private void OnDisable() {

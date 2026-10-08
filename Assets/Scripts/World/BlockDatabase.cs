@@ -12,7 +12,7 @@ namespace Brickcraft.World
     ///   top.png, side.png, bottom.png  optional per side textures, they override texture.png
     ///   model.obj                   optional terrain model, the default 2x2 brick otherwise
     ///   collider.obj                optional collider model, model.obj (or the default collider) otherwise
-    ///   icon.png                    inventory icon of the block's item
+    ///   icon.png                    inventory icon of the block's item, its top (or every side) texture otherwise
     ///
     /// To add a block, add a new folder (it also works in builds, where the folder is at
     /// [Game]_Data/StreamingAssets/Blocks).
@@ -216,7 +216,7 @@ namespace Brickcraft.World
                 return;
             }
 
-            string iconPath = Path.Combine(definition.folder, IconFile);
+            string iconPath = iconFor(definition.folder);
             Item item = new Item() {
                 id = json.id,
                 type = Item.Type.Brick,
@@ -237,12 +237,26 @@ namespace Brickcraft.World
             }
         }
 
+        // icon.png, or the texture of the block's top, so items without an icon don't show blank
+        private static string iconFor(string folder) {
+            foreach (string file in new[] { IconFile, "top.png", TextureFile }) {
+                string path = Path.Combine(folder, file);
+                if (File.Exists(path)) {
+                    return path;
+                }
+            }
+            return Path.Combine(folder, IconFile);
+        }
+
         private static Texture2D loadIcon(string path) {
             if (!File.Exists(path)) {
                 return null;
             }
             Texture2D icon = new Texture2D(2, 2, TextureFormat.RGBA32, false);
             icon.name = path;
+            if (Path.GetFileName(path) != IconFile) {
+                icon.filterMode = FilterMode.Point; // block textures are pixel art
+            }
 
             if (!icon.LoadImage(File.ReadAllBytes(path))) {
                 Debug.LogError("Unsupported icon file " + path);

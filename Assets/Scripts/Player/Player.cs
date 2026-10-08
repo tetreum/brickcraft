@@ -105,7 +105,7 @@ namespace Brickcraft
             } else {
                 brickPlacer.tick(hasHit, latestHit, PlayerPanel.Instance.selectedItem);
 
-                if (Input.GetKey(KeyCode.Mouse0) && (lookedBrick != null || lookedBlock.HasValue)) {
+                if (GameInput.GetButton(GameInput.Dig, KeyCode.Mouse0) && (lookedBrick != null || lookedBlock.HasValue)) {
                     dig();
                 } else {
                     stopDigging();
@@ -116,30 +116,15 @@ namespace Brickcraft
             if (ChatPanel.IsTyping || ChatPanel.WasClosedThisFrame) {
                 return;
             }
-            if (Input.GetKeyDown(KeyCode.I)) {
+            if (GameInput.GetButtonDown(GameInput.Inventory, KeyCode.I)) {
                 Menu.Instance.togglePanel("InventoryPanel");
             }
-            if (Input.GetKeyDown(KeyCode.Escape)) {
+            if (GameInput.GetButtonDown(GameInput.Menu, KeyCode.Escape)) {
                 Menu.Instance.togglePanel("ESCPanel");
             }
-            if (Input.GetKeyDown(KeyCode.Alpha1)) {
-                PlayerPanel.Instance.selectFastSlot(0);
-            } else if (Input.GetKeyDown(KeyCode.Alpha2)) {
-                PlayerPanel.Instance.selectFastSlot(1);
-            } else if (Input.GetKeyDown(KeyCode.Alpha3)) {
-                PlayerPanel.Instance.selectFastSlot(2);
-            } else if (Input.GetKeyDown(KeyCode.Alpha4)) {
-                PlayerPanel.Instance.selectFastSlot(3);
-            } else if (Input.GetKeyDown(KeyCode.Alpha5)) {
-                PlayerPanel.Instance.selectFastSlot(4);
-            } else if (Input.GetKeyDown(KeyCode.Alpha6)) {
-                PlayerPanel.Instance.selectFastSlot(5);
-            } else if (Input.GetKeyDown(KeyCode.Alpha7)) {
-                PlayerPanel.Instance.selectFastSlot(6);
-            } else if (Input.GetKeyDown(KeyCode.Alpha8)) {
-                PlayerPanel.Instance.selectFastSlot(7);
-            } else if (Input.GetKeyDown(KeyCode.Alpha9)) {
-                PlayerPanel.Instance.selectFastSlot(8);
+            int slot = GameInput.GetSlotDown();
+            if (slot != -1) {
+                PlayerPanel.Instance.selectFastSlot(slot);
             }
         }
 

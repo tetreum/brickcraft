@@ -85,7 +85,7 @@ namespace Brickcraft.UI
                 if (isChatPressed() && Player.Instance != null && !Player.Instance.isFrozen) {
                     open();
                 }
-            } else if (Input.GetKeyDown(KeyCode.Escape)) {
+            } else if (GameInput.GetButtonDown(GameInput.Menu, KeyCode.Escape)) {
                 close();
             } else if (isChatPressed() || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) {
                 send();
@@ -95,13 +95,8 @@ namespace Brickcraft.UI
             refreshLog();
         }
 
-        // the "Chat" input of the input manager, Enter if the project doesn't define it
         private static bool isChatPressed() {
-            try {
-                return Input.GetButtonDown("Chat");
-            } catch (ArgumentException) {
-                return Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
-            }
+            return GameInput.GetButtonDown(GameInput.Chat, KeyCode.Return, KeyCode.KeypadEnter);
         }
 
         private void open() {

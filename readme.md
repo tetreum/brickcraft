@@ -16,16 +16,20 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 
 ## Controls
 
-- WASD - Move character
-- Space - Jump
-- TAB (hold) - Player list (the "PlayerList" input of the Input Manager)
-- 1-9 - Select a fast inventory slot
-- I - Open inventory
-- Enter - Chat (the "Chat" input of the Input Manager), Enter again to send, Escape to cancel
-- Left click (hold) - Remove placed bricks and terrain blocks
-- Right click (having a block selected in inventory) - Adds a block
-- Mouse wheel / R (having a block selected in inventory) - Rotates block
-- Shift (while placing) - Place on any stud instead of snapping to the terrain block grid
+Every key is a button of the Input Manager (Edit → Project Settings → Input Manager), named in brackets, so it can be rebound. A button missing from the project falls back to the default key listed here (see `GameInput`).
+
+- WASD - Move character (Horizontal, Vertical)
+- Space - Jump (Jump)
+- Left Shift (hold) - Sprint (Sprint)
+- TAB (hold) - Player list (PlayerList)
+- 1-9 - Select a fast inventory slot (Slot1 to Slot9)
+- I - Open inventory (Inventory)
+- Escape - Menu, or close the chat (Menu)
+- Enter - Chat (Chat), Enter again to send
+- Left click (hold) - Remove placed bricks and terrain blocks (Dig)
+- Right click (having a block selected in inventory) - Adds a block (Place)
+- Mouse wheel / R (having a block selected in inventory) - Rotates block (Rotate)
+- Shift (hold, while placing) - Place on any stud instead of snapping to the terrain block grid (FreePlacement)
 
 ## Multiplayer
 

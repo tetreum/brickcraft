@@ -42,13 +42,8 @@ namespace Brickcraft.UI
             }
         }
 
-        // the "PlayerList" input of the input manager, Tab if the project doesn't define it
         private static bool isHeld() {
-            try {
-                return Input.GetButton("PlayerList");
-            } catch (ArgumentException) {
-                return Input.GetKey(KeyCode.Tab);
-            }
+            return GameInput.GetButton(GameInput.PlayerList, KeyCode.Tab);
         }
 
         private void refresh() {

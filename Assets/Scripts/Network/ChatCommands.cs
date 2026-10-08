@@ -20,6 +20,7 @@ namespace Brickcraft.Network
     ///   /ban NICK|ID [reason]       bans a player (and its machine), online or not
     ///   /unban NICK|ID
     ///   /role NICK|ID [role]        shows or changes a player's role (user, admin)
+    ///   /additem ITEM [count] [NICK|ID]   gives items to a player (yourself by default), online or not
     /// NICK|ID is a player name (any case) or, if no name matches, a player id.
     /// Only admins can use them.
     /// </summary>
@@ -28,6 +29,7 @@ namespace Brickcraft.Network
         public const string ServerName = "Server";
 
         private const float DisconnectDelay = 0.5f;
+        private const int MaxAddedItems = 10000;
 
         public static bool IsCommand(string text) {
             return text.StartsWith("/");
@@ -70,6 +72,13 @@ namespace Brickcraft.Network
                         role(sender, admin, target, reason);
                     }
                     break;
+                case "additem":
+                    if (target == null) {
+                        reply(sender, "Usage: /additem ITEM [count] [NICK|ID]");
+                    } else {
+                        addItem(sender, admin, target, reason);
+                    }
+                    break;
                 case "unban":
                     if (target == null) {
                         reply(sender, "Usage: /unban NICK|ID");
@@ -78,7 +87,7 @@ namespace Brickcraft.Network
                     }
                     break;
                 default:
-                    reply(sender, "Unknown command. Commands: /players, /kick NICK|ID [reason], /ban NICK|ID [reason], /unban NICK|ID, /role NICK|ID [role]");
+                    reply(sender, "Unknown command. Commands: /players, /kick NICK|ID [reason], /ban NICK|ID [reason], /unban NICK|ID, /role NICK|ID [role], /additem ITEM [count] [NICK|ID]");
                     break;
             }
         }
@@ -193,6 +202,69 @@ namespace Brickcraft.Network
                 if (conn.identity != null) {
                     conn.identity.GetComponent<PlayerNetwork>().role = newRole; // the player list shows it
                 }
+            }
+        }
+
+        // args: [count] [NICK|ID]
+        private static void addItem(NetworkConnectionToClient sender, ConnectedPlayer admin, string itemText, string args) {
+            if (!int.TryParse(itemText, out int itemId) || !Server.items.TryGetValue(itemId, out Item item)) {
+                reply(sender, "There's no item " + itemText);
+                return;
+            }
+
+            string[] rest = string.IsNullOrEmpty(args) ? new string[0] : args.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            int count = 1;
+            string countText = rest.Length > 0 ? rest[0] : null;
+            string target = rest.Length > 1 ? rest[1] : null;
+
+            if (rest.Length == 1 && !int.TryParse(countText, out _)) {
+                target = countText;
+                countText = null;
+            }
+            if (countText != null && (!int.TryParse(countText, out count) || count < 1 || count > MaxAddedItems)) {
+                reply(sender, "The count must be a number from 1 to " + MaxAddedItems);
+                return;
+            }
+
+            NetworkConnectionToClient conn = target == null ? sender : findOnline(target, out _);
+            PlayerRecord player;
+            bool added;
+
+            if (conn != null) {
+                ConnectedPlayer online = (ConnectedPlayer)conn.authenticationData;
+                PlayerInventory inventory = conn.identity != null ? conn.identity.GetComponent<PlayerInventory>() : null;
+
+                if (inventory == null) {
+                    reply(sender, online.record.Name + " is still joining, try again in a moment");
+                    return;
+                }
+                player = online.record;
+                added = inventory.ServerAdd(itemId, count);
+            } else {
+                // offline players get it in their saved inventory
+                player = findRecord(target);
+                if (player == null) {
+                    reply(sender, "There's no player called " + target);
+                    return;
+                }
+                GameDatabase database = BrickcraftNetworkManager.Instance.Database;
+                List<InventoryItem> items = database.LoadInventory(player.Id);
+                added = Inventory.Add(items, itemId, count);
+
+                if (added) {
+                    database.SaveInventory(player.Id, items);
+                }
+            }
+
+            if (!added) {
+                reply(sender, player.Name + "'s inventory is full");
+                return;
+            }
+            Debug.Log(admin.record.Name + " gave " + count + " x " + item.name + " (" + itemId + ") to " + player.Name + " (" + player.Id + ")");
+            reply(sender, "Gave " + count + " x " + item.name + " to " + player.Name);
+
+            if (conn != null && conn != sender) {
+                reply(conn, admin.record.Name + " gave you " + count + " x " + item.name);
             }
         }
 

@@ -298,6 +298,9 @@ namespace Brickcraft.Network
         }
 
         public static void StopClient() {
+            hasWorldInfo = false;
+            isSpawnAreaReady = false;
+
             if (WorldBehaviour.Instance != null && !NetworkServer.active) {
                 WorldBehaviour.Instance.ChunkGenerated -= onClientChunkGenerated;
                 WorldBehaviour.Instance.ChunkUnloaded -= onClientChunkUnloaded;
@@ -315,6 +318,41 @@ namespace Brickcraft.Network
                 NetworkClient.Ready();
             }
             NetworkClient.Send(new JoinWorldMessage());
+        }
+
+        /// <summary>How far joining the game is, from 0 to 1, and what it's doing, for the loading screen.</summary>
+        public static float GetLoadingProgress(out string status) {
+            if (isSpawnAreaReady) {
+                status = "Joining...";
+                return 1f;
+            }
+            if (!NetworkClient.isConnected) {
+                status = "Connecting...";
+                return 0f;
+            }
+            if (NetworkManager.loadingSceneAsync != null) {
+                status = "Loading world...";
+                return 0.05f + 0.2f * NetworkManager.loadingSceneAsync.progress;
+            }
+            WorldBehaviour world = WorldBehaviour.Instance;
+            if (!hasWorldInfo || world == null) {
+                status = "Waiting for the server...";
+                return 0.25f;
+            }
+
+            float done = 0f;
+            int ready = 0;
+            int total = 0;
+            for (int x = -SpawnAreaRadius; x <= SpawnAreaRadius; x++) {
+                for (int z = -SpawnAreaRadius; z <= SpawnAreaRadius; z++) {
+                    float chunk = world.GetLoadProgress(new Vector2Int(spawn.x + x, spawn.y + z));
+                    done += chunk;
+                    ready += chunk >= 1f ? 1 : 0;
+                    total++;
+                }
+            }
+            status = "Building terrain (" + ready + "/" + total + " chunks)";
+            return 0.3f + 0.7f * done / total;
         }
 
         /// <summary>Spawns the player once the area around the spawn can be walked on.</summary>

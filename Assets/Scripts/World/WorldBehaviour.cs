@@ -146,6 +146,18 @@ namespace Brickcraft.World
 		}
 
 		/// <summary>The chunk is drawn and has colliders, so it can be walked on.</summary>
+		/// <summary>How far a chunk is from walkable, from 0 (not requested) to 1, for loading screens.</summary>
+		public float GetLoadProgress(Vector2Int coords)
+		{
+			if (!chunks.TryGetValue(coords, out Chunk chunk) || chunk.State == Chunk.ChunkState.Unloaded)
+				return 0f;
+			if (chunk.State == Chunk.ChunkState.Generating)
+				return 0.25f;
+			if (chunk.HasColliders)
+				return 1f;
+			return chunk.IsMeshJobDone ? 0.85f : 0.6f;
+		}
+
 		public bool IsWalkable(Vector2Int coords)
 		{
 			return chunks.TryGetValue(coords, out Chunk chunk) && chunk.State == Chunk.ChunkState.Generated && chunk.HasColliders;

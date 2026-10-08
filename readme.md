@@ -52,6 +52,7 @@ Admins can type commands in the chat:
 - `/ban NICK|ID [reason]`: bans a player, online or not. Nobody can join from a banned player's machine either (except admins).
 - `/unban NICK|ID`
 - `/role NICK|ID [role]`: shows a player's role, or changes it (`user` or `admin`). Admins can't change their own.
+- `/additem ITEM [count] [NICK|ID]`: gives `count` (1 by default) of the item with id `ITEM` to a player, yourself by default. Offline players get them in their saved inventory. `/additem ITEM NICK` works too, but a number after the item is always the count, so give a player by id with `/additem ITEM count ID`.
 
 `NICK|ID` is a player name (any case) or, if no name matches, a player id. Admins can't kick or ban themselves, other admins or the host.
 

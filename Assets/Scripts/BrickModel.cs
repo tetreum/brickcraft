@@ -1,6 +1,3 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-
 namespace Brickcraft
 {
     public class BrickModel
@@ -10,10 +7,14 @@ namespace Brickcraft
             Plate = 2
         };
         public int type;
-        public int heightInPlates;
         public Category category;
-        public Vector3 pivot = Vector3.zero; // the point from where we will rotate/place it
+
+        // Dimensions on the brick grid (unrotated), see Bricks.BrickGrid.
+        // Width runs along the prefab's local X axis and depth along its local Z axis.
+        public int width;
+        public int depth;
+        public int heightInPlates;
+
         public float hardness = 4; //seconds with bare hands
-        public Dictionary<int, Dictionary<int, int[]>> studs = new Dictionary<int, Dictionary<int, int[]>>();
     }
 }

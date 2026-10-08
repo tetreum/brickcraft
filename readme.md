@@ -19,10 +19,12 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 - WASD - Move character
 - Space - Jump
 - TAB - Switch between fast inventory slots
+- 1-9 - Select a fast inventory slot
 - I - Open inventory
-- Left click - Remove blocks
+- Left click (hold) - Remove placed bricks and terrain blocks
 - Right click (having a block selected in inventory) - Adds a block
-- Mouse wheel (having a block selected in inventory) - Rotates block
+- Mouse wheel / R (having a block selected in inventory) - Rotates block
+- Shift (while placing) - Place on any stud instead of snapping to the terrain block grid
 
 ## How can i help?
 
@@ -34,7 +36,7 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 1. Brick models & their prefabs are stored in https://github.com/tetreum/brickcraft/tree/main/Assets/Models/Bricks
 2. The icon is stored at https://github.com/tetreum/brickcraft/tree/main/Assets/Resources/Textures/Bricks
 3. Prefab must be listed at Server -> prefabs scene object.
-4. Model specs must be added at Server.cs#setupBrickModels() (https://github.com/tetreum/brickcraft/blob/main/Assets/Scripts/Server.cs#L146)
+4. Model specs (footprint in studs and height in plates) must be added at Server.cs#setupBrickModels(). The model's pivot must be at the center of its footprint, on its bottom face, like the existing ones.
 5. Items using it must be added at Server.cs#items var (https://github.com/tetreum/brickcraft/blob/main/Assets/Scripts/Server.cs#L12)
 6. To generate it's icon, head to /Scenes/IconGenerator & simply hit Play. Items with missing icons will have their icon generated.
 

@@ -1,8 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Brickcraft.UI;
+using Brickcraft.Bricks;
+using Brickcraft.World;
 
 namespace Brickcraft
 {
@@ -41,10 +42,20 @@ namespace Brickcraft
         public TriggerDetector triggerDetector;
 
         private float rayLength = 5f;
-        private GameObject lookedBrick;
-        private Brick diggedBrick;
-        private DateTime? activityStartTime;
+        private bool hasHit;
+        private BrickPlacer brickPlacer;
         private List<UserItem> inventory = new List<UserItem>();
+
+        // what the player is looking at: either a placed brick or a world block
+        private Brick lookedBrick;
+        private Vector3Int? lookedBlock;
+
+        // what the player is digging
+        private bool isDigging;
+        private Brick diggedBrick;
+        private Vector3Int? diggedBlock;
+        private float digTime;
+        private float digHardness;
 
         private float _duration = 0.5f;
         private float _timer = 0f;
@@ -53,6 +64,7 @@ namespace Brickcraft
             Instance = this;
             firstPersonController = GetComponent<FirstPersonController>();
             triggerDetector = GetComponentInChildren<TriggerDetector>();
+            brickPlacer = gameObject.AddComponent<BrickPlacer>();
         }
 
         private void Start() {
@@ -67,11 +79,18 @@ namespace Brickcraft
 
         private void Update() {
             frontRaycast();
-        
-            if (Input.GetKey(KeyCode.Mouse0) && lookedBrick != null) {
-                dig();
-            } else if (Input.GetKeyUp(KeyCode.Mouse0) && diggedBrick != null) {
+
+            if (isFrozen) {
+                brickPlacer.hide();
                 stopDigging();
+            } else {
+                brickPlacer.tick(hasHit, latestHit, PlayerPanel.Instance.selectedItem);
+
+                if (Input.GetKey(KeyCode.Mouse0) && (lookedBrick != null || lookedBlock.HasValue)) {
+                    dig();
+                } else {
+                    stopDigging();
+                }
             }
             if (Input.GetKeyDown(KeyCode.I)) {
                 Menu.Instance.togglePanel("InventoryPanel");
@@ -124,68 +143,107 @@ namespace Brickcraft
 
         void frontRaycast () {
             lookedBrick = null;
+            lookedBlock = null;
+
             Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0));
+            hasHit = Physics.Raycast(ray, out latestHit, rayLength, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
 
-            // debug Ray
-            //Debug.DrawRay(ray.origin, ray.direction * rayLength, Color.red);
+            if (!hasHit) {
+                return;
+            }
 
-            if (Physics.Raycast(ray, out latestHit, rayLength)) {
-                if (latestHit.collider.name.StartsWith("ChunkSlice")) {
-                    if (BrickCollisionDetector.Instance != null && BrickCollisionDetector.Instance.isLookingAtWorldStud(latestHit)) {
-                        BrickCollisionDetector.Instance.lookingAtStud(latestHit);
-                    }
-                    lookedBrick = latestHit.transform.parent.gameObject;
-                } else if (latestHit.collider.name.StartsWith("GridStud")) {
-                    if (BrickCollisionDetector.Instance != null) {
-                        BrickCollisionDetector.Instance.lookingAtStud(latestHit);
-                    }
-                    lookedBrick = latestHit.transform.parent.gameObject;
-                } else if (latestHit.transform.tag == "Block") {
-                    lookedBrick = latestHit.transform.gameObject;
-                }
+            lookedBrick = Server.findBrick(latestHit.collider);
+
+            if (lookedBrick == null && WorldBehaviour.Instance != null && latestHit.collider.name.StartsWith("ChunkSlice")) {
+                // step slightly inside the face we hit to find which block it belongs to
+                Vector3Int cell = BrickGrid.WorldToCell(latestHit.point - latestHit.normal * 0.01f);
+                lookedBlock = BrickGrid.CellToBlock(cell);
             }
         }
 
         void dig () {
-            if (activityStartTime == null) {
-                if (!Server.bricks.ContainsKey(lookedBrick.name)) {
+            bool isSameTarget = isDigging && (diggedBrick != null
+                ? diggedBrick == lookedBrick
+                : lookedBrick == null && diggedBlock == lookedBlock);
+
+            if (!isSameTarget) {
+                startDigging();
+
+                if (!isDigging) {
                     return;
                 }
-                diggedBrick = Server.bricks[lookedBrick.name];
-                activityStartTime = DateTime.Now;
-
-                // fix z-fighting
-                Vector3 hitPoint = latestHit.point;
-                hitPoint.z += lookedBrick.transform.position.z > 0 ? 0.001f : -0.001f;
-                hitPoint.y += lookedBrick.transform.position.y > 0 ? -0.001f : 0.001f;
-                hitPoint.x += lookedBrick.transform.position.x > 0 ? -0.001f : 0.001f;
-                Game.breakAnimation.showAt(hitPoint, Quaternion.FromToRotation(Vector3.back, latestHit.normal));
             }
-            DateTime currentTime = DateTime.Now;
-            TimeSpan span = currentTime.Subtract((DateTime)activityStartTime);
 
-            // has finished digging
-            if (span.Seconds >= diggedBrick.model.hardness) {
+            digTime += Time.deltaTime;
+
+            if (digTime >= digHardness) {
+                finishDigging();
+                return;
+            }
+
+            Game.breakAnimation.setProgress(digTime / digHardness);
+
+            _timer += Time.deltaTime;
+            if (_timer >= _duration) {
+                _timer = 0f;
+                SoundManager.Instance.play(SoundManager.EFFECT_DIG);
+            }
+        }
+
+        void startDigging () {
+            stopDigging();
+
+            if (lookedBrick != null) {
+                digHardness = lookedBrick.model.hardness;
+                diggedBrick = lookedBrick;
+            } else {
+                BlockType blockType = WorldBehaviour.Instance.GetBlockType(lookedBlock.Value);
+
+                if (!Blocks.IsBreakable(blockType)) {
+                    return;
+                }
+                digHardness = Blocks.GetHardness(blockType);
+                diggedBlock = lookedBlock;
+            }
+
+            isDigging = true;
+            digTime = 0f;
+            _timer = 0f;
+            Game.breakAnimation.showAt(latestHit.point, Quaternion.FromToRotation(Vector3.back, latestHit.normal));
+        }
+
+        void finishDigging () {
+            if (diggedBrick != null) {
                 addItem(new UserItem() {
                     id = diggedBrick.itemId,
                     quantity = 1
                 });
                 Server.Instance.removeBrick(diggedBrick);
-                SoundManager.Instance.play(SoundManager.EFFECT_REMOVE_BLOCK);
-                stopDigging();
             } else {
-                _timer += Time.deltaTime;
-                if (_timer >= _duration) {
-                    _timer = 0f;
-                    SoundManager.Instance.play(SoundManager.EFFECT_DIG);
-                    Game.breakAnimation.advance();
+                BlockType blockType = WorldBehaviour.Instance.GetBlockType(diggedBlock.Value);
+
+                if (WorldBehaviour.Instance.SetBlockType(diggedBlock.Value, BlockType.Air)) {
+                    Item item = Server.getItemForBlock(blockType);
+
+                    if (item != null) {
+                        addItem(new UserItem() {
+                            id = item.id,
+                            quantity = 1
+                        });
+                    }
                 }
             }
+            SoundManager.Instance.play(SoundManager.EFFECT_REMOVE_BLOCK);
+            stopDigging();
         }
 
         void stopDigging () {
+            if (!isDigging) {
+                return;
+            }
+            isDigging = false;
             diggedBrick = null;
-            activityStartTime = null;
+            diggedBlock = null;
             Game.breakAnimation.hide();
         }
 

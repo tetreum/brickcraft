@@ -18,6 +18,12 @@ namespace Brickcraft.Bricks {
             currentFrame++;
         }
 
+        // progress goes from 0 (just started) to 1 (broken)
+        public void setProgress (float progress) {
+            currentFrame = Mathf.Clamp(Mathf.FloorToInt(progress * frames.Length), 0, frames.Length - 1);
+            decalProjector.uvBias = new Vector2(frames[currentFrame], 0);
+        }
+
         public void showAt (Vector3 position, Quaternion rotation) {
             if (prefab == null) {
                 prefab = Game.Instantiate(Game.Instance.breakAnimationPrefab, Vector3.zero, Quaternion.identity);

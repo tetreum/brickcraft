@@ -30,7 +30,6 @@ namespace Brickcraft.UI
             set {
                 _selectedSlot = value;
                 updateSelectedItemBackground();
-                updateBrickPreviewer();
             }
         }
         private int _selectedSlot;
@@ -67,31 +66,6 @@ namespace Brickcraft.UI
                 slot.setVisible(true);
                 slot.GetComponent<RawImage>().texture = inventory[slotId].item.icon;
                 slot.quantity.text = inventory[slotId].quantity.ToString();
-            }
-
-            updateBrickPreviewer();
-        }
-
-        public void updateBrickPreviewer() {
-            if (Player.Instance == null) {
-                return;
-            }
-
-            // update brick previewer
-            if (selectedItem == null && BrickCollisionDetector.Instance != null) {
-                Destroy(BrickCollisionDetector.Instance.gameObject);
-            } else if (selectedItem != null && selectedItem.item.type == Item.Type.Brick) {
-                BrickModel selectedBrickModel = selectedItem.item.brickModel;
-
-                if (BrickCollisionDetector.Instance != null) {
-                    if (BrickCollisionDetector.Instance.currentBrickType == selectedBrickModel.type) {
-                        return;
-                    }
-                    Destroy(BrickCollisionDetector.Instance.gameObject);
-                }
-
-                GameObject brickPreviewer = Instantiate(Server.brickPrefabs[selectedBrickModel.type.ToString()]);
-                brickPreviewer.AddComponent<BrickCollisionDetector>().setCurrentBrickType(selectedBrickModel.type);
             }
         }
 

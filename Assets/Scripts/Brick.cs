@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using UnityEngine;
+using Brickcraft.Bricks;
 
 namespace Brickcraft
 {
@@ -6,6 +7,7 @@ namespace Brickcraft
         public string id;
         public int itemId;
         public GameObject gameObject;
+        public BrickPlacement placement;
 
         public Item item {
             get {

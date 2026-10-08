@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Brickcraft.Bricks;
+using Brickcraft.World;
 
 namespace Brickcraft
 {
@@ -16,6 +18,7 @@ namespace Brickcraft
                 type = Item.Type.Brick,
                 brickModelId = 3003,
                 materialName = "MediumNougat",
+                blockType = BlockType.Dirt,
                 name = "Dirt 2x2"
             } },
             {2, new Item(){
@@ -66,6 +69,7 @@ namespace Brickcraft
                 type = Item.Type.Brick,
                 brickModelId = 3003,
                 materialName = "BrickYellow",
+                blockType = BlockType.Sand,
                 name = "Sand 2x2"
             } },
             {9, new Item(){
@@ -75,12 +79,35 @@ namespace Brickcraft
                 materialName = "MediumNougat",
                 name = "Dirt 48x48"
             } },
+            {10, new Item(){
+                id = 10,
+                type = Item.Type.Brick,
+                brickModelId = 3003,
+                blockType = BlockType.Stone,
+                name = "Stone 2x2"
+            } },
+            {11, new Item(){
+                id = 11,
+                type = Item.Type.Brick,
+                brickModelId = 3003,
+                materialName = "MediumNougat",
+                blockType = BlockType.Wood,
+                name = "Wood 2x2"
+            } },
+            {12, new Item(){
+                id = 12,
+                type = Item.Type.Brick,
+                brickModelId = 3003,
+                materialName = "BrightGreen",
+                blockType = BlockType.Leaves,
+                name = "Leaves 2x2"
+            } },
         };
 
         public const float studSize = 0.398f;
         public const float plateHeight = (0.478f / 3);
-        public const float brickHeight = 0.478f;
-        public const float brickWidth = 0.796f; // 2x2
+        public const float brickHeight = plateHeight * 3;
+        public const float brickWidth = studSize * 2; // 2x2, the size of a world block
 
         public GameObject[] prefabs;
         public GameObject playerPrefab;
@@ -109,40 +136,36 @@ namespace Brickcraft
         }
 
         void setupTest() {
-            spawnBrick(Server.items[1], new Vector3(3.327f, 3, -4.196f), Quaternion.identity, true);
-            spawnBrick(Server.items[1], new Vector3(1.468601f, 0, -4.383173f), Quaternion.identity, true);
-            spawnBrick(Server.items[2], new Vector3(2.374763f, 0.372f, -3.981043f), Quaternion.identity, true);
-            spawnBrick(Server.items[3], new Vector3(0.1108012f, 0.355f, -4.368471f), Quaternion.identity, true);
-            spawnBrick(Server.items[4], new Vector3(-1.03f, 0.15f, -4.299f), Quaternion.identity, true);
-            spawnBrick(Server.items[6], new Vector3(-2.72f, 0.15f, -4.15f), Quaternion.identity, true);
+            // a few loose bricks
+            spawnBrick(items[1], new BrickPlacement(items[1].brickModel, new Vector3Int(8, 18, -12)), true);
+            spawnBrick(items[1], new BrickPlacement(items[1].brickModel, new Vector3Int(4, 0, -12)), true);
+            spawnBrick(items[2], new BrickPlacement(items[2].brickModel, new Vector3Int(6, 0, -10)), true);
+            spawnBrick(items[3], new BrickPlacement(items[3].brickModel, new Vector3Int(0, 0, -11)), true);
+            spawnBrick(items[4], new BrickPlacement(items[4].brickModel, new Vector3Int(-3, 0, -11)), true);
+            spawnBrick(items[6], new BrickPlacement(items[6].brickModel, new Vector3Int(-8, 0, -11)), true);
 
-            generateCube(Server.items[9], new Vector3(3, 1, 5), new Vector3(-41f, 0f, -24f));
+            fillWithBricks(items[9], new Vector3Int(-150, 0, -100), new Vector3Int(3, 1, 5));
 
-            // water
-            generateCube(Server.items[7], new Vector3(10, 10, 10), new Vector3(16.411f, -4.824f, -3.732f));
-
-            // sand
-            generateCube(Server.items[8], new Vector3(2, 10, 10), new Vector3(14.819f, -4.824f, -3.732f));
-            generateCube(Server.items[8], new Vector3(1, 11, 10), new Vector3(14.023f, -4.824f, -3.732f));
-            generateCube(Server.items[8], new Vector3(13, 10, 2), new Vector3(14.023f, -4.824f, -5.323999f));
-            generateCube(Server.items[8], new Vector3(2, 10, 12), new Vector3(24.371f, -4.824f, -5.323999f));
-            generateCube(Server.items[8], new Vector3(15, 10, 2), new Vector3(14.023f, -4.824f, 4.228f));
-            generateCube(Server.items[8], new Vector3(10, 1, 10), new Vector3(16.411f, -4.824f, -3.732f));
-
-            // dirt
-            //generateCube(Server.items[1], new Vector3(100, 11, 100), new Vector3(14.023f, -4.824f, 5.82f));
+            // a pool of water surrounded by sand
+            fillWithBricks(items[8], new Vector3Int(40, -30, -12), new Vector3Int(12, 1, 12));
+            fillWithBricks(items[7], new Vector3Int(42, -27, -10), new Vector3Int(10, 10, 10));
+            fillWithBricks(items[8], new Vector3Int(40, -27, -12), new Vector3Int(1, 10, 12));
+            fillWithBricks(items[8], new Vector3Int(62, -27, -12), new Vector3Int(1, 10, 12));
+            fillWithBricks(items[8], new Vector3Int(42, -27, -12), new Vector3Int(10, 10, 1));
+            fillWithBricks(items[8], new Vector3Int(42, -27, 10), new Vector3Int(10, 10, 1));
 
             spawnUnlimitedBlocks();
         }
 
-        private void generateCube (Item item, Vector3 cubeDimensions, Vector3 startingPos) {
-            float brickWidth = Server.studSize * (item.id == 9 ? 48 : 2);
-            float brickHeight = Server.plateHeight * item.brickModel.heightInPlates;
+        // fills a box with copies of the item's brick, starting at the given cell
+        private void fillWithBricks (Item item, Vector3Int originCell, Vector3Int brickCount) {
+            Vector3Int size = BrickPlacement.SizeFor(item.brickModel, 0);
 
-            for (int x = 0; x < cubeDimensions.x; x++) {
-                for (int y = 0; y < cubeDimensions.y; y++) {
-                    for (int z = 0; z < cubeDimensions.z; z++) {
-                        spawnBrick(item, new Vector3(startingPos.x + (x * brickWidth), startingPos.y + (y * brickHeight), startingPos.z + (z * brickWidth)), Quaternion.identity, true);
+            for (int x = 0; x < brickCount.x; x++) {
+                for (int y = 0; y < brickCount.y; y++) {
+                    for (int z = 0; z < brickCount.z; z++) {
+                        Vector3Int cell = originCell + Vector3Int.Scale(new Vector3Int(x, y, z), size);
+                        spawnBrick(item, new BrickPlacement(item.brickModel, cell), true);
                     }
                 }
             }
@@ -152,17 +175,17 @@ namespace Brickcraft
         // For testing.
         void spawnUnlimitedBlocks () {
             Vector3 colliderSize = new Vector3(1.5f, 1.5f, 1.5f);
-            Vector3 pos = new Vector3(4.574519f, 0.5f, 5.509473f);
+            Vector3Int cell = new Vector3Int(12, 3, 14);
             Brick brick;
             BoxCollider boxCollider;
             BlockAdderTest blockAdder;
 
             foreach (Item item in items.Values) {
-                if (item.type != Item.Type.Brick) {
+                if (item.type != Item.Type.Brick || item.brickModel.width > 4) {
                     continue;
                 }
-                pos.x -= 2;
-                brick = spawnBrick(item, pos, Quaternion.identity, true);
+                cell.x -= 5;
+                brick = spawnBrick(item, new BrickPlacement(item.brickModel, cell), true);
                 brick.gameObject.layer = (int)Game.Layers.Default;
                 boxCollider = brick.gameObject.GetComponent<BoxCollider>();
                 boxCollider.isTrigger = true;
@@ -172,9 +195,20 @@ namespace Brickcraft
             }
         }
 
-        public Brick spawnBrick(Item item, Vector3 position, Quaternion rotation, bool fromServer = false) {
-            GameObject brickObj = Instantiate(brickPrefabs[item.brickModelId.ToString()], position, rotation);
+        /// <summary>
+        /// Creates the GameObject of an item's brick without registering it in the world.
+        /// </summary>
+        public GameObject createBrickObject(Item item, Vector3 position, Quaternion rotation) {
+            GameObject prefab = brickPrefabs[item.brickModelId.ToString()];
+            GameObject brickObj = Instantiate(prefab, position, rotation * prefab.transform.rotation);
             Material brickMaterial = item.material;
+
+            // legacy stud colliders, placement is computed from the brick grid now
+            foreach (Transform child in brickObj.transform) {
+                if (child.name.StartsWith("GridStud")) {
+                    Destroy(child.gameObject);
+                }
+            }
 
             MeshRenderer meshRenderer = brickObj.GetComponent<MeshRenderer>();
 
@@ -190,13 +224,20 @@ namespace Brickcraft
             if ((Game.Layers)item.layer == Game.Layers.Water) {
                 meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             }
+            return brickObj;
+        }
+
+        public Brick spawnBrick(Item item, BrickPlacement placement, bool fromServer = false) {
+            GameObject brickObj = createBrickObject(item, placement.Position, placement.Rotation);
 
             Brick brick = new Brick();
             brick.id = System.Guid.NewGuid().ToString();
             brick.itemId = item.id;
             brick.gameObject = brickObj;
+            brick.placement = placement;
 
             bricks.Add(brick.id, brick);
+            BrickGrid.Register(brick);
 
             brickObj.name = brick.id;
 
@@ -209,106 +250,65 @@ namespace Brickcraft
 
         public void removeBrick(Brick brick) {
             bricks.Remove(brick.id);
+            BrickGrid.Unregister(brick);
             Destroy(brick.gameObject);
         }
 
+        public static Brick findBrick(Collider collider) {
+            for (Transform tr = collider.transform; tr != null; tr = tr.parent) {
+                if (bricks.TryGetValue(tr.name, out Brick brick)) {
+                    return brick;
+                }
+            }
+            return null;
+        }
+
+        // the item a player gets after digging a world block, if any
+        public static Item getItemForBlock(BlockType blockType) {
+            switch (blockType) {
+                case BlockType.Grass:
+                case BlockType.Dirt:
+                    return items[1];
+                case BlockType.Sand:
+                    return items[8];
+                case BlockType.Wood:
+                case BlockType.Wood_Planks:
+                    return items[11];
+                case BlockType.Leaves:
+                    return items[12];
+                case BlockType.Stone:
+                case BlockType.Cobblestone:
+                case BlockType.Gravel:
+                case BlockType.Coal_Ore:
+                case BlockType.Iron_Ore:
+                case BlockType.Gold_Ore:
+                case BlockType.Diamond_Ore:
+                case BlockType.Lapis_Lazuli_Ore:
+                case BlockType.Redstone_Ore:
+                case BlockType.Redstone_Ore_Glowing:
+                    return items[10];
+                default:
+                    return null;
+            }
+        }
+
         private void setupBrickModels() {
-            BrickModel brick;
+            addBrickModel(3003, BrickModel.Category.Brick, 2, 2, 3);
+            addBrickModel(22885, BrickModel.Category.Brick, 2, 1, 5);
+            addBrickModel(3022, BrickModel.Category.Plate, 2, 2, 1);
+            addBrickModel(3024, BrickModel.Category.Plate, 1, 1, 1);
+            addBrickModel(3001, BrickModel.Category.Brick, 4, 2, 3);
+            addBrickModel(4186, BrickModel.Category.Plate, 48, 48, 1);
+        }
 
-            brick = new BrickModel() {
-                type = 3003,
-                heightInPlates = 3,
-                category = BrickModel.Category.Brick,
-                pivot = new Vector3(-(Server.studSize / 2), 0, -(Server.studSize / 2)),
-                studs = new Dictionary<int, Dictionary<int, int[]>>() {
-                    {0, new Dictionary<int, int[]>() {
-                            {0, new int[]{1, 2} },
-                            {1, new int[]{0, 3} },
-                            {2, new int[]{0, 3} },
-                            {3, new int[]{1, 2} },
-                        }
-                    }
-                }
-            };
-            
-            brickModels.Add(brick.type, brick);
-
-            brick = new BrickModel() {
-                type = 22885,
-                heightInPlates = 6,
-                category = BrickModel.Category.Brick,
-                pivot = new Vector3(-(Server.studSize / 2), 0, 0),
-                studs = new Dictionary<int, Dictionary<int, int[]>>() {
-                    {0, new Dictionary<int, int[]>() {
-                            {0, new int[]{1, 2} },
-                            {1, new int[]{0, 3} },
-                            {2, new int[]{0, 3} },
-                            {3, new int[]{1, 2} },
-                        }
-                    },
-                    {1, new Dictionary<int, int[]>() {
-                            {0, new int[]{1} },
-                            {1, new int[]{0} },
-                        }
-                    },
-                }
-            };
-            brickModels.Add(brick.type, brick);
-
-            brick = new BrickModel();
-            brick.type = 3022;
-            brick.heightInPlates = 1;
-            brick.category = BrickModel.Category.Plate;
-            brick.pivot = new Vector3(-(Server.studSize / 2), 0, -(Server.studSize / 2));
-            brick.studs = new Dictionary<int, Dictionary<int, int[]>>() {
-                {0, new Dictionary<int, int[]>() {
-                    {0, new int[]{1, 2} },
-                    {1, new int[]{0, 3} },
-                    {2, new int[]{0, 3} },
-                    {3, new int[]{1, 2} },
-                }
-             }
-            };
-            brickModels.Add(brick.type, brick);
-
-            brick = new BrickModel();
-            brick.type = 3024;
-            brick.heightInPlates = 1;
-            brick.category = BrickModel.Category.Plate;
-            brick.pivot = new Vector3(0, 0, 0);
-            brick.studs = new Dictionary<int, Dictionary<int, int[]>>() {
-                {0, new Dictionary<int, int[]>() {
-                        {0, new int[]{ } },
-                    }
-                }
-            };
-            brickModels.Add(brick.type, brick);
-
-            brick = new BrickModel();
-            brick.type = 3001;
-            brick.heightInPlates = 3;
-            brick.category = BrickModel.Category.Brick;
-            brick.pivot = new Vector3(-(Server.studSize / 2) * 3, 0, -(Server.studSize / 2));
-            brick.studs = new Dictionary<int, Dictionary<int, int[]>>() {
-                {0, new Dictionary<int, int[]>() {
-                        {0, new int[]{ } },
-                    }
-                }
-            };
-            brickModels.Add(brick.type, brick);
-
-            brick = new BrickModel();
-            brick.type = 4186;
-            brick.heightInPlates = 1;
-            brick.category = BrickModel.Category.Plate;
-            brick.pivot = new Vector3(-(Server.studSize / 2) * 3, 0, -(Server.studSize / 2));
-            brick.studs = new Dictionary<int, Dictionary<int, int[]>>() {
-                {0, new Dictionary<int, int[]>() {
-                        {0, new int[]{ } },
-                    }
-                }
-            };
-            brickModels.Add(brick.type, brick);
+        private void addBrickModel(int type, BrickModel.Category category, int width, int depth, int heightInPlates) {
+            brickModels.Add(type, new BrickModel() {
+                type = type,
+                category = category,
+                width = width,
+                depth = depth,
+                heightInPlates = heightInPlates,
+            });
         }
     }
 }

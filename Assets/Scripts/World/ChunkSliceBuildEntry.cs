@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 // Highly based on https://github.com/chraft/chunk-light-tester
@@ -14,6 +13,5 @@ namespace Brickcraft.World
 
 		public Vector3[] ColliderVertices;
 		public int[] ColliderTriangles;
-		public Dictionary<byte, Vector3[]> meshes;
 	}
 }

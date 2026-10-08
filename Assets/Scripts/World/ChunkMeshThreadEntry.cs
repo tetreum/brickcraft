@@ -1,3 +1,5 @@
+using System.Threading;
+
 // Highly based on https://github.com/chraft/chunk-light-tester
 namespace Brickcraft.World
 {
@@ -18,8 +20,15 @@ namespace Brickcraft.World
 	
 		public void ThreadCallback(object threadContext)
 		{
-			ChunkRenderer chunkRenderer = new ChunkRenderer();
-			chunkRenderer.RenderChunk(chunkToBeRendered);
+			try
+			{
+				ChunkRenderer chunkRenderer = new ChunkRenderer();
+				chunkRenderer.RenderChunk(chunkToBeRendered);
+			}
+			finally
+			{
+				Interlocked.Decrement(ref WorldBehaviour.PendingChunkRenders);
+			}
 		}
 	}
 }

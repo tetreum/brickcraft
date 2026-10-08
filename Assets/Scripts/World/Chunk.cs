@@ -57,28 +57,35 @@ namespace Brickcraft.World
 				if(!slice.IsEmpty)
 				{
 					slice.ClearDirtyLight();
-					GameObject newObject = new GameObject("ChunkSlice#" + i);
-					ChunkSliceObjects[i] = newObject;			
-					MeshRenderer meshRenderer = newObject.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
-					meshRenderer.material = WorldBehaviour.BlockMaterial;
-					meshRenderer.material.mainTexture = WorldBehaviour.AtlasTexture;
-					meshRenderer.sharedMaterial = WorldBehaviour.BlockMaterial;
-					newObject.AddComponent(typeof(MeshFilter));
-					newObject.AddComponent<MeshCollider>();
-
-					Vector3 pos = new Vector3(ChunkObject.transform.position.x, ChunkObject.transform.position.y + (i * Chunk.SliceHeight), ChunkObject.transform.position.z);
-					if (WorldBehaviour.mode == 3) {
-						pos.x = pos.x * Server.brickWidth;
-						pos.y = pos.y * Server.brickHeight;
-						pos.z = pos.z * Server.brickWidth;
-					}
-					newObject.transform.position = pos;
-					newObject.transform.parent = ChunkObject.transform;
-
-					slice.renderer = meshRenderer;
-					slice.CreateBoundsBox(newObject.transform);
+					GetOrCreateSliceObject(i);
 				}
 			}
+		}
+
+		public GameObject GetOrCreateSliceObject(int i)
+		{
+			if (ChunkSliceObjects[i] != null)
+				return ChunkSliceObjects[i];
+
+			ChunkSlice slice = Slices[i];
+			GameObject newObject = new GameObject("ChunkSlice#" + i);
+			ChunkSliceObjects[i] = newObject;
+			MeshRenderer meshRenderer = newObject.AddComponent<MeshRenderer>();
+			meshRenderer.sharedMaterial = WorldBehaviour.BlockMaterial;
+			newObject.AddComponent<MeshFilter>();
+			newObject.AddComponent<MeshCollider>();
+
+			newObject.transform.position = new Vector3(
+				X * 16 * Server.brickWidth,
+				i * Chunk.SliceHeight * Server.brickHeight,
+				Z * 16 * Server.brickWidth
+			);
+			newObject.transform.parent = ChunkObject.transform;
+
+			slice.renderer = meshRenderer;
+			slice.CreateBoundsBox(newObject.transform);
+
+			return newObject;
 		}
 	
 		private int Depth;

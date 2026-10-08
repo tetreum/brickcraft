@@ -1,4 +1,5 @@
 using UnityEngine;
+using Brickcraft.World;
 
 namespace Brickcraft
 {
@@ -14,6 +15,9 @@ namespace Brickcraft
         public int layer;
         public Type type;
         public string name;
+
+        // World block this item turns into when placed exactly over a world block (2x2 bricks only)
+        public BlockType? blockType;
 
         public Texture2D icon {
             get {

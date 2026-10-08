@@ -43,6 +43,16 @@ To stay precise however far players go, the game uses a floating origin: game lo
 
 The first player to join a save without admins (the host, starting singleplayer or a server) becomes its admin; everyone else joins as a `user`.
 
+Admins can type commands in the chat:
+
+- `/players`: online players and their ids.
+- `/kick NICK|ID [reason]`: disconnects a player, who sees the reason in the menu.
+- `/ban NICK|ID [reason]`: bans a player, online or not. Nobody can join from a banned player's machine either (except admins).
+- `/unban NICK|ID`
+- `/role NICK|ID [role]`: shows a player's role, or changes it (`user` or `admin`). Admins can't change their own.
+
+`NICK|ID` is a player name (any case) or, if no name matches, a player id. Admins can't kick or ban themselves, other admins or the host.
+
 Players are identified by the name typed in the menu plus their machine id (`SystemInfo.deviceUniqueIdentifier`): the first machine that uses a name owns it on that server, so nobody else can play with it.
 
 ### Saves

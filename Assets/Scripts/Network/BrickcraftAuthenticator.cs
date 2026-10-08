@@ -56,7 +56,15 @@ namespace Brickcraft.Network
                 string machineIdHash = PlayerIdentity.HashMachineId(request.machineId);
                 player = database.FindPlayer(request.name);
 
-                if (player == null) {
+                // admins are never locked out by the ban of someone using the same machine
+                bool isAdmin = player != null && player.IsAdmin && player.TokenHash == machineIdHash;
+
+                if ((player != null && player.Banned) || (!isAdmin && database.IsMachineBanned(machineIdHash))) {
+                    error = "You are banned from this server";
+                    if (player != null && !string.IsNullOrEmpty(player.BanReason)) {
+                        error += ": " + player.BanReason;
+                    }
+                } else if (player == null) {
                     player = database.CreatePlayer(request.name, machineIdHash);
                 } else if (player.TokenHash != machineIdHash) {
                     error = "The name " + player.Name + " belongs to someone else";

@@ -43,6 +43,11 @@ namespace Brickcraft.Network
             get { return Role == PlayerRoles.Admin; }
         }
 
+        // banned players can't join, neither can anyone else from their machine
+        public bool Banned { get; set; }
+        public long BannedAt { get; set; }
+        public string BanReason { get; set; }
+
         // where the player was in the world when it last left, absolute coordinates; null until then
         public double? LastX { get; set; }
         public double? LastY { get; set; }
@@ -113,6 +118,7 @@ namespace Brickcraft.Network
             // columns added to existing databases start empty
             connection.Execute("UPDATE players SET Role = ? WHERE Role IS NULL", PlayerRoles.User);
             connection.Execute("UPDATE players SET Experience = 0 WHERE Experience IS NULL");
+            connection.Execute("UPDATE players SET Banned = 0 WHERE Banned IS NULL");
 
             // sessions left open by a server that didn't shut down cleanly
             connection.Execute("UPDATE player_sessions SET LeftAt = JoinedAt WHERE LeftAt = 0");
@@ -147,6 +153,22 @@ namespace Brickcraft.Network
             connection.Insert(player);
 
             return player;
+        }
+
+        public PlayerRecord FindPlayer(int id) {
+            return connection.Table<PlayerRecord>().Where(p => p.Id == id).FirstOrDefault();
+        }
+
+        public void SetBanned(PlayerRecord player, bool banned, string reason) {
+            player.Banned = banned;
+            player.BannedAt = banned ? Now() : 0;
+            player.BanReason = banned ? reason : null;
+            connection.Update(player);
+        }
+
+        /// <summary>Whether any banned player played from this machine.</summary>
+        public bool IsMachineBanned(string machineIdHash) {
+            return connection.Table<PlayerRecord>().Where(p => p.TokenHash == machineIdHash && p.Banned).Count() > 0;
         }
 
         public bool HasAdmin() {

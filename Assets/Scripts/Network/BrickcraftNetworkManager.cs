@@ -253,6 +253,9 @@ namespace Brickcraft.Network
 
             UI.ChatPanel.ClearHistory();
             NetworkClient.RegisterHandler<ChatMessage>(UI.ChatPanel.OnChatMessage);
+
+            disconnectReason = null;
+            NetworkClient.RegisterHandler<DisconnectReasonMessage>(message => disconnectReason = message.reason);
         }
 
         public override void OnStopClient() {
@@ -269,15 +272,27 @@ namespace Brickcraft.Network
             requestWorldIfInGame();
         }
 
-        // a failed join leaves us in the menu, show it again
+        // why the server disconnected us (kicked, banned), if it said
+        private static string disconnectReason;
+
+        // tells the player why it's back in the menu
         public override void OnClientDisconnect() {
             base.OnClientDisconnect();
 
-            if (isInMenu() && Menu.Instance != null) {
-                string message = BrickcraftAuthenticator.LastRejection ?? "Couldn't join " + networkAddress;
+            string message = BrickcraftAuthenticator.LastRejection ?? disconnectReason;
 
-                Debug.LogWarning(message);
+            if (message == null && isInMenu()) {
+                message = "Couldn't join " + networkAddress; // a failed join leaves us in the menu
+            }
+            if (message == null) {
+                return;
+            }
+            Debug.LogWarning(message);
+
+            if (isInMenu() && Menu.Instance != null) {
                 Menu.Instance.showPanel("MainPanel").GetComponent<MainPanel>().showMessage(message);
+            } else {
+                MainPanel.PendingMessage = message; // shown once the menu loads
             }
         }
 

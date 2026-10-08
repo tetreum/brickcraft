@@ -10,9 +10,16 @@ public class MainPanel : MonoBehaviour
 
     private static bool hasReadCommandLine;
 
+    /// <summary>Message to show next time the menu opens, like why the server disconnected us.</summary>
+    public static string PendingMessage;
+
     private void OnEnable () {
         if (nameInput != null) {
             nameInput.text = PlayerIdentity.Name;
+        }
+        if (PendingMessage != null) {
+            showMessage(PendingMessage);
+            PendingMessage = null;
         }
     }
 

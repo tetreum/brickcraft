@@ -152,6 +152,12 @@ namespace Brickcraft.Network
             }
             nextChatTime = NetworkTime.time + ChatInterval;
 
+            if (ChatCommands.IsCommand(text)) {
+                Debug.Log("[Command] " + playerName + ": " + text);
+                ChatCommands.Run(connectionToClient, text);
+                return;
+            }
+
             Debug.Log("[Chat] " + playerName + ": " + text);
             NetworkServer.SendToReady(new ChatMessage() { sender = playerName, text = text });
         }

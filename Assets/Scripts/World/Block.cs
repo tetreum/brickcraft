@@ -1,12 +1,5 @@
 // Highly based on https://github.com/chraft/chunk-light-tester
 namespace Brickcraft.World { 
-	public enum BlockFace
-	{
-		Top,
-		Side,
-		Bottom
-	}
-
 	public enum BlockType : byte
 	{
 		//Invalid = 255,

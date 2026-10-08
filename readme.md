@@ -26,10 +26,67 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 - Mouse wheel / R (having a block selected in inventory) - Rotates block
 - Shift (while placing) - Place on any stud instead of snapping to the terrain block grid
 
+## Multiplayer
+
+Multiplayer uses [Mirror](https://mirror-networking.gitbook.io/docs). Every game is networked:
+
+- **Singleplayer** runs a host that doesn't listen for connections, so nobody else can join.
+- **Host game** runs a host other players can join (UDP port 7777 by default, see the KcpTransport in `Resources/NetworkManager`).
+- **Join game** connects to the address typed next to the button (`localhost` if empty).
+
+The server owns the world. Clients generate the terrain from the server's seed and only receive what changed since (dug or placed blocks, bricks). Players ask the server to dig and place, and it checks the request before applying it.
+
+To test with several instances, a build can be started with `-host` or `-join <address>`. Playing a game scene straight from the editor starts a singleplayer game.
+
 ## How can i help?
 
 [https://tetreum.github.io/brickcraft/?/help](https://tetreum.github.io/brickcraft/?/help)
 
+
+## How can i add a new block?
+
+Each block has its own folder in `Assets/StreamingAssets/Blocks` (`<Game>_Data/StreamingAssets/Blocks` in builds), loaded when the game starts:
+
+```
+Blocks/marble/
+    block.json      properties (required)
+    texture.png     texture of every side
+    top.png         optional, overrides texture.png on that side (also side.png, bottom.png)
+    model.obj       optional terrain model, the default 2x2 brick otherwise
+    collider.obj    optional collider, model.obj (or the default brick collider) otherwise
+    icon.png        inventory icon of the block's item
+```
+
+`block.json`:
+
+```json
+{
+    "id": 200,
+    "name": "marble",
+    "hardness": 2.5,
+    "breakable": true,
+    "replaceable": false,
+    "transparent": false,
+    "dropItemId": 0,
+    "item": {
+        "id": 200,
+        "name": "Marble 2x2",
+        "brickModel": 3003,
+        "material": "BrightBlue"
+    }
+}
+```
+
+- `id` (1-254) and `name` must be unique. A folder reusing an existing id overrides that block.
+- `hardness`: seconds to dig it with bare hands. `breakable: false` makes it undiggable.
+- `replaceable`: bricks can be placed inside it (like water).
+- `transparent`: sky light goes through it (like leaves or water).
+- `item`: optional item that places the block back. It needs an item id not used in Server.cs#items. Its icon is `icon.png`, which /Scenes/IconGenerator generates if missing.
+- `dropItemId`: item given when dug. Defaults to the block's own item, `0` and no item means nothing.
+
+Every field but `id` and `name` is optional.
+
+Textures are square images (they're scaled to the biggest one). Models are OBJ files in game units: the pivot is at the center of the bottom face and a block spans 0.796 x 0.478 x 0.796 (the default model is in `StreamingAssets/Models`). Each triangle is drawn when the side of the block it's closest to is exposed to air; triangles facing the inside of the block are drawn with the bottom side. Far from the camera (`DetailRadius` chunks, on the World object), blocks are drawn with their collider shape instead, so detailed models only cost where they can be seen.
 
 ## How can i add a new model?
 

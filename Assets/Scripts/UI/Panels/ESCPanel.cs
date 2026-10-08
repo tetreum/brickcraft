@@ -10,11 +10,16 @@ namespace Brickcraft.UI {
 
         void OnDisable() {
             Game.lockMouse();
-            Player.Instance.unFreeze(Player.FreezeReason.ESCMenu);
+
+            // the player is already gone when leaving the game
+            if (Player.Instance != null) {
+                Player.Instance.unFreeze(Player.FreezeReason.ESCMenu);
+            }
         }
 
+        // back to the main menu
         public void exit() {
-            Application.Quit();
+            Network.BrickcraftNetworkManager.Instance.Leave();
         }
     }
 }

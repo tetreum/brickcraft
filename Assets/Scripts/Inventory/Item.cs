@@ -19,8 +19,15 @@ namespace Brickcraft
         // World block this item turns into when placed exactly over a world block (2x2 bricks only)
         public BlockType? blockType;
 
+        // icon of items defined in a block folder, loaded from iconFile (see BlockDatabase)
+        public string iconFile;
+        public Texture2D iconTexture;
+
         public Texture2D icon {
             get {
+                if (iconFile != null) {
+                    return iconTexture;
+                }
                 return Resources.Load<Texture2D>("Textures/Bricks/" + id);
             }
         }

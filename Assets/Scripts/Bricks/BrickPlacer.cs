@@ -1,5 +1,4 @@
 using UnityEngine;
-using Brickcraft.World;
 
 namespace Brickcraft.Bricks
 {
@@ -106,30 +105,12 @@ namespace Brickcraft.Bricks
             return new BrickPlacement(model, origin, rotation);
         }
 
+        // the server places it, and takes the item from our inventory if it could
         private void place(UserItem userItem, BrickPlacement placement) {
-            Item item = userItem.item;
-            bool placedAsWorldBlock = false;
-
-            // a 2x2 brick that fits exactly in a world block becomes part of the world
-            if (item.blockType.HasValue && placement.MatchesWorldBlock && WorldBehaviour.Instance != null) {
-                Vector3Int block = BrickGrid.CellToBlock(placement.origin);
-                placedAsWorldBlock = WorldBehaviour.Instance.SetBlockType(block, item.blockType.Value);
-            }
-
-            if (placedAsWorldBlock) {
-                SoundManager.Instance.play(SoundManager.EFFECT_TAPPING);
-            } else {
-                Server.Instance.spawnBrick(item, placement);
-            }
-
-            Player.Instance.removeItem(new UserItem() {
-                id = userItem.id,
-                health = userItem.health,
-                quantity = 1
-            });
+            Player.Instance.network.CmdPlaceBrick(userItem.id, userItem.health, placement.origin, (byte)placement.rotation);
         }
 
-        private bool overlapsPlayer(BrickPlacement placement) {
+        public static bool overlapsPlayer(BrickPlacement placement) {
             Bounds bounds = placement.WorldBounds;
             bounds.Expand(-0.02f); // touching is fine
 

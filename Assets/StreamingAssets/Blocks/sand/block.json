@@ -1,0 +1,11 @@
+{
+    "id": 12,
+    "name": "sand",
+    "hardness": 1,
+    "item": {
+        "id": 8,
+        "name": "Sand 2x2",
+        "brickModel": 3003,
+        "material": "BrickYellow"
+    }
+}

@@ -41,9 +41,10 @@ namespace Brickcraft
         }
 
         private bool generateIcon(Item item, bool forceWrite = false) {
-            string iconPath = "/Resources/Textures/Bricks/" + item.id + ".png";
+            // items of blocks keep their icon in the block folder
+            string iconFile = item.iconFile ?? Application.dataPath + "/Resources/Textures/Bricks/" + item.id + ".png";
 
-            if (!forceWrite && System.IO.File.Exists(Application.dataPath + iconPath)) {
+            if (!forceWrite && System.IO.File.Exists(iconFile)) {
                 return false;
             }
 
@@ -69,7 +70,6 @@ namespace Brickcraft
             // force render to make sure the new brick appears
             Camera.main.Render();
 
-            iconPath = "Assets" + iconPath;
             texture.ReadPixels(rectReadPicture, 0, 0);
             Color32[] colors = texture.GetPixels32();
             int i = 0;
@@ -83,13 +83,18 @@ namespace Brickcraft
             texture.SetPixels32(colors);
             
             byte[] bytes = texture.EncodeToPNG();
-            System.IO.File.WriteAllBytes(iconPath, bytes);
-            AssetDatabase.ImportAsset(iconPath);
+            System.IO.File.WriteAllBytes(iconFile, bytes);
 
-            TextureImporter ti = (TextureImporter)TextureImporter.GetAtPath(iconPath);
-            ti.textureType = TextureImporterType.Default;
-            ti.alphaIsTransparency = true;
-            ti.SaveAndReimport();
+            // icons in Resources are imported as textures, the ones in block folders are read at runtime
+            if (item.iconFile == null) {
+                string assetPath = "Assets" + iconFile.Substring(Application.dataPath.Length);
+                AssetDatabase.ImportAsset(assetPath);
+
+                TextureImporter ti = (TextureImporter)TextureImporter.GetAtPath(assetPath);
+                ti.textureType = TextureImporterType.Default;
+                ti.alphaIsTransparency = true;
+                ti.SaveAndReimport();
+            }
 
             DestroyImmediate(obj);
             return true;

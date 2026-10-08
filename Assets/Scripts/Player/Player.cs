@@ -4,6 +4,7 @@ using UnityEngine;
 using Brickcraft.UI;
 using Brickcraft.Bricks;
 using Brickcraft.World;
+using Brickcraft.Network;
 
 namespace Brickcraft
 {
@@ -60,11 +61,27 @@ namespace Brickcraft
         private float _duration = 0.5f;
         private float _timer = 0f;
 
+        [HideInInspector]
+        public PlayerNetwork network;
+
         private void Awake() {
-            Instance = this;
             firstPersonController = GetComponent<FirstPersonController>();
             triggerDetector = GetComponentInChildren<TriggerDetector>();
+            network = GetComponent<PlayerNetwork>();
+        }
+
+        // every player in the game has this component, but only the local one is controlled from here
+        public void onStartLocalPlayer() {
+            Debug.Log("Player joined the game, " + Time.realtimeSinceStartup.ToString("0.0") + " s after the game started");
+            Instance = this;
             brickPlacer = gameObject.AddComponent<BrickPlacer>();
+            Menu.Instance.showPanel("PlayerPanel");
+        }
+
+        private void OnDestroy() {
+            if (Instance == this) {
+                Instance = null;
+            }
         }
 
         private void Start() {
@@ -197,12 +214,12 @@ namespace Brickcraft
                 digHardness = lookedBrick.model.hardness;
                 diggedBrick = lookedBrick;
             } else {
-                BlockType blockType = WorldBehaviour.Instance.GetBlockType(lookedBlock.Value);
+                BlockDefinition block = BlockDatabase.Get(WorldBehaviour.Instance.GetBlockType(lookedBlock.Value));
 
-                if (!Blocks.IsBreakable(blockType)) {
+                if (!block.isBreakable) {
                     return;
                 }
-                digHardness = Blocks.GetHardness(blockType);
+                digHardness = block.hardness;
                 diggedBlock = lookedBlock;
             }
 
@@ -212,26 +229,12 @@ namespace Brickcraft
             Game.breakAnimation.showAt(latestHit.point, Quaternion.FromToRotation(Vector3.back, latestHit.normal));
         }
 
+        // the server removes it and gives us the item
         void finishDigging () {
             if (diggedBrick != null) {
-                addItem(new UserItem() {
-                    id = diggedBrick.itemId,
-                    quantity = 1
-                });
-                Server.Instance.removeBrick(diggedBrick);
+                network.CmdRemoveBrick(diggedBrick.id);
             } else {
-                BlockType blockType = WorldBehaviour.Instance.GetBlockType(diggedBlock.Value);
-
-                if (WorldBehaviour.Instance.SetBlockType(diggedBlock.Value, BlockType.Air)) {
-                    Item item = Server.getItemForBlock(blockType);
-
-                    if (item != null) {
-                        addItem(new UserItem() {
-                            id = item.id,
-                            quantity = 1
-                        });
-                    }
-                }
+                network.CmdDigBlock(diggedBlock.Value);
             }
             SoundManager.Instance.play(SoundManager.EFFECT_REMOVE_BLOCK);
             stopDigging();

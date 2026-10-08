@@ -3,6 +3,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Brickcraft.Bricks;
 using Brickcraft.World;
+using Brickcraft.Network;
+using Mirror;
 
 namespace Brickcraft
 {
@@ -12,15 +14,8 @@ namespace Brickcraft
         public static Dictionary<string, Brick> bricks = new Dictionary<string, Brick>();
         public static Dictionary<int, BrickModel> brickModels = new Dictionary<int, BrickModel>();
         public static Dictionary<string, GameObject> brickPrefabs = new Dictionary<string, GameObject>();
+        // items of blocks are defined in their block folder, see World.BlockDatabase
         public static Dictionary<int, Item> items = new Dictionary<int, Item>() {
-            {1, new Item(){
-                id = 1,
-                type = Item.Type.Brick,
-                brickModelId = 3003,
-                materialName = "MediumNougat",
-                blockType = BlockType.Dirt,
-                name = "Dirt 2x2"
-            } },
             {2, new Item(){
                 id = 2,
                 type = Item.Type.Brick,
@@ -64,43 +59,12 @@ namespace Brickcraft
                 layer = (int)Game.Layers.Water,
                 name = "Water 2x2"
             } },
-            {8, new Item(){
-                id = 8,
-                type = Item.Type.Brick,
-                brickModelId = 3003,
-                materialName = "BrickYellow",
-                blockType = BlockType.Sand,
-                name = "Sand 2x2"
-            } },
             {9, new Item(){
                 id = 9,
                 type = Item.Type.Brick,
                 brickModelId = 4186,
                 materialName = "MediumNougat",
                 name = "Dirt 48x48"
-            } },
-            {10, new Item(){
-                id = 10,
-                type = Item.Type.Brick,
-                brickModelId = 3003,
-                blockType = BlockType.Stone,
-                name = "Stone 2x2"
-            } },
-            {11, new Item(){
-                id = 11,
-                type = Item.Type.Brick,
-                brickModelId = 3003,
-                materialName = "MediumNougat",
-                blockType = BlockType.Wood,
-                name = "Wood 2x2"
-            } },
-            {12, new Item(){
-                id = 12,
-                type = Item.Type.Brick,
-                brickModelId = 3003,
-                materialName = "BrightGreen",
-                blockType = BlockType.Leaves,
-                name = "Leaves 2x2"
             } },
         };
 
@@ -110,23 +74,29 @@ namespace Brickcraft
         public const float brickWidth = studSize * 2; // 2x2, the size of a world block
 
         public GameObject[] prefabs;
-        public GameObject playerPrefab;
 
         void Awake() {
             Instance = this;
+
+            // static state survives scene changes, start every game clean
+            bricks.Clear();
+            BrickGrid.Clear();
+            brickModels.Clear();
+            brickPrefabs.Clear();
 
             setupBrickModels();
             processPrefabs();
         }
 
         private void Start() {
-            if (SceneManager.GetActiveScene().name == "Test") {
+            // game scene played straight from the editor: make it a singleplayer game
+            if (!NetworkServer.active && !NetworkClient.active) {
+                BrickcraftNetworkManager.GetOrCreate().StartSingleplayer(SceneManager.GetActiveScene().name);
+            }
+
+            if (NetworkServer.active && SceneManager.GetActiveScene().name == BrickcraftNetworkManager.TestScene) {
                 setupTest();
             }
-        }
-
-        public void spawnPlayer (Vector3 pos, Quaternion rot) {
-            Instantiate(playerPrefab, pos, rot);
         }
 
         void processPrefabs() {
@@ -137,12 +107,12 @@ namespace Brickcraft
 
         void setupTest() {
             // a few loose bricks
-            spawnBrick(items[1], new BrickPlacement(items[1].brickModel, new Vector3Int(8, 18, -12)), true);
-            spawnBrick(items[1], new BrickPlacement(items[1].brickModel, new Vector3Int(4, 0, -12)), true);
-            spawnBrick(items[2], new BrickPlacement(items[2].brickModel, new Vector3Int(6, 0, -10)), true);
-            spawnBrick(items[3], new BrickPlacement(items[3].brickModel, new Vector3Int(0, 0, -11)), true);
-            spawnBrick(items[4], new BrickPlacement(items[4].brickModel, new Vector3Int(-3, 0, -11)), true);
-            spawnBrick(items[6], new BrickPlacement(items[6].brickModel, new Vector3Int(-8, 0, -11)), true);
+            spawnBrick(items[1], new BrickPlacement(items[1].brickModel, new Vector3Int(8, 18, -12)));
+            spawnBrick(items[1], new BrickPlacement(items[1].brickModel, new Vector3Int(4, 0, -12)));
+            spawnBrick(items[2], new BrickPlacement(items[2].brickModel, new Vector3Int(6, 0, -10)));
+            spawnBrick(items[3], new BrickPlacement(items[3].brickModel, new Vector3Int(0, 0, -11)));
+            spawnBrick(items[4], new BrickPlacement(items[4].brickModel, new Vector3Int(-3, 0, -11)));
+            spawnBrick(items[6], new BrickPlacement(items[6].brickModel, new Vector3Int(-8, 0, -11)));
 
             fillWithBricks(items[9], new Vector3Int(-150, 0, -100), new Vector3Int(3, 1, 5));
 
@@ -165,7 +135,7 @@ namespace Brickcraft
                 for (int y = 0; y < brickCount.y; y++) {
                     for (int z = 0; z < brickCount.z; z++) {
                         Vector3Int cell = originCell + Vector3Int.Scale(new Vector3Int(x, y, z), size);
-                        spawnBrick(item, new BrickPlacement(item.brickModel, cell), true);
+                        spawnBrick(item, new BrickPlacement(item.brickModel, cell));
                     }
                 }
             }
@@ -185,7 +155,7 @@ namespace Brickcraft
                     continue;
                 }
                 cell.x -= 5;
-                brick = spawnBrick(item, new BrickPlacement(item.brickModel, cell), true);
+                brick = spawnBrick(item, new BrickPlacement(item.brickModel, cell));
                 brick.gameObject.layer = (int)Game.Layers.Default;
                 boxCollider = brick.gameObject.GetComponent<BoxCollider>();
                 boxCollider.isTrigger = true;
@@ -227,11 +197,15 @@ namespace Brickcraft
             return brickObj;
         }
 
-        public Brick spawnBrick(Item item, BrickPlacement placement, bool fromServer = false) {
+        /// <summary>
+        /// Adds a brick to this game instance. In a networked game use Network.WorldNetwork instead,
+        /// which calls this on the server and every client.
+        /// </summary>
+        public Brick spawnBrick(Item item, BrickPlacement placement, string id = null) {
             GameObject brickObj = createBrickObject(item, placement.Position, placement.Rotation);
 
             Brick brick = new Brick();
-            brick.id = System.Guid.NewGuid().ToString();
+            brick.id = id ?? System.Guid.NewGuid().ToString();
             brick.itemId = item.id;
             brick.gameObject = brickObj;
             brick.placement = placement;
@@ -240,10 +214,6 @@ namespace Brickcraft
             BrickGrid.Register(brick);
 
             brickObj.name = brick.id;
-
-            if (!fromServer) {
-                SoundManager.Instance.play(SoundManager.EFFECT_TAPPING);
-            }
 
             return brick;
         }
@@ -265,31 +235,9 @@ namespace Brickcraft
 
         // the item a player gets after digging a world block, if any
         public static Item getItemForBlock(BlockType blockType) {
-            switch (blockType) {
-                case BlockType.Grass:
-                case BlockType.Dirt:
-                    return items[1];
-                case BlockType.Sand:
-                    return items[8];
-                case BlockType.Wood:
-                case BlockType.Wood_Planks:
-                    return items[11];
-                case BlockType.Leaves:
-                    return items[12];
-                case BlockType.Stone:
-                case BlockType.Cobblestone:
-                case BlockType.Gravel:
-                case BlockType.Coal_Ore:
-                case BlockType.Iron_Ore:
-                case BlockType.Gold_Ore:
-                case BlockType.Diamond_Ore:
-                case BlockType.Lapis_Lazuli_Ore:
-                case BlockType.Redstone_Ore:
-                case BlockType.Redstone_Ore_Glowing:
-                    return items[10];
-                default:
-                    return null;
-            }
+            int itemId = BlockDatabase.Get(blockType).dropItemId;
+
+            return items.TryGetValue(itemId, out Item item) ? item : null;
         }
 
         private void setupBrickModels() {

@@ -6,6 +6,10 @@ namespace Brickcraft.World
 	public class ChunkMeshThreadEntry {
 
 		private Chunk chunkToBeRendered;
+
+		public Chunk Chunk {
+			get { return chunkToBeRendered; }
+		}
 	
 		public ChunkMeshThreadEntry(Chunk chunk)
 		{
@@ -20,13 +24,15 @@ namespace Brickcraft.World
 	
 		public void ThreadCallback(object threadContext)
 		{
+			long start = WorldLoadProfiler.Now();
 			try
 			{
 				ChunkRenderer chunkRenderer = new ChunkRenderer();
-				chunkRenderer.RenderChunk(chunkToBeRendered);
+				chunkRenderer.RenderChunk(chunkToBeRendered, chunkToBeRendered.IsDetailed);
 			}
 			finally
 			{
+				WorldLoadProfiler.AddChunkMeshing(start);
 				Interlocked.Decrement(ref WorldBehaviour.PendingChunkRenders);
 			}
 		}

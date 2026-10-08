@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Threading;
-using Brickcraft.Utils;
+using System.Collections;
+using UnityEngine.Rendering;
 using Brickcraft.Bricks;
 
 // Highly based on https://github.com/chraft/chunk-light-tester
@@ -25,12 +26,26 @@ namespace Brickcraft.World
 
 		public static Material BlockMaterial;
 
-		public Transform obj;
-		public Transform brickColliderObj;
+		[Tooltip("Chunks this far from the camera (in chunks) are drawn with studs, the rest with simple boxes")]
+		public int DetailRadius = 4;
 
-		private int accumulator;
+		// chunk the level of detail is centered on, the spawn until there's a camera
+		private Vector2Int detailCenter = Vector2Int.zero;
+
+		private const float UploadBudgetMs = 4f;
+		private const float LoadingUploadBudgetMs = 40f;
+		private readonly System.Diagnostics.Stopwatch uploadClock = new System.Diagnostics.Stopwatch();
+
+		private const MeshUpdateFlags FastMeshUpdate = MeshUpdateFlags.DontRecalculateBounds | MeshUpdateFlags.DontValidateIndices | MeshUpdateFlags.DontNotifyMeshUsers;
+
+		// local bounds of any slice mesh, with a block of margin for models bigger than a block
+		private static readonly Bounds SliceBounds = new Bounds(
+			new Vector3(7.5f * Server.brickWidth, 8.5f * Server.brickHeight, 7.5f * Server.brickWidth),
+			new Vector3(18 * Server.brickWidth, 18 * Server.brickHeight, 18 * Server.brickWidth)
+		);
 
         private int ChunksNum = 26 * 26;
+        private const int ChunksInitializedPerFrame = 26;
 
         public static readonly int MapMinChunkX = -13;
         public static readonly int MapMaxChunkX = 12;
@@ -38,41 +53,81 @@ namespace Brickcraft.World
         public static readonly int MapMinCoords = MapMinChunkX * 16;
 		public static readonly int MapMaxCoords = MapMaxChunkX * 16;
 
-		public static Dictionary<string, FaceMap> meshMap;
-		public static Dictionary<string, FaceMap> colliderMeshMap;
-
 		// used on the main thread to rebuild slices after a block changes
 		private ChunkRenderer sliceRenderer = new ChunkRenderer();
+
+		public long? Seed { get; private set; }
 
 		/// <summary>True once the whole world has been generated and its meshes built.</summary>
 		public bool IsReady { get; private set; }
 
+		public event System.Action OnReady;
+
 		private void Awake() {
 			Instance = this;
-			meshMap = (new FaceMapper(obj)).getMapping();
-			colliderMeshMap = (new FaceMapper(brickColliderObj)).getMapping();
-
-			BrickGrid.AlignToWorldBlockMesh(obj.GetComponent<MeshFilter>().sharedMesh.bounds);
 		}
 
 		void Start () {
 			Menu.Instance.showPanel("LoadingPanel");
+		}
 
-			BlockMaterial = (Material)Resources.Load ("Materials/Block_Triplanar", typeof(Material));
+		/// <summary>
+		/// Generates the world. Every player generates it from the server's seed, see Network.WorldNetwork.
+		/// Calling it again does nothing, <see cref="OnReady"/> is raised once it's done.
+		/// </summary>
+		public void Generate(long seed)
+		{
+			if (Seed.HasValue) {
+				if (Seed.Value != seed) {
+					Debug.LogError("The world was already generated with another seed");
+				}
+				if (IsReady) {
+					OnReady?.Invoke();
+				}
+				return;
+			}
+			Seed = seed;
+			StartCoroutine(generate(seed));
+		}
+
+		// the main thread never waits for the generation, so the game (and its network connection) keeps running
+		private IEnumerator generate(long seed)
+		{
+			WorldLoadProfiler.Start();
+
+			// counts the whole generation, so the world isn't considered ready before it starts rendering
+			PendingChunkRenders = ChunksNum;
+
+			// a copy, so the texture array built from the block folders doesn't end up saved in the asset
+			BlockMaterial = new Material((Material)Resources.Load ("Materials/Block_Triplanar", typeof(Material)));
+			BlockMaterial.SetTexture("_MainTexture", BlockDatabase.TextureArray);
 
 			ChunkMeshThreadEntry[] chunkEntries = new ChunkMeshThreadEntry[ChunksNum];
 
-			ChunkGenManager chunkGenManager = new ChunkGenManager(MapMinChunkX, MapMaxChunkX + 1, 6, this, 13284938921, chunkEntries);
+			ChunkGenManager chunkGenManager = new ChunkGenManager(MapMinChunkX, MapMaxChunkX + 1, 6, this, seed, chunkEntries);
 
-			chunkGenManager.Generate();
+			// its own thread: the generation waits for the thread pool, which it limits to its workers
+			Thread generationThread = new Thread(() => chunkGenManager.Generate());
+			generationThread.IsBackground = true;
+			generationThread.Start();
 
-			PendingChunkRenders = ChunksNum;
+			while (generationThread.IsAlive)
+				yield return null;
 
+			WorldLoadProfiler.Phase("terrain generated");
+
+			// chunk game objects can only be created on the main thread
 			for(int x = 0; x < ChunksNum; ++x)
 			{
 				chunkEntries[x].Init();
+				chunkEntries[x].Chunk.IsDetailed = isNearCamera(chunkEntries[x].Chunk);
 				ThreadPool.QueueUserWorkItem(new WaitCallback(chunkEntries[x].ThreadCallback));
+
+				if (x % ChunksInitializedPerFrame == ChunksInitializedPerFrame - 1 && x < ChunksNum - 1)
+					yield return null;
 			}
+
+			WorldLoadProfiler.Phase("chunk objects created");
 		}
 
 		public static ushort ChunkIndexFromCoords(int x, int z)
@@ -93,13 +148,68 @@ namespace Brickcraft.World
 					slice.FrustrumCulling();
 				}
 			}
+
+			if (IsReady)
+				updateLevelOfDetail();
+
+			uploadSliceMeshes();
 		}
 
-		void FixedUpdate()
+		// re-meshes, on the thread pool, the chunks that got closer to or farther from the camera
+		private void updateLevelOfDetail()
 		{
-			++accumulator;
+			Camera cam = Camera.main;
 
-			if(accumulator == 2) // Each 100ms (1 FixedStep is 50ms)
+			if (cam != null) {
+				Vector3Int block = BrickGrid.CellToBlock(BrickGrid.WorldToCell(cam.transform.position));
+				detailCenter = new Vector2Int(block.x >> 4, block.z >> 4);
+			}
+
+			foreach (Chunk chunk in ChunksMap) {
+				if (chunk == null || chunk.IsRemeshing) {
+					continue;
+				}
+				bool detailed = isNearCamera(chunk);
+
+				if (chunk.IsDetailed != detailed) {
+					chunk.IsDetailed = detailed;
+					chunk.IsRemeshing = true;
+
+					ThreadPool.QueueUserWorkItem(_ => {
+						try {
+							new ChunkRenderer().RenderChunk(chunk, detailed);
+						} finally {
+							chunk.IsRemeshing = false;
+						}
+					});
+				}
+			}
+		}
+
+		/// <summary>Height to stand on at the given position: right above its highest block.</summary>
+		public float GetSurfaceHeight(Vector3 position)
+		{
+			Vector3Int block = BrickGrid.CellToBlock(BrickGrid.WorldToCell(position));
+
+			for (int y = Chunk.NumSlices * Chunk.SliceHeight - 1; y >= 0; y--) {
+				BlockType type = GetBlockType(block.x, y, block.z);
+
+				if (type != BlockType.Air && type != BlockType.NULL) {
+					return BrickGrid.CellToWorld(BrickGrid.BlockToCell(new Vector3Int(block.x, y + 1, block.z))).y;
+				}
+			}
+			return position.y;
+		}
+
+		private bool isNearCamera(Chunk chunk)
+		{
+			return Mathf.Abs(chunk.X - detailCenter.x) <= DetailRadius && Mathf.Abs(chunk.Z - detailCenter.y) <= DetailRadius;
+		}
+
+		// uploads the slice meshes computed by the chunk threads, within a time budget per frame
+		private void uploadSliceMeshes()
+		{
+			if (ChunkSlicesWorkingQueue.Count == 0)
 			{
 				lock(ChunkQueueLock)
 				{
@@ -107,41 +217,50 @@ namespace Brickcraft.World
 					ChunkSlicesWorkingQueue = ChunkSlicesToBuild;
 					ChunkSlicesToBuild = temp;
 				}
-
-				for(int i = 0; ChunkSlicesWorkingQueue.Count != 0 && i < 40; ++i)
-				{
-					ChunkSliceBuildEntry chunkEntry = ChunkSlicesWorkingQueue.Dequeue();
-					BuildChunkSliceMesh(chunkEntry);
-				}
-
-				if (!IsReady && ChunkSlicesWorkingQueue.Count == 0 && Volatile.Read(ref PendingChunkRenders) == 0) {
-					bool queueEmpty;
-					lock (ChunkQueueLock) {
-						queueEmpty = ChunkSlicesToBuild.Count == 0;
-					}
-					if (queueEmpty) {
-						IsReady = true;
-						Server.Instance.spawnPlayer(new Vector3(0, 160, 0), Quaternion.identity);
-						Menu.Instance.showPanel("PlayerPanel");
-					}
-				}
-
-				lock(SliceLock)
-				{
-					Queue<ChunkSlicesDeleteEntry> temp = SlicesToDeleteWorking;
-					SlicesToDeleteWorking = SlicesToDelete;
-					SlicesToDelete = temp;
-				}
-
-				SlicesToDeleteWorking.Clear();
-
-				accumulator = 0;
 			}
+
+			// while loading nothing else is going on, but keep the frames short enough for the network
+			float budgetMs = IsReady ? UploadBudgetMs : LoadingUploadBudgetMs;
+			uploadClock.Restart();
+
+			while (ChunkSlicesWorkingQueue.Count != 0 && uploadClock.Elapsed.TotalMilliseconds < budgetMs)
+			{
+				BuildChunkSliceMesh(ChunkSlicesWorkingQueue.Dequeue());
+			}
+
+			if (Seed.HasValue && !IsReady && ChunkSlicesWorkingQueue.Count == 0 && Volatile.Read(ref PendingChunkRenders) == 0) {
+				bool queueEmpty;
+				lock (ChunkQueueLock) {
+					queueEmpty = ChunkSlicesToBuild.Count == 0;
+				}
+				if (queueEmpty) {
+					IsReady = true;
+					WorldLoadProfiler.Finish();
+					OnReady?.Invoke();
+				}
+			}
+
+			lock(SliceLock)
+			{
+				Queue<ChunkSlicesDeleteEntry> temp = SlicesToDeleteWorking;
+				SlicesToDeleteWorking = SlicesToDelete;
+				SlicesToDelete = temp;
+			}
+
+			SlicesToDeleteWorking.Clear();
 		}
 
 		// muertet
 		public void BuildChunkSliceMesh(ChunkSliceBuildEntry chunkEntry)
 		{
+			// a block changed while a thread was meshing this slice, mesh it again with the current blocks
+			if (chunkEntry.ChunkVersion != chunkEntry.ParentChunk.Version) {
+				RebuildSlice(chunkEntry.ParentChunk, chunkEntry.SliceIndex);
+				return;
+			}
+
+			long uploadStart = WorldLoadProfiler.Now();
+
 			GameObject chunkSliceObject = chunkEntry.ParentChunk.ChunkSliceObjects[chunkEntry.SliceIndex];
 			MeshFilter filter = chunkSliceObject.GetComponent<MeshFilter>();
 			MeshCollider meshCollider = chunkSliceObject.GetComponent<MeshCollider>();
@@ -154,41 +273,39 @@ namespace Brickcraft.World
 				Destroy(meshCollider.sharedMesh);
 			}
 
-			// Build the Mesh:
+			// the threads already computed everything, this is just a copy
 			Mesh mesh = new Mesh();
+			int vertexCount = chunkEntry.Vertices.Length;
+			int indexCount = chunkEntry.Triangles.Length;
 
-			if (chunkEntry.Vertices.Length > 65535) {
-				mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-			}
-
-			mesh.vertices = chunkEntry.Vertices;
-			mesh.triangles = chunkEntry.Triangles;
-			mesh.uv = chunkEntry.Uvs;
-			mesh.colors = chunkEntry.Colors;
-
-			mesh.RecalculateNormals();
-			mesh.RecalculateBounds();
+			mesh.SetVertexBufferParams(vertexCount, TerrainVertex.Layout);
+			mesh.SetVertexBufferData(chunkEntry.Vertices, 0, 0, vertexCount, 0, FastMeshUpdate);
+			mesh.SetIndexBufferParams(indexCount, IndexFormat.UInt32);
+			mesh.SetIndexBufferData(chunkEntry.Triangles, 0, 0, indexCount, FastMeshUpdate);
+			mesh.subMeshCount = 1;
+			mesh.SetSubMesh(0, new SubMeshDescriptor(0, indexCount), FastMeshUpdate);
+			mesh.bounds = SliceBounds;
 
 			filter.sharedMesh = mesh;
 
 			// generate a much simpler collider mesh
+			long colliderStart = WorldLoadProfiler.Now();
+
 			if (chunkEntry.ColliderTriangles.Length > 0) {
 				mesh = new Mesh();
-
-				if (chunkEntry.ColliderVertices.Length > 65535) {
-					mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-				}
-				mesh.vertices = chunkEntry.ColliderVertices;
-				mesh.triangles = chunkEntry.ColliderTriangles;
-
-				mesh.RecalculateNormals();
-				mesh.RecalculateBounds();
+				mesh.indexFormat = IndexFormat.UInt32;
+				mesh.SetVertices(chunkEntry.ColliderVertices);
+				mesh.SetTriangles(chunkEntry.ColliderTriangles, 0);
 
 				meshCollider.sharedMesh = mesh;
 			} else {
 				meshCollider.sharedMesh = null;
 			}
+			WorldLoadProfiler.AddColliderUpload(colliderStart);
+
 			chunkEntry.ParentChunk.ClearDirtySlices();
+
+			WorldLoadProfiler.AddSliceUpload(uploadStart, chunkEntry.Vertices.Length);
 		}
 
 		public BlockType GetBlockType(int x, int y, int z)
@@ -260,8 +377,11 @@ namespace Brickcraft.World
 			if (chunk.Slices[sliceIndex].IsEmpty && chunk.ChunkSliceObjects[sliceIndex] == null)
 				return;
 
+			// meshes of this chunk still being computed by a thread are outdated now
+			chunk.Version++;
+
 			chunk.GetOrCreateSliceObject(sliceIndex);
-			BuildChunkSliceMesh(sliceRenderer.RenderSlice(chunk, sliceIndex));
+			BuildChunkSliceMesh(sliceRenderer.RenderSlice(chunk, sliceIndex, chunk.IsDetailed, chunk.Version));
 		}
 
 		public Chunk GetChunk(int x, int z)

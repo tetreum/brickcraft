@@ -34,15 +34,12 @@ public class Menu : MonoBehaviour {
 	public void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode) {
         switch (scene.name) {
 			case "Main":
+				Game.unlockMouse();
 				showPanel("MainPanel");
 				break;
 			case "IconGenerator":
 				hideAllPanels();
 				Game.unlockMouse();
-				break;
-			case "Test":
-				showPanel("PlayerPanel");
-				Server.Instance.spawnPlayer(new Vector3(1.480856f, 5, -0.7904243f), Quaternion.identity);
 				break;
 			default:
                 showPanel("LoadingPanel");

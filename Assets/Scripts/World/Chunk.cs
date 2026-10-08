@@ -20,6 +20,13 @@ namespace Brickcraft.World
 		public Color ChunkColor;
 		public int MinSliceIndex;
 		public int LowestY;
+
+		// level of detail: near the camera blocks are drawn with their studs, far away with a simple box
+		public bool IsDetailed;
+		public volatile bool IsRemeshing;
+
+		// bumped by every block change, so meshes computed from older data are thrown away
+		public int Version;
 	
 		public bool ProcessingLight{
 			get;
@@ -228,8 +235,7 @@ namespace Brickcraft.World
 		public void RecalculateHeight(int x, int z)
 		{
 			int height;
-			BlockType blockType;
-			for (height = 127; height > 0 && (GetBlockType(x, height - 1, z) == 0 || (blockType = GetBlockType(x, height - 1, z)) == BlockType.Leaves || blockType == BlockType.Water || blockType == BlockType.Still_Water); height--) ;
+			for (height = 127; height > 0 && BlockDatabase.Get(GetBlockType(x, height - 1, z)).isTransparent; height--) ;
 			HeightMap[x, z] = (byte)height;
 
 			if (height < LowestY)

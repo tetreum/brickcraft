@@ -20,21 +20,13 @@ namespace Brickcraft.Bricks
 
         // World position of the corner of cell (0,0,0), which is also the corner of world block (0,0,0).
         // World block (0,0,0) has its pivot at the world origin, so its corner is half a block back.
-        public static Vector3 Origin { get; private set; } = new Vector3(-Server.brickWidth / 2, 0, -Server.brickWidth / 2);
-
-        /// <summary>
-        /// Lines the grid up with the mesh the world renders its blocks with, in case its
-        /// footprint is not perfectly centered on its pivot.
-        /// </summary>
-        public static void AlignToWorldBlockMesh(Bounds blockMeshBounds) {
-            Origin = new Vector3(
-                blockMeshBounds.center.x - Server.brickWidth / 2,
-                0,
-                blockMeshBounds.center.z - Server.brickWidth / 2
-            );
-        }
+        public static readonly Vector3 Origin = new Vector3(-Server.brickWidth / 2, 0, -Server.brickWidth / 2);
 
         private static readonly Dictionary<Vector3Int, Brick> occupiedCells = new Dictionary<Vector3Int, Brick>();
+
+        public static void Clear() {
+            occupiedCells.Clear();
+        }
 
         public static Vector3 CellToWorld(Vector3 cell) {
             return Origin + Vector3.Scale(cell, CellSize);
@@ -82,7 +74,7 @@ namespace Brickcraft.Bricks
             if (block.y < 0 || block.y >= Chunk.NumSlices * Chunk.SliceHeight) {
                 return false;
             }
-            return Blocks.IsReplaceable(WorldBehaviour.Instance.GetBlockType(block.x, block.y, block.z));
+            return BlockDatabase.Get(WorldBehaviour.Instance.GetBlockType(block.x, block.y, block.z)).isReplaceable;
         }
 
         public static bool IsFree(BrickPlacement placement) {

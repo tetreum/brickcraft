@@ -66,6 +66,12 @@ namespace Brickcraft.World.CustomGenerator
         {
 
             InitGen();
+
+            // random features depend only on the seed and the chunk, not on which thread generated
+            // which chunk before, so every player of a multiplayer game gets the same world
+            long chunkSeed = _Seed ^ ((long)x * 341873128712L) ^ ((long)z * 132897987541L);
+            _FastRandom = new FastRandom(chunkSeed);
+            r = new Random((int)(chunkSeed ^ (chunkSeed >> 32)));
 #if PROFILE
             Stopwatch watch = new Stopwatch();
             watch.Start();

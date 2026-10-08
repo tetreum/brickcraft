@@ -1,29 +1,38 @@
 using Brickcraft.Utils;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace Brickcraft.World
 {
 	public class ChunkRenderer
 	{
-		private static Color firstSideColor = new Color(0.9f, 0.9f, 0.9f, 1.0f);
-		private static Color secondSideColor = new Color(0.8f, 0.8f, 0.8f, 1.0f);
-		private static Color topColor = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-		private static Color bottomColor = new Color(0.7f, 0.7f, 0.7f, 1.0f);
+		private static Color32 firstSideColor = new Color(0.9f, 0.9f, 0.9f, 1.0f);
+		private static Color32 secondSideColor = new Color(0.8f, 0.8f, 0.8f, 1.0f);
+		private static Color32 topColor = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+		private static Color32 bottomColor = new Color(0.7f, 0.7f, 0.7f, 1.0f);
+
+		// indexed by BlockSide
+		private static readonly Color32[] sideColors = {
+			topColor, bottomColor, firstSideColor, firstSideColor, secondSideColor, secondSideColor
+		};
+
+		// sides of the blocks that are exposed to air, gathered before building the mesh arrays
+		private struct VisibleSide
+		{
+			public BlockShape shape;
+			public BlockDefinition definition;
+			public BlockSide side;
+			public Vector3 offset;
+		}
 
 		private List<int> indexesToDelete = new List<int>();
-		private List<Vector3> vertices = new List<Vector3>();
-		private	List<int> triangles = new List<int>();
-		private	List<Color> colors = new List<Color>();
-		private	List<Vector2> uvs = new List<Vector2>();
+		private List<VisibleSide> visibleSides = new List<VisibleSide>();
 
-		// collider mesh
-		private List<Vector3> colliderVertices = new List<Vector3>();
-		private List<int> colliderTriangles = new List<int>();
-
-		public void RenderChunk(Chunk chunk)
+		public void RenderChunk(Chunk chunk, bool detailed)
 		{
 			WorldBehaviour world = chunk.World;
+			int version = Volatile.Read(ref chunk.Version);
 
 			int minSliceIndex = chunk.MinSliceIndex;
 
@@ -63,7 +72,7 @@ namespace Brickcraft.World
 
 				int minHeight = chunk.MinSliceIndex == chunkSlice.Index ? (chunk.LowestY & Chunk.SliceHeightLimit) : 0;
 
-				ChunkSliceBuildEntry chunkEntry = RenderSlice(chunk, i, minHeight);
+				ChunkSliceBuildEntry chunkEntry = RenderSlice(chunk, i, detailed, version, minHeight);
 
 				lock (WorldBehaviour.ChunkQueueLock)
 					WorldBehaviour.ChunkSlicesToBuild.Enqueue(chunkEntry);
@@ -85,9 +94,16 @@ namespace Brickcraft.World
 		/// Builds the mesh data of a single slice. Used both by the initial world rendering
 		/// and to refresh a slice after one of its blocks changed.
 		/// </summary>
-		public ChunkSliceBuildEntry RenderSlice(Chunk chunk, int sliceIndex, int minHeight = 0)
+		public ChunkSliceBuildEntry RenderSlice(Chunk chunk, int sliceIndex, bool detailed, int version, int minHeight = 0)
 		{
 			ChunkSlice chunkSlice = chunk.Slices[sliceIndex];
+			int vertexCount = 0;
+			int triangleCount = 0;
+			int colliderVertexCount = 0;
+			int colliderTriangleCount = 0;
+
+			// first find what has to be drawn, so the mesh arrays can be allocated at their final size
+			visibleSides.Clear();
 
 			for (int x = 0; x < 16; x++)
 			{
@@ -100,46 +116,50 @@ namespace Brickcraft.World
 						if(block == 0)
 							continue;
 
-						// only faces that are exposed to air are rendered
-						if (GetNeighbour(chunk, sliceIndex, x, y + 1, z) == 0)
-							addBrickFace("top", block, x, y, z);
+						BlockDefinition definition = BlockDatabase.Get(block);
+						Vector3 offset = new Vector3(x * Server.brickWidth, y * Server.brickHeight, z * Server.brickWidth);
 
-						if (GetNeighbour(chunk, sliceIndex, x, y, z - 1) == 0)
-							addBrickFace("front", block, x, y, z);
+						// only sides that are exposed to air are rendered
+						for (int side = 0; side < BlockShape.SideCount; side++)
+						{
+							Vector3Int direction = BlockShape.SideDirections[side];
 
-						if (GetNeighbour(chunk, sliceIndex, x + 1, y, z) == 0)
-							addBrickFace("right", block, x, y, z);
+							if (GetNeighbour(chunk, sliceIndex, x + direction.x, y + direction.y, z + direction.z) != 0)
+								continue;
 
-						if (GetNeighbour(chunk, sliceIndex, x, y, z + 1) == 0)
-							addBrickFace("back", block, x, y, z);
+							BlockShape shape = detailed ? definition.shape : definition.colliderShape;
+							visibleSides.Add(new VisibleSide() { shape = shape, definition = definition, side = (BlockSide)side, offset = offset });
 
-						if (GetNeighbour(chunk, sliceIndex, x - 1, y, z) == 0)
-							addBrickFace("left", block, x, y, z);
+							FaceMap faceMap = shape.GetSide((BlockSide)side);
+							vertexCount += faceMap.vertices.Length;
+							triangleCount += faceMap.triangles.Length;
 
-						if (GetNeighbour(chunk, sliceIndex, x, y - 1, z) == 0)
-							addBrickFace("bottom", block, x, y, z);
+							FaceMap colliderFaceMap = definition.colliderShape.GetSide((BlockSide)side);
+							colliderVertexCount += colliderFaceMap.vertices.Length;
+							colliderTriangleCount += colliderFaceMap.triangles.Length;
+						}
 					}
 				}
 			}
 
 			ChunkSliceBuildEntry chunkEntry = new ChunkSliceBuildEntry();
-			chunkEntry.Vertices = vertices.ToArray();
-			chunkEntry.Triangles = triangles.ToArray();
-			chunkEntry.Colors = colors.ToArray();
-			chunkEntry.Uvs = uvs.ToArray();
 			chunkEntry.ParentChunk = chunk;
 			chunkEntry.SliceIndex = sliceIndex;
+			chunkEntry.ChunkVersion = version;
+			chunkEntry.Vertices = new TerrainVertex[vertexCount];
+			chunkEntry.Triangles = new int[triangleCount];
+			chunkEntry.ColliderVertices = new Vector3[colliderVertexCount];
+			chunkEntry.ColliderTriangles = new int[colliderTriangleCount];
 
-			chunkEntry.ColliderVertices = colliderVertices.ToArray();
-			chunkEntry.ColliderTriangles = colliderTriangles.ToArray();
+			int vertex = 0;
+			int triangle = 0;
+			int colliderVertex = 0;
+			int colliderTriangle = 0;
 
-			vertices.Clear();
-			triangles.Clear();
-			colors.Clear();
-			uvs.Clear();
-
-			colliderVertices.Clear();
-			colliderTriangles.Clear();
+			foreach (VisibleSide visible in visibleSides)
+			{
+				addBlockSide(chunkEntry, visible, ref vertex, ref triangle, ref colliderVertex, ref colliderTriangle);
+			}
 
 			return chunkEntry;
 		}
@@ -170,98 +190,39 @@ namespace Brickcraft.World
 			return chunk.Slices[sliceIndex][x, y, z];
 		}
 
-		void addBrickFace (string face, byte block, int x, int y, int z) {
-			int vertexIndex = vertices.Count;
-			FaceMap faceMap = WorldBehaviour.meshMap[face];
-			Color color;
+		void addBlockSide (ChunkSliceBuildEntry entry, VisibleSide visible, ref int vertex, ref int triangle, ref int colliderVertex, ref int colliderTriangle) {
+			Color32 color = sideColors[(int)visible.side];
+			Vector2 uv = TerrainTextures.LayerToUV(visible.definition.GetTextureLayer(visible.side));
 
-			switch (face) {
-				case "top":
-					color = topColor;
-					break;
-				case "bottom":
-					color = bottomColor;
-					break;
-				case "front":
-				case "back":
-					color = firstSideColor;
-					break;
-				case "left":
-				case "right":
-					color = secondSideColor;
-					break;
-				default:
-					throw new System.Exception("wrong face name: " + face);
+			FaceMap faceMap = visible.shape.GetSide(visible.side);
+			Vector3[] sideVertices = faceMap.vertices;
+			Vector3[] sideNormals = faceMap.normals;
+			int[] sideTriangles = faceMap.triangles;
+			TerrainVertex[] vertices = entry.Vertices;
+			int[] triangles = entry.Triangles;
+			int firstVertex = vertex;
+
+			for (int i = 0; i < sideVertices.Length; i++, vertex++) {
+				vertices[vertex].position = sideVertices[i] + visible.offset;
+				vertices[vertex].normal = sideNormals[i];
+				vertices[vertex].color = color;
+				vertices[vertex].uv = uv;
+			}
+			for (int i = 0; i < sideTriangles.Length; i++, triangle++) {
+				triangles[triangle] = sideTriangles[i] + firstVertex;
 			}
 
-			// temporal | testing
-			Vector2 xt = new Vector2(0, 0);
-			Vector2 zt = new Vector2(0, 0);
+			// the collider is usually way simpler than the rendered mesh, as it hasn't the studs
+			FaceMap colliderFaceMap = visible.definition.colliderShape.GetSide(visible.side);
+			Vector3[] colliderSideVertices = colliderFaceMap.vertices;
+			int[] colliderSideTriangles = colliderFaceMap.triangles;
+			firstVertex = colliderVertex;
 
-			foreach (Vector3 vertice in faceMap.vertices) {
-				if (vertice.x > xt.x) {
-					xt.x = vertice.x;
-				} else if (vertice.x < xt.y) {
-					xt.y = vertice.x;
-				}
-				if (vertice.z > zt.x) {
-					zt.x = vertice.z;
-				} else if (vertice.x < zt.y) {
-					zt.y = vertice.z;
-				}
+			for (int i = 0; i < colliderSideVertices.Length; i++, colliderVertex++) {
+				entry.ColliderVertices[colliderVertex] = colliderSideVertices[i] + visible.offset;
 			}
-
-			foreach (Vector3 vertice in faceMap.vertices) {
-				Vector3 pos = new Vector3(
-					vertice.x + (x * Server.brickWidth),
-					vertice.y + (y * Server.brickHeight),
-					vertice.z + (z * Server.brickWidth)
-				);
-				vertices.Add(pos);
-				colors.Add(color);
-
-				// temporal | testing | dunno what im doing here
-				if (face == "top" || face == "bottom") {
-					Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, face == "top" ? BlockFace.Top : BlockFace.Bottom);
-
-					float yMax = (coords.y + coords.height) - 0.125f;
-					float xMax = (coords.x + coords.width) - 0.125f;
-					float xMin = coords.x + 0.125f;
-					float yMin = coords.y + 0.125f;
-
-					uvs.Add(new Vector2(vertice.x < xt.x ? xMin : xMax, vertice.z < zt.x ? yMin : yMax));
-				}
-			}
-			if (face != "top" && face != "bottom") {
-				Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, BlockFace.Side);
-
-				float yMax = (coords.y + coords.height) - 0.125f;
-				float xMax = (coords.x + coords.width) - 0.125f;
-				float xMin = coords.x + 0.125f;
-				float yMin = coords.y + 0.125f;
-
-				uvs.Add(new Vector2(xMax, yMax));
-				uvs.Add(new Vector2(xMin, yMax));
-				uvs.Add(new Vector2(xMin, yMin));
-				uvs.Add(new Vector2(xMax, yMin));
-			}
-			foreach (int index in faceMap.triangles) {
-				triangles.Add(index + vertexIndex);
-			}
-
-			// Mesh collider, it is way more simple than the normal mesh, as it hasn't the studs
-			vertexIndex = colliderVertices.Count;
-			FaceMap colliderFaceMap = WorldBehaviour.colliderMeshMap[face];
-			foreach (Vector3 vertice in colliderFaceMap.vertices) {
-				Vector3 pos = new Vector3(
-					vertice.x + (x * Server.brickWidth),
-					vertice.y + (y * Server.brickHeight),
-					vertice.z + (z * Server.brickWidth)
-				);
-				colliderVertices.Add(pos);
-			}
-			foreach (int index in colliderFaceMap.triangles) {
-				colliderTriangles.Add(index + vertexIndex);
+			for (int i = 0; i < colliderSideTriangles.Length; i++, colliderTriangle++) {
+				entry.ColliderTriangles[colliderTriangle] = colliderSideTriangles[i] + firstVertex;
 			}
 		}
 	}

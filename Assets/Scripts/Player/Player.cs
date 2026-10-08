@@ -103,9 +103,16 @@ namespace Brickcraft
                 brickPlacer.hide();
                 stopDigging();
             } else {
-                brickPlacer.tick(hasHit, latestHit, PlayerPanel.Instance.selectedItem);
+                bool isDigHeld = GameInput.GetButton(GameInput.Dig, KeyCode.Mouse0);
 
-                if (GameInput.GetButton(GameInput.Dig, KeyCode.Mouse0) && (lookedBrick != null || lookedBlock.HasValue)) {
+                // the placing preview would hide what's being dug
+                if (isDigHeld) {
+                    brickPlacer.hide();
+                } else {
+                    brickPlacer.tick(hasHit, latestHit, PlayerPanel.Instance.selectedItem);
+                }
+
+                if (isDigHeld && (lookedBrick != null || lookedBlock.HasValue)) {
                     dig();
                 } else {
                     stopDigging();

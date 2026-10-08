@@ -8,7 +8,9 @@ namespace Brickcraft.Bricks
     ///
     /// The target position is computed from the face the player is looking at: the brick is put
     /// right against that face and centered on the crosshair. By default it snaps to the world
-    /// block grid (so 2x2 bricks line up with the terrain), holding Shift allows any stud.
+    /// block grid (so 2x2 bricks line up with the terrain) along the axes where its size is a whole
+    /// number of blocks, and to studs along the others (so a 1x1 fits on any stud); holding Shift
+    /// allows any stud.
     /// Mouse wheel or R rotates it.
     /// </summary>
     public class BrickPlacer : MonoBehaviour
@@ -93,13 +95,13 @@ namespace Brickcraft.Bricks
                     origin[axis] = adjacent[axis] - size[axis] + 1;
                 } else if (axis == 1) {
                     // placing against a side face, sit on the hovered row
-                    origin.y = snapToBlocks
+                    origin.y = snapToBlocks && size.y % BrickGrid.PlatesPerBlock == 0
                         ? BrickGrid.FloorDiv(adjacent.y, BrickGrid.PlatesPerBlock) * BrickGrid.PlatesPerBlock
                         : adjacent.y;
                 } else {
                     // center the brick on the crosshair
                     float start = gridPoint[axis] - size[axis] / 2f;
-                    origin[axis] = originCell[axis] + (snapToBlocks
+                    origin[axis] = originCell[axis] + (snapToBlocks && size[axis] % BrickGrid.StudsPerBlock == 0
                         ? Mathf.RoundToInt(start / BrickGrid.StudsPerBlock) * BrickGrid.StudsPerBlock
                         : Mathf.RoundToInt(start));
                 }

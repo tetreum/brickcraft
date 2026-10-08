@@ -43,6 +43,12 @@ namespace Brickcraft.Network
             get { return Role == PlayerRoles.Admin; }
         }
 
+        /// <summary>
+        /// What the player wears, as JSON (see <see cref="PlayerEquipment"/>), null when nothing.
+        /// Use <see cref="GameDatabase.GetEquipment"/> and <see cref="GameDatabase.SetEquipment"/>.
+        /// </summary>
+        public string Equipment { get; set; }
+
         // banned players can't join, neither can anyone else from their machine
         public bool Banned { get; set; }
         public long BannedAt { get; set; }
@@ -169,6 +175,15 @@ namespace Brickcraft.Network
         /// <summary>Whether any banned player played from this machine.</summary>
         public bool IsMachineBanned(string machineIdHash) {
             return connection.Table<PlayerRecord>().Where(p => p.TokenHash == machineIdHash && p.Banned).Count() > 0;
+        }
+
+        public PlayerEquipment GetEquipment(PlayerRecord player) {
+            return PlayerEquipment.FromJson(player.Equipment);
+        }
+
+        public void SetEquipment(PlayerRecord player, PlayerEquipment equipment) {
+            player.Equipment = PlayerEquipment.ToJson(equipment);
+            connection.Update(player);
         }
 
         public bool HasAdmin() {

@@ -26,7 +26,8 @@ namespace Brickcraft.World
         public const string RegionsFolder = "regions";
 
         // bump when the generator changes how a seed turns into terrain, saved changes would no longer line up
-        public const ushort GeneratorVersion = 1;
+        // 2: deserts get their cacti (generating them used to fail and leave the chunk's flora unfinished)
+        public const ushort GeneratorVersion = 2;
 
         private const uint Magic = 0x44574342; // "BCWD"
         private const ushort FormatVersion = 1;

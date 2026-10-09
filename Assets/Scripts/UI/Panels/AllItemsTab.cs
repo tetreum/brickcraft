@@ -72,17 +72,17 @@ namespace Brickcraft.UI
                     matches.Add(item);
                 }
             }
-            matches.Sort((a, b) => a.id.CompareTo(b.id));
+            matches.Sort((a, b) => string.CompareOrdinal(a.id, b.id));
             showPage(page);
         }
 
-        // by name (any part, any case) or by exact id
+        // by name or id, any part, any case
         private static bool isMatch(Item item, string query) {
             if (query.Length == 0) {
                 return true;
             }
             return (item.name != null && item.name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
-                || item.id.ToString() == query;
+                || item.id.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private void showPage(int newPage) {
@@ -100,7 +100,7 @@ namespace Brickcraft.UI
                 }
                 entry.item = matches[index];
                 entry.icon.texture = entry.item.icon;
-                entry.name.text = entry.item.name + "\n#" + entry.item.id;
+                entry.name.text = entry.item.name + "\n" + entry.item.id;
                 entry.gameObject.SetActive(true);
             }
 

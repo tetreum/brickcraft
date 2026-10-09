@@ -1,6 +1,5 @@
 {
-    "id": 15,
     "name": "iron_ore",
     "hardness": 3,
-    "dropItemId": 10
+    "dropItem": "stone"
 }

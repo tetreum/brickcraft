@@ -1,6 +1,5 @@
 {
-    "id": 2,
     "name": "grass",
     "hardness": 1,
-    "dropItemId": 1
+    "dropItem": "dirt"
 }

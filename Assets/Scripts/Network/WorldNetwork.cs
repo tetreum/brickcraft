@@ -98,7 +98,7 @@ namespace Brickcraft.Network
                 return false;
             }
             serverChanges.SetBlock(block, type);
-            sendToChunk(WorldChanges.ChunkOfBlock(block), new BlockChangedMessage() { block = block, blockType = (byte)type });
+            sendToChunk(WorldChanges.ChunkOfBlock(block), new BlockChangedMessage() { block = block, blockName = BlockDatabase.Get(type).name });
 
             return true;
         }
@@ -427,10 +427,11 @@ namespace Brickcraft.Network
             if (NetworkServer.active) {
                 return;
             }
-            clientChanges.SetBlock(message.block, (BlockType)message.blockType);
+            BlockType type = (BlockType)BlockDatabase.IdOf(message.blockName);
+            clientChanges.SetBlock(message.block, type);
 
             if (WorldBehaviour.Instance.IsGenerated(WorldChanges.ChunkOfBlock(message.block))) {
-                WorldBehaviour.Instance.SetBlockType(message.block, (BlockType)message.blockType);
+                WorldBehaviour.Instance.SetBlockType(message.block, type);
             }
         }
 

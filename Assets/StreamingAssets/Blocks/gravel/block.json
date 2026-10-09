@@ -1,6 +1,5 @@
 {
-    "id": 13,
     "name": "gravel",
     "hardness": 1,
-    "dropItemId": 10
+    "dropItem": "stone"
 }

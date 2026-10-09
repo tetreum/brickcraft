@@ -14,59 +14,67 @@ namespace Brickcraft
         public static Dictionary<string, Brick> bricks = new Dictionary<string, Brick>();
         public static Dictionary<int, BrickModel> brickModels = new Dictionary<int, BrickModel>();
         public static Dictionary<string, GameObject> brickPrefabs = new Dictionary<string, GameObject>();
-        // items of blocks are defined in their block folder, see World.BlockDatabase
-        public static Dictionary<int, Item> items = new Dictionary<int, Item>() {
-            {2, new Item(){
-                id = 2,
+        // items of blocks are defined in their block folder, see World.BlockDatabase. Ids are slugs, see Slugs
+        public static Dictionary<string, Item> items = new Dictionary<string, Item>();
+
+        private static readonly Item[] builtInItems = {
+            new Item() {
+                id = "plate_2x2_yellow",
                 type = Item.Type.Brick,
                 brickModelId = 3022,
                 materialName = "BrightYellow",
                 name = "A brick"
-            } },
-            {3, new Item(){
-                id = 3,
+            },
+            new Item() {
+                id = "plate_1x1_green",
                 type = Item.Type.Brick,
                 brickModelId = 3024,
                 materialName = "BrightGreen",
                 name = "A brick"
-            } },
-            {4, new Item(){
-                id = 4,
+            },
+            new Item() {
+                id = "brick_1x2_side_studs_green",
                 type = Item.Type.Brick,
                 brickModelId = 22885,
                 materialName = "BrightGreen",
                 name = "A brick"
-            } },
-            {5, new Item(){
-                id = 5,
+            },
+            new Item() {
+                id = "glass_2x2",
                 type = Item.Type.Brick,
                 brickModelId = 3003,
                 materialName = "TransparentBlue",
                 name = "Glass 2x2"
-            } },
-            {6, new Item(){
-                id = 6,
+            },
+            new Item() {
+                id = "dirt_2x4",
                 type = Item.Type.Brick,
                 brickModelId = 3001,
                 materialName = "MediumNougat",
                 name = "Dirt 2x4"
-            } },
-            {7, new Item(){
-                id = 7,
+            },
+            new Item() {
+                id = "water_2x2",
                 type = Item.Type.Brick,
                 brickModelId = 3003,
                 materialName = "Water",
                 layer = (int)Game.Layers.Water,
                 name = "Water 2x2"
-            } },
-            {9, new Item(){
-                id = 9,
+            },
+            new Item() {
+                id = "dirt_48x48",
                 type = Item.Type.Brick,
                 brickModelId = 4186,
                 materialName = "MediumNougat",
                 name = "Dirt 48x48"
-            } },
+            },
         };
+
+        static Server() {
+            foreach (Item item in builtInItems) {
+                items.Add(item.id, item);
+            }
+        }
 
         public const float studSize = 0.398f;
         public const float plateHeight = (0.478f / 3);
@@ -107,22 +115,22 @@ namespace Brickcraft
 
         void setupTest() {
             // a few loose bricks
-            spawnBrick(items[1], new BrickPlacement(items[1].brickModel, new Vector3Int(8, 18, -12)));
-            spawnBrick(items[1], new BrickPlacement(items[1].brickModel, new Vector3Int(4, 0, -12)));
-            spawnBrick(items[2], new BrickPlacement(items[2].brickModel, new Vector3Int(6, 0, -10)));
-            spawnBrick(items[3], new BrickPlacement(items[3].brickModel, new Vector3Int(0, 0, -11)));
-            spawnBrick(items[4], new BrickPlacement(items[4].brickModel, new Vector3Int(-3, 0, -11)));
-            spawnBrick(items[6], new BrickPlacement(items[6].brickModel, new Vector3Int(-8, 0, -11)));
+            spawnBrick(items["dirt"], new BrickPlacement(items["dirt"].brickModel, new Vector3Int(8, 18, -12)));
+            spawnBrick(items["dirt"], new BrickPlacement(items["dirt"].brickModel, new Vector3Int(4, 0, -12)));
+            spawnBrick(items["plate_2x2_yellow"], new BrickPlacement(items["plate_2x2_yellow"].brickModel, new Vector3Int(6, 0, -10)));
+            spawnBrick(items["plate_1x1_green"], new BrickPlacement(items["plate_1x1_green"].brickModel, new Vector3Int(0, 0, -11)));
+            spawnBrick(items["brick_1x2_side_studs_green"], new BrickPlacement(items["brick_1x2_side_studs_green"].brickModel, new Vector3Int(-3, 0, -11)));
+            spawnBrick(items["dirt_2x4"], new BrickPlacement(items["dirt_2x4"].brickModel, new Vector3Int(-8, 0, -11)));
 
-            fillWithBricks(items[9], new Vector3Int(-150, 0, -100), new Vector3Int(3, 1, 5));
+            fillWithBricks(items["dirt_48x48"], new Vector3Int(-150, 0, -100), new Vector3Int(3, 1, 5));
 
             // a pool of water surrounded by sand
-            fillWithBricks(items[8], new Vector3Int(40, -30, -12), new Vector3Int(12, 1, 12));
-            fillWithBricks(items[7], new Vector3Int(42, -27, -10), new Vector3Int(10, 10, 10));
-            fillWithBricks(items[8], new Vector3Int(40, -27, -12), new Vector3Int(1, 10, 12));
-            fillWithBricks(items[8], new Vector3Int(62, -27, -12), new Vector3Int(1, 10, 12));
-            fillWithBricks(items[8], new Vector3Int(42, -27, -12), new Vector3Int(10, 10, 1));
-            fillWithBricks(items[8], new Vector3Int(42, -27, 10), new Vector3Int(10, 10, 1));
+            fillWithBricks(items["sand"], new Vector3Int(40, -30, -12), new Vector3Int(12, 1, 12));
+            fillWithBricks(items["water_2x2"], new Vector3Int(42, -27, -10), new Vector3Int(10, 10, 10));
+            fillWithBricks(items["sand"], new Vector3Int(40, -27, -12), new Vector3Int(1, 10, 12));
+            fillWithBricks(items["sand"], new Vector3Int(62, -27, -12), new Vector3Int(1, 10, 12));
+            fillWithBricks(items["sand"], new Vector3Int(42, -27, -12), new Vector3Int(10, 10, 1));
+            fillWithBricks(items["sand"], new Vector3Int(42, -27, 10), new Vector3Int(10, 10, 1));
 
             spawnUnlimitedBlocks();
         }
@@ -235,9 +243,9 @@ namespace Brickcraft
 
         // the item a player gets after digging a world block, if any
         public static Item getItemForBlock(BlockType blockType) {
-            int itemId = BlockDatabase.Get(blockType).dropItemId;
+            string itemId = BlockDatabase.Get(blockType).dropItemId;
 
-            return items.TryGetValue(itemId, out Item item) ? item : null;
+            return itemId != null && items.TryGetValue(itemId, out Item item) ? item : null;
         }
 
         private void setupBrickModels() {

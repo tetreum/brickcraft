@@ -42,7 +42,7 @@ namespace Brickcraft
 
         private bool generateIcon(Item item, bool forceWrite = false) {
             // items of blocks keep their icon in the block folder
-            string iconFile = item.iconFile ?? Application.dataPath + "/Resources/Textures/Bricks/" + item.id + ".png";
+            string iconFile = item.iconFile ?? Application.dataPath + "/Resources/Textures/Bricks/" + Slugs.FileName(item.id) + ".png";
 
             if (!forceWrite && System.IO.File.Exists(iconFile)) {
                 return false;

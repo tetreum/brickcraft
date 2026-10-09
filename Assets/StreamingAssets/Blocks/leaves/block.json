@@ -1,10 +1,8 @@
 {
-    "id": 18,
     "name": "leaves",
     "hardness": 0.5,
     "transparent": true,
     "item": {
-        "id": 12,
         "name": "Leaves 2x2",
         "brickModel": 3003,
         "material": "BrightGreen"

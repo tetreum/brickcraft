@@ -113,8 +113,9 @@ MonoBehaviour:
   defaultSpawnPosition: {x: 0, y: 160, z: 0}
   seed: 13284938921
   saveName: world
+  autosaveInterval: 30
   starterItems:
-  - itemId: 1
+  - itemId: dirt
     quantity: 100
 --- !u!114 &5228763039519626170
 MonoBehaviour:

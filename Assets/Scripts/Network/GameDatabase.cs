@@ -93,7 +93,8 @@ namespace Brickcraft.Network
         public int PlayerId { get; set; }
 
         public int Slot { get; set; }
-        public int ItemId { get; set; }
+        /// <summary>The item's slug, see Slugs.</summary>
+        public string Item { get; set; }
         public int Quantity { get; set; }
         public int Health { get; set; }
     }
@@ -244,9 +245,14 @@ namespace Brickcraft.Network
             List<InventoryItem> items = new List<InventoryItem>();
 
             foreach (InventoryItemRecord record in connection.Table<InventoryItemRecord>().Where(i => i.PlayerId == playerId)) {
+                // an item of a mod that isn't installed anymore
+                if (record.Item == null || !Server.items.ContainsKey(record.Item)) {
+                    Debug.LogWarning("Player " + playerId + " had an unknown item (" + record.Item + ") in slot " + record.Slot + ", it's dropped");
+                    continue;
+                }
                 items.Add(new InventoryItem() {
                     slot = record.Slot,
-                    itemId = record.ItemId,
+                    itemId = record.Item,
                     quantity = record.Quantity,
                     health = record.Health,
                 });
@@ -263,7 +269,7 @@ namespace Brickcraft.Network
                     connection.Insert(new InventoryItemRecord() {
                         PlayerId = playerId,
                         Slot = item.slot,
-                        ItemId = item.itemId,
+                        Item = item.itemId,
                         Quantity = item.quantity,
                         Health = item.health,
                     });

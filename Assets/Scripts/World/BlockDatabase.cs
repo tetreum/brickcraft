@@ -34,7 +34,7 @@ namespace Brickcraft.World
 
         private static readonly BlockDefinition[] definitions = new BlockDefinition[256];
         private static readonly Dictionary<string, BlockDefinition> definitionsByName = new Dictionary<string, BlockDefinition>();
-        private static readonly List<int> registeredItemIds = new List<int>();
+        private static readonly List<string> registeredItemIds = new List<string>();
 
         private static BlockShape defaultShape;
         private static BlockShape defaultColliderShape;
@@ -54,9 +54,74 @@ namespace Brickcraft.World
             return definitionsByName.TryGetValue(name, out definition);
         }
 
+        /// <summary>
+        /// The number of a block in this game, by its slug (what saves and the network use). Unknown
+        /// blocks (a mod that isn't installed anymore) are air.
+        /// </summary>
+        public static byte IdOf(string name) {
+            BlockDefinition definition;
+            if (name != null && definitionsByName.TryGetValue(name, out definition)) {
+                return definition.id;
+            }
+            warnUnknown(name);
+            return (byte)BlockType.Air;
+        }
+
+        private static readonly HashSet<string> warnedUnknown = new HashSet<string>();
+
+        // saves are read on other threads
+        private static void warnUnknown(string name) {
+            bool isNew;
+            lock (warnedUnknown) {
+                isNew = warnedUnknown.Add(name ?? "");
+            }
+            if (isNew) {
+                Debug.LogWarning("Unknown block \"" + name + "\" (removed mod?), it's air from now on");
+            }
+        }
+
+        // Blocks are numbered when the game starts, numbers aren't saved: built-in blocks keep the number
+        // of their BlockType (the world generator uses them), the others get free ones.
+        private static byte numberFor(string name) {
+            BlockDefinition existing;
+            if (definitionsByName.TryGetValue(name, out existing)) {
+                return existing.id; // overriding a block, it keeps its number
+            }
+            byte builtIn;
+            if (BuiltInNumbers.TryGetValue(name.Replace("_", ""), out builtIn)) {
+                return builtIn;
+            }
+            // free numbers not meant for built-in blocks first
+            for (int pass = 0; pass < 2; pass++) {
+                for (int id = 1; id < (int)BlockType.NULL; id++) {
+                    if (definitions[id].isUnknown && (pass == 1 || !builtInValues.Contains((byte)id))) {
+                        return (byte)id;
+                    }
+                }
+            }
+            return 0;
+        }
+
+        // BlockType names (without "_", lowercase) and their numbers
+        private static readonly Dictionary<string, byte> BuiltInNumbers = createBuiltInNumbers();
+        private static readonly HashSet<byte> builtInValues = new HashSet<byte>(BuiltInNumbers.Values);
+
+        private static Dictionary<string, byte> createBuiltInNumbers() {
+            Dictionary<string, byte> numbers = new Dictionary<string, byte>();
+            foreach (string name in System.Enum.GetNames(typeof(BlockType))) {
+                BlockType type = (BlockType)System.Enum.Parse(typeof(BlockType), name);
+                string key = name.Replace("_", "").ToLowerInvariant();
+                if (type != BlockType.Air && type != BlockType.NULL && !numbers.ContainsKey(key)) {
+                    numbers[key] = (byte)type;
+                }
+            }
+            return numbers;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Load() {
             definitionsByName.Clear();
+            warnedUnknown.Clear();
             unregisterItems();
 
             defaultShape = loadDefaultShape(DefaultModelFile);
@@ -107,8 +172,8 @@ namespace Brickcraft.World
                 return;
             }
 
-            if (json.id <= (int)BlockType.Air || json.id >= (int)BlockType.NULL || string.IsNullOrEmpty(json.name)) {
-                Debug.LogError("Block file " + file + " needs a name and an id between 1 and 254");
+            if (!Slugs.IsValid(json.name)) {
+                Debug.LogError("Block file " + file + " needs a name that identifies it: " + Slugs.Rules);
                 return;
             }
             if (json.hardness < 0) {
@@ -116,16 +181,14 @@ namespace Brickcraft.World
                 return;
             }
 
-            byte id = (byte)json.id;
-            BlockDefinition previous = definitions[id];
-
-            if (definitionsByName.ContainsKey(json.name) && definitionsByName[json.name] != previous) {
-                Debug.LogError("Block file " + file + " uses the name \"" + json.name + "\" which is already taken by block " + definitionsByName[json.name].id);
+            byte id = numberFor(json.name);
+            if (id == 0) {
+                Debug.LogError("Block file " + file + " can't be loaded, there are already 254 blocks");
                 return;
             }
-            if (definitionsByName.ContainsKey(previous.name)) {
-                Debug.LogWarning("Block file " + file + " overrides block " + id + " (" + previous.name + ")");
-                definitionsByName.Remove(previous.name);
+            if (definitionsByName.ContainsKey(json.name)) {
+                Debug.LogWarning("Block file " + file + " overrides the block " + json.name + " of " + definitionsByName[json.name].folder);
+                unregisterItemOf(definitionsByName[json.name]);
             }
 
             BlockDefinition definition = new BlockDefinition() {
@@ -137,7 +200,7 @@ namespace Brickcraft.World
                 isReplaceable = json.replaceable,
                 isTransparent = json.transparent,
                 isTranslucent = json.translucent,
-                dropItemId = json.dropItemId,
+                dropItemId = string.IsNullOrEmpty(json.dropItem) ? null : json.dropItem,
             };
 
             loadTextures(definition, textures);
@@ -202,21 +265,24 @@ namespace Brickcraft.World
         }
 
         private static void loadItem(BlockDefinition definition, BlockItemJson json) {
-            if (json == null || json.id == 0) {
+            // blocks without an item don't name one
+            if (json == null || string.IsNullOrEmpty(json.name)) {
                 return;
             }
-            if (string.IsNullOrEmpty(json.name)) {
-                Debug.LogError("The item of block " + definition.name + " needs a name");
+            string id = string.IsNullOrEmpty(json.id) ? definition.name : json.id;
+
+            if (!Slugs.IsValid(id)) {
+                Debug.LogError("The item of block " + definition.name + " has the id \"" + id + "\", ids are " + Slugs.Rules);
                 return;
             }
-            if (Server.items.ContainsKey(json.id)) {
-                Debug.LogError("The item of block " + definition.name + " uses id " + json.id + " which is already taken by " + Server.items[json.id].name);
+            if (Server.items.ContainsKey(id)) {
+                Debug.LogError("The item of block " + definition.name + " uses the id " + id + ", already taken by " + Server.items[id].name);
                 return;
             }
 
             string iconPath = iconFor(definition.folder);
             Item item = new Item() {
-                id = json.id,
+                id = id,
                 type = Item.Type.Brick,
                 name = json.name,
                 brickModelId = json.brickModel,
@@ -231,7 +297,7 @@ namespace Brickcraft.World
             registeredItemIds.Add(item.id);
 
             definition.itemId = item.id;
-            if (definition.dropItemId == 0) {
+            if (definition.dropItemId == null) {
                 definition.dropItemId = item.id;
             }
         }
@@ -266,8 +332,15 @@ namespace Brickcraft.World
         }
 
         // items survive between play sessions when domain reload is disabled
+        // the item of a block being overridden, so the new one can register its id
+        private static void unregisterItemOf(BlockDefinition definition) {
+            if (definition.itemId != null && registeredItemIds.Remove(definition.itemId)) {
+                Server.items.Remove(definition.itemId);
+            }
+        }
+
         private static void unregisterItems() {
-            foreach (int id in registeredItemIds) {
+            foreach (string id in registeredItemIds) {
                 Server.items.Remove(id);
             }
             registeredItemIds.Clear();
@@ -293,6 +366,7 @@ namespace Brickcraft.World
             return new BlockDefinition() {
                 id = id,
                 name = "unknown_" + id,
+                isUnknown = true,
                 hardness = 1,
                 isBreakable = true,
                 shape = defaultShape,

@@ -8,7 +8,9 @@ namespace Brickcraft.World
     /// </summary>
     public class BlockDefinition
     {
+        /// <summary>Its number in this game: what chunks store, given when the game starts and never saved.</summary>
         public byte id;
+        /// <summary>Identifies it in saves and the network, see Slugs.</summary>
         public string name;
 
         /// <summary>
@@ -24,6 +26,9 @@ namespace Brickcraft.World
         /// <summary>Bricks can be placed where this block is (air, water...).</summary>
         public bool isReplaceable;
 
+        /// <summary>No block has this number in this game.</summary>
+        public bool isUnknown;
+
         /// <summary>Sky light goes through it (air, leaves, water...).</summary>
         public bool isTransparent;
 
@@ -33,11 +38,11 @@ namespace Brickcraft.World
         /// </summary>
         public bool isTranslucent;
 
-        /// <summary>Item given when dug, 0 for none.</summary>
-        public int dropItemId;
+        /// <summary>Item given when dug (its slug, see Slugs), null for none.</summary>
+        public string dropItemId;
 
-        /// <summary>Item defined by this block's folder, 0 for none.</summary>
-        public int itemId;
+        /// <summary>Item defined by this block's folder (its slug), null for none.</summary>
+        public string itemId;
 
         /// <summary>Geometry drawn in the terrain mesh.</summary>
         public BlockShape shape;
@@ -68,24 +73,27 @@ namespace Brickcraft.World
     [Serializable]
     public class BlockJson
     {
-        public int id = -1;
+        /// <summary>Identifies the block (in saves too), see Slugs.</summary>
         public string name;
         public float hardness = 1;
         public bool breakable = true;
         public bool replaceable = false;
         public bool transparent = false;
         public bool translucent = false;
-        public int dropItemId = 0;
+        /// <summary>Id of the item given when dug, the block's own item if empty.</summary>
+        public string dropItem;
         public BlockItemJson item = new BlockItemJson();
     }
 
     /// <summary>
-    /// Optional item that places this block. Its icon is the block folder's icon.png.
+    /// Optional item that places this block: a block has one if it's given a name. Its icon is the
+    /// block folder's icon.png.
     /// </summary>
     [Serializable]
     public class BlockItemJson
     {
-        public int id = 0; // 0 means the block has no item
+        /// <summary>Its slug (see Slugs), the block's name if empty.</summary>
+        public string id;
         public string name;
         public int brickModel = 3003;
         public string material;

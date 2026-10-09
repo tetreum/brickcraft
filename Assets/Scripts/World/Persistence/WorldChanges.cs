@@ -11,7 +11,8 @@ namespace Brickcraft.World
     public struct SavedBrick
     {
         public Guid id;
-        public int itemId;
+        /// <summary>Its item's slug, see Slugs.</summary>
+        public string itemId;
         public Vector3Int origin;
         public byte rotation;
     }
@@ -191,12 +192,16 @@ namespace Brickcraft.World
     /// Binary format of the changes of a chunk, used both by region files and the network.
     /// Deflate compressed:
     ///   u8 version
-    ///   varint block count, then per block: varint index delta (sorted), u8 type
-    ///   varint brick count, then per brick: 16 bytes id, varint item, zigzag varint x y z, u8 rotation
+    ///   varint block name count, then the names (length prefixed UTF-8 slugs) of the blocks used below
+    ///   varint block count, then per block: varint index delta (sorted), varint position of its name in that list
+    ///   varint brick count, then per brick: 16 bytes id, string item (length prefixed UTF-8 slug), zigzag varint x y z, u8 rotation
+    /// Blocks are saved by name, the numbers chunks use are only valid in the game that gave them (see
+    /// BlockDatabase).
     /// </summary>
     public static class ChunkChangesSerializer
     {
-        public const byte Version = 1;
+        // change it when the format changes, records of other versions are rejected
+        public const byte Version = 3;
 
         // pages keep network messages small, even for heavily modified chunks
         private const int BlocksPerPage = 8192;
@@ -231,18 +236,24 @@ namespace Brickcraft.World
                     throw new InvalidDataException("Unknown chunk changes version " + version);
                 }
 
+                // this game's number of each block name the record uses
+                byte[] numbers = new byte[(int)readVarUInt(reader)];
+                for (int i = 0; i < numbers.Length; i++) {
+                    numbers[i] = BlockDatabase.IdOf(reader.ReadString());
+                }
+
                 int blockCount = (int)readVarUInt(reader);
                 int index = 0;
                 for (int i = 0; i < blockCount; i++) {
                     index += (int)readVarUInt(reader);
-                    changes.blocks[(ushort)index] = reader.ReadByte();
+                    changes.blocks[(ushort)index] = numbers[(int)readVarUInt(reader)];
                 }
 
                 int brickCount = (int)readVarUInt(reader);
                 for (int i = 0; i < brickCount; i++) {
                     SavedBrick brick = new SavedBrick() {
                         id = new Guid(reader.ReadBytes(16)),
-                        itemId = (int)readVarUInt(reader),
+                        itemId = reader.ReadString(),
                         origin = new Vector3Int(readVarInt(reader), readVarInt(reader), readVarInt(reader)),
                         rotation = reader.ReadByte(),
                     };
@@ -260,18 +271,32 @@ namespace Brickcraft.World
                 using (BinaryWriter writer = new BinaryWriter(deflate)) {
                     writer.Write(Version);
 
+                    // the names of the blocks used, each changed block points into this list
+                    List<string> names = new List<string>();
+                    Dictionary<byte, int> nameIndexes = new Dictionary<byte, int>();
+                    foreach (KeyValuePair<ushort, byte> block in blocks) {
+                        if (!nameIndexes.ContainsKey(block.Value)) {
+                            nameIndexes[block.Value] = names.Count;
+                            names.Add(BlockDatabase.Get(block.Value).name);
+                        }
+                    }
+                    writeVarUInt(writer, (uint)names.Count);
+                    foreach (string name in names) {
+                        writer.Write(name);
+                    }
+
                     writeVarUInt(writer, (uint)blocks.Count);
                     int previous = 0;
                     foreach (KeyValuePair<ushort, byte> block in blocks) {
                         writeVarUInt(writer, (uint)(block.Key - previous));
-                        writer.Write(block.Value);
+                        writeVarUInt(writer, (uint)nameIndexes[block.Value]);
                         previous = block.Key;
                     }
 
                     writeVarUInt(writer, (uint)bricks.Count);
                     foreach (SavedBrick brick in bricks) {
                         writer.Write(brick.id.ToByteArray());
-                        writeVarUInt(writer, (uint)brick.itemId);
+                        writer.Write(brick.itemId);
                         writeVarInt(writer, brick.origin.x);
                         writeVarInt(writer, brick.origin.y);
                         writeVarInt(writer, brick.origin.z);

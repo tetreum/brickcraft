@@ -41,12 +41,12 @@ namespace Brickcraft.Network
         public float autosaveInterval = 30f;
 
         [Tooltip("Items new players start with")]
-        public StarterItem[] starterItems = { new StarterItem() { itemId = 1, quantity = 100 } };
+        public StarterItem[] starterItems = { new StarterItem() { itemId = "dirt", quantity = 100 } };
 
         [System.Serializable]
         public struct StarterItem
         {
-            public int itemId;
+            public string itemId;
             public int quantity;
         }
 

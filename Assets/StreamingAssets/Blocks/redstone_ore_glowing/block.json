@@ -1,6 +1,5 @@
 {
-    "id": 74,
     "name": "redstone_ore_glowing",
     "hardness": 3,
-    "dropItemId": 10
+    "dropItem": "stone"
 }

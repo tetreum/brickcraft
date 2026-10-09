@@ -1,9 +1,7 @@
 {
-    "id": 1,
     "name": "stone",
     "hardness": 3,
     "item": {
-        "id": 10,
         "name": "Stone 2x2",
         "brickModel": 3003
     }

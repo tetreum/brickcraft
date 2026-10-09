@@ -5,7 +5,7 @@ namespace Brickcraft
 {
     public class Brick {
         public string id;
-        public int itemId;
+        public string itemId;
         public GameObject gameObject;
         public BrickPlacement placement;
 

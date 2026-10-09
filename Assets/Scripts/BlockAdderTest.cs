@@ -5,7 +5,7 @@ using UnityEngine;
 // test scene brick that gives 100 items to the players walking into it
 public class BlockAdderTest : MonoBehaviour
 {
-    public int item;
+    public string item = "dirt";
 
     // only the server can give items, and it sees every player
     private void OnTriggerEnter(Collider other) {

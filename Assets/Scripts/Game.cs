@@ -20,15 +20,15 @@ namespace Brickcraft
 
         public Recipe[] craftingRecipes = new Recipe[] {
             new Recipe() {
-                itemId = 6,
+                itemId = "dirt_2x4",
                 ingredients = new Ingredient[] {
                     new Ingredient() {
-                        itemId = 1,
+                        itemId = "dirt",
                         quantity = 1,
                         slot = 1,
                     },
                     new Ingredient() {
-                        itemId = 1,
+                        itemId = "dirt",
                         quantity = 1,
                         slot = 2,
                     }

@@ -207,7 +207,8 @@ namespace Brickcraft.Network
 
         // args: [count] [NICK|ID]
         private static void addItem(NetworkConnectionToClient sender, ConnectedPlayer admin, string itemText, string args) {
-            if (!int.TryParse(itemText, out int itemId) || !Server.items.TryGetValue(itemId, out Item item)) {
+            string itemId = itemText.ToLowerInvariant();
+            if (!Server.items.TryGetValue(itemId, out Item item)) {
                 reply(sender, "There's no item " + itemText);
                 return;
             }

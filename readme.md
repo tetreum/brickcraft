@@ -73,7 +73,7 @@ Admins can type commands in the chat:
 - `/ban NICK|ID [reason]`: bans a player, online or not. Nobody can join from a banned player's machine either (except admins).
 - `/unban NICK|ID`
 - `/role NICK|ID [role]`: shows a player's role, or changes it (`user` or `admin`). Admins can't change their own.
-- `/additem ITEM [count] [NICK|ID]`: gives `count` (1 by default) of the item with id `ITEM` to a player, yourself by default. Offline players get them in their saved inventory. `/additem ITEM NICK` works too, but a number after the item is always the count, so give a player by id with `/additem ITEM count ID`.
+- `/additem ITEM [count] [NICK|ID]`: gives `count` (1 by default) of the item with id `ITEM` (like `dirt_2x4`) to a player, yourself by default. Offline players get them in their saved inventory. `/additem ITEM NICK` works too, but a number after the item is always the count, so give a player by id with `/additem ITEM count ID`.
 
 Admins also get an ALL tab in the inventory: every item of the game, searchable by name or id, 30 per page. Clicking one adds it to their inventory.
 
@@ -157,16 +157,14 @@ Blocks/marble/
 
 ```json
 {
-    "id": 200,
     "name": "marble",
     "hardness": 2.5,
     "breakable": true,
     "replaceable": false,
     "transparent": false,
     "translucent": false,
-    "dropItemId": 0,
+    "dropItem": "",
     "item": {
-        "id": 200,
         "name": "Marble 2x2",
         "brickModel": 3003,
         "material": "BrightBlue",
@@ -175,14 +173,14 @@ Blocks/marble/
 }
 ```
 
-- `id` (1-254) and `name` must be unique. A folder reusing an existing id overrides that block.
+- `name` identifies the block, in saves too: a slug (see Block and item ids below). A folder reusing an existing name overrides that block.
 - `hardness`: seconds to dig it with bare hands. `breakable: false` makes it undiggable.
 - `replaceable`: bricks can be placed inside it (like water).
 - `transparent`: sky light goes through it (like leaves or water).
 - `translucent`: drawn see-through (like water), with the terrain's translucent material (`Resources/Materials/Block_Translucent`, 60% opaque, its shader is `Resources/Shader/TerrainTranslucent`). What's behind it is drawn too, and its own sides only where they touch air.
-- `item`: optional item that places the block back. It needs an item id not used in Server.cs#items. Its icon is `icon.png`, which /Scenes/IconGenerator generates if missing; until then the game uses the block's `top.png` or `texture.png`.
+- `item`: optional item that places the block back, if it has a `name`. Its id is the block's name (`marble`), or `item.id` to give another. Its icon is `icon.png`, which /Scenes/IconGenerator generates if missing; until then the game uses the block's `top.png` or `texture.png`.
 - `item.maxStack`: how many fit in one inventory slot, 64 by default (also `maxStack` on the items of Server.cs#items). Dragging a stack onto the same item merges them as far as that allows.
-- `dropItemId`: item given when dug. Defaults to the block's own item, `0` and no item means nothing.
+- `dropItem`: id of the item given when dug, like `"stone"`. Defaults to the block's own item; without one, nothing.
 
 Every field but `id` and `name` is optional.
 
@@ -194,8 +192,12 @@ Textures are square images (they're scaled to the biggest one). Models are OBJ f
 2. The icon is stored at https://github.com/tetreum/brickcraft/tree/main/Assets/Resources/Textures/Bricks
 3. Prefab must be listed at Server -> prefabs scene object.
 4. Model specs (footprint in studs and height in plates) must be added at Server.cs#setupBrickModels(). The model's pivot must be at the center of its footprint, on its bottom face, like the existing ones.
-5. Items using it must be added at Server.cs#items var (https://github.com/tetreum/brickcraft/blob/main/Assets/Scripts/Server.cs#L12)
+5. Items using it must be added at Server.cs#builtInItems (https://github.com/tetreum/brickcraft/blob/main/Assets/Scripts/Server.cs), with a slug id (see below). Its icon is `Resources/Textures/Bricks/<id>.png`.
 6. To generate it's icon, head to /Scenes/IconGenerator & simply hit Play. Items with missing icons will have their icon generated.
+
+### Block and item ids
+
+Blocks (their `name`) and items are identified by slugs, so ones added by different people don't clash: lowercase letters, digits and `_`, like `dirt_2x4`. Mods can prefix theirs, like `mymod:red_brick` (its icon file then uses a `.`: `mymod.red_brick.png`). Saves store these names. While the game runs, blocks also get a number (what chunks store, one byte per block): built-in blocks keep the one of their `BlockType`, the others get free ones, and these numbers are never saved.
 
 ## How can i add a new brick material/texture?
 

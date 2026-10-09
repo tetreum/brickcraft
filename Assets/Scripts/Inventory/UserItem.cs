@@ -2,7 +2,7 @@ namespace Brickcraft
 {
     public class UserItem
     {
-        public int id;
+        public string id;
         public int quantity;
         public int health;
         public int slot;

@@ -35,13 +35,13 @@ namespace Brickcraft.Network
         }
 
         [Server]
-        public bool ServerHas(int itemId, int quantity, int health) {
+        public bool ServerHas(string itemId, int quantity, int health) {
             return Inventory.Has(items, itemId, quantity, health);
         }
 
         /// <summary>Adds them all, or none and false if they don't fit.</summary>
         [Server]
-        public bool ServerAdd(int itemId, int quantity, int health = 0, int slot = 0) {
+        public bool ServerAdd(string itemId, int quantity, int health = 0, int slot = 0) {
             bool added = Inventory.Add(items, itemId, quantity, health, slot);
 
             if (added) {
@@ -69,7 +69,7 @@ namespace Brickcraft.Network
         }
 
         [Server]
-        public bool ServerRemove(int itemId, int quantity, int health = 0) {
+        public bool ServerRemove(string itemId, int quantity, int health = 0) {
             bool removed = Inventory.Remove(items, itemId, quantity, health);
 
             if (removed) {
@@ -129,7 +129,7 @@ namespace Brickcraft.Network
 
         /// <summary>Admins only: adds items out of nothing (the ALL tab of the inventory).</summary>
         [Command]
-        public void CmdAdminAdd(int itemId, int quantity) {
+        public void CmdAdminAdd(string itemId, int quantity) {
             ConnectedPlayer player = connectionToClient.authenticationData as ConnectedPlayer;
 
             if (player == null || !player.record.IsAdmin || !Server.items.TryGetValue(itemId, out Item item) || quantity < 1 || quantity > MaxAdminAdd) {

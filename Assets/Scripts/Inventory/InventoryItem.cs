@@ -6,7 +6,7 @@ namespace Brickcraft
     public struct InventoryItem
     {
         public int slot;
-        public int itemId;
+        public string itemId;
         public int quantity;
         public int health;
     }
@@ -22,7 +22,7 @@ namespace Brickcraft
         public const int FirstFastSlot = 28;
 
         /// <summary>How many of the item fit in one slot.</summary>
-        public static int MaxStack(int itemId) {
+        public static int MaxStack(string itemId) {
             Item item;
             return Server.items.TryGetValue(itemId, out item) ? item.maxStack : Item.DefaultMaxStack;
         }
@@ -40,12 +40,12 @@ namespace Brickcraft
             return slot >= 1 && slot <= SlotCount && FindSlot(items, slot) == -1;
         }
 
-        private static bool isSame(InventoryItem stack, int itemId, int health) {
+        private static bool isSame(InventoryItem stack, string itemId, int health) {
             return stack.itemId == itemId && stack.health == health;
         }
 
         /// <summary>How many there are, in all their stacks.</summary>
-        public static int Count(IList<InventoryItem> items, int itemId, int health) {
+        public static int Count(IList<InventoryItem> items, string itemId, int health) {
             int count = 0;
             foreach (InventoryItem stack in items) {
                 if (isSame(stack, itemId, health)) {
@@ -55,12 +55,12 @@ namespace Brickcraft
             return count;
         }
 
-        public static bool Has(IList<InventoryItem> items, int itemId, int quantity, int health) {
+        public static bool Has(IList<InventoryItem> items, string itemId, int quantity, int health) {
             return Count(items, itemId, health) >= quantity;
         }
 
         /// <summary>How many more fit: what's missing in their stacks, plus whole empty slots.</summary>
-        public static int Room(IList<InventoryItem> items, int itemId, int health) {
+        public static int Room(IList<InventoryItem> items, string itemId, int health) {
             int max = MaxStack(itemId);
             int room = 0;
             foreach (InventoryItem stack in items) {
@@ -80,7 +80,7 @@ namespace Brickcraft
         /// Adds them all or none: first filling their stacks, then new ones in free slots (preferring the
         /// fast inventory). With a slot, all of them go there (empty or with room). False if they don't fit.
         /// </summary>
-        public static bool Add(IList<InventoryItem> items, int itemId, int quantity, int health = 0, int slot = 0) {
+        public static bool Add(IList<InventoryItem> items, string itemId, int quantity, int health = 0, int slot = 0) {
             int max = MaxStack(itemId);
 
             if (slot != 0) {
@@ -122,7 +122,7 @@ namespace Brickcraft
         }
 
         /// <summary>Removes them from their stacks (the smallest first), false (and nothing removed) if there aren't enough.</summary>
-        public static bool Remove(IList<InventoryItem> items, int itemId, int quantity, int health = 0) {
+        public static bool Remove(IList<InventoryItem> items, string itemId, int quantity, int health = 0) {
             if (!Has(items, itemId, quantity, health)) {
                 return false;
             }

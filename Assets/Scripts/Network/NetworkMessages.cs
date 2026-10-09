@@ -49,14 +49,15 @@ namespace Brickcraft.Network
     public struct BlockChangedMessage : NetworkMessage
     {
         public Vector3Int block;
-        public byte blockType;
+        /// <summary>The block's name: numbers are only valid in the game that gave them (see BlockDatabase).</summary>
+        public string blockName;
     }
 
     /// <summary>Server to client: a brick was placed.</summary>
     public struct BrickPlacedMessage : NetworkMessage
     {
         public string id;
-        public int itemId;
+        public string itemId;
         public Vector3Int origin;
         public byte rotation;
     }

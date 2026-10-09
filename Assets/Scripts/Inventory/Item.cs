@@ -9,7 +9,8 @@ namespace Brickcraft
         {
             Brick = 1
         }
-        public int id;
+        /// <summary>Its slug, see Slugs.</summary>
+        public string id;
         public int brickModelId;
         public string materialName;
         public int layer;
@@ -33,7 +34,7 @@ namespace Brickcraft
                 if (iconFile != null) {
                     return iconTexture;
                 }
-                return Resources.Load<Texture2D>("Textures/Bricks/" + id);
+                return Resources.Load<Texture2D>("Textures/Bricks/" + Slugs.FileName(id));
             }
         }
         public BrickModel brickModel {

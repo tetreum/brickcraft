@@ -31,7 +31,6 @@ namespace Brickcraft.UI
 
         [Header("General")]
         public Dropdown language;
-        public SegmentedControl difficulty;
         public Toggle autoSave;
         public Toggle showCoordinates;
         public Toggle crosshair;
@@ -67,7 +66,6 @@ namespace Brickcraft.UI
             language.AddOptions(names);
             language.onValueChanged.AddListener(index => GameSettings.Language = GameSettings.LanguageCodes[index]);
 
-            difficulty.Changed += index => GameSettings.Difficulty = (Difficulty)index;
             autoSave.onValueChanged.AddListener(on => GameSettings.AutoSave = on);
             showCoordinates.onValueChanged.AddListener(on => GameSettings.ShowCoordinates = on);
             crosshair.onValueChanged.AddListener(on => GameSettings.Crosshair = on);
@@ -122,7 +120,6 @@ namespace Brickcraft.UI
         // shows the current values, without changing them
         private void load() {
             language.SetValueWithoutNotify(Mathf.Max(0, System.Array.IndexOf(GameSettings.LanguageCodes, GameSettings.Language)));
-            difficulty.Select((int)GameSettings.Difficulty);
             autoSave.SetIsOnWithoutNotify(GameSettings.AutoSave);
             showCoordinates.SetIsOnWithoutNotify(GameSettings.ShowCoordinates);
             crosshair.SetIsOnWithoutNotify(GameSettings.Crosshair);

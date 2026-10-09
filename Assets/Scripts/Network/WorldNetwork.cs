@@ -33,6 +33,9 @@ namespace Brickcraft.Network
 
         public static long Seed { get; private set; }
 
+        /// <summary>How hard the world is (saved with it, see WorldStorage), on the server and its clients.</summary>
+        public static Difficulty Difficulty { get; private set; }
+
         /// <summary>The saved world, null in scenes that aren't saved (the test scene).</summary>
         public static WorldStorage Storage { get; private set; }
 
@@ -58,6 +61,7 @@ namespace Brickcraft.Network
         public static void StartServer(WorldStorage storage, long unsavedSeed, Vector3 spawn) {
             Storage = storage;
             Seed = storage != null ? storage.Seed : unsavedSeed;
+            Difficulty = storage != null ? storage.Difficulty : Difficulty.Normal;
             serverChanges = storage != null ? storage.Changes : new WorldChanges();
             interests.Clear();
             serverChunks.Clear();
@@ -238,6 +242,7 @@ namespace Brickcraft.Network
 
             conn.Send(new WorldInfoMessage() {
                 seed = Seed,
+                difficulty = (byte)Difficulty,
                 spawnChunk = interest.spawnChunk,
                 viewDistance = WorldBehaviour.Instance != null ? WorldBehaviour.Instance.ViewDistance : 0,
             });
@@ -385,6 +390,7 @@ namespace Brickcraft.Network
         private static void onWorldInfo(WorldInfoMessage message) {
             spawn = message.spawnChunk;
             hasWorldInfo = true;
+            Difficulty = (Difficulty)message.difficulty;
 
             WorldBehaviour world = WorldBehaviour.Instance;
             if (world == null) {

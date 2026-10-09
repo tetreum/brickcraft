@@ -63,6 +63,12 @@ namespace Brickcraft.Network
             return Instance;
         }
 
+        /// <summary>Plays a saved world (see World.SavedWorlds) alone.</summary>
+        public void PlayWorld(string worldSaveName) {
+            saveName = worldSaveName;
+            StartSingleplayer();
+        }
+
         public void StartSingleplayer(string scene = WorldScene) {
             AllowsRemotePlayers = false;
             NetworkServer.listen = false;
@@ -107,7 +113,7 @@ namespace Brickcraft.Network
             long newSeed = seed != 0 ? seed : Random.Range(1, int.MaxValue);
 
             // only the generated world is saved, the test scene starts from scratch every time
-            WorldStorage storage = isWorldScene(onlineScene) ? WorldStorage.OpenOrCreate(SaveFolder, newSeed) : null;
+            WorldStorage storage = isWorldScene(onlineScene) ? WorldStorage.OpenOrCreate(SaveFolder, newSeed, saveName, Difficulty.Normal) : null;
             WorldNetwork.StartServer(storage, newSeed, defaultSpawnPosition);
 
             if (storage != null) {

@@ -36,7 +36,6 @@ Players can change every key in Settings → Controls (their keys are kept in Pl
 The Settings button of the main menu and the ESC menu opens the player's preferences (`GameSettings`, kept in PlayerPrefs). Changes apply right away and raise `EventManager.SettingChanged`.
 
 - Language: only English for now.
-- Game Difficulty: Peaceful, Normal or Hard. Stored, nothing uses it yet.
 - Auto Save: the host saves the world every 30 seconds. Off, it's still saved when regions unload and when the server stops.
 - Show Coordinates: the player's block coordinates, top left.
 - Crosshair
@@ -52,7 +51,7 @@ Its icons and rounded shapes are white sprites tinted in Unity, drawn by `python
 
 Multiplayer uses [Mirror](https://mirror-networking.gitbook.io/docs). Every game is networked:
 
-- **Singleplayer** runs a host that doesn't listen for connections, so nobody else can join.
+- **Singleplayer** lists the saved worlds, to play or delete them, or creates a new one with its name, seed (a number, any text, or empty for a random one) and difficulty (Peaceful, Normal or Hard, kept with the world; nothing uses it yet). The world runs on a host that doesn't listen for connections, so nobody else can join.
 - **Host game** runs a host other players can join (UDP port 7777 by default, see the KcpTransport in `Resources/NetworkManager`).
 - **Join game** connects to the address typed next to the button (`localhost` if empty).
 
@@ -85,9 +84,9 @@ Players are identified by the name typed in the menu plus their machine id (`Sys
 
 ### Saves
 
-Everything is saved in `<persistentDataPath>/saves/<save name>/` (`saveName` on the NetworkManager, `world` by default):
+Every world is saved in its own folder, `<persistentDataPath>/saves/<save name>/`, named after the world (`SavedWorlds`). Hosting a game uses the `saveName` of the NetworkManager, `world` by default:
 
-- `world.dat`: the world's seed, the generator version, when it was created and last saved, and which game versions created it and played it last.
+- `world.dat`: the world's name, seed, difficulty and generator version, when it was created and last played, and which game versions created it and played it last.
 - `regions/r.<x>.<z>.bcr`: what players changed (blocks and bricks), in region files of 32x32 chunks. The terrain itself is never saved, it's generated again from the seed and the changes are applied on top, so a save only grows with what players do, not with the size of the world. Each chunk record is compressed and can be rewritten alone; new versions are written before the old ones are released, so a crash can't leave half a chunk. Regions nobody changed have no file.
 
 Regions are streamed with the world: the changes of a region are read when the server loads its first chunk, and saved and dropped from memory when it unloads its last one, so memory only holds the areas around players.

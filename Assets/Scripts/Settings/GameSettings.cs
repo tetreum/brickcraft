@@ -3,13 +3,6 @@ using UnityEngine;
 
 namespace Brickcraft
 {
-    public enum Difficulty
-    {
-        Peaceful = 0,
-        Normal = 1,
-        Hard = 2,
-    }
-
     /// <summary>
     /// The player's preferences, kept in PlayerPrefs. Changing one raises EventManager.SettingChanged
     /// with its name (the constants below), so whatever depends on it can update.
@@ -17,7 +10,6 @@ namespace Brickcraft
     public static class GameSettings
     {
         public const string LanguageSetting = "language";
-        public const string DifficultySetting = "difficulty";
         public const string AutoSaveSetting = "autoSave";
         public const string ShowCoordinatesSetting = "showCoordinates";
         public const string CrosshairSetting = "crosshair";
@@ -35,11 +27,6 @@ namespace Brickcraft
         public static string Language {
             get { return getString(LanguageSetting, "en"); }
             set { setString(LanguageSetting, value); }
-        }
-
-        public static Difficulty Difficulty {
-            get { return (Difficulty)Mathf.Clamp(getInt(DifficultySetting, (int)Difficulty.Normal), 0, 2); }
-            set { setInt(DifficultySetting, (int)value); }
         }
 
         /// <summary>The host saves the world every now and then, not only when it stops.</summary>

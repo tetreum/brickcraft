@@ -9,7 +9,7 @@ namespace Brickcraft.World
     /// <summary>
     /// A saved world on disk, owned by the server:
     ///   world.dat                 header: format version, seed, generator version, timestamps,
-    ///                             game versions that created and last saved it
+    ///                             game versions that created and last saved it, name, difficulty
     ///   regions/r.[x].[z].bcr     changes of each chunk, see <see cref="RegionFile"/>
     ///
     /// The terrain itself is never stored, it's generated again from the seed. Saves only contain
@@ -30,14 +30,19 @@ namespace Brickcraft.World
         public const ushort GeneratorVersion = 2;
 
         private const uint Magic = 0x44574342; // "BCWD"
-        // 2: game versions
-        private const ushort FormatVersion = 2;
+        // change it when the header changes, worlds with another one aren't opened
+        private const ushort FormatVersion = 3;
 
         public string Folder { get; private set; }
         public long Seed { get; private set; }
         public long CreatedAt { get; private set; }
+        /// <summary>When it was last played (saved, or opened), unix seconds.</summary>
+        public long LastPlayedAt { get; private set; }
+        /// <summary>What players called it.</summary>
+        public string Name { get; private set; }
+        public Difficulty Difficulty { get; private set; }
 
-        /// <summary>The game version that created the world, null for worlds older than that.</summary>
+        /// <summary>The game version that created the world.</summary>
         public string CreatedWithVersion { get; private set; }
         /// <summary>The game version that played the world last, before this session.</summary>
         public string LastSavedWithVersion { get; private set; }
@@ -58,20 +63,44 @@ namespace Brickcraft.World
         // every disk write, in order
         private Task ioQueue = Task.CompletedTask;
 
-        /// <summary>Opens the world saved in the folder, or creates it with the given seed.</summary>
-        public static WorldStorage OpenOrCreate(string folder, long newSeed) {
+        /// <summary>Opens the world saved in the folder, or creates it with what's given.</summary>
+        public static WorldStorage OpenOrCreate(string folder, long newSeed, string newName, Difficulty newDifficulty) {
+            if (!File.Exists(Path.Combine(folder, HeaderFile))) {
+                Create(folder, newName, newSeed, newDifficulty);
+            }
             WorldStorage storage = new WorldStorage() { Folder = folder, Changes = new WorldChanges() };
             Directory.CreateDirectory(Path.Combine(folder, RegionsFolder));
+            storage.readHeader();
+            storage.writeHeader(); // records that it was played now, and with which version
+            return storage;
+        }
 
-            if (File.Exists(Path.Combine(folder, HeaderFile))) {
+        /// <summary>Creates a new world in the folder (nothing is generated until it's played).</summary>
+        public static void Create(string folder, string name, long seed, Difficulty difficulty) {
+            WorldStorage storage = new WorldStorage() {
+                Folder = folder,
+                Name = name,
+                Seed = seed,
+                Difficulty = difficulty,
+                CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                CreatedWithVersion = GameVersion.Current,
+            };
+            Directory.CreateDirectory(Path.Combine(folder, RegionsFolder));
+            storage.writeHeader();
+            UnityEngine.Debug.Log("Created world \"" + name + "\" in " + folder + " with seed " + seed);
+        }
+
+        /// <summary>Reads only the header of the world in the folder (to list saves), null if it isn't one.</summary>
+        public static WorldStorage ReadInfo(string folder) {
+            if (!File.Exists(Path.Combine(folder, HeaderFile))) {
+                return null;
+            }
+            WorldStorage storage = new WorldStorage() { Folder = folder };
+            try {
                 storage.readHeader();
-                storage.writeHeader(); // so it records this version even if nothing changes
-            } else {
-                storage.Seed = newSeed;
-                storage.CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                storage.CreatedWithVersion = GameVersion.Current;
-                storage.writeHeader();
-                UnityEngine.Debug.Log("Created world " + folder + " with seed " + newSeed);
+            } catch (Exception e) {
+                UnityEngine.Debug.LogWarning("Can't read the world in " + folder + ": " + e.Message);
+                return null;
             }
             return storage;
         }
@@ -274,18 +303,17 @@ namespace Brickcraft.World
                     throw new InvalidDataException(HeaderFile + " isn't a world file");
                 }
                 ushort format = reader.ReadUInt16();
-                if (format > FormatVersion) {
-                    throw new InvalidDataException("The world was saved by a newer version of the game");
+                if (format != FormatVersion) {
+                    throw new InvalidDataException("The world was saved by another version of the game");
                 }
                 Seed = reader.ReadInt64();
                 ushort generator = reader.ReadUInt16();
                 CreatedAt = reader.ReadInt64();
-                reader.ReadInt64(); // last saved
-
-                if (format >= 2) {
-                    CreatedWithVersion = reader.ReadString();
-                    LastSavedWithVersion = reader.ReadString();
-                }
+                LastPlayedAt = reader.ReadInt64();
+                CreatedWithVersion = reader.ReadString();
+                LastSavedWithVersion = reader.ReadString();
+                Name = reader.ReadString();
+                Difficulty = (Difficulty)reader.ReadByte();
 
                 if (generator != GeneratorVersion) {
                     UnityEngine.Debug.LogWarning("The world was created with another version of the generator, saved changes may not line up with the terrain");
@@ -304,9 +332,11 @@ namespace Brickcraft.World
                 writer.Write(Seed);
                 writer.Write(GeneratorVersion);
                 writer.Write(CreatedAt);
-                writer.Write(DateTimeOffset.UtcNow.ToUnixTimeSeconds()); // last saved
+                writer.Write(DateTimeOffset.UtcNow.ToUnixTimeSeconds()); // last played
                 writer.Write(CreatedWithVersion ?? "unknown");
                 writer.Write(GameVersion.Current);
+                writer.Write(Name ?? "");
+                writer.Write((byte)Difficulty);
             }
 
             if (File.Exists(path)) {

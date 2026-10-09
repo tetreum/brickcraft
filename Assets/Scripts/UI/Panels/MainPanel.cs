@@ -89,13 +89,12 @@ public class MainPanel : MonoBehaviour
         return true;
     }
 
-    // a server only this player can join
+    // the saved worlds, to play one alone (a server only this player can join) or create a new one
     public void play () {
         if (!applyName()) {
             return;
         }
-        Menu.Instance.showPanel("LoadingPanel");
-        BrickcraftNetworkManager.GetOrCreate().StartSingleplayer();
+        Brickcraft.UI.WorldsPanel.Open();
     }
 
     public void playTest() {

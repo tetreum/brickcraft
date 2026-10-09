@@ -128,6 +128,15 @@ namespace Brickcraft
                 } else {
                     stopDigging();
                 }
+
+                // what happens is up to the brick's mod, see ModScripts
+                if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Interact)) {
+                    if (lookedBrick != null) {
+                        network.CmdInteractBrick(lookedBrick.id);
+                    } else if (lookedBlock.HasValue) {
+                        network.CmdInteractBlock(lookedBlock.Value);
+                    }
+                }
             }
 
             // keys typed as text aren't shortcuts; the UI handles its own (inventory, menu...)

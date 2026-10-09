@@ -200,6 +200,34 @@ Each world has its own mods, chosen when it's created (New world → Mods). They
 
 Players joining a server need its world's mods: the same version with the same files (the server compares a SHA-256 of each mod's files). Otherwise they're refused and told which ones, like *"This server needs the mod My Castle 1.2 (you have 1.0)"*. Once accepted they play with the server's mods only, whatever else they have installed.
 
+### Scripts
+
+Mods can script their bricks in Lua ([MoonSharp](https://www.moonsharp.org/), Lua 5.2). Scripts only run on the server: what they do goes through it and reaches players like any other change, so they can't be used to cheat.
+
+- `items/[item]/script.lua`: the item's events, called for its bricks and world blocks:
+  - `onPlaced(brick, player)`: it was placed.
+  - `onHit(brick, player)`: a player is breaking it; return `false` and it stays.
+  - `onBroken(brick, player)`: it was removed or dug out.
+  - `onInteract(brick, player)`: a player used it (E, "Use brick" in Controls).
+- `scripts/*.lua`: the mod's events: `onLoad()` (when the server starts, before the world loads), `onPlayerJoined(player)`, `onPlayerLeft(player)`, `onChat(player, text)` (return `false` and the message isn't sent).
+
+```lua
+-- items/vault/script.lua: a brick that takes three hits to break
+local hits = 0
+
+function onHit(brick, player)
+  hits = hits + 1
+  if hits < 3 then
+    player:message("It's sturdy (" .. hits .. "/3)")
+    return false
+  end
+end
+```
+
+A `brick` has `item` (its id), `position` (`x`, `y`, `z` in grid cells: studs sideways, plates up; a world block is 2 x 3 x 2 cells), `color`, `rotation`, `isBlock` (part of the terrain, not a loose brick), `placedBy` (the player's id, 0 if no player placed it), `placedAt` (unix seconds) and `exists`. A `player` has `id`, `name`, `position` and `player:message(text)`. `log(...)` and `print(...)` write to the server log, prefixed with the mod's id.
+
+Each file has its own globals, so two items can both define `onPlaced`; the table `shared` is the same for all the mod's scripts. Each mod has its own Lua state and only gets `string`, `table`, `math`, `bit32`, coroutines, metatables, error handling and `os.time`/`os.clock`/`os.date`: no files, no loading code. A call that runs more than a million instructions is stopped, and a handler that fails 5 times is turned off; errors are logged with the file and line and never stop the game.
+
 ## How can i add a new model?
 
 1. Brick models & their prefabs are stored in https://github.com/tetreum/brickcraft/tree/main/Assets/Models/Bricks
@@ -221,6 +249,7 @@ Brick colours are limited to a palette, Rebrickable's colour list: `Resources/Br
 
 ## Credits
 
+- Lua interpreter - MoonSharp, Marco Mastropaolo (BSD 3-Clause, see Assets/Plugins/MoonSharp/LICENSE.txt) - https://www.moonsharp.org/
 - stone-SJH for fixing "Terrain mesh is randomly broken because of brick's top face" bug at https://github.com/tetreum/brickcraft/pull/2
 - Tapping sound effect - https://freesound.org/people/rioforce/sounds/233654/
 - Dig + remove block sound effect - https://freesound.org/people/Agaxly/sounds/213005/

@@ -134,6 +134,16 @@ namespace Brickcraft.Network
             return brick;
         }
 
+        /// <summary>Who placed a world block, nobody (0) if it was generated.</summary>
+        public static Placer ServerPlacerOf(Vector3Int block) {
+            return serverChanges != null && serverChanges.TryGetPlacer(block, out Placer placer) ? placer : default(Placer);
+        }
+
+        /// <summary>Who placed a brick, nobody (0) if no player did.</summary>
+        public static Placer ServerPlacerOf(Brick brick) {
+            return serverChanges != null && serverChanges.TryGetBrick(new Guid(brick.id), brick.placement.origin, out SavedBrick saved) ? saved.placer : default(Placer);
+        }
+
         public static void ServerRemoveBrick(Brick brick) {
             Server.Instance.removeBrick(brick);
             serverChanges.RemoveBrick(new Guid(brick.id), brick.placement.origin);

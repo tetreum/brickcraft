@@ -24,6 +24,7 @@ namespace Brickcraft
         public const string Dig = "Dig";
         public const string Place = "Place";
         public const string Rotate = "Rotate";
+        public const string Interact = "Interact";
         public const string FreePlacement = "FreePlacement";
         public const string Inventory = "Inventory";
         public const string Chat = "Chat";
@@ -79,6 +80,7 @@ namespace Brickcraft
                 new Binding("Building", Dig, "Dig or remove", KeyCode.Mouse0),
                 new Binding("Building", Place, "Place brick", KeyCode.Mouse1),
                 new Binding("Building", Rotate, "Rotate brick", KeyCode.R),
+                new Binding("Building", Interact, "Use brick", KeyCode.E),
                 new Binding("Building", FreePlacement, "Place on any stud (hold)", KeyCode.LeftShift, KeyCode.RightShift),
                 new Binding("Interface", Inventory, "Inventory", KeyCode.I),
                 new Binding("Interface", Chat, "Chat", KeyCode.Return, KeyCode.KeypadEnter),

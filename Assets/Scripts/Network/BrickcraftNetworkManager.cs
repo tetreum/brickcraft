@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Brickcraft.Bricks;
 using Brickcraft.Mods;
+using Brickcraft.Scripting;
 using Brickcraft.World;
 using Mirror;
 using UnityEngine;
@@ -118,6 +119,7 @@ namespace Brickcraft.Network
             // the world's mods, before its scene loads and uses the items
             WorldStorage info = isWorldScene(onlineScene) ? WorldStorage.ReadInfo(SaveFolder) : null;
             ModDatabase.Activate(info != null ? info.ModIds : new List<string>());
+            ModScripts.Start();
 
             // only the generated world is saved, the test scene starts from scratch every time
             WorldStorage storage = isWorldScene(onlineScene) ? WorldStorage.OpenOrCreate(SaveFolder, newSeed, saveName, Difficulty.Normal) : null;
@@ -140,6 +142,7 @@ namespace Brickcraft.Network
             foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {
                 endSession(conn, false);
             }
+            ModScripts.Stop();
             WorldNetwork.StopServer();
             Database.Dispose();
             Database = null;
@@ -184,6 +187,9 @@ namespace Brickcraft.Network
                 if (announce && player.hasJoined && !player.leaveAnnounced) {
                     ChatEvents.Send(new ChatEventMessage() { type = ChatEventType.Left, player = player.record.Name }, conn);
                 }
+                if (player.hasJoined) {
+                    ModScripts.ModEvent("onPlayerLeft", PlayerHandle.For(conn));
+                }
             }
         }
 
@@ -225,6 +231,7 @@ namespace Brickcraft.Network
 
             connected.hasJoined = true;
             ChatEvents.Send(new ChatEventMessage() { type = ChatEventType.Joined, player = connected.record.Name });
+            ModScripts.ModEvent("onPlayerJoined", PlayerHandle.For(conn));
         }
 
         /// <summary>

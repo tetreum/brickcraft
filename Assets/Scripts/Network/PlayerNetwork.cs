@@ -1,5 +1,6 @@
 using Brickcraft.Bricks;
 using Brickcraft.Events;
+using Brickcraft.Scripting;
 using Brickcraft.World;
 using Mirror;
 using UnityEngine;
@@ -135,16 +136,19 @@ namespace Brickcraft.Network
 
             // a 2x2 brick that fits exactly in a world block becomes part of the world, in its colour
             // (blocks in their item's default colour are drawn with its textures)
+            Vector3Int block = BrickGrid.CellToBlock(placement.origin);
+            int blockColor = color == item.color ? BrickColor.None : color;
             bool placedAsWorldBlock = item.blockType.HasValue
                 && placement.MatchesWorldBlock
-                && WorldNetwork.ServerSetBlock(BrickGrid.CellToBlock(placement.origin), item.blockType.Value, placer,
-                    color == item.color ? BrickColor.None : color);
+                && WorldNetwork.ServerSetBlock(block, item.blockType.Value, placer, blockColor);
 
-            if (!placedAsWorldBlock) {
-                WorldNetwork.ServerPlaceBrick(item, color, placement, placer);
-            }
+            BrickHandle placed = placedAsWorldBlock
+                ? BrickHandle.ForBlock(block, item.blockType.Value, blockColor, placer)
+                : BrickHandle.ForBrick(WorldNetwork.ServerPlaceBrick(item, color, placement, placer), placer);
+
             inventory.ServerRemoveFromSlot(slot, 1);
             TargetBrickPlaced();
+            ModScripts.ItemEvent(item.id, "onPlaced", placed, PlayerHandle.For(connectionToClient));
         }
 
         [Command]
@@ -152,8 +156,40 @@ namespace Brickcraft.Network
             if (!Server.bricks.TryGetValue(brickId, out Brick brick) || !isInReach(brick.placement.WorldBounds.center)) {
                 return;
             }
+            // its script can make it resist
+            BrickHandle handle = BrickHandle.ForBrick(brick, WorldNetwork.ServerPlacerOf(brick));
+            PlayerHandle player = PlayerHandle.For(connectionToClient);
+            if (!ModScripts.ItemEvent(brick.itemId, "onHit", handle, player)) {
+                return;
+            }
             WorldNetwork.ServerRemoveBrick(brick);
             inventory.ServerAdd(brick.itemId, brick.color, 1);
+            ModScripts.ItemEvent(brick.itemId, "onBroken", handle, player);
+        }
+
+        /// <summary>The use key on a brick (see ModScripts, onInteract).</summary>
+        [Command]
+        public void CmdInteractBrick(string brickId) {
+            if (Server.bricks.TryGetValue(brickId, out Brick brick) && isInReach(brick.placement.WorldBounds.center)
+                && ModScripts.HasItemEvent(brick.itemId, "onInteract")) {
+                ModScripts.ItemEvent(brick.itemId, "onInteract", BrickHandle.ForBrick(brick, WorldNetwork.ServerPlacerOf(brick)), PlayerHandle.For(connectionToClient));
+            }
+        }
+
+        /// <summary>The use key on a world block (see ModScripts, onInteract).</summary>
+        [Command]
+        public void CmdInteractBlock(Vector3Int block) {
+            if (WorldBehaviour.Instance == null) {
+                return;
+            }
+            BlockType type = WorldBehaviour.Instance.GetBlockType(block);
+            string itemId = BlockDatabase.Get(type).itemId;
+            Vector3 center = BrickGrid.CellToWorld(BrickGrid.BlockToCell(block), new Vector3(1, 1.5f, 1));
+
+            if (isInReach(center) && ModScripts.HasItemEvent(itemId, "onInteract")) {
+                BrickHandle handle = BrickHandle.ForBlock(block, type, WorldBehaviour.Instance.GetBlockColor(block), WorldNetwork.ServerPlacerOf(block));
+                ModScripts.ItemEvent(itemId, "onInteract", handle, PlayerHandle.For(connectionToClient));
+            }
         }
 
         [Command]
@@ -168,6 +204,13 @@ namespace Brickcraft.Network
             if (!BlockDatabase.Get(blockType).isBreakable || !isInReach(blockCenter)) {
                 return;
             }
+            // its script can make it resist
+            string blockItem = BlockDatabase.Get(blockType).itemId;
+            BrickHandle handle = BrickHandle.ForBlock(block, blockType, blockColor, WorldNetwork.ServerPlacerOf(block));
+            PlayerHandle player = PlayerHandle.For(connectionToClient);
+            if (!ModScripts.ItemEvent(blockItem, "onHit", handle, player)) {
+                return;
+            }
             if (WorldNetwork.ServerSetBlock(block, BlockType.Air, null)) {
                 // a block placed with a colour gives back its brick in that colour
                 Item item = blockColor != BrickColor.None
@@ -177,6 +220,7 @@ namespace Brickcraft.Network
                 if (item != null) {
                     inventory.ServerAdd(item.id, blockColor != BrickColor.None ? blockColor : item.color, 1);
                 }
+                ModScripts.ItemEvent(blockItem, "onBroken", handle, player);
             }
         }
 
@@ -195,6 +239,10 @@ namespace Brickcraft.Network
 
             if (ChatCommands.IsCommand(text)) {
                 ChatCommands.Run(connectionToClient, text);
+                return;
+            }
+            // mods can keep a message from being sent
+            if (!ModScripts.ModEvent("onChat", PlayerHandle.For(connectionToClient), text)) {
                 return;
             }
 

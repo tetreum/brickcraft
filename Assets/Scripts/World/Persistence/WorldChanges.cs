@@ -120,6 +120,14 @@ namespace Brickcraft.World
             }
         }
 
+        /// <summary>A placed brick as saved, false if there's none with that id there.</summary>
+        public bool TryGetBrick(Guid id, Vector3Int origin, out SavedBrick brick) {
+            lock (sync) {
+                brick = default(SavedBrick);
+                return chunks.TryGetValue(ChunkOfBrick(origin), out ChunkChanges changes) && changes.bricks.TryGetValue(id, out brick);
+            }
+        }
+
         public void AddBrick(SavedBrick brick) {
             lock (sync) {
                 Vector2Int coords = ChunkOfBrick(brick.origin);

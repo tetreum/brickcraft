@@ -22,6 +22,9 @@ namespace Brickcraft
         public const string ShowCoordinatesSetting = "showCoordinates";
         public const string CrosshairSetting = "crosshair";
         public const string TutorialHintsSetting = "tutorialHints";
+        public const string MasterVolumeSetting = "masterVolume";
+        public const string MusicVolumeSetting = "musicVolume";
+        public const string EffectsVolumeSetting = "effectsVolume";
 
         private const string KeyPrefix = "settings.";
 
@@ -58,6 +61,36 @@ namespace Brickcraft
         public static bool TutorialHints {
             get { return getBool(TutorialHintsSetting, true); }
             set { setBool(TutorialHintsSetting, value); }
+        }
+
+        /// <summary>Volume of the whole game, from 0 to 1.</summary>
+        public static float MasterVolume {
+            get { return getVolume(MasterVolumeSetting, 1f); }
+            set { setFloat(MasterVolumeSetting, Mathf.Clamp01(value)); }
+        }
+
+        /// <summary>Volume of the music, from 0 to 1, on top of the master volume.</summary>
+        public static float MusicVolume {
+            get { return getVolume(MusicVolumeSetting, 0.7f); }
+            set { setFloat(MusicVolumeSetting, Mathf.Clamp01(value)); }
+        }
+
+        /// <summary>Volume of sound effects (digging, steps...), from 0 to 1, on top of the master volume.</summary>
+        public static float EffectsVolume {
+            get { return getVolume(EffectsVolumeSetting, 1f); }
+            set { setFloat(EffectsVolumeSetting, Mathf.Clamp01(value)); }
+        }
+
+        private static float getVolume(string setting, float fallback) {
+            return Mathf.Clamp01(PlayerPrefs.GetFloat(KeyPrefix + setting, fallback));
+        }
+
+        private static void setFloat(string setting, float value) {
+            if (PlayerPrefs.HasKey(KeyPrefix + setting) && Mathf.Approximately(PlayerPrefs.GetFloat(KeyPrefix + setting), value)) {
+                return;
+            }
+            PlayerPrefs.SetFloat(KeyPrefix + setting, value);
+            changed(setting);
         }
 
         private static string getString(string setting, string fallback) {

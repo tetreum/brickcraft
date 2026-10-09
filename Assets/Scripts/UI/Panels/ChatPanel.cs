@@ -71,7 +71,7 @@ namespace Brickcraft.UI
                 if (isChatPressed() && Player.Instance != null && !Player.Instance.isFrozen) {
                     open();
                 }
-            } else if (GameInput.GetButtonDown(GameInput.Menu, KeyCode.Escape)) {
+            } else if (GameInput.GetButtonDown(GameInput.Menu)) {
                 close();
             } else if (isChatPressed() || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) {
                 send();
@@ -82,7 +82,7 @@ namespace Brickcraft.UI
         }
 
         private static bool isChatPressed() {
-            return GameInput.GetButtonDown(GameInput.Chat, KeyCode.Return, KeyCode.KeypadEnter);
+            return GameInput.GetButtonDown(GameInput.Chat);
         }
 
         private void open() {

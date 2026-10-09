@@ -43,7 +43,7 @@ namespace Brickcraft.UI
         }
 
         private static bool isHeld() {
-            return GameInput.GetButton(GameInput.PlayerList, KeyCode.Tab);
+            return GameInput.GetButton(GameInput.PlayerList);
         }
 
         private void refresh() {

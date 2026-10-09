@@ -115,7 +115,7 @@ namespace Brickcraft
                 brickPlacer.hide();
                 stopDigging();
             } else {
-                bool isDigHeld = GameInput.GetButton(GameInput.Dig, KeyCode.Mouse0);
+                bool isDigHeld = GameInput.GetButton(GameInput.Dig);
 
                 // the placing preview would hide what's being dug
                 if (isDigHeld) {

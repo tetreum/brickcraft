@@ -52,7 +52,7 @@ namespace Brickcraft.Bricks
             }
 
             float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (scroll > 0f || GameInput.GetButtonDown(GameInput.Rotate, KeyCode.R)) {
+            if (scroll > 0f || GameInput.GetButtonDown(GameInput.Rotate)) {
                 rotation = (rotation + 1) % 4;
             } else if (scroll < 0f) {
                 rotation = (rotation + 3) % 4;
@@ -64,7 +64,7 @@ namespace Brickcraft.Bricks
 
             updateGhost(isValid);
 
-            if (isValid && GameInput.GetButtonDown(GameInput.Place, KeyCode.Mouse1)) {
+            if (isValid && GameInput.GetButtonDown(GameInput.Place)) {
                 place(selectedItem, target.Value);
             }
         }
@@ -83,7 +83,7 @@ namespace Brickcraft.Bricks
             Vector3 gridPoint = BrickGrid.WorldToLocalGrid(hit.point);
             Vector3Int originCell = FloatingOrigin.Cell;
             Vector3Int adjacent = BrickGrid.WorldToCell(hit.point + (Vector3)normal * SurfaceOffset);
-            bool snapToBlocks = !GameInput.GetButton(GameInput.FreePlacement, KeyCode.LeftShift, KeyCode.RightShift);
+            bool snapToBlocks = !GameInput.GetButton(GameInput.FreePlacement);
             Vector3Int origin = Vector3Int.zero;
 
             for (int axis = 0; axis < 3; axis++) {

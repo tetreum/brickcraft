@@ -163,4 +163,40 @@ d.line([(300, 150), (300, 70), (80, 70), (80, 442), (300, 442), (300, 362)], fil
 d.line([(200, 256), (430, 256)], fill=255, width=52)
 d.polygon([(470, 256), (370, 160), (370, 352)], fill=255)
 done(m, "icon_exit")
+
+# settings tabs: a keyboard (controls)
+m, d = icon()
+d.rounded_rectangle([30, 120, 482, 392], 46, fill=255)
+for row, (y, count, x0) in enumerate(((160, 6, 72), (220, 6, 92), (280, 5, 112))):
+    for i in range(count):
+        x = x0 + i * 62
+        d.rounded_rectangle([x, y, x + 44, y + 40], 10, fill=0)
+d.rounded_rectangle([140, 336, 372, 366], 12, fill=0)
+done(m, "icon_keyboard")
+
+# settings tabs: a speaker (audio, master volume)
+m, d = icon()
+d.polygon([(60, 190), (150, 190), (270, 80), (270, 432), (150, 322), (60, 322)], fill=255)
+d.arc([220, 160, 380, 352], -55, 55, fill=255, width=36)
+d.arc([220, 90, 470, 422], -55, 55, fill=255, width=36)
+done(m, "icon_speaker")
+
+# audio: a music note
+m, d = icon()
+d.ellipse([70, 330, 230, 450], fill=255)
+d.ellipse([280, 290, 440, 410], fill=255)
+d.rectangle([194, 110, 230, 390], fill=255)
+d.rectangle([404, 70, 440, 350], fill=255)
+d.polygon([(194, 110), (440, 50), (440, 130), (194, 190)], fill=255)
+done(m, "icon_music")
+
+# audio: sparkles (sound effects)
+m, d = icon()
+def sparkle(d, cx, cy, r):
+    w = r * 0.28
+    d.polygon([(cx, cy - r), (cx + w, cy - w), (cx + r, cy), (cx + w, cy + w), (cx, cy + r), (cx - w, cy + w), (cx - r, cy), (cx - w, cy - w)], fill=255)
+sparkle(d, 220, 290, 190)
+sparkle(d, 400, 120, 90)
+sparkle(d, 410, 400, 60)
+done(m, "icon_effects")
 print("ok")

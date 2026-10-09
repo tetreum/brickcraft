@@ -49,10 +49,10 @@ public class Menu : MonoBehaviour {
 		if (Player.Instance == null || GameInput.IsTyping || SettingsPanel.IsOpen || SettingsPanel.WasClosedThisFrame) {
 			return;
 		}
-		if (GameInput.GetButtonDown(GameInput.Inventory, KeyCode.I)) {
+		if (GameInput.GetButtonDown(GameInput.Inventory)) {
 			togglePanel("InventoryPanel");
 		}
-		if (GameInput.GetButtonDown(GameInput.Menu, KeyCode.Escape)) {
+		if (GameInput.GetButtonDown(GameInput.Menu)) {
 			togglePanel("ESCPanel");
 		}
 	}

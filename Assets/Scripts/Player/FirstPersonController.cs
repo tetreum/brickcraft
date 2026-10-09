@@ -42,6 +42,7 @@ namespace Brickcraft
         private float m_NextStep;
         private bool m_Jumping;
         private AudioSource m_AudioSource;
+        private float m_BaseVolume;
         private float originalGravityMultiplier;
         private float originalStickToGroundForce;
         private float originalJumpSpeed;
@@ -65,7 +66,29 @@ namespace Brickcraft
             m_NextStep = m_StepCycle/2f;
             m_Jumping = false;
             m_AudioSource = GetComponent<AudioSource>();
+            m_BaseVolume = m_AudioSource.volume;
+            applyEffectsVolume();
+            Brickcraft.Events.EventManager.SettingChanged.Subscribe(onSettingChanged);
 			m_MouseLook.Init(transform , m_Camera.transform);
+        }
+
+        private void OnDestroy()
+        {
+            Brickcraft.Events.EventManager.SettingChanged.Unsubscribe(onSettingChanged);
+        }
+
+        // steps, jumps and landings are sound effects
+        private void onSettingChanged(Brickcraft.Events.SettingChangedEvent e)
+        {
+            if (e.setting == GameSettings.EffectsVolumeSetting)
+            {
+                applyEffectsVolume();
+            }
+        }
+
+        private void applyEffectsVolume()
+        {
+            m_AudioSource.volume = m_BaseVolume * GameSettings.EffectsVolume;
         }
 
         private void Update()
@@ -75,9 +98,9 @@ namespace Brickcraft
             if (!m_Jump)
             {
                 if (Player.Instance.isOnWater) {
-                    m_Jump = Input.GetButton("Jump") || Input.GetButtonDown("Jump");
+                    m_Jump = GameInput.GetButton(GameInput.Jump) || GameInput.GetButtonDown(GameInput.Jump);
                 } else {
-                    m_Jump = Input.GetButtonDown("Jump");
+                    m_Jump = GameInput.GetButtonDown(GameInput.Jump);
                 }
             }
 
@@ -255,15 +278,16 @@ namespace Brickcraft
         private void GetInput(out float speed)
         {
             // Read input
-            float horizontal = Input.GetAxis("Horizontal");
-            float vertical = Input.GetAxis("Vertical");
+            Vector2 movement = GameInput.GetMovement();
+            float horizontal = movement.x;
+            float vertical = movement.y;
 
             bool waswalking = m_IsWalking;
 
 #if !MOBILE_INPUT
             // On standalone builds, walk/run speed is modified by a key press.
             // keep track of whether or not the character is walking or running
-            m_IsWalking = !GameInput.GetButton(GameInput.Sprint, KeyCode.LeftShift);
+            m_IsWalking = !GameInput.GetButton(GameInput.Sprint);
 #endif
             // set the desired speed to be walking or running
             speed = m_IsWalking ? m_WalkSpeed : m_RunSpeed;

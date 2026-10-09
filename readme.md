@@ -16,9 +16,9 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 
 ## Controls
 
-Every key is a button of the Input Manager (Edit → Project Settings → Input Manager), named in brackets, so it can be rebound. A button missing from the project falls back to the default key listed here (see `GameInput`).
+Players can change every key in Settings → Controls (their keys are kept in PlayerPrefs). Otherwise each one is a button of the Input Manager (Edit → Project Settings → Input Manager), named in brackets, so the project can change the defaults; a button missing from it falls back to the default key listed here. `GameInput.Bindings` lists them all.
 
-- WASD - Move character (Horizontal, Vertical)
+- WASD - Move character (MoveForward, MoveBack, MoveLeft, MoveRight; the Horizontal and Vertical axes while the player didn't remap them)
 - Space - Jump (Jump)
 - Left Shift (hold) - Sprint (Sprint)
 - TAB (hold) - Player list (PlayerList)
@@ -41,6 +41,10 @@ The Settings button of the main menu and the ESC menu opens the player's prefere
 - Show Coordinates: the player's block coordinates, top left.
 - Crosshair
 - Tutorial Hints: stored, there are no hints yet.
+
+The Controls tab lists every action with its key: clicking one waits for the next key or mouse button (Escape cancels), and Reset to defaults brings the default keys back.
+
+The Audio tab has the master volume (the whole game, `AudioListener.volume`), the music volume and the effects volume (SoundManager's effects and the player's steps). `SoundManager.PlayMusic` plays music at the music volume; there's no music in the game yet.
 
 Its icons and rounded shapes are white sprites tinted in Unity, drawn by `python Tools/make_ui_sprites.py` (needs Pillow) into `Assets/Textures/UI/Sprites`.
 

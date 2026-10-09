@@ -228,8 +228,9 @@ namespace Brickcraft.Scripting
             if (timers.FindAll(t => t.script == script).Count >= MaxTimers) {
                 throw new ScriptRuntimeException("A mod can have up to " + MaxTimers + " timers");
             }
-            if (repeat && seconds < MinInterval) {
-                throw new ScriptRuntimeException("timer.every runs at most every " + MinInterval + " seconds");
+            // MinInterval is a float, 0.05 written in Lua is a bit less than it
+            if (repeat && seconds < MinInterval - 0.0001) {
+                throw new ScriptRuntimeException("timer.every runs at most every " + MinInterval.ToString(System.Globalization.CultureInfo.InvariantCulture) + " seconds");
             }
             Timer timer = new Timer() {
                 id = nextTimerId++,

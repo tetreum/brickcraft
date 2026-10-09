@@ -194,7 +194,7 @@ Mods/
       catapult/       an item, like the folders of StreamingAssets/Items (info.json, icon.png, textures, model.obj...)
 ```
 
-`name` and `version` are required. Mod items are named after their mod: `items/catapult` is `my_castle:catapult` (their `info.json` can't set a prefix). Item ids in a mod's `info.json` (recipe ingredients, block drops) are first looked for in the mod, so `"gear"` means `my_castle:gear` if the mod has it and the game's `gear` otherwise; `"other_mod:gear"` names any other loaded item.
+`name` and `version` are required. `Mods/example` is a small mod to start from: a sturdy brick that takes three hits, a launcher that shoots plates up when used, and a welcome message. Builds don't copy the `Mods` folder, it's put next to the game by hand. Mod items are named after their mod: `items/catapult` is `my_castle:catapult` (their `info.json` can't set a prefix). Item ids in a mod's `info.json` (recipe ingredients, block drops) are first looked for in the mod, so `"gear"` means `my_castle:gear` if the mod has it and the game's `gear` otherwise; `"other_mod:gear"` names any other loaded item.
 
 Each world has its own mods, chosen when it's created (New world → Mods). They're saved in its `world.dat` (with the version it was last played with) and loaded when it's played, besides the game's own items. A world whose mods aren't installed shows them as missing in the list; it can still be played, but their items are unknown and their blocks become air.
 

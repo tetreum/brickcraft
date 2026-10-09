@@ -34,11 +34,29 @@ namespace Brickcraft.World
             return worlds;
         }
 
-        /// <summary>Creates a world and returns its folder's name (its save name).</summary>
-        public static string Create(string name, long seed, Difficulty difficulty) {
+        /// <summary>Creates a world played with the given installed mods, returns its folder's name (its save name).</summary>
+        public static string Create(string name, long seed, Difficulty difficulty, IEnumerable<string> modIds = null) {
+            List<WorldMod> mods = new List<WorldMod>();
+            if (modIds != null) {
+                foreach (string id in modIds) {
+                    Mods.ModInfo mod = Mods.ModDatabase.Find(id);
+                    mods.Add(new WorldMod() { id = id, version = mod != null ? mod.version : "" });
+                }
+            }
             string saveName = freeFolderName(name);
-            WorldStorage.Create(Path.Combine(Folder, saveName), name, seed, difficulty);
+            WorldStorage.Create(Path.Combine(Folder, saveName), name, seed, difficulty, mods);
             return saveName;
+        }
+
+        /// <summary>The mods of the world that aren't installed.</summary>
+        public static List<WorldMod> MissingMods(WorldStorage world) {
+            List<WorldMod> missing = new List<WorldMod>();
+            foreach (WorldMod mod in world.Mods) {
+                if (Mods.ModDatabase.Find(mod.id) == null) {
+                    missing.Add(mod);
+                }
+            }
+            return missing;
         }
 
         /// <summary>Deletes a saved world: its terrain changes and its players (inventories, positions...).</summary>

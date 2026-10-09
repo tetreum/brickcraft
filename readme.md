@@ -69,7 +69,7 @@ Players are identified by the name typed in the menu plus their machine id (`Sys
 
 Every world is saved in its own folder, `<persistentDataPath>/saves/<save name>/`, named after the world (`SavedWorlds`). Hosting a game uses the `saveName` of the NetworkManager, `world` by default:
 
-- `world.dat`: the world's name, seed, difficulty and generator version, when it was created and last played, and which game versions created it and played it last.
+- `world.dat`: the world's name, seed, difficulty and generator version, when it was created and last played, which game versions created it and played it last, and its mods (see Mods).
 - `regions/r.<x>.<z>.bcr`: what players changed (blocks and bricks), in region files of 32x32 chunks. The terrain itself is never saved, it's generated again from the seed and the changes are applied on top, so a save only grows with what players do, not with the size of the world. Each chunk record is compressed and can be rewritten alone; new versions are written before the old ones are released, so a crash can't leave half a chunk. Regions nobody changed have no file. Placed blocks and bricks also store who placed them (their id in `players.db`) and when (unix seconds); dug blocks don't. Bricks store their colour, and blocks placed in a colour other than their item's default one store it too (they're drawn with it instead of their textures).
 
 Regions are streamed with the world: the changes of a region are read when the server loads its first chunk, and saved and dropped from memory when it unloads its last one, so memory only holds the areas around players.
@@ -181,6 +181,22 @@ Items/marble/
 Every field but `name` is optional. /Scenes/IconGenerator generates the missing `icon.png` of brick items.
 
 Textures are square images (they're scaled to the biggest one). Models are OBJ files in game units: the pivot is at the center of the bottom face and a block spans 0.796 x 0.478 x 0.796 (the default model is in `StreamingAssets/Models`). Each triangle is drawn when the side of the block it's closest to is exposed to air (or, for opaque blocks, seen through a translucent one); triangles facing the inside of the block are drawn with the bottom side. Far from the camera (`DetailRadius` chunks, on the World object), blocks are drawn with their collider shape instead, so detailed models only cost where they can be seen.
+
+## Mods
+
+Mods are folders in `Mods/`, next to the game (next to `[Game]_Data`, or the project's folder in the editor). The folder's name is the mod's id (lowercase letters, digits and `_`):
+
+```
+Mods/
+  my_castle/
+    index.json        { "name": "My Castle", "author": "Me", "version": "1.0", "description": "Catapults and towers" }
+    items/
+      catapult/       an item, like the folders of StreamingAssets/Items (info.json, icon.png, textures, model.obj...)
+```
+
+`name` and `version` are required. Mod items are named after their mod: `items/catapult` is `my_castle:catapult` (their `info.json` can't set a prefix). Item ids in a mod's `info.json` (recipe ingredients, block drops) are first looked for in the mod, so `"gear"` means `my_castle:gear` if the mod has it and the game's `gear` otherwise; `"other_mod:gear"` names any other loaded item.
+
+Each world has its own mods, chosen when it's created (New world → Mods). They're saved in its `world.dat` (with the version it was last played with) and loaded when it's played, besides the game's own items. A world whose mods aren't installed shows them as missing in the list; it can still be played, but their items are unknown and their blocks become air.
 
 ## How can i add a new model?
 

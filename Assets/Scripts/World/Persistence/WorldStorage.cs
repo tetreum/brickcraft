@@ -9,7 +9,8 @@ namespace Brickcraft.World
     /// <summary>
     /// A saved world on disk, owned by the server:
     ///   world.dat                 header: format version, seed, generator version, timestamps,
-    ///                             game versions that created and last saved it, name, difficulty
+    ///                             game versions that created and last saved it, name, difficulty,
+    ///                             mods (id and version last played with)
     ///   regions/r.[x].[z].bcr     changes of each chunk, see <see cref="RegionFile"/>
     ///
     /// The terrain itself is never stored, it's generated again from the seed. Saves only contain
@@ -20,6 +21,14 @@ namespace Brickcraft.World
     /// holds the areas around players. All disk writes go through a single ordered queue, so a
     /// chunk is never overwritten by an older version, and reads wait for the writes before them.
     /// </summary>
+    /// <summary>A mod a world is played with, see ModDatabase.</summary>
+    public struct WorldMod
+    {
+        public string id;
+        /// <summary>The version it was last played with.</summary>
+        public string version;
+    }
+
     public class WorldStorage : IDisposable
     {
         public const string HeaderFile = "world.dat";
@@ -31,7 +40,7 @@ namespace Brickcraft.World
 
         private const uint Magic = 0x44574342; // "BCWD"
         // change it when the header changes, worlds with another one aren't opened
-        private const ushort FormatVersion = 3;
+        private const ushort FormatVersion = 4;
 
         public string Folder { get; private set; }
         public long Seed { get; private set; }
@@ -41,6 +50,13 @@ namespace Brickcraft.World
         /// <summary>What players called it.</summary>
         public string Name { get; private set; }
         public Difficulty Difficulty { get; private set; }
+        /// <summary>The mods it's played with, chosen when it was created.</summary>
+        public List<WorldMod> Mods { get; private set; } = new List<WorldMod>();
+
+        /// <summary>The ids of its mods.</summary>
+        public List<string> ModIds {
+            get { return Mods.ConvertAll(m => m.id); }
+        }
 
         /// <summary>The game version that created the world.</summary>
         public string CreatedWithVersion { get; private set; }
@@ -76,12 +92,13 @@ namespace Brickcraft.World
         }
 
         /// <summary>Creates a new world in the folder (nothing is generated until it's played).</summary>
-        public static void Create(string folder, string name, long seed, Difficulty difficulty) {
+        public static void Create(string folder, string name, long seed, Difficulty difficulty, List<WorldMod> mods = null) {
             WorldStorage storage = new WorldStorage() {
                 Folder = folder,
                 Name = name,
                 Seed = seed,
                 Difficulty = difficulty,
+                Mods = mods ?? new List<WorldMod>(),
                 CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 CreatedWithVersion = GameVersion.Current,
             };
@@ -315,6 +332,12 @@ namespace Brickcraft.World
                 Name = reader.ReadString();
                 Difficulty = (Difficulty)reader.ReadByte();
 
+                int modCount = reader.ReadUInt16();
+                Mods = new List<WorldMod>(modCount);
+                for (int i = 0; i < modCount; i++) {
+                    Mods.Add(new WorldMod() { id = reader.ReadString(), version = reader.ReadString() });
+                }
+
                 if (generator != GeneratorVersion) {
                     UnityEngine.Debug.LogWarning("The world was created with another version of the generator, saved changes may not line up with the terrain");
                 }
@@ -337,6 +360,19 @@ namespace Brickcraft.World
                 writer.Write(GameVersion.Current);
                 writer.Write(Name ?? "");
                 writer.Write((byte)Difficulty);
+
+                writer.Write((ushort)Mods.Count);
+                foreach (WorldMod mod in Mods) {
+                    // the version of the mod it's being played with, if it's active
+                    Brickcraft.Mods.ModInfo active = null;
+                    foreach (Brickcraft.Mods.ModInfo candidate in Brickcraft.Mods.ModDatabase.Active) {
+                        if (candidate.id == mod.id) {
+                            active = candidate;
+                        }
+                    }
+                    writer.Write(mod.id);
+                    writer.Write(active != null ? active.version : mod.version ?? "");
+                }
             }
 
             if (File.Exists(path)) {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Brickcraft.Bricks;
+using Brickcraft.Mods;
 using Brickcraft.World;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -10,8 +11,9 @@ using UnityEngine;
 namespace Brickcraft
 {
     /// <summary>
-    /// Every item of the game, loaded before the first scene loads. Each item has its own folder,
-    /// StreamingAssets/Items/[item]/, which holds:
+    /// Every item: the game's own, loaded before the first scene loads, and those of the mods of the
+    /// world being played (see ModDatabase), loaded again with them when it starts. Each item has its
+    /// own folder, StreamingAssets/Items/[item]/ (or Mods/[mod]/items/[item]/), which holds:
     ///   info.json       what the item is, see <see cref="ItemInfo"/>: its kind, its world block if it
     ///                   has one (brick items), and the recipes that craft it
     ///   icon.png        inventory icon, its block's top (or every side) texture otherwise
@@ -19,6 +21,9 @@ namespace Brickcraft
     ///
     /// To add an item, add a new folder (it also works in builds, where the folder is at
     /// [Game]_Data/StreamingAssets/Items). A folder with the id of another item replaces it.
+    ///
+    /// Mod items are "[mod]:[item]". Item ids in a mod's info.json (recipe ingredients, drops) are
+    /// first looked for in the mod ("wheel" is "[mod]:wheel" if the mod has it), then in the game.
     /// </summary>
     public static class ItemDatabase
     {
@@ -29,40 +34,83 @@ namespace Brickcraft
         /// <summary>Crafting grid slots, 1 to 4.</summary>
         public const int CraftingSlots = 4;
 
-        // their info, to build the recipes once every item is known
+        // their info and mod, to build the recipes once every item is known
         private static readonly Dictionary<string, ItemInfo> infos = new Dictionary<string, ItemInfo>();
+        private static readonly Dictionary<string, ModInfo> modOf = new Dictionary<string, ModInfo>();
 
+        // the game's own items, until a world is played with its mods
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        public static void Load() {
+        private static void loadGameItems() {
+            Load(new ModInfo[0]);
+        }
+
+        /// <summary>Loads the game's items and those of the mods (see ModDatabase.Activate), replacing the loaded ones.</summary>
+        public static void Load(IList<ModInfo> mods) {
             BrickColorPalette.Load(); // blocks and items need the colours
+            foreach (Item old in Server.items.Values) {
+                if (old.iconTexture != null) {
+                    TerrainTextures.Destroy(old.iconTexture);
+                }
+            }
             Server.items.Clear();
             Recipes.All.Clear();
             infos.Clear();
+            modOf.Clear();
             BlockDatabase.BeginLoading();
 
             string folder = Path.Combine(Application.streamingAssetsPath, Folder);
             if (Directory.Exists(folder)) {
-                string[] itemFolders = Directory.GetDirectories(folder);
-                Array.Sort(itemFolders, StringComparer.Ordinal); // deterministic overrides
-
-                foreach (string itemFolder in itemFolders) {
-                    string file = Path.Combine(itemFolder, InfoFile);
-
-                    if (!File.Exists(file)) {
-                        Debug.LogWarning("Item folder " + itemFolder + " has no " + InfoFile + ", skipping it");
-                        continue;
-                    }
-                    loadItem(itemFolder, file);
-                }
+                loadFolder(folder, null);
             } else {
                 Debug.LogError("Items folder not found: " + folder);
             }
+            foreach (ModInfo mod in mods) {
+                if (Directory.Exists(mod.ItemsFolder)) {
+                    loadFolder(mod.ItemsFolder, mod);
+                }
+            }
 
             BlockDatabase.FinishLoading();
+            resolveDrops();
             loadRecipes();
         }
 
-        private static void loadItem(string folder, string file) {
+        private static void loadFolder(string folder, ModInfo mod) {
+            string[] itemFolders = Directory.GetDirectories(folder);
+            Array.Sort(itemFolders, StringComparer.Ordinal); // deterministic overrides
+
+            foreach (string itemFolder in itemFolders) {
+                string file = Path.Combine(itemFolder, InfoFile);
+
+                if (!File.Exists(file)) {
+                    Debug.LogWarning("Item folder " + itemFolder + " has no " + InfoFile + ", skipping it");
+                    continue;
+                }
+                loadItem(itemFolder, file, mod);
+            }
+        }
+
+        // an item id written in an info.json: the mod's item if it has one with that name, otherwise the game's
+        private static string resolve(string id, ModInfo mod) {
+            if (string.IsNullOrEmpty(id) || mod == null || id.Contains(":")) {
+                return id;
+            }
+            string own = mod.id + ":" + id;
+            return Server.items.ContainsKey(own) ? own : id;
+        }
+
+        // drops can name items loaded after the block's
+        private static void resolveDrops() {
+            foreach (KeyValuePair<string, ModInfo> entry in modOf) {
+                Item item = Server.items[entry.Key];
+                if (entry.Value != null && item.blockType.HasValue) {
+                    BlockDefinition block = BlockDatabase.Get(item.blockType.Value);
+                    block.dropItemId = resolve(block.dropItemId, entry.Value);
+                }
+            }
+        }
+
+        private static void loadItem(string folder, string file, ModInfo mod) {
             ItemInfo info;
             try {
                 info = JsonConvert.DeserializeObject<ItemInfo>(File.ReadAllText(file));
@@ -79,6 +127,13 @@ namespace Brickcraft
             if (!Slugs.IsValid(id)) {
                 Debug.LogError("Item file " + file + " has the id \"" + id + "\", ids are " + Slugs.Rules);
                 return;
+            }
+            if (mod != null) {
+                if (id.Contains(":")) {
+                    Debug.LogError("Item file " + file + " has the id \"" + id + "\", mod item ids don't have a prefix (it's the mod's: " + mod.id + ":)");
+                    return;
+                }
+                id = mod.id + ":" + id;
             }
             if (string.IsNullOrEmpty(info.name)) {
                 Debug.LogError("Item file " + file + " needs a name");
@@ -148,6 +203,7 @@ namespace Brickcraft
 
             Server.items[id] = item;
             infos[id] = info;
+            modOf[id] = mod;
         }
 
         // "colors": "all", or a list of colour ids
@@ -208,8 +264,9 @@ namespace Brickcraft
             List<Ingredient> ingredients = new List<Ingredient>();
             HashSet<int> slots = new HashSet<int>();
             foreach (IngredientInfo ingredient in info.ingredients) {
-                if (ingredient == null || string.IsNullOrEmpty(ingredient.id) || !Server.items.ContainsKey(ingredient.id)) {
-                    Debug.LogError(where + " uses the item \"" + (ingredient != null ? ingredient.id : null) + "\", which doesn't exist");
+                string ingredientId = ingredient != null ? resolve(ingredient.id, modOf[itemId]) : null;
+                if (string.IsNullOrEmpty(ingredientId) || !Server.items.ContainsKey(ingredientId)) {
+                    Debug.LogError(where + " uses the item \"" + ingredientId + "\", which doesn't exist");
                     return null;
                 }
                 if (ingredient.slot < 1 || ingredient.slot > CraftingSlots || !slots.Add(ingredient.slot)) {
@@ -220,7 +277,7 @@ namespace Brickcraft
                     Debug.LogError(where + " needs " + ingredient.quantity + " " + ingredient.id + ", it should need at least 1");
                     return null;
                 }
-                ingredients.Add(new Ingredient() { itemId = ingredient.id, quantity = ingredient.quantity, slot = ingredient.slot });
+                ingredients.Add(new Ingredient() { itemId = ingredientId, quantity = ingredient.quantity, slot = ingredient.slot });
             }
 
             return new Recipe() {

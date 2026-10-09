@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Brickcraft.Mods;
 using Brickcraft.Network;
 using Brickcraft.World;
 using UnityEngine;
@@ -9,7 +10,7 @@ namespace Brickcraft.UI
 {
     /// <summary>
     /// What Singleplayer opens: the saved worlds (play or delete them) and a form to create a new one
-    /// with its name, seed and difficulty. See World.SavedWorlds.
+    /// with its name, seed, difficulty and mods (see Mods.ModDatabase). See World.SavedWorlds.
     /// </summary>
     public class WorldsPanel : MonoBehaviour
     {
@@ -40,12 +41,24 @@ namespace Brickcraft.UI
         /// <summary>What's wrong with the form.</summary>
         public Text error;
 
+        [Header("New world: mods")]
+        /// <summary>Where the installed mods go, the content of a ScrollRect.</summary>
+        public RectTransform modsList;
+        /// <summary>A mod, copied for each: Texts "Name" and "Details", a Toggle "Control".</summary>
+        public GameObject modTemplate;
+        /// <summary>Shown when no mods are installed.</summary>
+        public GameObject noModsText;
+
         private readonly List<GameObject> rows = new List<GameObject>();
+        private readonly List<GameObject> modRows = new List<GameObject>();
+        // the toggle of each installed mod, by id
+        private readonly Dictionary<string, Toggle> modToggles = new Dictionary<string, Toggle>();
         // the world whose Delete was clicked once: a second click deletes it
         private string confirmingDelete;
 
         private void Awake() {
             rowTemplate.SetActive(false);
+            modTemplate.SetActive(false);
             nameInput.characterLimit = SavedWorlds.MaxNameLength;
             closeButton.onClick.AddListener(close);
             newWorldButton.onClick.AddListener(showCreate);
@@ -105,8 +118,10 @@ namespace Brickcraft.UI
                 GameObject row = Instantiate(rowTemplate, list);
                 row.name = saveName;
                 row.transform.Find("Name").GetComponent<Text>().text = string.IsNullOrEmpty(world.Name) ? saveName : world.Name;
-                row.transform.Find("Details").GetComponent<Text>().text =
-                    world.Difficulty + "   Seed " + world.Seed + "   Played " + timeAgo(world.LastPlayedAt);
+                Text details = row.transform.Find("Details").GetComponent<Text>();
+                details.text = world.Difficulty + "   Seed " + world.Seed + "   Played " + timeAgo(world.LastPlayedAt)
+                    + (world.Mods.Count > 0 ? "   " + world.Mods.Count + (world.Mods.Count == 1 ? " mod" : " mods") : "");
+                showMissingMods(row, details, SavedWorlds.MissingMods(world));
                 row.transform.Find("Play").GetComponent<Button>().onClick.AddListener(() => play(saveName));
 
                 Button delete = row.transform.Find("Delete").GetComponent<Button>();
@@ -143,6 +158,25 @@ namespace Brickcraft.UI
             }
         }
 
+        // the mods that aren't installed (their items are lost while playing without them), on a line of their own
+        private const float MissingLineHeight = 20;
+
+        private static void showMissingMods(GameObject row, Text details, List<WorldMod> missing) {
+            if (missing.Count == 0) {
+                return;
+            }
+            // a couple of them, the line ends at the buttons
+            List<string> names = missing.ConvertAll(m => m.id + " " + m.version);
+            string shown = names.Count <= 2 ? string.Join(", ", names) : names[0] + ", " + names[1] + " and " + (names.Count - 2) + " more";
+            details.text += "\n<color=#ff9e94>Missing mods: " + shown + "</color>";
+            details.horizontalOverflow = HorizontalWrapMode.Overflow;
+            ((RectTransform)details.transform).sizeDelta += new Vector2(0, MissingLineHeight);
+
+            // name and details stay centered in the row
+            ((RectTransform)row.transform.Find("Name")).anchoredPosition += new Vector2(0, MissingLineHeight / 2);
+            ((RectTransform)details.transform).anchoredPosition += new Vector2(0, MissingLineHeight / 2);
+        }
+
         private static string timeAgo(long unixSeconds) {
             TimeSpan ago = DateTimeOffset.UtcNow - DateTimeOffset.FromUnixTimeSeconds(unixSeconds);
             if (ago.TotalMinutes < 1) {
@@ -171,6 +205,37 @@ namespace Brickcraft.UI
             seedInput.text = "";
             difficulty.Select((int)Difficulty.Normal);
             error.text = "";
+            refreshMods();
+        }
+
+        // every installed mod, off: worlds are played with the ones turned on
+        private void refreshMods() {
+            foreach (GameObject row in modRows) {
+                row.SetActive(false);
+                Destroy(row);
+            }
+            modRows.Clear();
+            modToggles.Clear();
+
+            List<ModInfo> mods = ModDatabase.Installed();
+            noModsText.SetActive(mods.Count == 0);
+
+            foreach (ModInfo mod in mods) {
+                GameObject row = Instantiate(modTemplate, modsList);
+                row.name = mod.id;
+                Text title = row.transform.Find("Name").GetComponent<Text>();
+                title.supportRichText = false; // mods name themselves
+                title.text = mod.name + "  " + mod.version;
+                Text details = row.transform.Find("Details").GetComponent<Text>();
+                details.supportRichText = false;
+                details.text = (mod.author.Length > 0 ? "by " + mod.author + "   " : "") + mod.description;
+
+                Toggle toggle = row.transform.Find("Control").GetComponent<Toggle>();
+                toggle.isOn = false;
+                row.SetActive(true);
+                modRows.Add(row);
+                modToggles[mod.id] = toggle;
+            }
         }
 
         private void create() {
@@ -183,7 +248,13 @@ namespace Brickcraft.UI
 
             string saveName;
             try {
-                saveName = SavedWorlds.Create(name, SavedWorlds.ParseSeed(seedInput.text), (Difficulty)Mathf.Max(0, difficulty.Selected));
+                List<string> mods = new List<string>();
+                foreach (KeyValuePair<string, Toggle> mod in modToggles) {
+                    if (mod.Value.isOn) {
+                        mods.Add(mod.Key);
+                    }
+                }
+                saveName = SavedWorlds.Create(name, SavedWorlds.ParseSeed(seedInput.text), (Difficulty)Mathf.Max(0, difficulty.Selected), mods);
             } catch (Exception e) {
                 error.text = "Couldn't create the world: " + e.Message;
                 return;

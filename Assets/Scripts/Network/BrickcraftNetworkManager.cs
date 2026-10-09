@@ -1,6 +1,8 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using Brickcraft.Bricks;
+using Brickcraft.Mods;
 using Brickcraft.World;
 using Mirror;
 using UnityEngine;
@@ -112,6 +114,10 @@ namespace Brickcraft.Network
             Database = new GameDatabase(SaveFolder);
 
             long newSeed = seed != 0 ? seed : Random.Range(1, int.MaxValue);
+
+            // the world's mods, before its scene loads and uses the items
+            WorldStorage info = isWorldScene(onlineScene) ? WorldStorage.ReadInfo(SaveFolder) : null;
+            ModDatabase.Activate(info != null ? info.ModIds : new List<string>());
 
             // only the generated world is saved, the test scene starts from scratch every time
             WorldStorage storage = isWorldScene(onlineScene) ? WorldStorage.OpenOrCreate(SaveFolder, newSeed, saveName, Difficulty.Normal) : null;
@@ -264,6 +270,10 @@ namespace Brickcraft.Network
 
         public override void OnStartClient() {
             base.OnStartClient();
+            // the host's client shares the server's items; others, until joining checks the server's mods, use every installed one
+            if (!NetworkServer.active) {
+                ModDatabase.Activate(ModDatabase.Installed().ConvertAll(m => m.id));
+            }
             WorldNetwork.StartClient();
 
             Events.EventManager.ClientStarted.Raise(new Events.ClientStartedEvent());

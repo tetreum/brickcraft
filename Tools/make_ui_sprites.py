@@ -1,16 +1,16 @@
 """
-Draws the white UI sprites of the settings panel (icons, rounded corners, circles), which Unity tints.
+Draws the white UI sprites of the menus (icons, rounded corners, circles), which Unity tints.
 Shapes are drawn 4x bigger and scaled down for smooth edges.
 
     python Tools/make_ui_sprites.py [output folder]
 
-The output folder defaults to Assets/Textures/UI/Settings. Needs Pillow (pip install pillow).
+The output folder defaults to Assets/Textures/UI/Sprites. Needs Pillow (pip install pillow).
 After changing a sprite, Unity reimports it keeping its import settings (sprite, 9-slice borders).
 """
 import math, sys, os
 from PIL import Image, ImageDraw
 
-OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Assets", "Textures", "UI", "Settings")
+OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Assets", "Textures", "UI", "Sprites")
 os.makedirs(OUT, exist_ok=True)
 S = 4
 
@@ -118,4 +118,49 @@ d.line([(120, 190), (256, 326), (392, 190)], fill=255, width=48, joint="curve")
 for (x, y) in ((120, 190), (392, 190), (256, 326)):
     d.ellipse([x - 24, y - 24, x + 24, y + 24], fill=255)
 done(m, "icon_chevron")
+
+# main menu: play triangle
+m, d = icon()
+d.polygon([(150, 96), (150, 416), (430, 256)], fill=255)
+d.line([(150, 96), (150, 416), (430, 256), (150, 96)], fill=255, width=60, joint="curve")
+for (x, y) in ((150, 96), (150, 416), (430, 256)):
+    d.ellipse([x - 30, y - 30, x + 30, y + 30], fill=255)
+done(m, "icon_play")
+
+# main menu: a cube (the world), its faces in different shades
+m, d = icon()
+top = [(256, 40), (456, 150), (256, 260), (56, 150)]
+left = [(56, 150), (256, 260), (256, 480), (56, 370)]
+right = [(256, 260), (456, 150), (456, 370), (256, 480)]
+d.polygon(top, fill=255); d.polygon(left, fill=200); d.polygon(right, fill=150)
+d.line(top + [top[0]], fill=0, width=14, joint="curve"); d.line([(256, 260), (256, 480)], fill=0, width=14)
+done(m, "icon_cube")
+
+# main menu: two people
+m, d = icon()
+def person(d, cx, top, scale, fill):
+    r = 70 * scale
+    d.ellipse([cx - r, top, cx + r, top + 2 * r], fill=fill)
+    w, h = 130 * scale, 150 * scale
+    y = top + 2 * r + 20 * scale
+    d.rounded_rectangle([cx - w, y, cx + w, y + h], 60 * scale, fill=fill)
+person(d, 330, 70, 0.95, 255)
+person(d, 200, 100, 1.12, 0)  # gap around the front person
+person(d, 200, 120, 1.0, 255)
+done(m, "icon_people")
+
+# main menu: a server (hosting)
+m, d = icon()
+for y in (70, 290):
+    d.rounded_rectangle([70, y, 442, y + 160], 34, fill=255)
+    d.ellipse([110, y + 58, 154, y + 102], fill=0)
+    d.rounded_rectangle([300, y + 66, 400, y + 94], 14, fill=0)
+done(m, "icon_server")
+
+# main menu: exit, a door and an arrow out of it
+m, d = icon()
+d.line([(300, 150), (300, 70), (80, 70), (80, 442), (300, 442), (300, 362)], fill=255, width=48, joint="curve")
+d.line([(200, 256), (430, 256)], fill=255, width=52)
+d.polygon([(470, 256), (370, 160), (370, 352)], fill=255)
+done(m, "icon_exit")
 print("ok")

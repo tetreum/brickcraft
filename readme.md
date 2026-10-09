@@ -42,7 +42,7 @@ The Settings button of the main menu and the ESC menu opens the player's prefere
 - Crosshair
 - Tutorial Hints: stored, there are no hints yet.
 
-Its icons and rounded shapes are white sprites tinted in Unity, drawn by `python Tools/make_ui_sprites.py` (needs Pillow) into `Assets/Textures/UI/Settings`.
+Its icons and rounded shapes are white sprites tinted in Unity, drawn by `python Tools/make_ui_sprites.py` (needs Pillow) into `Assets/Textures/UI/Sprites`.
 
 ## Multiplayer
 
@@ -106,6 +106,8 @@ The code is split in assemblies, so each part only sees what it needs:
 - `Brickcraft.Events` (`Assets/Scripts/Events`): the events below. It depends on nothing else of the game.
 - `Brickcraft` (`Assets/Scripts`): the game itself: world, bricks, player, network, database.
 - `Brickcraft.UI` (`Assets/Scripts/UI`): menus and panels. It uses the game, but the game never calls the UI: it raises events the UI listens to, and the UI owns its own shortcuts (inventory, menu, chat, player list).
+
+Reusable UI controls live in `Assets/Scripts/UI/Controls`: `MenuButton` (the `Prefabs/UI/MenuButton` prefab: set its label, icon and Primary/Secondary variant, and its click on the Button), `SwitchToggle` and `SegmentedControl`.
 
 ## Events
 

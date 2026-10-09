@@ -26,6 +26,8 @@ namespace Brickcraft.World
 		public static object ChunkQueueLock = new object();
 
 		public static Material BlockMaterial;
+		/// <summary>For translucent blocks (water), see BlockDefinition.isTranslucent.</summary>
+		public static Material TranslucentBlockMaterial;
 
 		[Tooltip("Chunks this far from the camera (in chunks) are drawn")]
 		public int ViewDistance = 8;
@@ -108,6 +110,8 @@ namespace Brickcraft.World
 			// a copy, so the texture array built from the block folders doesn't end up saved in the asset
 			BlockMaterial = new Material((Material)Resources.Load ("Materials/Block_Triplanar", typeof(Material)));
 			BlockMaterial.SetTexture("_MainTexture", BlockDatabase.TextureArray);
+			TranslucentBlockMaterial = new Material((Material)Resources.Load ("Materials/Block_Translucent", typeof(Material)));
+			TranslucentBlockMaterial.SetTexture("_MainTexture", BlockDatabase.TextureArray);
 
 			WorldLoadProfiler.Start();
 		}
@@ -385,8 +389,10 @@ namespace Brickcraft.World
 			mesh.SetVertexBufferData(chunkEntry.Vertices, 0, 0, vertexCount, 0, FastMeshUpdate);
 			mesh.SetIndexBufferParams(indexCount, IndexFormat.UInt32);
 			mesh.SetIndexBufferData(chunkEntry.Triangles, 0, 0, indexCount, FastMeshUpdate);
-			mesh.subMeshCount = 1;
-			mesh.SetSubMesh(0, new SubMeshDescriptor(0, indexCount), FastMeshUpdate);
+			// opaque sides, then translucent ones, matching the renderer's two materials
+			mesh.subMeshCount = 2;
+			mesh.SetSubMesh(0, new SubMeshDescriptor(0, chunkEntry.TranslucentStart), FastMeshUpdate);
+			mesh.SetSubMesh(1, new SubMeshDescriptor(chunkEntry.TranslucentStart, indexCount - chunkEntry.TranslucentStart), FastMeshUpdate);
 			mesh.bounds = SliceBounds;
 
 			filter.sharedMesh = mesh;

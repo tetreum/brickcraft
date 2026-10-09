@@ -11,7 +11,9 @@ namespace Brickcraft.World
 	/// </summary>
 	public class ChunkSliceBuildEntry {
 		public TerrainVertex[] Vertices;
+		/// <summary>The opaque sides first, then the translucent ones (from TranslucentStart).</summary>
 		public int[] Triangles;
+		public int TranslucentStart;
 		public Chunk ParentChunk;
 		public int SliceIndex;
 		public int ChunkVersion;

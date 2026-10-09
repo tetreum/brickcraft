@@ -129,7 +129,7 @@ namespace Brickcraft.World
 			GameObject newObject = new GameObject("ChunkSlice#" + i);
 			ChunkSliceObjects[i] = newObject;
 			MeshRenderer meshRenderer = newObject.AddComponent<MeshRenderer>();
-			meshRenderer.sharedMaterial = WorldBehaviour.BlockMaterial;
+			meshRenderer.sharedMaterials = new[] { WorldBehaviour.BlockMaterial, WorldBehaviour.TranslucentBlockMaterial };
 			newObject.AddComponent<MeshFilter>();
 			newObject.AddComponent<MeshCollider>();
 

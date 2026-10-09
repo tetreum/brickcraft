@@ -136,6 +136,7 @@ namespace Brickcraft.World
                 isBreakable = json.breakable,
                 isReplaceable = json.replaceable,
                 isTransparent = json.transparent,
+                isTranslucent = json.translucent,
                 dropItemId = json.dropItemId,
             };
 
@@ -220,6 +221,7 @@ namespace Brickcraft.World
                 name = json.name,
                 brickModelId = json.brickModel,
                 materialName = json.material,
+                maxStack = System.Math.Max(1, json.maxStack),
                 blockType = (BlockType)definition.id,
                 iconFile = iconPath,
                 iconTexture = loadIcon(iconPath),

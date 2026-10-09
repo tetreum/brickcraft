@@ -24,6 +24,7 @@ namespace Brickcraft.World
 			public BlockDefinition definition;
 			public BlockSide side;
 			public Vector3 offset;
+			public bool translucent;
 		}
 
 		private List<VisibleSide> visibleSides = new List<VisibleSide>();
@@ -83,6 +84,7 @@ namespace Brickcraft.World
 			ChunkSlice chunkSlice = chunk.Slices[sliceIndex];
 			int vertexCount = 0;
 			int triangleCount = 0;
+			int translucentTriangleCount = 0;
 			int colliderVertexCount = 0;
 			int colliderTriangleCount = 0;
 
@@ -103,20 +105,24 @@ namespace Brickcraft.World
 						BlockDefinition definition = BlockDatabase.Get(block);
 						Vector3 offset = new Vector3(x * Server.brickWidth, y * Server.brickHeight, z * Server.brickWidth);
 
-						// only sides that are exposed to air are rendered
+						// only sides that can be seen are rendered: the ones touching air, and for
+						// opaque blocks also the ones seen through translucent blocks (under water)
 						for (int side = 0; side < BlockShape.SideCount; side++)
 						{
 							Vector3Int direction = BlockShape.SideDirections[side];
+							byte neighbour = GetNeighbour(chunk, sliceIndex, x + direction.x, y + direction.y, z + direction.z);
 
-							if (GetNeighbour(chunk, sliceIndex, x + direction.x, y + direction.y, z + direction.z) != 0)
+							if (neighbour != 0 && (definition.isTranslucent || !BlockDatabase.Get(neighbour).isTranslucent))
 								continue;
 
 							BlockShape shape = detailed ? definition.shape : definition.colliderShape;
-							visibleSides.Add(new VisibleSide() { shape = shape, definition = definition, side = (BlockSide)side, offset = offset });
+							visibleSides.Add(new VisibleSide() { shape = shape, definition = definition, side = (BlockSide)side, offset = offset, translucent = definition.isTranslucent });
 
 							FaceMap faceMap = shape.GetSide((BlockSide)side);
 							vertexCount += faceMap.vertices.Length;
 							triangleCount += faceMap.triangles.Length;
+							if (definition.isTranslucent)
+								translucentTriangleCount += faceMap.triangles.Length;
 
 							FaceMap colliderFaceMap = definition.colliderShape.GetSide((BlockSide)side);
 							colliderVertexCount += colliderFaceMap.vertices.Length;
@@ -136,13 +142,20 @@ namespace Brickcraft.World
 			chunkEntry.ColliderTriangles = new int[colliderTriangleCount];
 
 			int vertex = 0;
-			int triangle = 0;
 			int colliderVertex = 0;
 			int colliderTriangle = 0;
 
+			// opaque sides first and translucent ones after, they're drawn with different materials
+			chunkEntry.TranslucentStart = triangleCount - translucentTriangleCount;
+			int opaqueTriangle = 0;
+			int translucentTriangle = chunkEntry.TranslucentStart;
+
 			foreach (VisibleSide visible in visibleSides)
 			{
-				addBlockSide(chunkEntry, visible, ref vertex, ref triangle, ref colliderVertex, ref colliderTriangle);
+				if (visible.translucent)
+					addBlockSide(chunkEntry, visible, ref vertex, ref translucentTriangle, ref colliderVertex, ref colliderTriangle);
+				else
+					addBlockSide(chunkEntry, visible, ref vertex, ref opaqueTriangle, ref colliderVertex, ref colliderTriangle);
 			}
 
 			return chunkEntry;

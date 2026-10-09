@@ -3,5 +3,6 @@
     "name": "still_water",
     "breakable": false,
     "replaceable": true,
-    "transparent": true
+    "transparent": true,
+    "translucent": true
 }

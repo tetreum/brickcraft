@@ -27,6 +27,12 @@ namespace Brickcraft.World
         /// <summary>Sky light goes through it (air, leaves, water...).</summary>
         public bool isTransparent;
 
+        /// <summary>
+        /// Drawn see-through (water), with the terrain's translucent material: what's behind it is
+        /// drawn too, and its own sides only where they touch air.
+        /// </summary>
+        public bool isTranslucent;
+
         /// <summary>Item given when dug, 0 for none.</summary>
         public int dropItemId;
 
@@ -68,6 +74,7 @@ namespace Brickcraft.World
         public bool breakable = true;
         public bool replaceable = false;
         public bool transparent = false;
+        public bool translucent = false;
         public int dropItemId = 0;
         public BlockItemJson item = new BlockItemJson();
     }
@@ -82,5 +89,7 @@ namespace Brickcraft.World
         public string name;
         public int brickModel = 3003;
         public string material;
+        /// <summary>How many fit in one inventory slot.</summary>
+        public int maxStack = Item.DefaultMaxStack;
     }
 }

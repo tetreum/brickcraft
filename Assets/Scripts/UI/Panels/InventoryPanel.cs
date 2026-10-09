@@ -29,6 +29,9 @@ namespace Brickcraft.UI
         }
 
         private void OnEnable() {
+            Events.EventManager.InventoryChanged.Subscribe(onInventoryChanged);
+            Events.EventManager.PlayerRoleChanged.Subscribe(onRoleChanged);
+
             resetCraftingSlots();
             reload();
             showInventory();
@@ -36,15 +39,19 @@ namespace Brickcraft.UI
             Player.Instance.freeze(Player.FreezeReason.ViewingInventory);
         }
 
-        private void Update() {
-            bool isAdmin = isLocalPlayerAdmin();
+        private void onInventoryChanged(Events.InventoryChangedEvent e) {
+            reload();
+        }
 
-            if (allTab.gameObject.activeSelf != isAdmin) {
-                allTab.gameObject.SetActive(isAdmin);
+        // the role can change while it's open: the ALL tab comes and goes with admin
+        private void onRoleChanged(Events.PlayerRoleChangedEvent e) {
+            if (!e.isLocalPlayer) {
+                return;
             }
-            // the role can change while it's open
-            if (!isAdmin && allItemsView.activeSelf) {
+            if (e.newRole != Network.PlayerRoles.Admin && allItemsView.activeSelf) {
                 showInventory();
+            } else {
+                allTab.gameObject.SetActive(e.newRole == Network.PlayerRoles.Admin);
             }
         }
 
@@ -74,6 +81,9 @@ namespace Brickcraft.UI
         }
 
         private void OnDisable() {
+            Events.EventManager.InventoryChanged.Unsubscribe(onInventoryChanged);
+            Events.EventManager.PlayerRoleChanged.Unsubscribe(onRoleChanged);
+
             Game.lockMouse();
             Player.Instance.unFreeze(Player.FreezeReason.ViewingInventory);
         }

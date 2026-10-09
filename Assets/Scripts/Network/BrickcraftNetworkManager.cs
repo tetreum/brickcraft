@@ -260,9 +260,18 @@ namespace Brickcraft.Network
             base.OnStartClient();
             WorldNetwork.StartClient();
 
-            UI.ChatPanel.ClearHistory();
-            NetworkClient.RegisterHandler<ChatMessage>(UI.ChatPanel.OnChatMessage);
-            NetworkClient.RegisterHandler<ChatEventMessage>(UI.ChatPanel.OnChatEvent);
+            Events.EventManager.ClientStarted.Raise(new Events.ClientStartedEvent());
+            NetworkClient.RegisterHandler<ChatMessage>(message => Events.EventManager.ChatLineReceived.Raise(new Events.ChatLineReceivedEvent() {
+                sender = message.sender,
+                text = message.text,
+            }));
+            NetworkClient.RegisterHandler<ChatEventMessage>(message => {
+                string text = ChatEvents.Describe(message);
+
+                if (text != null) {
+                    Events.EventManager.ChatLineReceived.Raise(new Events.ChatLineReceivedEvent() { text = text });
+                }
+            });
 
             disconnectReason = null;
             NetworkClient.RegisterHandler<DisconnectReasonMessage>(message => disconnectReason = message.reason);

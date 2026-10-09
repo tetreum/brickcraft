@@ -1,4 +1,5 @@
 using Brickcraft.Bricks;
+using Brickcraft.Events;
 using Brickcraft.World;
 using Mirror;
 using UnityEngine;
@@ -22,8 +23,8 @@ namespace Brickcraft.Network
         [SyncVar]
         public string playerName;
 
-        // shown in the player list
-        [SyncVar] public string role;
+        // shown in the player list; changes raise EventManager.PlayerRoleChanged
+        [SyncVar(hook = nameof(onRoleChanged))] public string role;
         [SyncVar] public int pingMs;
 
         private const float PingUpdateInterval = 2f;
@@ -49,6 +50,15 @@ namespace Brickcraft.Network
                 nextPingUpdate = Time.unscaledTime + PingUpdateInterval;
                 pingMs = (int)(connectionToClient.rtt * 1000);
             }
+        }
+
+        private void onRoleChanged(string oldRole, string newRole) {
+            EventManager.PlayerRoleChanged.Raise(new PlayerRoleChangedEvent() {
+                playerName = playerName,
+                oldRole = oldRole,
+                newRole = newRole,
+                isLocalPlayer = isLocalPlayer,
+            });
         }
 
         public override void OnStartClient() {

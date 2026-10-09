@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Brickcraft.Network;
+using Brickcraft.Events;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -42,22 +42,16 @@ namespace Brickcraft.UI
             get { return closedFrame == Time.frameCount; }
         }
 
-        public static void ClearHistory() {
-            history.Clear();
+        // lines are kept even while the panel doesn't exist, so it listens from the start
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void subscribe() {
+            EventManager.ClientStarted.Subscribe(e => history.Clear());
+            EventManager.ChatLineReceived.Subscribe(onChatLine);
         }
 
-        /// <summary>Client handler of the messages the server relays.</summary>
-        public static void OnChatMessage(ChatMessage message) {
-            addLine(message.sender + ": " + message.text);
-        }
-
-        /// <summary>Client handler of the events the server announces, like players joining or leaving.</summary>
-        public static void OnChatEvent(ChatEventMessage message) {
-            string text = ChatEvents.Describe(message);
-
-            if (text != null) {
-                addLine(text);
-            }
+        private static void onChatLine(ChatLineReceivedEvent line) {
+            // things that happened read as a sentence, messages say who wrote them
+            addLine(line.IsEvent ? line.text : line.sender + ": " + line.text);
         }
 
         private static void addLine(string text) {

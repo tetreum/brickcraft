@@ -39,6 +39,15 @@ namespace Brickcraft.UI
         {
             Instance = this;
             selectedSlot = firstSlot; // by default the first slot from fastInventory starting from the left
+            Events.EventManager.InventoryChanged.Subscribe(onInventoryChanged);
+        }
+
+        private void OnDestroy() {
+            Events.EventManager.InventoryChanged.Unsubscribe(onInventoryChanged);
+        }
+
+        private void onInventoryChanged(Events.InventoryChangedEvent e) {
+            reload();
         }
 
         private void OnEnable() {

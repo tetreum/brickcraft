@@ -86,6 +86,23 @@ The server keeps a SQLite database (`players.db`, via [unity-sqlite-net](https:/
 
 To test with several instances, a build can be started with `-name <name>` and `-host` or `-join <address>`. Playing a game scene straight from the editor starts a singleplayer game.
 
+## Events
+
+Parts of the game talk through events instead of calling each other, so each part only depends on the `Brickcraft.Events` assembly (`Assets/Scripts/Events`), which depends on nothing else of the game. `EventManager` lists every event, and the event data classes live next to it:
+
+```csharp
+EventManager.PlayerRoleChanged.Subscribe(onRoleChanged);   // usually in OnEnable
+EventManager.PlayerRoleChanged.Unsubscribe(onRoleChanged); // and in OnDisable
+EventManager.PlayerRoleChanged.Raise(new PlayerRoleChangedEvent() { ... });
+```
+
+- `PlayerRoleChanged`: a player's role changed.
+- `InventoryChanged`: the local player's inventory changed.
+- `ClientStarted`: this client connected to a server.
+- `ChatLineReceived`: a chat message or something that happened (a player joined, left...).
+
+To add an event, add its data class to `Assets/Scripts/Events` and a field to `EventManager`.
+
 ## How can i help?
 
 [https://tetreum.github.io/brickcraft/?/help](https://tetreum.github.io/brickcraft/?/help)

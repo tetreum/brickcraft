@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Brickcraft.UI;
+using Brickcraft.Events;
 using Mirror;
 
 namespace Brickcraft.Network
@@ -126,12 +126,7 @@ namespace Brickcraft.Network
         }
 
         private void refreshUI() {
-            if (PlayerPanel.Instance != null) {
-                PlayerPanel.Instance.reload();
-            }
-            if (InventoryPanel.Instance != null && InventoryPanel.Instance.gameObject.activeInHierarchy) {
-                InventoryPanel.Instance.reload();
-            }
+            EventManager.InventoryChanged.Raise(new InventoryChangedEvent());
         }
     }
 }

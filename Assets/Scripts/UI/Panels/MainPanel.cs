@@ -9,6 +9,12 @@ public class MainPanel : MonoBehaviour
     public Text messageText;
     public Text versionText;
 
+    [Header("Background")]
+    /// <summary>The background video, it plays when the panel opens.</summary>
+    public UnityEngine.Video.VideoPlayer video;
+    /// <summary>Shown until the video has its first frame (and if it can't play).</summary>
+    public GameObject videoPlaceholder;
+
     private static bool hasReadCommandLine;
 
     /// <summary>Message to show next time the menu opens, like why the server disconnected us.</summary>
@@ -29,6 +35,8 @@ public class MainPanel : MonoBehaviour
     }
 
     private void OnEnable () {
+        waitForVideo();
+
         if (versionText != null) {
             versionText.text = "v" + Brickcraft.GameVersion.Current;
         }
@@ -39,6 +47,30 @@ public class MainPanel : MonoBehaviour
             showMessage(PendingMessage);
             PendingMessage = null;
         }
+    }
+
+    private void OnDisable () {
+        if (video != null) {
+            video.frameReady -= onVideoFrameReady;
+        }
+    }
+
+    // the placeholder covers the video until its first frame is ready (it restarts each time the panel opens)
+    private void waitForVideo () {
+        if (video == null || videoPlaceholder == null) {
+            return;
+        }
+        videoPlaceholder.SetActive(true);
+        video.sendFrameReadyEvents = true;
+        video.frameReady -= onVideoFrameReady;
+        video.frameReady += onVideoFrameReady;
+    }
+
+    private void onVideoFrameReady (UnityEngine.Video.VideoPlayer source, long frame) {
+        // only the first one matters, frame events are costly
+        video.frameReady -= onVideoFrameReady;
+        video.sendFrameReadyEvents = false;
+        videoPlaceholder.SetActive(false);
     }
 
     public void showMessage (string message) {

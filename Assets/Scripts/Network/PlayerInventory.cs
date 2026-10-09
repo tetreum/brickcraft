@@ -143,7 +143,6 @@ namespace Brickcraft.Network
                 return;
             }
             save();
-            UnityEngine.Debug.Log(player.record.Name + " took " + quantity + " x " + item.name + " (" + itemId + ") from the ALL tab");
         }
 
         // -------- client --------

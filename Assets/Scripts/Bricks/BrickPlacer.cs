@@ -51,11 +51,9 @@ namespace Brickcraft.Bricks
                 return;
             }
 
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (scroll > 0f || GameInput.GetButtonDown(GameInput.Rotate)) {
+            // the mouse wheel picks the slot instead, see PlayerPanel
+            if (GameInput.GetButtonDown(GameInput.Rotate)) {
                 rotation = (rotation + 1) % 4;
-            } else if (scroll < 0f) {
-                rotation = (rotation + 3) % 4;
             }
 
             target = hasHit ? computePlacement(hit, model) : (BrickPlacement?)null;

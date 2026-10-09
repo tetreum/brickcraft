@@ -147,6 +147,22 @@ namespace Brickcraft
             EventManager.SelectedSlotChanged.Raise(new SelectedSlotChangedEvent() { slot = SelectedSlot });
         }
 
+        /// <summary>
+        /// Selects the next (step 1) or previous (step -1) slot of the fast inventory, wrapping around.
+        /// With none selected, it starts from the first or last one.
+        /// </summary>
+        public void scrollFastSlot(int step) {
+            int index = SelectedSlot - FirstFastSlot;
+
+            if (index < 0 || index >= FastSlotCount) {
+                index = step > 0 ? 0 : FastSlotCount - 1;
+            } else {
+                index = ((index + step) % FastSlotCount + FastSlotCount) % FastSlotCount;
+            }
+            SelectedSlot = FirstFastSlot + index;
+            EventManager.SelectedSlotChanged.Raise(new SelectedSlotChangedEvent() { slot = SelectedSlot });
+        }
+
         public void freeze(FreezeReason reason) {
             if (isFrozen) {
                 return;

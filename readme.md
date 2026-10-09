@@ -28,7 +28,8 @@ Players can change every key in Settings → Controls (their keys are kept in Pl
 - Enter - Chat (Chat), Enter again to send
 - Left click (hold) - Remove placed bricks and terrain blocks (Dig)
 - Right click (having a block selected in inventory) - Adds a block (Place)
-- Mouse wheel / R (having a block selected in inventory) - Rotates block (Rotate)
+- R (having a block selected in inventory) - Rotates block (Rotate)
+- Mouse wheel - Selects the next (down) or previous (up) slot of the bottom bar, while no other panel is open
 - Shift (hold, while placing) - Place on any stud instead of snapping to the terrain block grid (FreePlacement)
 
 ## Settings

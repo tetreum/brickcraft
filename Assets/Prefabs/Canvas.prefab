@@ -21010,6 +21010,7 @@ MonoBehaviour:
   - {fileID: 950011421774270833}
   - {fileID: 950011421767541909}
   crosshair: {fileID: 6359582168082527478}
+  playerList: {fileID: 7663580285005219289}
   coordinates: {fileID: 1311972200128339801}
 --- !u!1 &6359582168064791101
 GameObject:

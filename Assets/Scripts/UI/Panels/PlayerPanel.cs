@@ -14,6 +14,8 @@ namespace Brickcraft.UI
         public InventorySlot[] fastInventorySlots;
 
         public GameObject crosshair;
+        /// <summary>Shown while Tab is held, the wheel doesn't change slots meanwhile.</summary>
+        public PlayerListPanel playerList;
         /// <summary>The player's block coordinates, if the setting is on.</summary>
         public Text coordinates;
 
@@ -44,8 +46,38 @@ namespace Brickcraft.UI
             coordinates.gameObject.SetActive(GameSettings.ShowCoordinates);
         }
 
-        // the player moves all the time, so the coordinates are refreshed a few times per second
         private void Update() {
+            scrollSlots();
+            updateCoordinates();
+        }
+
+        // the mouse wheel selects the next (down) or previous (up) slot of the bottom bar, only while
+        // playing: not with another panel open (inventory, menu, settings...), the player list or the chat
+        private void scrollSlots() {
+            float scroll = Input.mouseScrollDelta.y;
+            if (scroll == 0 || !isOnlyPanelOpen()) {
+                return;
+            }
+            Player.Instance.scrollFastSlot(scroll < 0 ? 1 : -1);
+        }
+
+        private bool isOnlyPanelOpen() {
+            if (Player.Instance == null || GameInput.IsTyping || SettingsPanel.IsOpen) {
+                return false;
+            }
+            if (playerList != null && playerList.window.activeSelf) {
+                return false;
+            }
+            foreach (GameObject panel in Menu.Instance.Menus) {
+                if (panel != gameObject && panel.activeSelf) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // the player moves all the time, so the coordinates are refreshed a few times per second
+        private void updateCoordinates() {
             if (!coordinates.gameObject.activeSelf || Player.Instance == null || Time.unscaledTime < nextCoordinatesUpdate) {
                 return;
             }

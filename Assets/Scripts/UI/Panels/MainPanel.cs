@@ -121,6 +121,10 @@ public class MainPanel : MonoBehaviour
         BrickcraftNetworkManager.GetOrCreate().Join(address);
     }
 
+    public void openSettings () {
+        Brickcraft.UI.SettingsPanel.Open();
+    }
+
     public void exit() {
         Application.Quit();
     }

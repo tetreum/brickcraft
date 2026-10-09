@@ -17,6 +17,10 @@ namespace Brickcraft.UI {
             }
         }
 
+        public void openSettings() {
+            SettingsPanel.Open();
+        }
+
         // back to the main menu
         public void exit() {
             Network.BrickcraftNetworkManager.Instance.Leave();

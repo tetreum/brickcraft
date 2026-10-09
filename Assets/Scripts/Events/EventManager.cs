@@ -36,6 +36,9 @@ namespace Brickcraft.Events
         /// <summary>A line for the chat arrived: a player's message or something that happened.</summary>
         public static readonly GameEvent<ChatLineReceivedEvent> ChatLineReceived = new GameEvent<ChatLineReceivedEvent>();
 
+        /// <summary>A setting of the player's preferences changed.</summary>
+        public static readonly GameEvent<SettingChangedEvent> SettingChanged = new GameEvent<SettingChangedEvent>();
+
         /// <summary>This client left the server, or couldn't join it, and there's something to tell the player.</summary>
         public static readonly GameEvent<DisconnectedEvent> Disconnected = new GameEvent<DisconnectedEvent>();
 
@@ -50,6 +53,7 @@ namespace Brickcraft.Events
             ClientStarted.Clear();
             ChatLineReceived.Clear();
             Disconnected.Clear();
+            SettingChanged.Clear();
         }
     }
 }

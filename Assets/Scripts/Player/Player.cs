@@ -21,6 +21,7 @@ namespace Brickcraft
             Looting = 5,
             LoadingWorld = 6,
             Chatting = 7,
+            Settings = 8,
         }
 
         public bool isFrozen {

@@ -141,7 +141,8 @@ namespace Brickcraft.Network
             while (NetworkServer.active && WorldNetwork.Storage != null) {
                 yield return wait;
 
-                if (WorldNetwork.Storage != null) {
+                // without it the world is still saved when regions unload and when the server stops
+                if (WorldNetwork.Storage != null && GameSettings.AutoSave) {
                     WorldNetwork.Storage.SaveInBackground();
                 }
                 // so a crash doesn't send players back much

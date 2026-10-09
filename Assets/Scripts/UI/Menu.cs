@@ -46,7 +46,7 @@ public class Menu : MonoBehaviour {
 
 	// the panels' shortcuts, while playing
 	private void Update() {
-		if (Player.Instance == null || GameInput.IsTyping) {
+		if (Player.Instance == null || GameInput.IsTyping || SettingsPanel.IsOpen || SettingsPanel.WasClosedThisFrame) {
 			return;
 		}
 		if (GameInput.GetButtonDown(GameInput.Inventory, KeyCode.I)) {

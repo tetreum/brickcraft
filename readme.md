@@ -31,6 +31,19 @@ Every key is a button of the Input Manager (Edit → Project Settings → Input 
 - Mouse wheel / R (having a block selected in inventory) - Rotates block (Rotate)
 - Shift (hold, while placing) - Place on any stud instead of snapping to the terrain block grid (FreePlacement)
 
+## Settings
+
+The Settings button of the main menu and the ESC menu opens the player's preferences (`GameSettings`, kept in PlayerPrefs). Changes apply right away and raise `EventManager.SettingChanged`.
+
+- Language: only English for now.
+- Game Difficulty: Peaceful, Normal or Hard. Stored, nothing uses it yet.
+- Auto Save: the host saves the world every 30 seconds. Off, it's still saved when regions unload and when the server stops.
+- Show Coordinates: the player's block coordinates, top left.
+- Crosshair
+- Tutorial Hints: stored, there are no hints yet.
+
+Its icons and rounded shapes are white sprites tinted in Unity, drawn by `python Tools/make_ui_sprites.py` (needs Pillow) into `Assets/Textures/UI/Settings`.
+
 ## Multiplayer
 
 Multiplayer uses [Mirror](https://mirror-networking.gitbook.io/docs). Every game is networked:

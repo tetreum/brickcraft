@@ -1,0 +1,7 @@
+{
+    "id": "brick_1x2_side_studs_green",
+    "name": "A brick",
+    "type": "brick",
+    "brickModel": 22885,
+    "material": "BrightGreen"
+}

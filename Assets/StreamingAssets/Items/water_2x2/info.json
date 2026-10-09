@@ -1,0 +1,8 @@
+{
+    "id": "water_2x2",
+    "name": "Water 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "material": "Water",
+    "layer": "Water"
+}

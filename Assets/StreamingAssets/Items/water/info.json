@@ -1,7 +1,14 @@
 {
-    "name": "water",
-    "breakable": false,
-    "replaceable": true,
-    "transparent": true,
-    "translucent": true
+    "id": "water",
+    "name": "Water 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "material": "Water",
+    "layer": "Water",
+    "block": {
+        "breakable": false,
+        "replaceable": true,
+        "transparent": true,
+        "translucent": true
+    }
 }

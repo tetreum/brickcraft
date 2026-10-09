@@ -105,15 +105,14 @@ namespace Brickcraft.Network
             }
         }
 
-        /// <summary>Crafts one of Game.craftingRecipes, putting the result in the given slot.</summary>
+        /// <summary>Crafts a recipe (see Recipes), putting the result in the given slot.</summary>
         [Command]
-        public void CmdCraft(int recipeIndex, int targetSlot) {
-            Recipe[] recipes = Game.Instance.craftingRecipes;
+        public void CmdCraft(string recipeId, int targetSlot) {
+            Recipe recipe = Recipes.Find(recipeId);
 
-            if (recipeIndex < 0 || recipeIndex >= recipes.Length || !Inventory.IsSlotFree(items, targetSlot)) {
+            if (recipe == null || !Inventory.IsSlotFree(items, targetSlot)) {
                 return;
             }
-            Recipe recipe = recipes[recipeIndex];
 
             foreach (Ingredient ingredient in recipe.ingredients) {
                 if (!Inventory.Has(items, ingredient.itemId, ingredient.quantity, 0)) {

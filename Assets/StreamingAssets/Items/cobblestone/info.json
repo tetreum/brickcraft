@@ -1,5 +1,10 @@
 {
-    "name": "cobblestone",
-    "hardness": 3,
-    "dropItem": "stone"
+    "id": "cobblestone",
+    "name": "Cobblestone 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "block": {
+        "hardness": 3,
+        "drop": "stone"
+    }
 }

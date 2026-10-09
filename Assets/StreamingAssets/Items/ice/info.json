@@ -1,4 +1,10 @@
 {
-    "name": "ice",
-    "hardness": 3
+    "id": "ice",
+    "name": "Ice 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "material": "Aqua",
+    "block": {
+        "hardness": 3
+    }
 }

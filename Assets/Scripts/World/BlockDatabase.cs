@@ -5,36 +5,28 @@ using UnityEngine;
 namespace Brickcraft.World
 {
     /// <summary>
-    /// Block definitions, loaded before the first scene loads. Each block has its own folder,
-    /// StreamingAssets/Blocks/[block]/, which holds:
-    ///   block.json                  its properties, see <see cref="BlockJson"/>
+    /// The world blocks: the "block" of brick items, added by <see cref="ItemDatabase"/> from their folder
+    /// (StreamingAssets/Items/[item]/), where these files define how the block looks:
     ///   texture.png                 texture of every side
     ///   top.png, side.png, bottom.png  optional per side textures, they override texture.png
     ///   model.obj                   optional terrain model, the default 2x2 brick otherwise
     ///   collider.obj                optional collider model, model.obj (or the default collider) otherwise
-    ///   icon.png                    inventory icon of the block's item, its top (or every side) texture otherwise
-    ///
-    /// To add a block, add a new folder (it also works in builds, where the folder is at
-    /// [Game]_Data/StreamingAssets/Blocks).
     ///
     /// Lookups are a plain array access by block id, so they are cheap enough for meshing
     /// and safe from the world generation threads.
     /// </summary>
     public static class BlockDatabase
     {
-        public const string Folder = "Blocks";
-        public const string DefinitionFile = "block.json";
         public const string TextureFile = "texture.png";
         public const string ModelFile = "model.obj";
         public const string ColliderFile = "collider.obj";
-        public const string IconFile = "icon.png";
 
         public const string DefaultModelFile = "Models/brick_2x2.obj";
         public const string DefaultColliderFile = "Models/brick_2x2_collider.obj";
 
         private static readonly BlockDefinition[] definitions = new BlockDefinition[256];
         private static readonly Dictionary<string, BlockDefinition> definitionsByName = new Dictionary<string, BlockDefinition>();
-        private static readonly List<string> registeredItemIds = new List<string>();
+        private static TerrainTextures textures;
 
         private static BlockShape defaultShape;
         private static BlockShape defaultColliderShape;
@@ -118,11 +110,10 @@ namespace Brickcraft.World
             return numbers;
         }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        public static void Load() {
+        /// <summary>Forgets the blocks, before ItemDatabase adds them again.</summary>
+        public static void BeginLoading() {
             definitionsByName.Clear();
             warnedUnknown.Clear();
-            unregisterItems();
 
             defaultShape = loadDefaultShape(DefaultModelFile);
             defaultColliderShape = loadDefaultShape(DefaultColliderFile);
@@ -135,80 +126,57 @@ namespace Brickcraft.World
             definitions[(byte)BlockType.Air] = createBuiltIn(BlockType.Air, "air");
             definitions[(byte)BlockType.NULL] = createBuiltIn(BlockType.NULL, "void"); // outside the generated world
 
-            TerrainTextures textures = new TerrainTextures();
-            string folder = Path.Combine(Application.streamingAssetsPath, Folder);
-
-            if (Directory.Exists(folder)) {
-                string[] blockFolders = Directory.GetDirectories(folder);
-                System.Array.Sort(blockFolders, System.StringComparer.Ordinal); // deterministic overrides
-
-                foreach (string blockFolder in blockFolders) {
-                    string file = Path.Combine(blockFolder, DefinitionFile);
-
-                    if (!File.Exists(file)) {
-                        Debug.LogWarning("Block folder " + blockFolder + " has no " + DefinitionFile + ", skipping it");
-                        continue;
-                    }
-                    loadBlock(blockFolder, file, textures);
-                }
-            } else {
-                Debug.LogError("Block definitions folder not found: " + folder);
-            }
-
-            if (TextureArray != null) {
-                TerrainTextures.Destroy(TextureArray);
-            }
-            TextureArray = textures.Build();
+            textures = new TerrainTextures();
         }
 
-        private static void loadBlock(string blockFolder, string file, TerrainTextures textures) {
-            // overwrite a new instance so fields missing from the file keep their defaults
-            BlockJson json = new BlockJson();
-
-            try {
-                JsonUtility.FromJsonOverwrite(File.ReadAllText(file), json);
-            } catch (System.Exception e) {
-                Debug.LogError("Invalid block file " + file + ": " + e.Message);
-                return;
+        /// <summary>The block of a brick item, named after it. Null (and logged) if it can't be added.</summary>
+        public static BlockDefinition AddBlock(string folder, string name, BlockInfo info) {
+            if (info.hardness < 0) {
+                Debug.LogError("The block of " + name + " has a negative hardness, use \"breakable\": false instead");
+                return null;
             }
-
-            if (!Slugs.IsValid(json.name)) {
-                Debug.LogError("Block file " + file + " needs a name that identifies it: " + Slugs.Rules);
-                return;
-            }
-            if (json.hardness < 0) {
-                Debug.LogError("Block file " + file + " has a negative hardness, use \"breakable\": false instead");
-                return;
-            }
-
-            byte id = numberFor(json.name);
+            byte id = numberFor(name);
             if (id == 0) {
-                Debug.LogError("Block file " + file + " can't be loaded, there are already 254 blocks");
-                return;
-            }
-            if (definitionsByName.ContainsKey(json.name)) {
-                Debug.LogWarning("Block file " + file + " overrides the block " + json.name + " of " + definitionsByName[json.name].folder);
-                unregisterItemOf(definitionsByName[json.name]);
+                Debug.LogError("The block of " + name + " can't be added, there are already 254 blocks");
+                return null;
             }
 
             BlockDefinition definition = new BlockDefinition() {
                 id = id,
-                name = json.name,
-                folder = blockFolder,
-                hardness = json.hardness,
-                isBreakable = json.breakable,
-                isReplaceable = json.replaceable,
-                isTransparent = json.transparent,
-                isTranslucent = json.translucent,
-                dropItemId = string.IsNullOrEmpty(json.dropItem) ? null : json.dropItem,
+                name = name,
+                folder = folder,
+                hardness = info.hardness,
+                isBreakable = info.breakable,
+                isReplaceable = info.replaceable,
+                isTransparent = info.transparent,
+                isTranslucent = info.translucent,
+                itemId = name,
+                dropItemId = string.IsNullOrEmpty(info.drop) ? name : info.drop,
             };
-
             loadTextures(definition, textures);
             loadShapes(definition);
-            loadItem(definition, json.item);
 
             definitions[id] = definition;
-            definitionsByName[definition.name] = definition;
+            definitionsByName[name] = definition;
+            return definition;
+        }
+
+        /// <summary>Takes a block out again (its item was overridden by one without a block).</summary>
+        public static void RemoveBlock(string name) {
+            BlockDefinition definition;
+            if (definitionsByName.TryGetValue(name, out definition)) {
+                definitionsByName.Remove(name);
+                definitions[definition.id] = createUnknown(definition.id);
+            }
+        }
+
+        /// <summary>Builds the terrain texture array once every block is added.</summary>
+        public static void FinishLoading() {
+            if (TextureArray != null) {
+                TerrainTextures.Destroy(TextureArray);
+            }
+            TextureArray = textures.Build();
+            textures = null;
         }
 
         private static void loadTextures(BlockDefinition definition, TerrainTextures textures) {
@@ -262,88 +230,6 @@ namespace Brickcraft.World
                 Debug.LogError("Can't load the default block model " + path + ": " + e.Message);
                 return new BlockShape(new Vector3[0], new int[0]);
             }
-        }
-
-        private static void loadItem(BlockDefinition definition, BlockItemJson json) {
-            // blocks without an item don't name one
-            if (json == null || string.IsNullOrEmpty(json.name)) {
-                return;
-            }
-            string id = string.IsNullOrEmpty(json.id) ? definition.name : json.id;
-
-            if (!Slugs.IsValid(id)) {
-                Debug.LogError("The item of block " + definition.name + " has the id \"" + id + "\", ids are " + Slugs.Rules);
-                return;
-            }
-            if (Server.items.ContainsKey(id)) {
-                Debug.LogError("The item of block " + definition.name + " uses the id " + id + ", already taken by " + Server.items[id].name);
-                return;
-            }
-
-            string iconPath = iconFor(definition.folder);
-            Item item = new Item() {
-                id = id,
-                type = Item.Type.Brick,
-                name = json.name,
-                brickModelId = json.brickModel,
-                materialName = json.material,
-                maxStack = System.Math.Max(1, json.maxStack),
-                blockType = (BlockType)definition.id,
-                iconFile = iconPath,
-                iconTexture = loadIcon(iconPath),
-            };
-
-            Server.items.Add(item.id, item);
-            registeredItemIds.Add(item.id);
-
-            definition.itemId = item.id;
-            if (definition.dropItemId == null) {
-                definition.dropItemId = item.id;
-            }
-        }
-
-        // icon.png, or the texture of the block's top, so items without an icon don't show blank
-        private static string iconFor(string folder) {
-            foreach (string file in new[] { IconFile, "top.png", TextureFile }) {
-                string path = Path.Combine(folder, file);
-                if (File.Exists(path)) {
-                    return path;
-                }
-            }
-            return Path.Combine(folder, IconFile);
-        }
-
-        private static Texture2D loadIcon(string path) {
-            if (!File.Exists(path)) {
-                return null;
-            }
-            Texture2D icon = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-            icon.name = path;
-            if (Path.GetFileName(path) != IconFile) {
-                icon.filterMode = FilterMode.Point; // block textures are pixel art
-            }
-
-            if (!icon.LoadImage(File.ReadAllBytes(path))) {
-                Debug.LogError("Unsupported icon file " + path);
-                TerrainTextures.Destroy(icon);
-                return null;
-            }
-            return icon;
-        }
-
-        // items survive between play sessions when domain reload is disabled
-        // the item of a block being overridden, so the new one can register its id
-        private static void unregisterItemOf(BlockDefinition definition) {
-            if (definition.itemId != null && registeredItemIds.Remove(definition.itemId)) {
-                Server.items.Remove(definition.itemId);
-            }
-        }
-
-        private static void unregisterItems() {
-            foreach (string id in registeredItemIds) {
-                Server.items.Remove(id);
-            }
-            registeredItemIds.Clear();
         }
 
         private static BlockDefinition createBuiltIn(BlockType type, string name) {

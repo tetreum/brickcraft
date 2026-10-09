@@ -1,4 +1,10 @@
 {
-    "name": "yellow_flower",
-    "hardness": 0.5
+    "id": "yellow_flower",
+    "name": "Yellow Flower 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "material": "BrightYellow",
+    "block": {
+        "hardness": 0.5
+    }
 }

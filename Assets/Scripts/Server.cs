@@ -14,67 +14,8 @@ namespace Brickcraft
         public static Dictionary<string, Brick> bricks = new Dictionary<string, Brick>();
         public static Dictionary<int, BrickModel> brickModels = new Dictionary<int, BrickModel>();
         public static Dictionary<string, GameObject> brickPrefabs = new Dictionary<string, GameObject>();
-        // items of blocks are defined in their block folder, see World.BlockDatabase. Ids are slugs, see Slugs
+        // every item has its folder, see ItemDatabase. Ids are slugs, see Slugs
         public static Dictionary<string, Item> items = new Dictionary<string, Item>();
-
-        private static readonly Item[] builtInItems = {
-            new Item() {
-                id = "plate_2x2_yellow",
-                type = Item.Type.Brick,
-                brickModelId = 3022,
-                materialName = "BrightYellow",
-                name = "A brick"
-            },
-            new Item() {
-                id = "plate_1x1_green",
-                type = Item.Type.Brick,
-                brickModelId = 3024,
-                materialName = "BrightGreen",
-                name = "A brick"
-            },
-            new Item() {
-                id = "brick_1x2_side_studs_green",
-                type = Item.Type.Brick,
-                brickModelId = 22885,
-                materialName = "BrightGreen",
-                name = "A brick"
-            },
-            new Item() {
-                id = "glass_2x2",
-                type = Item.Type.Brick,
-                brickModelId = 3003,
-                materialName = "TransparentBlue",
-                name = "Glass 2x2"
-            },
-            new Item() {
-                id = "dirt_2x4",
-                type = Item.Type.Brick,
-                brickModelId = 3001,
-                materialName = "MediumNougat",
-                name = "Dirt 2x4"
-            },
-            new Item() {
-                id = "water_2x2",
-                type = Item.Type.Brick,
-                brickModelId = 3003,
-                materialName = "Water",
-                layer = (int)Game.Layers.Water,
-                name = "Water 2x2"
-            },
-            new Item() {
-                id = "dirt_48x48",
-                type = Item.Type.Brick,
-                brickModelId = 4186,
-                materialName = "MediumNougat",
-                name = "Dirt 48x48"
-            },
-        };
-
-        static Server() {
-            foreach (Item item in builtInItems) {
-                items.Add(item.id, item);
-            }
-        }
 
         public const float studSize = 0.398f;
         public const float plateHeight = (0.478f / 3);

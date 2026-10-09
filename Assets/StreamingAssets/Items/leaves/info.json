@@ -1,10 +1,11 @@
 {
-    "name": "leaves",
-    "hardness": 0.5,
-    "transparent": true,
-    "item": {
-        "name": "Leaves 2x2",
-        "brickModel": 3003,
-        "material": "BrightGreen"
+    "id": "leaves",
+    "name": "Leaves 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "material": "BrightGreen",
+    "block": {
+        "hardness": 0.5,
+        "transparent": true
     }
 }

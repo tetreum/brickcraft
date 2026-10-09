@@ -1,9 +1,10 @@
 {
-    "name": "sand",
-    "hardness": 1,
-    "item": {
-        "name": "Sand 2x2",
-        "brickModel": 3003,
-        "material": "BrickYellow"
+    "id": "sand",
+    "name": "Sand 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "material": "BrickYellow",
+    "block": {
+        "hardness": 1
     }
 }

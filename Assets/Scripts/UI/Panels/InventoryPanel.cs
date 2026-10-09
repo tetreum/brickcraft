@@ -151,7 +151,7 @@ namespace Brickcraft.UI
                 }
             }
 
-            foreach (Recipe recipe in Game.Instance.craftingRecipes) {
+            foreach (Recipe recipe in Recipes.All) {
                 // we can skip those recipes that dont match the amount of items
                 if (filledSlots != recipe.ingredients.Length) {
                     continue;
@@ -181,9 +181,7 @@ namespace Brickcraft.UI
 
         // the server crafts it, the inventory refreshes once it's synced back
         public void craftRecipe (Recipe recipe, int slotId) {
-            int recipeIndex = System.Array.IndexOf(Game.Instance.craftingRecipes, recipe);
-
-            Player.Instance.GetComponent<Network.PlayerInventory>().CmdCraft(recipeIndex, slotId);
+            Player.Instance.GetComponent<Network.PlayerInventory>().CmdCraft(recipe.id, slotId);
         }
     }
 }

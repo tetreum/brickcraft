@@ -1,9 +1,10 @@
 {
-    "name": "wood",
-    "hardness": 2,
-    "item": {
-        "name": "Wood 2x2",
-        "brickModel": 3003,
-        "material": "MediumNougat"
+    "id": "wood",
+    "name": "Wood 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "material": "MediumNougat",
+    "block": {
+        "hardness": 2
     }
 }

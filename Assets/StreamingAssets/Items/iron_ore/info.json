@@ -1,5 +1,10 @@
 {
-    "name": "iron_ore",
-    "hardness": 3,
-    "dropItem": "stone"
+    "id": "iron_ore",
+    "name": "Iron Ore 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "block": {
+        "hardness": 3,
+        "drop": "stone"
+    }
 }

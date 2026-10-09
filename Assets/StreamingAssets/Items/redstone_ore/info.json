@@ -1,5 +1,10 @@
 {
-    "name": "redstone_ore",
-    "hardness": 3,
-    "dropItem": "stone"
+    "id": "redstone_ore",
+    "name": "Redstone Ore 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "block": {
+        "hardness": 3,
+        "drop": "stone"
+    }
 }

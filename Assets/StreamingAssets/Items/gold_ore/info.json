@@ -1,5 +1,10 @@
 {
-    "name": "gold_ore",
-    "hardness": 3,
-    "dropItem": "stone"
+    "id": "gold_ore",
+    "name": "Gold Ore 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "block": {
+        "hardness": 3,
+        "drop": "stone"
+    }
 }

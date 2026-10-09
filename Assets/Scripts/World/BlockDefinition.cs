@@ -66,38 +66,4 @@ namespace Brickcraft.World
             }
         }
     }
-
-    /// <summary>
-    /// Shape of a block.json file. Every field but id and name is optional.
-    /// </summary>
-    [Serializable]
-    public class BlockJson
-    {
-        /// <summary>Identifies the block (in saves too), see Slugs.</summary>
-        public string name;
-        public float hardness = 1;
-        public bool breakable = true;
-        public bool replaceable = false;
-        public bool transparent = false;
-        public bool translucent = false;
-        /// <summary>Id of the item given when dug, the block's own item if empty.</summary>
-        public string dropItem;
-        public BlockItemJson item = new BlockItemJson();
-    }
-
-    /// <summary>
-    /// Optional item that places this block: a block has one if it's given a name. Its icon is the
-    /// block folder's icon.png.
-    /// </summary>
-    [Serializable]
-    public class BlockItemJson
-    {
-        /// <summary>Its slug (see Slugs), the block's name if empty.</summary>
-        public string id;
-        public string name;
-        public int brickModel = 3003;
-        public string material;
-        /// <summary>How many fit in one inventory slot.</summary>
-        public int maxStack = Item.DefaultMaxStack;
-    }
 }

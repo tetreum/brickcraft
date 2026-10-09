@@ -1,9 +1,10 @@
 {
-    "name": "dirt",
-    "hardness": 1,
-    "item": {
-        "name": "Dirt 2x2",
-        "brickModel": 3003,
-        "material": "MediumNougat"
+    "id": "dirt",
+    "name": "Dirt 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "material": "MediumNougat",
+    "block": {
+        "hardness": 1
     }
 }

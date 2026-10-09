@@ -49,7 +49,7 @@ Its icons and rounded shapes are white sprites tinted in Unity, drawn by `python
 
 ## Multiplayer
 
-Multiplayer uses [Mirror](https://mirror-networking.gitbook.io/docs). Every game is networked:
+Multiplayer uses [Mirror](https://mirror-networking.gitbook.io/docs), patched in one place (search for "Brickcraft patch" in `Assets/Mirror`, and apply it again after upgrading Mirror): `NetworkIdentity._connectionToClient` is `[NonSerialized]`, otherwise reloading scripts with the player prefab loaded throws "get_time is not allowed to be called during serialization". Every game is networked:
 
 - **Singleplayer** lists the saved worlds, to play or delete them, or creates a new one with its name, seed (a number, any text, or empty for a random one) and difficulty (Peaceful, Normal or Hard, kept with the world; nothing uses it yet). The world runs on a host that doesn't listen for connections, so nobody else can join.
 - **Host game** runs a host other players can join (UDP port 7777 by default, see the KcpTransport in `Resources/NetworkManager`).
@@ -138,65 +138,78 @@ To add an event, add its data class to `Assets/Scripts/Events` and a field to `E
 [https://tetreum.github.io/brickcraft/?/help](https://tetreum.github.io/brickcraft/?/help)
 
 
-## How can i add a new block?
+## How can i add a new item?
 
-Each block has its own folder in `Assets/StreamingAssets/Blocks` (`<Game>_Data/StreamingAssets/Blocks` in builds), loaded when the game starts:
+Each item has its own folder in `Assets/StreamingAssets/Items` (`<Game>_Data/StreamingAssets/Items` in builds), loaded when the game starts (`ItemDatabase`). A folder with the id of another item replaces it.
 
 ```
-Blocks/marble/
-    block.json      properties (required)
-    texture.png     texture of every side
+Items/marble/
+    info.json       what the item is (required)
+    icon.png        inventory icon (its block's top or main texture if missing)
+    texture.png     its block's texture, on every side
     top.png         optional, overrides texture.png on that side (also side.png, bottom.png)
-    model.obj       optional terrain model, the default 2x2 brick otherwise
-    collider.obj    optional collider, model.obj (or the default brick collider) otherwise
-    icon.png        inventory icon of the block's item (its top or main texture if missing)
+    model.obj       optional block model, the default 2x2 brick otherwise
+    collider.obj    optional block collider, model.obj (or the default brick collider) otherwise
 ```
 
-`block.json`:
+`info.json`:
 
 ```json
 {
-    "name": "marble",
-    "hardness": 2.5,
-    "breakable": true,
-    "replaceable": false,
-    "transparent": false,
-    "translucent": false,
-    "dropItem": "",
-    "item": {
-        "name": "Marble 2x2",
-        "brickModel": 3003,
-        "material": "BrightBlue",
-        "maxStack": 64
-    }
+    "id": "marble",
+    "name": "Marble 2x2",
+    "type": "brick",
+    "maxStack": 64,
+    "brickModel": 3003,
+    "material": "BrightBlue",
+    "block": {
+        "hardness": 2.5,
+        "breakable": true,
+        "replaceable": false,
+        "transparent": false,
+        "translucent": false,
+        "drop": "marble"
+    },
+    "recipes": [
+        {
+            "quantity": 2,
+            "ingredients": [
+                { "id": "stone", "quantity": 1, "slot": 1 },
+                { "id": "sand", "quantity": 1, "slot": 2 }
+            ]
+        }
+    ]
 }
 ```
 
-- `name` identifies the block, in saves too: a slug (see Block and item ids below). A folder reusing an existing name overrides that block.
-- `hardness`: seconds to dig it with bare hands. `breakable: false` makes it undiggable.
-- `replaceable`: bricks can be placed inside it (like water).
-- `transparent`: sky light goes through it (like leaves or water).
-- `translucent`: drawn see-through (like water), with the terrain's translucent material (`Resources/Materials/Block_Translucent`, 60% opaque, its shader is `Resources/Shader/TerrainTranslucent`). What's behind it is drawn too, and its own sides only where they touch air.
-- `item`: optional item that places the block back, if it has a `name`. Its id is the block's name (`marble`), or `item.id` to give another. Its icon is `icon.png`, which /Scenes/IconGenerator generates if missing; until then the game uses the block's `top.png` or `texture.png`.
-- `item.maxStack`: how many fit in one inventory slot, 64 by default (also `maxStack` on the items of Server.cs#items). Dragging a stack onto the same item merges them as far as that allows.
-- `dropItem`: id of the item given when dug, like `"stone"`. Defaults to the block's own item; without one, nothing.
+- `id` identifies the item, in saves too: a slug (see Block and item ids below). The folder's name if missing.
+- `name`: what players see. Required.
+- `type`: `brick` (the default), `helmet`, `weapon` or `food`. Only bricks can be placed.
+- `maxStack`: how many fit in one inventory slot, 64 by default. Dragging a stack onto the same item merges them as far as that allows.
+- `brickModel` and `material`: the brick it places (see How can i add a new model and How can i add a new brick material). `layer` sets the Unity layer of placed bricks, like `"Water"`.
+- `block`: for bricks that are also a world block (it's named like the item, and placing the brick exactly over a world block places the block):
+  - `hardness`: seconds to dig it with bare hands. `breakable: false` makes it undiggable.
+  - `replaceable`: bricks can be placed inside it (like water).
+  - `transparent`: sky light goes through it (like leaves or water).
+  - `translucent`: drawn see-through (like water), with the terrain's translucent material (`Resources/Materials/Block_Translucent`, 60% opaque, its shader is `Resources/Shader/TerrainTranslucent`). What's behind it is drawn too, and its own sides only where they touch air.
+  - `drop`: id of the item given when dug, like `"stone"`. The item itself if missing.
+- `recipes`: ways to craft the item. Each makes `quantity` of it (1 by default) from its `ingredients`, each one an item `id`, a `quantity` (1 by default) and a crafting `slot`, 1 to 4 (left to right, top to bottom). Recipes are identified as `<item>#<number>`, like `dirt_2x4#1`.
 
-Every field but `id` and `name` is optional.
+Every field but `name` is optional. /Scenes/IconGenerator generates the missing `icon.png` of brick items.
 
 Textures are square images (they're scaled to the biggest one). Models are OBJ files in game units: the pivot is at the center of the bottom face and a block spans 0.796 x 0.478 x 0.796 (the default model is in `StreamingAssets/Models`). Each triangle is drawn when the side of the block it's closest to is exposed to air (or, for opaque blocks, seen through a translucent one); triangles facing the inside of the block are drawn with the bottom side. Far from the camera (`DetailRadius` chunks, on the World object), blocks are drawn with their collider shape instead, so detailed models only cost where they can be seen.
 
 ## How can i add a new model?
 
 1. Brick models & their prefabs are stored in https://github.com/tetreum/brickcraft/tree/main/Assets/Models/Bricks
-2. The icon is stored at https://github.com/tetreum/brickcraft/tree/main/Assets/Resources/Textures/Bricks
-3. Prefab must be listed at Server -> prefabs scene object.
-4. Model specs (footprint in studs and height in plates) must be added at Server.cs#setupBrickModels(). The model's pivot must be at the center of its footprint, on its bottom face, like the existing ones.
-5. Items using it must be added at Server.cs#builtInItems (https://github.com/tetreum/brickcraft/blob/main/Assets/Scripts/Server.cs), with a slug id (see below). Its icon is `Resources/Textures/Bricks/<id>.png`.
-6. To generate it's icon, head to /Scenes/IconGenerator & simply hit Play. Items with missing icons will have their icon generated.
+2. Prefab must be listed at Server -> prefabs scene object.
+3. Model specs (footprint in studs and height in plates) must be added at Server.cs#setupBrickModels(). The model's pivot must be at the center of its footprint, on its bottom face, like the existing ones.
+4. Items using it are added like any item (see How can i add a new item?), with its number as `brickModel`.
+5. To generate their icon, head to /Scenes/IconGenerator & simply hit Play. Items with missing icons will have their icon generated.
 
 ### Block and item ids
 
-Blocks (their `name`) and items are identified by slugs, so ones added by different people don't clash: lowercase letters, digits and `_`, like `dirt_2x4`. Mods can prefix theirs, like `mymod:red_brick` (its icon file then uses a `.`: `mymod.red_brick.png`). Saves store these names. While the game runs, blocks also get a number (what chunks store, one byte per block): built-in blocks keep the one of their `BlockType`, the others get free ones, and these numbers are never saved.
+Items (and their blocks, named like them) are identified by slugs, so ones added by different people don't clash: lowercase letters, digits and `_`, like `dirt_2x4`. Mods can prefix theirs, like `mymod:red_brick` Saves store these names. While the game runs, blocks also get a number (what chunks store, one byte per block): built-in blocks keep the one of their `BlockType`, the others get free ones, and these numbers are never saved.
 
 ## How can i add a new brick material/texture?
 

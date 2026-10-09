@@ -1,5 +1,11 @@
 {
-    "name": "grass",
-    "hardness": 1,
-    "dropItem": "dirt"
+    "id": "grass",
+    "name": "Grass 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "material": "BrightGreen",
+    "block": {
+        "hardness": 1,
+        "drop": "dirt"
+    }
 }

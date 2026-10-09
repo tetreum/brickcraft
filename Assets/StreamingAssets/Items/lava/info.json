@@ -1,4 +1,10 @@
 {
-    "name": "lava",
-    "breakable": false
+    "id": "lava",
+    "name": "Lava 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "material": "BrightRed",
+    "block": {
+        "breakable": false
+    }
 }

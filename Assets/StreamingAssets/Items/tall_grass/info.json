@@ -1,4 +1,10 @@
 {
-    "name": "tall_grass",
-    "hardness": 0.5
+    "id": "tall_grass",
+    "name": "Tall Grass 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "material": "BrightGreen",
+    "block": {
+        "hardness": 0.5
+    }
 }

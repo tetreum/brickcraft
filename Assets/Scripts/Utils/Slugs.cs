@@ -15,10 +15,5 @@ namespace Brickcraft
         public static bool IsValid(string slug) {
             return slug != null && Pattern.IsMatch(slug);
         }
-
-        /// <summary>A file name for it (icons): the slug, with the ":" of mods as a ".".</summary>
-        public static string FileName(string slug) {
-            return slug.Replace(':', '.');
-        }
     }
 }

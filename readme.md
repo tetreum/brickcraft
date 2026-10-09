@@ -10,27 +10,9 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 
 [![Preview](https://github.com/tetreum/brickcraft/raw/main/Preview/1.png)](https://github.com/tetreum/brickcraft/raw/main/Preview/1.png)
 
-## Blog
+## How can i help?
 
-[https://tetreum.github.io/brickcraft/](https://tetreum.github.io/brickcraft/)
-
-## Controls
-
-Players can change every key in Settings → Controls (their keys are kept in PlayerPrefs). Otherwise each one is a button of the Input Manager (Edit → Project Settings → Input Manager), named in brackets, so the project can change the defaults; a button missing from it falls back to the default key listed here. `GameInput.Bindings` lists them all.
-
-- WASD - Move character (MoveForward, MoveBack, MoveLeft, MoveRight; the Horizontal and Vertical axes while the player didn't remap them)
-- Space - Jump (Jump)
-- Left Shift (hold) - Sprint (Sprint)
-- TAB (hold) - Player list (PlayerList)
-- 1-9 - Select a fast inventory slot (Slot1 to Slot9)
-- I - Open inventory (Inventory). Drag items to move or swap them; right click slots while dragging to drop one unit in each (letting go then puts the rest back)
-- Escape - Menu, or close the chat (Menu)
-- Enter - Chat (Chat), Enter again to send
-- Left click (hold) - Remove placed bricks and terrain blocks (Dig)
-- Right click (having a block selected in inventory) - Adds a block (Place)
-- R (having a block selected in inventory) - Rotates block (Rotate)
-- Mouse wheel - Selects the next (down) or previous (up) slot of the bottom bar, while no other panel is open
-- Shift (hold, while placing) - Place on any stud instead of snapping to the terrain block grid (FreePlacement)
+- Character model: It's poorly made, needs a rework to also have clothes and hair separated so clothing system can be added in the future. Since minifigures are patented, the model is an advanced iteration that has things like knees.
 
 ## Settings
 
@@ -134,9 +116,7 @@ EventManager.PlayerRoleChanged.Raise(new PlayerRoleChangedEvent() { ... });
 
 To add an event, add its data class to `Assets/Scripts/Events` and a field to `EventManager`.
 
-## How can i help?
 
-[https://tetreum.github.io/brickcraft/?/help](https://tetreum.github.io/brickcraft/?/help)
 
 
 ## How can i add a new item?
@@ -229,4 +209,4 @@ Brick colours are limited to Rebrickable's colour list, `Assets/colors.csv` (id,
 - Brick models - https://www.mecabricks.com/
 - Break texture - MooCwzRck - https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/resource-packs/1223258-16x128x-1-4-5-compatible-okami-texture-pack?page=5
 - World chunk system - Smjert - https://github.com/chraft/chunk-light-tester/
-- Logo font/style - Sverdlychenko Studio - http://sverdlychenko.com/en/lego-font-design/
+- Test monster - iJUNE - https://sketchfab.com/3d-models/free-dummy-monster-246678f908b548feb0f4cccaeef78756#download

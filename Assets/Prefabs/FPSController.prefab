@@ -432,7 +432,14 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
+  characterPrefab: {fileID: 3576062219884394315, guid: a37c62505782fe140bd6e4e3e0157e7c, type: 3}
   playerName: 
+  role: 
+  pingMs: 0
+  spawnX: 0
+  spawnY: 0
+  spawnZ: 0
+  spawnYaw: 0
 --- !u!114 &3064525323806781627
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -20,6 +20,9 @@ namespace Brickcraft.Network
         // how far from the player the server accepts changes, a bit more than the player's reach
         private const float MaxReach = 8f;
 
+        /// <summary>What other players see of this one, see PlayerCharacter.</summary>
+        public GameObject characterPrefab;
+
         [SyncVar]
         public string playerName;
 
@@ -102,12 +105,11 @@ namespace Brickcraft.Network
                 detector.gameObject.SetActive(false);
             }
 
-            // placeholder body, the local player doesn't see its own
-            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "Body";
-            Destroy(body.GetComponent<Collider>());
-            body.transform.SetParent(transform, false);
-            body.transform.localScale = new Vector3(0.6f, 0.9f, 0.6f);
+            // the animated body, the local player doesn't see its own
+            if (characterPrefab != null) {
+                GameObject body = Instantiate(characterPrefab, transform, false);
+                body.name = "Body";
+            }
         }
 
         // -------- client to server --------

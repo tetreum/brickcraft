@@ -101,7 +101,7 @@ The server keeps a SQLite database (`players.db`, via [unity-sqlite-net](https:/
 - `player_sessions`: every join, with its address and when the player joined and left.
 - `inventory_items`: each player's inventory. Inventories only change on the server and are synced to their owner; new players get the `starterItems` of the NetworkManager.
 
-To test with several instances, a build can be started with `-name <name>` and `-host` or `-join <address>`. `-test` starts the test scene, which has no button in the menu. Playing a game scene straight from the editor starts a singleplayer game.
+To test with several instances, a build can be started with `-name <name>` and `-host` or `-join <address>`. `-test` starts the test scene, which has no button in the menu, and `-profileLoad` logs how long loading the world takes, step by step (`WorldLoadProfiler`). Playing a game scene straight from the editor starts a singleplayer game.
 
 ## Code structure
 

@@ -56,7 +56,6 @@ namespace Brickcraft.World
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Load() {
-            System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
             definitionsByName.Clear();
             unregisterItems();
 
@@ -95,8 +94,6 @@ namespace Brickcraft.World
                 TerrainTextures.Destroy(TextureArray);
             }
             TextureArray = textures.Build();
-
-            Debug.Log("Loaded " + definitionsByName.Count + " blocks in " + clock.ElapsedMilliseconds + " ms");
         }
 
         private static void loadBlock(string blockFolder, string file, TerrainTextures textures) {

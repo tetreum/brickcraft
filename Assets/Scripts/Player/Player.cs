@@ -91,7 +91,6 @@ namespace Brickcraft
 
         // every player in the game has this component, but only the local one is controlled from here
         public void onStartLocalPlayer() {
-            Debug.Log("Player joined the game, " + Time.realtimeSinceStartup.ToString("0.0") + " s after the game started");
             Instance = this;
             brickPlacer = gameObject.AddComponent<BrickPlacer>();
             EventManager.LocalPlayerStarted.Raise(new LocalPlayerStartedEvent());

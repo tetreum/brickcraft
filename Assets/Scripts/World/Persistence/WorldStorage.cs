@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -212,7 +211,6 @@ namespace Brickcraft.World
             if (dirty.Count == 0) {
                 return;
             }
-            Stopwatch clock = Stopwatch.StartNew();
             HashSet<RegionFile> touched = new HashSet<RegionFile>();
 
             try {
@@ -230,8 +228,6 @@ namespace Brickcraft.World
                     file.Flush();
                 }
                 writeHeader();
-
-                UnityEngine.Debug.Log("Saved " + dirty.Count + " chunks in " + clock.ElapsedMilliseconds + " ms");
             } catch (Exception e) {
                 UnityEngine.Debug.LogError("Couldn't save the world: " + e);
             }
@@ -290,7 +286,6 @@ namespace Brickcraft.World
                     CreatedWithVersion = reader.ReadString();
                     LastSavedWithVersion = reader.ReadString();
                 }
-                UnityEngine.Debug.Log("World created with version " + (CreatedWithVersion ?? "unknown") + ", last saved with " + (LastSavedWithVersion ?? "unknown"));
 
                 if (generator != GeneratorVersion) {
                     UnityEngine.Debug.LogWarning("The world was created with another version of the generator, saved changes may not line up with the terrain");

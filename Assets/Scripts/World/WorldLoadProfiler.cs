@@ -5,11 +5,13 @@ using System.Threading;
 namespace Brickcraft.World
 {
     /// <summary>
-    /// Measures how long loading the area around the spawn takes, and logs it once players can walk on it.
-    /// Thread safe, the chunk threads add their own timings.
+    /// Measures how long loading the area around the spawn takes, and logs it once players can walk on it
+    /// if Enabled (the "-profileLoad" command line argument). Thread safe, the chunk threads add their own timings.
     /// </summary>
     public static class WorldLoadProfiler
     {
+        public static bool Enabled = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-profileLoad") >= 0;
+
         private static readonly Stopwatch clock = new Stopwatch();
         private static readonly StringBuilder phases = new StringBuilder();
         private static long lastPhaseTicks;
@@ -22,7 +24,9 @@ namespace Brickcraft.World
         private static long verticesUploaded;
 
         public static void Start() {
-            UnityEngine.Debug.Log("Generating the world, " + UnityEngine.Time.realtimeSinceStartup.ToString("0.0") + " s after the game started");
+            if (Enabled) {
+                UnityEngine.Debug.Log("Generating the world, " + UnityEngine.Time.realtimeSinceStartup.ToString("0.0") + " s after the game started");
+            }
             phases.Clear();
             chunkMeshingTicks = 0;
             sliceUploadTicks = 0;
@@ -60,13 +64,16 @@ namespace Brickcraft.World
 
         public static void Finish() {
             Phase("spawn area ready");
+            clock.Stop();
+            if (!Enabled) {
+                return;
+            }
             UnityEngine.Debug.Log(
                 "World loaded in " + toMs(clock.ElapsedTicks).ToString("0") + " ms\n" + phases +
                 "  meshing CPU time (all threads): " + toMs(chunkMeshingTicks).ToString("0") + " ms\n" +
                 "  mesh upload on the main thread: " + toMs(sliceUploadTicks).ToString("0") + " ms for " +
                 slicesUploaded + " slices, " + verticesUploaded + " vertices (colliders: " + toMs(colliderUploadTicks).ToString("0") + " ms)"
             );
-            clock.Stop();
         }
 
         private static double toMs(long ticks) {

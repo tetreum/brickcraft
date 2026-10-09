@@ -103,7 +103,6 @@ namespace Brickcraft.Network
         public override void OnStartServer() {
             base.OnStartServer();
             Database = new GameDatabase(SaveFolder);
-            Debug.Log("Server save: " + SaveFolder);
 
             long newSeed = seed != 0 ? seed : Random.Range(1, int.MaxValue);
 
@@ -168,7 +167,6 @@ namespace Brickcraft.Network
                 savePosition(conn);
                 player.hasLeft = true;
                 Database.EndSession(player.record, player.session);
-                Debug.Log(player.record.Name + " left");
 
                 if (announce && player.hasJoined && !player.leaveAnnounced) {
                     ChatEvents.Send(new ChatEventMessage() { type = ChatEventType.Left, player = player.record.Name }, conn);

@@ -15,7 +15,6 @@ namespace Brickcraft
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void init() {
             Current = Application.version;
-            Debug.Log("Brickcraft " + Current);
         }
 
 #if UNITY_EDITOR

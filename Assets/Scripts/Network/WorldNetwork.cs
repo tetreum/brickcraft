@@ -432,7 +432,6 @@ namespace Brickcraft.Network
             if (WorldBehaviour.Instance.IsGenerated(WorldChanges.ChunkOfBlock(message.block))) {
                 WorldBehaviour.Instance.SetBlockType(message.block, (BlockType)message.blockType);
             }
-            logChange("block " + message.block + " is now " + (BlockType)message.blockType);
         }
 
         private static void onBrickPlaced(BrickPlacedMessage message) {
@@ -445,7 +444,6 @@ namespace Brickcraft.Network
             if (WorldBehaviour.Instance == null || WorldBehaviour.Instance.IsGenerated(WorldChanges.ChunkOfBrick(message.origin))) {
                 spawnBricks(new List<SavedBrick>() { brick });
             }
-            logChange("brick placed at " + message.origin);
         }
 
         private static void onBrickRemoved(BrickRemovedMessage message) {
@@ -457,7 +455,6 @@ namespace Brickcraft.Network
             if (Server.bricks.TryGetValue(message.id, out Brick brick)) {
                 Server.Instance.removeBrick(brick);
             }
-            logChange("brick " + message.id + " removed");
         }
 
         private static void onClientChunkGenerated(Chunk chunk) {
@@ -466,12 +463,6 @@ namespace Brickcraft.Network
 
         private static void onClientChunkUnloaded(Vector2Int coords) {
             removeBricks(coords);
-        }
-
-        private static void logChange(string description) {
-            if (Debug.isDebugBuild) {
-                Debug.Log("World change from the server: " + description);
-            }
         }
 
         // -------- both --------

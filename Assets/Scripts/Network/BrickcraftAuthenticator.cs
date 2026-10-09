@@ -98,7 +98,6 @@ namespace Brickcraft.Network
                 record = player,
                 session = database.StartSession(player, conn.address),
             };
-            Debug.Log(player.Name + " joined (player " + player.Id + ", " + player.Role + ", " + player.TimesJoined + " times)");
 
             conn.Send(new AuthResponseMessage() { accepted = true });
             ServerAccept(conn);

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 namespace Brickcraft.UI
 {
     /// <summary>
-    /// Picks one of the brick colours (BrickColorPalette, from colors.csv), or none. A button showing the
+    /// Picks one of the brick colours (BrickColorPalette), or none. A button showing the
     /// chosen colour that opens a popup with a swatch per colour; hovering one shows its name.
     /// </summary>
     public class ColorPicker : MonoBehaviour

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Brickcraft.Bricks
 {
-    /// <summary>A colour bricks can have, from Assets/colors.csv (Rebrickable's colour list).</summary>
+    /// <summary>A colour bricks can have, one of Rebrickable's colour list.</summary>
     [Serializable]
     public class BrickColor
     {
@@ -29,9 +29,8 @@ namespace Brickcraft.Bricks
     }
 
     /// <summary>
-    /// Every colour bricks can have and its material, by colour id. Generated from Assets/colors.csv
-    /// with Brickcraft > Generate brick colour materials, which creates
-    /// Assets/Materials/BrickColors/Palette/[id]_[Name].mat and this asset (Resources/BrickColorPalette).
+    /// Every colour bricks can have and its material (Assets/Materials/BrickColors/Palette/[id]_[Name].mat),
+    /// by colour id. The list is this asset, Resources/BrickColorPalette: a colour is added there.
     ///
     /// Loaded on the main thread by <see cref="Load"/> (ItemDatabase does it before the first scene),
     /// lookups are then safe from any thread.
@@ -54,7 +53,7 @@ namespace Brickcraft.Bricks
             Dictionary<int, BrickColor> loaded = new Dictionary<int, BrickColor>();
 
             if (palette == null) {
-                Debug.LogError("Missing Resources/" + ResourceName + ", generate it with Brickcraft > Generate brick colour materials");
+                Debug.LogError("Missing Resources/" + ResourceName + ", bricks have no colours");
             } else {
                 foreach (BrickColor color in palette.colors) {
                     loaded[color.id] = color;

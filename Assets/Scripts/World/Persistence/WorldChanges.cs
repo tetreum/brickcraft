@@ -307,7 +307,7 @@ namespace Brickcraft.World
 
                     int color = readVarInt(reader);
                     if (color != Bricks.BrickColor.None) {
-                        // a colour removed from colors.csv: the block's own texture
+                        // a colour removed from the palette: the block's own texture
                         if (Bricks.BrickColorPalette.Get(color) != null) {
                             changes.colors[(ushort)index] = color;
                         }
@@ -329,7 +329,7 @@ namespace Brickcraft.World
                         rotation = reader.ReadByte(),
                         placer = readPlacer(reader) ?? default(Placer),
                     };
-                    // a colour removed from colors.csv (or the item no longer has it): its item's default one
+                    // a colour removed from the palette (or the item no longer has it): its item's default one
                     if (Server.items.TryGetValue(brick.itemId, out Item item)) {
                         brick.color = item.ValidColor(brick.color);
                     }

@@ -69,7 +69,7 @@ namespace Brickcraft
             return anyColor || colors.Contains(colorId);
         }
 
-        /// <summary>The colour, or the item's default one if it can't have it (a colour removed from colors.csv).</summary>
+        /// <summary>The colour, or the item's default one if it can't have it (a colour removed from the palette).</summary>
         public int ValidColor(int colorId) {
             return AllowsColor(colorId) ? colorId : color;
         }

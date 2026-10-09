@@ -105,7 +105,7 @@ namespace Brickcraft
             }
 
             if (info.color.HasValue && BrickColorPalette.Get(info.color.Value) == null) {
-                Debug.LogError("Item file " + file + " has the color " + info.color.Value + ", which isn't in colors.csv");
+                Debug.LogError("Item file " + file + " has the color " + info.color.Value + ", which isn't in the palette (Resources/BrickColorPalette)");
                 return;
             }
             if ((info.color.HasValue || info.colors != null) && type != Item.Type.Brick) {
@@ -169,7 +169,7 @@ namespace Brickcraft
             }
             foreach (JToken color in colors) {
                 if (color.Type != JTokenType.Integer || BrickColorPalette.Get((int)color) == null) {
-                    Debug.LogError("Item file " + file + " has the color " + color + ", which isn't in colors.csv");
+                    Debug.LogError("Item file " + file + " has the color " + color + ", which isn't in the palette (Resources/BrickColorPalette)");
                     return false;
                 }
                 item.colors.Add((int)color);

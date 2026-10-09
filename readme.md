@@ -57,7 +57,7 @@ Admins can type commands in the chat:
 - `/role NICK|ID [role]`: shows a player's role, or changes it (`user` or `admin`). Admins can't change their own.
 - `/additem ITEM[@COLOR] [count] [NICK|ID]`: gives `count` (1 by default) of the item with id `ITEM` (like `dirt_2x4`) to a player, yourself by default. `@COLOR` gives it in a colour it can have, by colour id or name (`plate_2x2_yellow@4`, `brick_2x2@trans-clear`), its default one otherwise. Offline players get them in their saved inventory. `/additem ITEM NICK` works too, but a number after the item is always the count, so give a player by id with `/additem ITEM count ID`.
 
-Admins also get an ALL tab in the inventory: every item of the game, searchable by name or id, 30 per page. Clicking one adds it to their inventory. The colour picker next to the search (a swatch per colour of `colors.csv`, hovering one shows its name) chooses the colour they're given in: only the items that can have it are listed. `Default` gives each item in its default colour.
+Admins also get an ALL tab in the inventory: every item of the game, searchable by name or id, 30 per page. Clicking one adds it to their inventory. The colour picker next to the search (a swatch per colour, hovering one shows its name) chooses the colour they're given in: only the items that can have it are listed. `Default` gives each item in its default colour.
 
 `NICK|ID` is a player name (any case) or, if no name matches, a player id. Admins can't kick or ban themselves, other admins or the host.
 
@@ -168,7 +168,7 @@ Items/marble/
 - `type`: `brick` (the default), `helmet`, `weapon` or `food`. Only bricks can be placed.
 - `maxStack`: how many fit in one inventory slot, 64 by default. Dragging a stack onto the same item merges them as far as that allows.
 - `brickModel`: the brick it places (see How can i add a new model).
-- `color`: its colour, an id of `Assets/colors.csv` (like `4` for Red, see How can i add a new brick material). `colors`: other colours it can have, `"all"` or a list of ids; only its default one if missing. Each inventory stack is of one colour, recipes take ingredients of any colour and make the default one. Blocks placed in another colour are drawn in it, see-through for transparent colours; blocks without textures (like `brick_2x2`) use their default colour. Items without an icon nor textures get a square of their colour.
+- `color`: its colour, a colour id of the palette (like `4` for Red, see How can i add a new brick material). `colors`: other colours it can have, `"all"` or a list of ids; only its default one if missing. Each inventory stack is of one colour, recipes take ingredients of any colour and make the default one. Blocks placed in another colour are drawn in it, see-through for transparent colours; blocks without textures (like `brick_2x2`) use their default colour. Items without an icon nor textures get a square of their colour.
 - `material`: a special material instead of its colour's, from Canvas -> Game -> BrickMaterials (only `"Water"` for now). `layer` sets the Unity layer of placed bricks, like `"Water"`.
 - `block`: for bricks that are also a world block (it's named like the item, and placing the brick exactly over a world block places the block):
   - `hardness`: seconds to dig it with bare hands. `breakable: false` makes it undiggable.
@@ -199,7 +199,7 @@ Items (and their blocks, named like them) are identified by slugs, so ones added
 1. They're stored in Assets/Materials/BrickColors/ (https://github.com/tetreum/brickcraft/tree/main/Assets/Materials/BrickColors)
 2. List the new materials at Canvas (scene object) -> Game -> BrickMaterials var.
 
-Brick colours are limited to Rebrickable's colour list, `Assets/colors.csv` (id, name, rgb, is_trans, ...). `Brickcraft > Generate brick colour materials` makes a material per colour in `Assets/Materials/BrickColors/Palette/<id>_<Name>.mat` (opaque ones copy `BrightGreen.mat`, transparent ones `TransparentBlue.mat`; Chrome, Metallic, Pearl, Glitter and Opal colours get their finish from the name) and `Resources/BrickColorPalette`, which finds them by colour id (`BrickColorPalette.Get(id)`). Running it again only updates the colour and finish of existing materials, so tweaks made in the editor are kept.
+Brick colours are limited to a palette, Rebrickable's colour list: `Resources/BrickColorPalette` lists each colour (Rebrickable id, name, hex, whether it's transparent) and its material in `Assets/Materials/BrickColors/Palette/<id>_<Name>.mat`; the game finds them by colour id (`BrickColorPalette.Get(id)`). To add a colour, copy a material of that folder (an opaque or transparent one), change its colour, and add an entry for it to the palette.
 
 ## Credits
 
@@ -210,3 +210,4 @@ Brick colours are limited to Rebrickable's colour list, `Assets/colors.csv` (id,
 - Break texture - MooCwzRck - https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/resource-packs/1223258-16x128x-1-4-5-compatible-okami-texture-pack?page=5
 - World chunk system - Smjert - https://github.com/chraft/chunk-light-tester/
 - Test monster - iJUNE - https://sketchfab.com/3d-models/free-dummy-monster-246678f908b548feb0f4cccaeef78756#download
+- Color list - https://rebrickable.com/downloads/

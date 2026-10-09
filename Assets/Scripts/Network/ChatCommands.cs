@@ -223,7 +223,7 @@ namespace Brickcraft.Network
             if (colorText != null) {
                 BrickColor brickColor = BrickColorPalette.Find(colorText);
                 if (brickColor == null) {
-                    reply(sender, "There's no colour " + colorText + " (see colors.csv)");
+                    reply(sender, "There's no colour " + colorText + "");
                     return;
                 }
                 if (!item.AllowsColor(brickColor.id)) {

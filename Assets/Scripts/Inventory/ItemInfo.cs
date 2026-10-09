@@ -16,7 +16,7 @@ namespace Brickcraft
         public int maxStack = Item.DefaultMaxStack;
         /// <summary>Bricks: the model (see Server.setupBrickModels).</summary>
         public int brickModel = 3003;
-        /// <summary>Bricks: their default colour, an id of Assets/colors.csv (see BrickColorPalette).</summary>
+        /// <summary>Bricks: their default colour, a colour id of BrickColorPalette.</summary>
         public int? color;
         /// <summary>Bricks: other colours they can have, "all" or a list of colour ids. Only their default one if missing.</summary>
         public Newtonsoft.Json.Linq.JToken colors;

@@ -255,7 +255,7 @@ namespace Brickcraft.Network
                 items.Add(new InventoryItem() {
                     slot = record.Slot,
                     itemId = record.Item,
-                    // a colour removed from colors.csv: the item's default one
+                    // a colour removed from the palette: the item's default one
                     color = item.ValidColor(record.Color ?? item.color),
                     quantity = record.Quantity,
                     health = record.Health,

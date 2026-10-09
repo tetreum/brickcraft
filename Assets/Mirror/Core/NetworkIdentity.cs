@@ -208,6 +208,10 @@ namespace Mirror
                 _connectionToClient?.AddOwnedObject(this);
             }
         }
+        // Brickcraft patch: connections are [Serializable], and Unity serializes private fields of those
+        // types when reloading scripts; restoring it calls the constructor, which reads Time.time and
+        // throws "get_time is not allowed to be called during serialization". It's runtime state anyway.
+        [NonSerialized]
         NetworkConnectionToClient _connectionToClient;
 
         // get all NetworkBehaviour components

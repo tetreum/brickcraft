@@ -56,6 +56,17 @@ namespace Brickcraft.World
             return layer;
         }
 
+        /// <summary>Adds a layer filled with a colour (coloured bricks) and returns it.</summary>
+        public int AddSolid(Color32 color) {
+            const int size = 2; // scaled up to the size of the other layers by Build
+            Color32[] pixels = new Color32[size * size];
+            for (int i = 0; i < pixels.Length; i++) {
+                pixels[i] = color;
+            }
+            layers.Add(new Layer() { width = size, height = size, pixels = pixels });
+            return layers.Count - 1;
+        }
+
         /// <summary>All layers are scaled to the size of the biggest texture.</summary>
         public Texture2DArray Build() {
             int size = 1;

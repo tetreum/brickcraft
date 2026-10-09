@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using Brickcraft.Bricks;
 using Mirror;
 using UnityEngine;
 
@@ -20,7 +21,7 @@ namespace Brickcraft.Network
     ///   /ban NICK|ID [reason]       bans a player (and its machine), online or not
     ///   /unban NICK|ID
     ///   /role NICK|ID [role]        shows or changes a player's role (user, admin)
-    ///   /additem ITEM [count] [NICK|ID]   gives items to a player (yourself by default), online or not
+    ///   /additem ITEM[@COLOR] [count] [NICK|ID]   gives items to a player (yourself by default), online or not
     /// NICK|ID is a player name (any case) or, if no name matches, a player id.
     /// Only admins can use them.
     /// </summary>
@@ -74,7 +75,7 @@ namespace Brickcraft.Network
                     break;
                 case "additem":
                     if (target == null) {
-                        reply(sender, "Usage: /additem ITEM [count] [NICK|ID]");
+                        reply(sender, "Usage: /additem ITEM[@COLOR] [count] [NICK|ID]");
                     } else {
                         addItem(sender, admin, target, reason);
                     }
@@ -87,7 +88,7 @@ namespace Brickcraft.Network
                     }
                     break;
                 default:
-                    reply(sender, "Unknown command. Commands: /players, /kick NICK|ID [reason], /ban NICK|ID [reason], /unban NICK|ID, /role NICK|ID [role], /additem ITEM [count] [NICK|ID]");
+                    reply(sender, "Unknown command. Commands: /players, /kick NICK|ID [reason], /ban NICK|ID [reason], /unban NICK|ID, /role NICK|ID [role], /additem ITEM[@COLOR] [count] [NICK|ID]");
                     break;
             }
         }
@@ -205,13 +206,33 @@ namespace Brickcraft.Network
             }
         }
 
-        // args: [count] [NICK|ID]
+        // ITEM[@COLOR] (a colour id or name, like plate_2x2@4 or plate_2x2@trans-clear), args: [count] [NICK|ID]
         private static void addItem(NetworkConnectionToClient sender, ConnectedPlayer admin, string itemText, string args) {
+            string colorText = null;
+            int at = itemText.IndexOf('@');
+            if (at != -1) {
+                colorText = itemText.Substring(at + 1);
+                itemText = itemText.Substring(0, at);
+            }
             string itemId = itemText.ToLowerInvariant();
             if (!Server.items.TryGetValue(itemId, out Item item)) {
                 reply(sender, "There's no item " + itemText);
                 return;
             }
+            int color = item.color;
+            if (colorText != null) {
+                BrickColor brickColor = BrickColorPalette.Find(colorText);
+                if (brickColor == null) {
+                    reply(sender, "There's no colour " + colorText + " (see colors.csv)");
+                    return;
+                }
+                if (!item.AllowsColor(brickColor.id)) {
+                    reply(sender, item.name + " can't be " + brickColor.name);
+                    return;
+                }
+                color = brickColor.id;
+            }
+            string itemName = item.name + (color != item.color ? " (" + BrickColorPalette.Get(color).name + ")" : "");
 
             string[] rest = string.IsNullOrEmpty(args) ? new string[0] : args.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             int count = 1;
@@ -240,7 +261,7 @@ namespace Brickcraft.Network
                     return;
                 }
                 player = online.record;
-                added = inventory.ServerAdd(itemId, count);
+                added = inventory.ServerAdd(itemId, color, count);
             } else {
                 // offline players get it in their saved inventory
                 player = findRecord(target);
@@ -250,7 +271,7 @@ namespace Brickcraft.Network
                 }
                 GameDatabase database = BrickcraftNetworkManager.Instance.Database;
                 List<InventoryItem> items = database.LoadInventory(player.Id);
-                added = Inventory.Add(items, itemId, count);
+                added = Inventory.Add(items, itemId, color, count);
 
                 if (added) {
                     database.SaveInventory(player.Id, items);
@@ -258,14 +279,14 @@ namespace Brickcraft.Network
             }
 
             if (!added) {
-                reply(sender, "There's no room for " + count + " x " + item.name + " in " + player.Name + "'s inventory");
+                reply(sender, "There's no room for " + count + " x " + itemName + " in " + player.Name + "'s inventory");
                 return;
             }
-            Debug.Log(admin.record.Name + " gave " + count + " x " + item.name + " (" + itemId + ") to " + player.Name + " (" + player.Id + ")");
-            reply(sender, "Gave " + count + " x " + item.name + " to " + player.Name);
+            Debug.Log(admin.record.Name + " gave " + count + " x " + itemName + " (" + itemId + ") to " + player.Name + " (" + player.Id + ")");
+            reply(sender, "Gave " + count + " x " + itemName + " to " + player.Name);
 
             if (conn != null && conn != sender) {
-                reply(conn, admin.record.Name + " gave you " + count + " x " + item.name);
+                reply(conn, admin.record.Name + " gave you " + count + " x " + itemName);
             }
         }
 

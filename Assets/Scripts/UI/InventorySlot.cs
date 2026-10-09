@@ -171,6 +171,9 @@ namespace Brickcraft.UI
             rawImage.color = currColor;
 
             quantity.gameObject.SetActive(show);
+            if (!show) {
+                ItemColorSwatch.Set(rawImage, null, 0);
+            }
         }
     }
 }

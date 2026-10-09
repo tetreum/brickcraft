@@ -175,6 +175,33 @@ namespace Brickcraft.World
 			slice[x & 0xF, y & Chunk.SliceHeightLimit, z & 0xF] = (byte)type;
 		}
 	
+		// colours of the blocks players placed with one (see BrickColorPalette), by ChunkChanges.BlockIndex.
+		// Written by the main thread, read by the meshing threads.
+		private readonly Dictionary<ushort, int> colors = new Dictionary<ushort, int>();
+		private volatile bool hasColors;
+
+		/// <summary>Colour of a block (chunk local x and z), BrickColor.None when drawn with its own texture.</summary>
+		public int GetColor(int x, int y, int z)
+		{
+			if (!hasColors)
+				return Bricks.BrickColor.None;
+
+			lock (colors)
+				return colors.TryGetValue(ChunkChanges.BlockIndex(x, y, z), out int color) ? color : Bricks.BrickColor.None;
+		}
+
+		public void SetColor(int x, int y, int z, int color)
+		{
+			lock (colors)
+			{
+				if (color == Bricks.BrickColor.None)
+					colors.Remove(ChunkChanges.BlockIndex(x & 0xF, y, z & 0xF));
+				else
+					colors[ChunkChanges.BlockIndex(x & 0xF, y, z & 0xF)] = color;
+				hasColors = colors.Count > 0;
+			}
+		}
+
 		public void SetData(int x, int y, int z, byte data, bool unused)
 		{
 		

@@ -125,13 +125,21 @@ namespace Brickcraft.Network
                 return;
             }
 
-            // a 2x2 brick that fits exactly in a world block becomes part of the world
+            // the save remembers who placed it and when
+            ConnectedPlayer player = connectionToClient.authenticationData as ConnectedPlayer;
+            Placer placer = Placer.Now(player != null ? player.record.Id : 0);
+
+            int color = item.ValidColor(held.Value.color);
+
+            // a 2x2 brick that fits exactly in a world block becomes part of the world, in its colour
+            // (blocks in their item's default colour are drawn with its textures)
             bool placedAsWorldBlock = item.blockType.HasValue
                 && placement.MatchesWorldBlock
-                && WorldNetwork.ServerSetBlock(BrickGrid.CellToBlock(placement.origin), item.blockType.Value);
+                && WorldNetwork.ServerSetBlock(BrickGrid.CellToBlock(placement.origin), item.blockType.Value, placer,
+                    color == item.color ? BrickColor.None : color);
 
             if (!placedAsWorldBlock) {
-                WorldNetwork.ServerPlaceBrick(item, placement);
+                WorldNetwork.ServerPlaceBrick(item, color, placement, placer);
             }
             inventory.ServerRemoveFromSlot(slot, 1);
             TargetBrickPlaced();
@@ -143,7 +151,7 @@ namespace Brickcraft.Network
                 return;
             }
             WorldNetwork.ServerRemoveBrick(brick);
-            inventory.ServerAdd(brick.itemId, 1);
+            inventory.ServerAdd(brick.itemId, brick.color, 1);
         }
 
         [Command]
@@ -152,16 +160,20 @@ namespace Brickcraft.Network
                 return;
             }
             BlockType blockType = WorldBehaviour.Instance.GetBlockType(block);
+            int blockColor = WorldBehaviour.Instance.GetBlockColor(block);
             Vector3 blockCenter = BrickGrid.CellToWorld(BrickGrid.BlockToCell(block), new Vector3(1, 1.5f, 1));
 
             if (!BlockDatabase.Get(blockType).isBreakable || !isInReach(blockCenter)) {
                 return;
             }
-            if (WorldNetwork.ServerSetBlock(block, BlockType.Air)) {
-                Item item = Server.getItemForBlock(blockType);
+            if (WorldNetwork.ServerSetBlock(block, BlockType.Air, null)) {
+                // a block placed with a colour gives back its brick in that colour
+                Item item = blockColor != BrickColor.None
+                    ? (Server.items.TryGetValue(BlockDatabase.Get(blockType).itemId ?? "", out Item colored) ? colored : null)
+                    : Server.getItemForBlock(blockType);
 
                 if (item != null) {
-                    inventory.ServerAdd(item.id, 1);
+                    inventory.ServerAdd(item.id, blockColor != BrickColor.None ? blockColor : item.color, 1);
                 }
             }
         }

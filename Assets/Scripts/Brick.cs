@@ -6,6 +6,8 @@ namespace Brickcraft
     public class Brick {
         public string id;
         public string itemId;
+        /// <summary>Its colour, see BrickColorPalette.</summary>
+        public int color;
         public GameObject gameObject;
         public BrickPlacement placement;
 

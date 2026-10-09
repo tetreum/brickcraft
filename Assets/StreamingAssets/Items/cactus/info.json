@@ -3,7 +3,7 @@
     "name": "Cactus 2x2",
     "type": "brick",
     "brickModel": 3003,
-    "material": "BrightGreen",
+    "color": 10,
     "block": {
         "hardness": 2
     }

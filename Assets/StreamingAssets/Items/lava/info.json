@@ -3,7 +3,7 @@
     "name": "Lava 2x2",
     "type": "brick",
     "brickModel": 3003,
-    "material": "BrightRed",
+    "color": 4,
     "block": {
         "breakable": false
     }

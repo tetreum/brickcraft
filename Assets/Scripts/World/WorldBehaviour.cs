@@ -438,10 +438,27 @@ namespace Brickcraft.World
 			return GetBlockType(block.x, block.y, block.z);
 		}
 
+		/// <summary>Colour of a block (see Chunk.GetColor), BrickColor.None where it has none or isn't loaded.</summary>
+		public int GetBlockColor(int x, int y, int z)
+		{
+			if (y < 0 || y >= Chunk.NumSlices * Chunk.SliceHeight)
+				return Bricks.BrickColor.None;
+
+			Chunk chunk = GetChunk(x >> 4, z >> 4);
+
+			return chunk != null ? chunk.GetColor(x & 0xF, y, z & 0xF) : Bricks.BrickColor.None;
+		}
+
+		public int GetBlockColor(Vector3Int block)
+		{
+			return GetBlockColor(block.x, block.y, block.z);
+		}
+
 		/// <summary>
-		/// Changes a block of a loaded chunk and rebuilds the affected slice meshes.
+		/// Changes a block of a loaded chunk and rebuilds the affected slice meshes. Blocks placed with
+		/// a colour are drawn with it instead of their texture.
 		/// </summary>
-		public bool SetBlockType(Vector3Int block, BlockType type)
+		public bool SetBlockType(Vector3Int block, BlockType type, int color = Bricks.BrickColor.None)
 		{
 			if (block.y < 0 || block.y >= Chunk.NumSlices * Chunk.SliceHeight)
 				return false;
@@ -457,6 +474,7 @@ namespace Brickcraft.World
 			int y = block.y & Chunk.SliceHeightLimit;
 
 			chunk.SetType(x, block.y, z, type, false);
+			chunk.SetColor(x, block.y, z, color);
 			chunk.RecalculateHeight(x, z);
 
 			RebuildSlice(chunk, sliceIndex);

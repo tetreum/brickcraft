@@ -35,14 +35,17 @@ namespace Brickcraft.Network
         }
 
         [Server]
-        public bool ServerHas(string itemId, int quantity, int health) {
-            return Inventory.Has(items, itemId, quantity, health);
+        public bool ServerHas(string itemId, int color, int quantity, int health) {
+            return Inventory.Has(items, itemId, color, quantity, health);
         }
 
-        /// <summary>Adds them all, or none and false if they don't fit.</summary>
+        /// <summary>Adds them all, or none and false if they don't fit. Colours the item can't have become its default one.</summary>
         [Server]
-        public bool ServerAdd(string itemId, int quantity, int health = 0, int slot = 0) {
-            bool added = Inventory.Add(items, itemId, quantity, health, slot);
+        public bool ServerAdd(string itemId, int color, int quantity, int health = 0, int slot = 0) {
+            if (Server.items.TryGetValue(itemId, out Item item)) {
+                color = item.ValidColor(color);
+            }
+            bool added = Inventory.Add(items, itemId, color, quantity, health, slot);
 
             if (added) {
                 save();
@@ -69,8 +72,8 @@ namespace Brickcraft.Network
         }
 
         [Server]
-        public bool ServerRemove(string itemId, int quantity, int health = 0) {
-            bool removed = Inventory.Remove(items, itemId, quantity, health);
+        public bool ServerRemove(string itemId, int color, int quantity, int health = 0) {
+            bool removed = Inventory.Remove(items, itemId, color, quantity, health);
 
             if (removed) {
                 save();
@@ -115,26 +118,27 @@ namespace Brickcraft.Network
             }
 
             foreach (Ingredient ingredient in recipe.ingredients) {
-                if (!Inventory.Has(items, ingredient.itemId, ingredient.quantity, 0)) {
+                if (!Inventory.Has(items, ingredient.itemId, Inventory.AnyColor, ingredient.quantity, 0)) {
                     return;
                 }
             }
             foreach (Ingredient ingredient in recipe.ingredients) {
-                Inventory.Remove(items, ingredient.itemId, ingredient.quantity);
+                Inventory.Remove(items, ingredient.itemId, Inventory.AnyColor, ingredient.quantity);
             }
-            Inventory.Add(items, recipe.itemId, recipe.quantity, 100, targetSlot);
+            // in the item's default colour
+            Inventory.Add(items, recipe.itemId, Server.items[recipe.itemId].color, recipe.quantity, 100, targetSlot);
             save();
         }
 
-        /// <summary>Admins only: adds items out of nothing (the ALL tab of the inventory).</summary>
+        /// <summary>Admins only: adds items out of nothing (the ALL tab of the inventory), in a colour the item can have.</summary>
         [Command]
-        public void CmdAdminAdd(string itemId, int quantity) {
+        public void CmdAdminAdd(string itemId, int color, int quantity) {
             ConnectedPlayer player = connectionToClient.authenticationData as ConnectedPlayer;
 
             if (player == null || !player.record.IsAdmin || !Server.items.TryGetValue(itemId, out Item item) || quantity < 1 || quantity > MaxAdminAdd) {
                 return;
             }
-            if (!Inventory.Add(items, itemId, quantity)) {
+            if (!Inventory.Add(items, itemId, item.ValidColor(color), quantity)) {
                 connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "There's no room for " + quantity + " x " + item.name + " in your inventory" });
                 return;
             }

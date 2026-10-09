@@ -1,0 +1,11 @@
+{
+    "id": "brick_2x2",
+    "name": "Brick 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "color": 71,
+    "colors": "all",
+    "block": {
+        "hardness": 1
+    }
+}

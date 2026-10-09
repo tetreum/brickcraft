@@ -52,6 +52,11 @@ namespace Brickcraft.Network
         public Vector3Int block;
         /// <summary>The block's name: numbers are only valid in the game that gave them (see BlockDatabase).</summary>
         public string blockName;
+        /// <summary>Colour it's drawn with (see BrickColorPalette), -1 for its own textures.</summary>
+        public int color;
+        /// <summary>Who placed it (players.db id) and when (unix seconds), 0 when dug.</summary>
+        public int placedBy;
+        public long placedAt;
     }
 
     /// <summary>Server to client: a brick was placed.</summary>
@@ -59,8 +64,13 @@ namespace Brickcraft.Network
     {
         public string id;
         public string itemId;
+        /// <summary>Its colour, see BrickColorPalette.</summary>
+        public int color;
         public Vector3Int origin;
         public byte rotation;
+        /// <summary>Who placed it (players.db id, 0 when no player did) and when (unix seconds).</summary>
+        public int placedBy;
+        public long placedAt;
     }
 
     /// <summary>Server to client: a brick was removed.</summary>

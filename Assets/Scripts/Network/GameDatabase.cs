@@ -95,6 +95,8 @@ namespace Brickcraft.Network
         public int Slot { get; set; }
         /// <summary>The item's slug, see Slugs.</summary>
         public string Item { get; set; }
+        /// <summary>Its colour (see BrickColorPalette), the item's default one when null.</summary>
+        public int? Color { get; set; }
         public int Quantity { get; set; }
         public int Health { get; set; }
     }
@@ -246,13 +248,15 @@ namespace Brickcraft.Network
 
             foreach (InventoryItemRecord record in connection.Table<InventoryItemRecord>().Where(i => i.PlayerId == playerId)) {
                 // an item of a mod that isn't installed anymore
-                if (record.Item == null || !Server.items.ContainsKey(record.Item)) {
+                if (record.Item == null || !Server.items.TryGetValue(record.Item, out Item item)) {
                     Debug.LogWarning("Player " + playerId + " had an unknown item (" + record.Item + ") in slot " + record.Slot + ", it's dropped");
                     continue;
                 }
                 items.Add(new InventoryItem() {
                     slot = record.Slot,
                     itemId = record.Item,
+                    // a colour removed from colors.csv: the item's default one
+                    color = item.ValidColor(record.Color ?? item.color),
                     quantity = record.Quantity,
                     health = record.Health,
                 });
@@ -270,6 +274,7 @@ namespace Brickcraft.Network
                         PlayerId = playerId,
                         Slot = item.slot,
                         Item = item.itemId,
+                        Color = item.color,
                         Quantity = item.quantity,
                         Health = item.health,
                     });

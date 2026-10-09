@@ -97,24 +97,38 @@ namespace Brickcraft.Network
             interests.Remove(conn);
         }
 
-        public static bool ServerSetBlock(Vector3Int block, BlockType type) {
-            if (WorldBehaviour.Instance == null || !WorldBehaviour.Instance.SetBlockType(block, type)) {
+        /// <summary>
+        /// Changes a block, placer is who placed it (null when it was dug), color the colour it's drawn
+        /// with (BrickColor.None for its own textures).
+        /// </summary>
+        public static bool ServerSetBlock(Vector3Int block, BlockType type, Placer? placer, int color = BrickColor.None) {
+            if (WorldBehaviour.Instance == null || !WorldBehaviour.Instance.SetBlockType(block, type, color)) {
                 return false;
             }
-            serverChanges.SetBlock(block, type);
-            sendToChunk(WorldChanges.ChunkOfBlock(block), new BlockChangedMessage() { block = block, blockName = BlockDatabase.Get(type).name });
+            serverChanges.SetBlock(block, type, placer, color);
+            Placer sent = placer ?? default(Placer);
+            sendToChunk(WorldChanges.ChunkOfBlock(block), new BlockChangedMessage() {
+                block = block,
+                blockName = BlockDatabase.Get(type).name,
+                color = color,
+                placedBy = sent.playerId,
+                placedAt = sent.placedAt,
+            });
 
             return true;
         }
 
-        public static Brick ServerPlaceBrick(Item item, BrickPlacement placement) {
-            Brick brick = Server.Instance.spawnBrick(item, placement);
-            serverChanges.AddBrick(toSaved(brick));
+        public static Brick ServerPlaceBrick(Item item, int color, BrickPlacement placement, Placer placer) {
+            Brick brick = Server.Instance.spawnBrick(item, color, placement);
+            serverChanges.AddBrick(toSaved(brick, placer));
             sendToChunk(WorldChanges.ChunkOfBrick(placement.origin), new BrickPlacedMessage() {
                 id = brick.id,
                 itemId = brick.itemId,
+                color = brick.color,
                 origin = placement.origin,
                 rotation = (byte)placement.rotation,
+                placedBy = placer.playerId,
+                placedAt = placer.placedAt,
             });
 
             return brick;
@@ -253,6 +267,7 @@ namespace Brickcraft.Network
                     conn.Send(new BrickPlacedMessage() {
                         id = brick.id,
                         itemId = brick.itemId,
+                        color = brick.color,
                         origin = brick.placement.origin,
                         rotation = (byte)brick.placement.rotation,
                     });
@@ -269,12 +284,14 @@ namespace Brickcraft.Network
             removeBricks(coords);
         }
 
-        private static SavedBrick toSaved(Brick brick) {
+        private static SavedBrick toSaved(Brick brick, Placer placer) {
             return new SavedBrick() {
                 id = new Guid(brick.id),
                 itemId = brick.itemId,
+                color = brick.color,
                 origin = brick.placement.origin,
                 rotation = (byte)brick.placement.rotation,
+                placer = placer,
             };
         }
 
@@ -434,10 +451,13 @@ namespace Brickcraft.Network
                 return;
             }
             BlockType type = (BlockType)BlockDatabase.IdOf(message.blockName);
-            clientChanges.SetBlock(message.block, type);
+            int color = BrickColorPalette.Get(message.color) != null ? message.color : BrickColor.None;
+            clientChanges.SetBlock(message.block, type, message.placedBy != 0
+                ? new Placer() { playerId = message.placedBy, placedAt = message.placedAt }
+                : (Placer?)null, color);
 
             if (WorldBehaviour.Instance.IsGenerated(WorldChanges.ChunkOfBlock(message.block))) {
-                WorldBehaviour.Instance.SetBlockType(message.block, type);
+                WorldBehaviour.Instance.SetBlockType(message.block, type, color);
             }
         }
 
@@ -445,7 +465,14 @@ namespace Brickcraft.Network
             if (NetworkServer.active) {
                 return;
             }
-            SavedBrick brick = new SavedBrick() { id = new Guid(message.id), itemId = message.itemId, origin = message.origin, rotation = message.rotation };
+            SavedBrick brick = new SavedBrick() {
+                id = new Guid(message.id),
+                itemId = message.itemId,
+                color = message.color,
+                origin = message.origin,
+                rotation = message.rotation,
+                placer = new Placer() { playerId = message.placedBy, placedAt = message.placedAt },
+            };
             clientChanges.AddBrick(brick);
 
             if (WorldBehaviour.Instance == null || WorldBehaviour.Instance.IsGenerated(WorldChanges.ChunkOfBrick(message.origin))) {
@@ -485,7 +512,7 @@ namespace Brickcraft.Network
                     Debug.LogError("Unknown item " + saved.itemId + " for brick " + id);
                     continue;
                 }
-                Server.Instance.spawnBrick(item, new BrickPlacement(item.brickModel, saved.origin, saved.rotation), id);
+                Server.Instance.spawnBrick(item, saved.color, new BrickPlacement(item.brickModel, saved.origin, saved.rotation), id);
             }
         }
 

@@ -14,8 +14,13 @@ namespace Brickcraft
         public string type = "brick";
         /// <summary>How many fit in one inventory slot.</summary>
         public int maxStack = Item.DefaultMaxStack;
-        /// <summary>Bricks: the model (see Server.setupBrickModels) and material (see Game.brickMaterials).</summary>
+        /// <summary>Bricks: the model (see Server.setupBrickModels).</summary>
         public int brickModel = 3003;
+        /// <summary>Bricks: their default colour, an id of Assets/colors.csv (see BrickColorPalette).</summary>
+        public int? color;
+        /// <summary>Bricks: other colours they can have, "all" or a list of colour ids. Only their default one if missing.</summary>
+        public Newtonsoft.Json.Linq.JToken colors;
+        /// <summary>Bricks: a special material used instead of their colour's (see Game.brickMaterials), like "Water".</summary>
         public string material;
         /// <summary>Bricks: the Unity layer of the placed brick (see Game.Layers), like "Water".</summary>
         public string layer;

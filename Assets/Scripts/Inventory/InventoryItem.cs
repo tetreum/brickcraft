@@ -7,6 +7,8 @@ namespace Brickcraft
     {
         public int slot;
         public string itemId;
+        /// <summary>Its colour (see BrickColorPalette), only stacks of the same colour merge.</summary>
+        public int color;
         public int quantity;
         public int health;
     }
@@ -14,12 +16,16 @@ namespace Brickcraft
     /// <summary>
     /// Inventory rules. Only the server changes inventories, clients get the result synced.
     /// Slots go from 1 to <see cref="SlotCount"/>, the last ones being the fast inventory. An item
-    /// can be in several stacks, each holding up to its Item.maxStack.
+    /// can be in several stacks, each holding up to its Item.maxStack. Stacks are of one item, colour
+    /// and health.
     /// </summary>
     public static class Inventory
     {
         public const int SlotCount = 36;
         public const int FirstFastSlot = 28;
+
+        /// <summary>Counting or removing: any colour of the item (recipes don't care about colours).</summary>
+        public const int AnyColor = int.MinValue;
 
         /// <summary>How many of the item fit in one slot.</summary>
         public static int MaxStack(string itemId) {
@@ -40,31 +46,35 @@ namespace Brickcraft
             return slot >= 1 && slot <= SlotCount && FindSlot(items, slot) == -1;
         }
 
-        private static bool isSame(InventoryItem stack, string itemId, int health) {
-            return stack.itemId == itemId && stack.health == health;
+        private static bool isSame(InventoryItem stack, string itemId, int color, int health) {
+            return stack.itemId == itemId && (color == AnyColor || stack.color == color) && stack.health == health;
+        }
+
+        private static bool isSame(InventoryItem stack, InventoryItem other) {
+            return isSame(stack, other.itemId, other.color, other.health);
         }
 
         /// <summary>How many there are, in all their stacks.</summary>
-        public static int Count(IList<InventoryItem> items, string itemId, int health) {
+        public static int Count(IList<InventoryItem> items, string itemId, int color, int health) {
             int count = 0;
             foreach (InventoryItem stack in items) {
-                if (isSame(stack, itemId, health)) {
+                if (isSame(stack, itemId, color, health)) {
                     count += stack.quantity;
                 }
             }
             return count;
         }
 
-        public static bool Has(IList<InventoryItem> items, string itemId, int quantity, int health) {
-            return Count(items, itemId, health) >= quantity;
+        public static bool Has(IList<InventoryItem> items, string itemId, int color, int quantity, int health) {
+            return Count(items, itemId, color, health) >= quantity;
         }
 
         /// <summary>How many more fit: what's missing in their stacks, plus whole empty slots.</summary>
-        public static int Room(IList<InventoryItem> items, string itemId, int health) {
+        public static int Room(IList<InventoryItem> items, string itemId, int color, int health) {
             int max = MaxStack(itemId);
             int room = 0;
             foreach (InventoryItem stack in items) {
-                if (isSame(stack, itemId, health) && stack.quantity < max) {
+                if (isSame(stack, itemId, color, health) && stack.quantity < max) {
                     room += max - stack.quantity;
                 }
             }
@@ -80,7 +90,7 @@ namespace Brickcraft
         /// Adds them all or none: first filling their stacks, then new ones in free slots (preferring the
         /// fast inventory). With a slot, all of them go there (empty or with room). False if they don't fit.
         /// </summary>
-        public static bool Add(IList<InventoryItem> items, string itemId, int quantity, int health = 0, int slot = 0) {
+        public static bool Add(IList<InventoryItem> items, string itemId, int color, int quantity, int health = 0, int slot = 0) {
             int max = MaxStack(itemId);
 
             if (slot != 0) {
@@ -89,11 +99,11 @@ namespace Brickcraft
                     if (slot < 1 || slot > SlotCount || quantity > max) {
                         return false;
                     }
-                    items.Add(new InventoryItem() { slot = slot, itemId = itemId, quantity = quantity, health = health });
+                    items.Add(new InventoryItem() { slot = slot, itemId = itemId, color = color, quantity = quantity, health = health });
                     return true;
                 }
                 InventoryItem existing = items[stack];
-                if (!isSame(existing, itemId, health) || existing.quantity + quantity > max) {
+                if (!isSame(existing, itemId, color, health) || existing.quantity + quantity > max) {
                     return false;
                 }
                 existing.quantity += quantity;
@@ -101,12 +111,12 @@ namespace Brickcraft
                 return true;
             }
 
-            if (Room(items, itemId, health) < quantity) {
+            if (Room(items, itemId, color, health) < quantity) {
                 return false;
             }
             for (int i = 0; i < items.Count && quantity > 0; i++) {
                 InventoryItem stack = items[i];
-                if (isSame(stack, itemId, health) && stack.quantity < max) {
+                if (isSame(stack, itemId, color, health) && stack.quantity < max) {
                     int added = System.Math.Min(max - stack.quantity, quantity);
                     stack.quantity += added;
                     items[i] = stack;
@@ -115,21 +125,21 @@ namespace Brickcraft
             }
             while (quantity > 0) {
                 int added = System.Math.Min(max, quantity);
-                items.Add(new InventoryItem() { slot = firstFreeSlot(items), itemId = itemId, quantity = added, health = health });
+                items.Add(new InventoryItem() { slot = firstFreeSlot(items), itemId = itemId, color = color, quantity = added, health = health });
                 quantity -= added;
             }
             return true;
         }
 
         /// <summary>Removes them from their stacks (the smallest first), false (and nothing removed) if there aren't enough.</summary>
-        public static bool Remove(IList<InventoryItem> items, string itemId, int quantity, int health = 0) {
-            if (!Has(items, itemId, quantity, health)) {
+        public static bool Remove(IList<InventoryItem> items, string itemId, int color, int quantity, int health = 0) {
+            if (!Has(items, itemId, color, quantity, health)) {
                 return false;
             }
             while (quantity > 0) {
                 int smallest = -1;
                 for (int i = 0; i < items.Count; i++) {
-                    if (isSame(items[i], itemId, health) && (smallest == -1 || items[i].quantity < items[smallest].quantity)) {
+                    if (isSame(items[i], itemId, color, health) && (smallest == -1 || items[i].quantity < items[smallest].quantity)) {
                         smallest = i;
                     }
                 }
@@ -169,7 +179,7 @@ namespace Brickcraft
             int source = FindSlot(items, from);
             int target = FindSlot(items, to);
 
-            if (source == -1 || target == -1 || !isSame(items[target], items[source].itemId, items[source].health)) {
+            if (source == -1 || target == -1 || !isSame(items[target], items[source])) {
                 return Swap(items, from, to);
             }
             if (from == to) {
@@ -202,8 +212,8 @@ namespace Brickcraft
             int target = FindSlot(items, to);
 
             if (target == -1) {
-                items.Add(new InventoryItem() { slot = to, itemId = moved.itemId, quantity = 1, health = moved.health });
-            } else if (isSame(items[target], moved.itemId, moved.health) && items[target].quantity < MaxStack(moved.itemId)) {
+                items.Add(new InventoryItem() { slot = to, itemId = moved.itemId, color = moved.color, quantity = 1, health = moved.health });
+            } else if (isSame(items[target], moved) && items[target].quantity < MaxStack(moved.itemId)) {
                 InventoryItem stack = items[target];
                 stack.quantity++;
                 items[target] = stack;

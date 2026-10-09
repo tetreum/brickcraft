@@ -25,6 +25,8 @@ namespace Brickcraft.World
 			public BlockSide side;
 			public Vector3 offset;
 			public bool translucent;
+			// texture layer of the block's colour, -1 to use the block's own textures
+			public int colorLayer;
 		}
 
 		private List<VisibleSide> visibleSides = new List<VisibleSide>();
@@ -103,6 +105,9 @@ namespace Brickcraft.World
 							continue;
 
 						BlockDefinition definition = BlockDatabase.Get(block);
+						int color = chunk.GetColor(x, sliceIndex * Chunk.SliceHeight + y, z);
+						int colorLayer = color == Bricks.BrickColor.None ? -1 : BlockDatabase.ColorLayer(color);
+						bool translucent = definition.isTranslucent || (colorLayer >= 0 && BlockDatabase.IsTransparentColor(color));
 						Vector3 offset = new Vector3(x * Server.brickWidth, y * Server.brickHeight, z * Server.brickWidth);
 
 						// only sides that can be seen are rendered: the ones touching air, and for
@@ -112,16 +117,16 @@ namespace Brickcraft.World
 							Vector3Int direction = BlockShape.SideDirections[side];
 							byte neighbour = GetNeighbour(chunk, sliceIndex, x + direction.x, y + direction.y, z + direction.z);
 
-							if (neighbour != 0 && (definition.isTranslucent || !BlockDatabase.Get(neighbour).isTranslucent))
+							if (neighbour != 0 && (translucent || !isTranslucent(chunk, sliceIndex, x + direction.x, y + direction.y, z + direction.z, neighbour)))
 								continue;
 
 							BlockShape shape = detailed ? definition.shape : definition.colliderShape;
-							visibleSides.Add(new VisibleSide() { shape = shape, definition = definition, side = (BlockSide)side, offset = offset, translucent = definition.isTranslucent });
+							visibleSides.Add(new VisibleSide() { shape = shape, definition = definition, side = (BlockSide)side, offset = offset, translucent = translucent, colorLayer = colorLayer });
 
 							FaceMap faceMap = shape.GetSide((BlockSide)side);
 							vertexCount += faceMap.vertices.Length;
 							triangleCount += faceMap.triangles.Length;
-							if (definition.isTranslucent)
+							if (translucent)
 								translucentTriangleCount += faceMap.triangles.Length;
 
 							FaceMap colliderFaceMap = definition.colliderShape.GetSide((BlockSide)side);
@@ -187,9 +192,26 @@ namespace Brickcraft.World
 			return chunk.Slices[sliceIndex][x, y, z];
 		}
 
+		// drawn see-through: by its kind (water) or its colour (trans bricks)
+		bool isTranslucent(Chunk chunk, int sliceIndex, int x, int y, int z, byte block)
+		{
+			if (BlockDatabase.Get(block).isTranslucent)
+				return true;
+
+			int worldY = sliceIndex * Chunk.SliceHeight + y;
+			if (worldY < 0 || worldY >= Chunk.NumSlices * Chunk.SliceHeight)
+				return false;
+
+			int color = x < 0 || x > 15 || z < 0 || z > 15
+				? chunk.World.GetBlockColor((chunk.X << 4) + x, worldY, (chunk.Z << 4) + z)
+				: chunk.GetColor(x, worldY, z);
+
+			return color != Bricks.BrickColor.None && BlockDatabase.IsTransparentColor(color);
+		}
+
 		void addBlockSide (ChunkSliceBuildEntry entry, VisibleSide visible, ref int vertex, ref int triangle, ref int colliderVertex, ref int colliderTriangle) {
 			Color32 color = sideColors[(int)visible.side];
-			Vector2 uv = TerrainTextures.LayerToUV(visible.definition.GetTextureLayer(visible.side));
+			Vector2 uv = TerrainTextures.LayerToUV(visible.colorLayer >= 0 ? visible.colorLayer : visible.definition.GetTextureLayer(visible.side));
 
 			FaceMap faceMap = visible.shape.GetSide(visible.side);
 			Vector3[] sideVertices = faceMap.vertices;

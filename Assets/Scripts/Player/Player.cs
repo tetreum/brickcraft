@@ -321,6 +321,7 @@ namespace Brickcraft
             foreach (InventoryItem item in inventory.items) {
                 items.Add(new UserItem() {
                     id = item.itemId,
+                    color = item.color,
                     quantity = item.quantity,
                     health = item.health,
                     slot = item.slot,

@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Brickcraft.Bricks;
 using Brickcraft.World;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace Brickcraft
@@ -32,6 +34,7 @@ namespace Brickcraft
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Load() {
+            BrickColorPalette.Load(); // blocks and items need the colours
             Server.items.Clear();
             Recipes.All.Clear();
             infos.Clear();
@@ -101,6 +104,15 @@ namespace Brickcraft
                 BlockDatabase.RemoveBlock(id);
             }
 
+            if (info.color.HasValue && BrickColorPalette.Get(info.color.Value) == null) {
+                Debug.LogError("Item file " + file + " has the color " + info.color.Value + ", which isn't in colors.csv");
+                return;
+            }
+            if ((info.color.HasValue || info.colors != null) && type != Item.Type.Brick) {
+                Debug.LogError("Item file " + file + " has a color, only bricks can");
+                return;
+            }
+
             string iconPath = iconFor(folder);
             Item item = new Item() {
                 id = id,
@@ -113,14 +125,21 @@ namespace Brickcraft
                 layer = layer,
                 iconFile = iconPath,
                 iconTexture = loadIcon(iconPath),
+                color = info.color ?? BrickColor.None,
             };
+            if (!loadColors(item, info.colors, file)) {
+                return;
+            }
+            if (item.iconTexture == null && item.color != BrickColor.None) {
+                item.iconTexture = colorIcon(BrickColorPalette.Get(item.color));
+            }
 
             // brick items can be a world block too
             if (info.block != null) {
                 if (type != Item.Type.Brick) {
                     Debug.LogError("Item file " + file + " has a block, only bricks can");
                 } else {
-                    BlockDefinition block = BlockDatabase.AddBlock(folder, id, info.block);
+                    BlockDefinition block = BlockDatabase.AddBlock(folder, id, info.block, item.color);
                     if (block != null) {
                         item.blockType = (BlockType)block.id;
                     }
@@ -129,6 +148,33 @@ namespace Brickcraft
 
             Server.items[id] = item;
             infos[id] = info;
+        }
+
+        // "colors": "all", or a list of colour ids
+        private static bool loadColors(Item item, JToken colors, string file) {
+            if (colors == null || colors.Type == JTokenType.Null) {
+                return true;
+            }
+            if (item.color == BrickColor.None) {
+                Debug.LogError("Item file " + file + " has colors but no default color");
+                return false;
+            }
+            if (colors.Type == JTokenType.String && (string)colors == "all") {
+                item.anyColor = true;
+                return true;
+            }
+            if (colors.Type != JTokenType.Array) {
+                Debug.LogError("Item file " + file + " has invalid colors, they're \"all\" or a list of colour ids");
+                return false;
+            }
+            foreach (JToken color in colors) {
+                if (color.Type != JTokenType.Integer || BrickColorPalette.Get((int)color) == null) {
+                    Debug.LogError("Item file " + file + " has the color " + color + ", which isn't in colors.csv");
+                    return false;
+                }
+                item.colors.Add((int)color);
+            }
+            return true;
         }
 
         // once every item is known, so recipes can use any of them
@@ -194,6 +240,27 @@ namespace Brickcraft
                 }
             }
             return Path.Combine(folder, IconFile);
+        }
+
+        // items without an icon nor textures: a square of their colour
+        private static Texture2D colorIcon(BrickColor color) {
+            const int size = 16;
+            Texture2D icon = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            icon.name = color.name;
+            icon.filterMode = FilterMode.Point;
+
+            Color32 fill = color.Color32;
+            Color32 border = new Color32((byte)(fill.r * 0.7f), (byte)(fill.g * 0.7f), (byte)(fill.b * 0.7f), 255);
+            Color32[] pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    bool edge = x == 0 || y == 0 || x == size - 1 || y == size - 1;
+                    pixels[y * size + x] = edge ? border : fill;
+                }
+            }
+            icon.SetPixels32(pixels);
+            icon.Apply();
+            return icon;
         }
 
         private static Texture2D loadIcon(string path) {

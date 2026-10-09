@@ -3,7 +3,7 @@
     "name": "Wood Planks 2x2",
     "type": "brick",
     "brickModel": 3003,
-    "material": "MediumNougat",
+    "color": 84,
     "block": {
         "hardness": 2,
         "drop": "wood"

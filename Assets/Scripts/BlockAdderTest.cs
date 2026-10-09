@@ -15,7 +15,7 @@ public class BlockAdderTest : MonoBehaviour
         PlayerInventory inventory = other.GetComponentInParent<PlayerInventory>();
 
         if (inventory != null) {
-            inventory.ServerAdd(item, 100);
+            inventory.ServerAdd(item, Brickcraft.Server.items[item].color, 100);
         }
     }
 }

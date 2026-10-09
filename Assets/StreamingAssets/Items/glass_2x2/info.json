@@ -3,5 +3,6 @@
     "name": "Glass 2x2",
     "type": "brick",
     "brickModel": 3003,
-    "material": "TransparentBlue"
+    "color": 41,
+    "colors": "all"
 }

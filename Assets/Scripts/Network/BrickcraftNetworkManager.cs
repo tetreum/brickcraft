@@ -1,5 +1,6 @@
 using System.Collections;
 using System.IO;
+using Brickcraft.Bricks;
 using Brickcraft.World;
 using Mirror;
 using UnityEngine;
@@ -243,7 +244,7 @@ namespace Brickcraft.Network
 
             if (record.TimesJoined == 1 && inventory.items.Count == 0) {
                 foreach (StarterItem starter in starterItems) {
-                    inventory.ServerAdd(starter.itemId, starter.quantity);
+                    inventory.ServerAdd(starter.itemId, Server.items.TryGetValue(starter.itemId, out Item item) ? item.color : BrickColor.None, starter.quantity);
                 }
             }
         }

@@ -3,5 +3,6 @@
     "name": "A brick",
     "type": "brick",
     "brickModel": 22885,
-    "material": "BrightGreen"
+    "color": 10,
+    "colors": "all"
 }

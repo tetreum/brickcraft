@@ -7,6 +7,19 @@ using UnityEngine;
 
 namespace Brickcraft.World
 {
+    /// <summary>Who placed a block or brick and when.</summary>
+    public struct Placer
+    {
+        /// <summary>The player's id in players.db, 0 when no player placed it (the test scene).</summary>
+        public int playerId;
+        /// <summary>Unix time, in seconds.</summary>
+        public long placedAt;
+
+        public static Placer Now(int playerId) {
+            return new Placer() { playerId = playerId, placedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds() };
+        }
+    }
+
     /// <summary>A brick placed by a player, as stored in a save or sent to joining clients.</summary>
     public struct SavedBrick
     {
@@ -15,15 +28,23 @@ namespace Brickcraft.World
         public string itemId;
         public Vector3Int origin;
         public byte rotation;
+        /// <summary>Its colour, see BrickColorPalette.</summary>
+        public int color;
+        public Placer placer;
     }
 
     /// <summary>
     /// What players changed in a chunk since it was generated: blocks (by their index inside the
     /// chunk, see <see cref="BlockIndex"/>) and bricks (whose origin cell is in the chunk).
+    /// Placed blocks also know who placed them, dug ones (air) don't.
     /// </summary>
     public class ChunkChanges
     {
         public readonly Dictionary<ushort, byte> blocks = new Dictionary<ushort, byte>();
+        /// <summary>Who placed the blocks players placed, by block index.</summary>
+        public readonly Dictionary<ushort, Placer> placers = new Dictionary<ushort, Placer>();
+        /// <summary>Colours of the blocks placed with one (drawn with it instead of their texture), by block index.</summary>
+        public readonly Dictionary<ushort, int> colors = new Dictionary<ushort, int>();
         public readonly Dictionary<Guid, SavedBrick> bricks = new Dictionary<Guid, SavedBrick>();
 
         public bool IsEmpty {
@@ -68,11 +89,34 @@ namespace Brickcraft.World
             }
         }
 
-        public void SetBlock(Vector3Int block, BlockType type) {
+        /// <summary>Changes a block, placer is who placed it (null when it was dug), color its colour (BrickColor.None for its texture).</summary>
+        public void SetBlock(Vector3Int block, BlockType type, Placer? placer, int color = Bricks.BrickColor.None) {
             lock (sync) {
                 Vector2Int coords = ChunkOfBlock(block);
-                getOrCreate(coords).blocks[ChunkChanges.BlockIndex(block.x & 0xF, block.y, block.z & 0xF)] = (byte)type;
+                ChunkChanges changes = getOrCreate(coords);
+                ushort index = ChunkChanges.BlockIndex(block.x & 0xF, block.y, block.z & 0xF);
+
+                changes.blocks[index] = (byte)type;
+                if (placer.HasValue) {
+                    changes.placers[index] = placer.Value;
+                } else {
+                    changes.placers.Remove(index);
+                }
+                if (color != Bricks.BrickColor.None) {
+                    changes.colors[index] = color;
+                } else {
+                    changes.colors.Remove(index);
+                }
                 dirtyChunks.Add(coords);
+            }
+        }
+
+        /// <summary>Who placed a block, false when no one did (it was generated, or dug).</summary>
+        public bool TryGetPlacer(Vector3Int block, out Placer placer) {
+            lock (sync) {
+                placer = default(Placer);
+                return chunks.TryGetValue(ChunkOfBlock(block), out ChunkChanges changes)
+                    && changes.placers.TryGetValue(ChunkChanges.BlockIndex(block.x & 0xF, block.y, block.z & 0xF), out placer);
             }
         }
 
@@ -101,6 +145,14 @@ namespace Brickcraft.World
 
                 foreach (KeyValuePair<ushort, byte> block in loaded.blocks) {
                     changes.blocks[block.Key] = block.Value;
+                    changes.placers.Remove(block.Key);
+                    changes.colors.Remove(block.Key);
+                }
+                foreach (KeyValuePair<ushort, Placer> placer in loaded.placers) {
+                    changes.placers[placer.Key] = placer.Value;
+                }
+                foreach (KeyValuePair<ushort, int> color in loaded.colors) {
+                    changes.colors[color.Key] = color.Value;
                 }
                 foreach (KeyValuePair<Guid, SavedBrick> brick in loaded.bricks) {
                     changes.bricks[brick.Key] = brick.Value;
@@ -117,6 +169,7 @@ namespace Brickcraft.World
                 foreach (KeyValuePair<ushort, byte> block in changes.blocks) {
                     Vector3Int local = ChunkChanges.BlockFromIndex(block.Key);
                     chunk.SetType(local.x, local.y, local.z, (BlockType)block.Value, false);
+                    chunk.SetColor(local.x, local.y, local.z, changes.colors.TryGetValue(block.Key, out int color) ? color : Bricks.BrickColor.None);
                 }
             }
         }
@@ -193,22 +246,25 @@ namespace Brickcraft.World
     /// Deflate compressed:
     ///   u8 version
     ///   varint block name count, then the names (length prefixed UTF-8 slugs) of the blocks used below
-    ///   varint block count, then per block: varint index delta (sorted), varint position of its name in that list
-    ///   varint brick count, then per brick: 16 bytes id, string item (length prefixed UTF-8 slug), zigzag varint x y z, u8 rotation
+    ///   varint block count, then per block: varint index delta (sorted), varint position of its name in that list,
+    ///     zigzag varint colour (-1 for none, see BrickColorPalette), placer
+    ///   varint brick count, then per brick: 16 bytes id, string item (length prefixed UTF-8 slug), zigzag varint colour,
+    ///     zigzag varint x y z, u8 rotation, placer
+    /// where placer is a varint player id (0 when no player placed it) followed, when not 0, by varint unix seconds.
     /// Blocks are saved by name, the numbers chunks use are only valid in the game that gave them (see
     /// BlockDatabase).
     /// </summary>
     public static class ChunkChangesSerializer
     {
         // change it when the format changes, records of other versions are rejected
-        public const byte Version = 3;
+        public const byte Version = 5;
 
         // pages keep network messages small, even for heavily modified chunks
         private const int BlocksPerPage = 8192;
         private const int BricksPerPage = 512;
 
         public static byte[] Serialize(ChunkChanges changes) {
-            return serialize(new List<KeyValuePair<ushort, byte>>(changes.blocks), new List<SavedBrick>(changes.bricks.Values));
+            return serialize(new List<KeyValuePair<ushort, byte>>(changes.blocks), changes, new List<SavedBrick>(changes.bricks.Values));
         }
 
         public static List<byte[]> SerializePages(ChunkChanges changes) {
@@ -219,6 +275,7 @@ namespace Brickcraft.World
             for (int b = 0, k = 0; b < blocks.Count || k < bricks.Count || pages.Count == 0; b += BlocksPerPage, k += BricksPerPage) {
                 pages.Add(serialize(
                     blocks.GetRange(Math.Min(b, blocks.Count), Math.Max(0, Math.Min(BlocksPerPage, blocks.Count - b))),
+                    changes,
                     bricks.GetRange(Math.Min(k, bricks.Count), Math.Max(0, Math.Min(BricksPerPage, bricks.Count - k)))
                 ));
             }
@@ -247,6 +304,19 @@ namespace Brickcraft.World
                 for (int i = 0; i < blockCount; i++) {
                     index += (int)readVarUInt(reader);
                     changes.blocks[(ushort)index] = numbers[(int)readVarUInt(reader)];
+
+                    int color = readVarInt(reader);
+                    if (color != Bricks.BrickColor.None) {
+                        // a colour removed from colors.csv: the block's own texture
+                        if (Bricks.BrickColorPalette.Get(color) != null) {
+                            changes.colors[(ushort)index] = color;
+                        }
+                    }
+
+                    Placer? placer = readPlacer(reader);
+                    if (placer.HasValue) {
+                        changes.placers[(ushort)index] = placer.Value;
+                    }
                 }
 
                 int brickCount = (int)readVarUInt(reader);
@@ -254,16 +324,22 @@ namespace Brickcraft.World
                     SavedBrick brick = new SavedBrick() {
                         id = new Guid(reader.ReadBytes(16)),
                         itemId = reader.ReadString(),
+                        color = readVarInt(reader),
                         origin = new Vector3Int(readVarInt(reader), readVarInt(reader), readVarInt(reader)),
                         rotation = reader.ReadByte(),
+                        placer = readPlacer(reader) ?? default(Placer),
                     };
+                    // a colour removed from colors.csv (or the item no longer has it): its item's default one
+                    if (Server.items.TryGetValue(brick.itemId, out Item item)) {
+                        brick.color = item.ValidColor(brick.color);
+                    }
                     changes.bricks[brick.id] = brick;
                 }
             }
             return changes;
         }
 
-        private static byte[] serialize(List<KeyValuePair<ushort, byte>> blocks, List<SavedBrick> bricks) {
+        private static byte[] serialize(List<KeyValuePair<ushort, byte>> blocks, ChunkChanges changes, List<SavedBrick> bricks) {
             blocks.Sort((a, b) => a.Key.CompareTo(b.Key));
 
             using (MemoryStream output = new MemoryStream()) {
@@ -290,6 +366,8 @@ namespace Brickcraft.World
                     foreach (KeyValuePair<ushort, byte> block in blocks) {
                         writeVarUInt(writer, (uint)(block.Key - previous));
                         writeVarUInt(writer, (uint)nameIndexes[block.Value]);
+                        writeVarInt(writer, changes.colors.TryGetValue(block.Key, out int color) ? color : Bricks.BrickColor.None);
+                        writePlacer(writer, changes.placers.TryGetValue(block.Key, out Placer placer) ? placer : default(Placer));
                         previous = block.Key;
                     }
 
@@ -297,14 +375,55 @@ namespace Brickcraft.World
                     foreach (SavedBrick brick in bricks) {
                         writer.Write(brick.id.ToByteArray());
                         writer.Write(brick.itemId);
+                        writeVarInt(writer, brick.color);
                         writeVarInt(writer, brick.origin.x);
                         writeVarInt(writer, brick.origin.y);
                         writeVarInt(writer, brick.origin.z);
                         writer.Write(brick.rotation);
+                        writePlacer(writer, brick.placer);
                     }
                 }
                 return output.ToArray();
             }
+        }
+
+        private static void writePlacer(BinaryWriter writer, Placer placer) {
+            writeVarUInt(writer, (uint)placer.playerId);
+            if (placer.playerId != 0) {
+                writeVarULong(writer, (ulong)placer.placedAt);
+            }
+        }
+
+        private static Placer? readPlacer(BinaryReader reader) {
+            int playerId = (int)readVarUInt(reader);
+            if (playerId == 0) {
+                return null;
+            }
+            return new Placer() { playerId = playerId, placedAt = (long)readVarULong(reader) };
+        }
+
+        private static void writeVarULong(BinaryWriter writer, ulong value) {
+            while (value >= 0x80) {
+                writer.Write((byte)(value | 0x80));
+                value >>= 7;
+            }
+            writer.Write((byte)value);
+        }
+
+        private static ulong readVarULong(BinaryReader reader) {
+            ulong value = 0;
+            int shift = 0;
+            byte b;
+            do {
+                if (shift > 63) {
+                    throw new InvalidDataException("Invalid varint");
+                }
+                b = reader.ReadByte();
+                value |= (ulong)(b & 0x7F) << shift;
+                shift += 7;
+            } while ((b & 0x80) != 0);
+
+            return value;
         }
 
         private static void writeVarUInt(BinaryWriter writer, uint value) {

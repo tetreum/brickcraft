@@ -3,7 +3,7 @@
     "name": "Sand 2x2",
     "type": "brick",
     "brickModel": 3003,
-    "material": "BrickYellow",
+    "color": 19,
     "block": {
         "hardness": 1
     }

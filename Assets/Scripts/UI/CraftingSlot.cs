@@ -89,8 +89,10 @@ namespace Brickcraft.UI
             if (show) {
                 quantity.text = currentItem.quantity.ToString();
                 rawImage.texture = currentItem.item.icon;
+                ItemColorSwatch.Set(rawImage, currentItem.item, currentItem.color);
             } else {
                 currentItem = null;
+                ItemColorSwatch.Set(rawImage, null, 0);
             }
 
             quantity.gameObject.SetActive(show);

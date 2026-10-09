@@ -108,6 +108,7 @@ namespace Brickcraft.UI
                 }
                 slot.setVisible(true);
                 slot.GetComponent<RawImage>().texture = inventory[slotId].item.icon;
+                ItemColorSwatch.Set(slot.GetComponent<RawImage>(), inventory[slotId].item, inventory[slotId].color);
                 slot.quantity.text = inventory[slotId].quantity.ToString();
             }
 

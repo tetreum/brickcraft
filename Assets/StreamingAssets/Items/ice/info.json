@@ -3,7 +3,7 @@
     "name": "Ice 2x2",
     "type": "brick",
     "brickModel": 3003,
-    "material": "Aqua",
+    "color": 118,
     "block": {
         "hardness": 3
     }

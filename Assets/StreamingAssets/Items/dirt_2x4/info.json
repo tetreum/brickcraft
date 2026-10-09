@@ -3,7 +3,7 @@
     "name": "Dirt 2x4",
     "type": "brick",
     "brickModel": 3001,
-    "material": "MediumNougat",
+    "color": 84,
     "recipes": [
         {
             "quantity": 1,

@@ -56,12 +56,12 @@ namespace Brickcraft
 
         void setupTest() {
             // a few loose bricks
-            spawnBrick(items["dirt"], new BrickPlacement(items["dirt"].brickModel, new Vector3Int(8, 18, -12)));
-            spawnBrick(items["dirt"], new BrickPlacement(items["dirt"].brickModel, new Vector3Int(4, 0, -12)));
-            spawnBrick(items["plate_2x2_yellow"], new BrickPlacement(items["plate_2x2_yellow"].brickModel, new Vector3Int(6, 0, -10)));
-            spawnBrick(items["plate_1x1_green"], new BrickPlacement(items["plate_1x1_green"].brickModel, new Vector3Int(0, 0, -11)));
-            spawnBrick(items["brick_1x2_side_studs_green"], new BrickPlacement(items["brick_1x2_side_studs_green"].brickModel, new Vector3Int(-3, 0, -11)));
-            spawnBrick(items["dirt_2x4"], new BrickPlacement(items["dirt_2x4"].brickModel, new Vector3Int(-8, 0, -11)));
+            spawnBrick(items["dirt"], items["dirt"].color, new BrickPlacement(items["dirt"].brickModel, new Vector3Int(8, 18, -12)));
+            spawnBrick(items["dirt"], items["dirt"].color, new BrickPlacement(items["dirt"].brickModel, new Vector3Int(4, 0, -12)));
+            spawnBrick(items["plate_2x2_yellow"], items["plate_2x2_yellow"].color, new BrickPlacement(items["plate_2x2_yellow"].brickModel, new Vector3Int(6, 0, -10)));
+            spawnBrick(items["plate_1x1_green"], items["plate_1x1_green"].color, new BrickPlacement(items["plate_1x1_green"].brickModel, new Vector3Int(0, 0, -11)));
+            spawnBrick(items["brick_1x2_side_studs_green"], items["brick_1x2_side_studs_green"].color, new BrickPlacement(items["brick_1x2_side_studs_green"].brickModel, new Vector3Int(-3, 0, -11)));
+            spawnBrick(items["dirt_2x4"], items["dirt_2x4"].color, new BrickPlacement(items["dirt_2x4"].brickModel, new Vector3Int(-8, 0, -11)));
 
             fillWithBricks(items["dirt_48x48"], new Vector3Int(-150, 0, -100), new Vector3Int(3, 1, 5));
 
@@ -84,7 +84,7 @@ namespace Brickcraft
                 for (int y = 0; y < brickCount.y; y++) {
                     for (int z = 0; z < brickCount.z; z++) {
                         Vector3Int cell = originCell + Vector3Int.Scale(new Vector3Int(x, y, z), size);
-                        spawnBrick(item, new BrickPlacement(item.brickModel, cell));
+                        spawnBrick(item, item.color, new BrickPlacement(item.brickModel, cell));
                     }
                 }
             }
@@ -104,7 +104,7 @@ namespace Brickcraft
                     continue;
                 }
                 cell.x -= 5;
-                brick = spawnBrick(item, new BrickPlacement(item.brickModel, cell));
+                brick = spawnBrick(item, item.color, new BrickPlacement(item.brickModel, cell));
                 brick.gameObject.layer = (int)Game.Layers.Default;
                 boxCollider = brick.gameObject.GetComponent<BoxCollider>();
                 boxCollider.isTrigger = true;
@@ -117,10 +117,10 @@ namespace Brickcraft
         /// <summary>
         /// Creates the GameObject of an item's brick without registering it in the world.
         /// </summary>
-        public GameObject createBrickObject(Item item, Vector3 position, Quaternion rotation) {
+        public GameObject createBrickObject(Item item, int color, Vector3 position, Quaternion rotation) {
             GameObject prefab = brickPrefabs[item.brickModelId.ToString()];
             GameObject brickObj = Instantiate(prefab, position, rotation * prefab.transform.rotation);
-            Material brickMaterial = item.material;
+            Material brickMaterial = item.MaterialFor(color);
 
             // legacy stud colliders, placement is computed from the brick grid now
             foreach (Transform child in brickObj.transform) {
@@ -150,12 +150,14 @@ namespace Brickcraft
         /// Adds a brick to this game instance. In a networked game use Network.WorldNetwork instead,
         /// which calls this on the server and every client.
         /// </summary>
-        public Brick spawnBrick(Item item, BrickPlacement placement, string id = null) {
-            GameObject brickObj = createBrickObject(item, placement.Position, placement.Rotation);
+        public Brick spawnBrick(Item item, int color, BrickPlacement placement, string id = null) {
+            color = item.ValidColor(color);
+            GameObject brickObj = createBrickObject(item, color, placement.Position, placement.Rotation);
 
             Brick brick = new Brick();
             brick.id = id ?? System.Guid.NewGuid().ToString();
             brick.itemId = item.id;
+            brick.color = color;
             brick.gameObject = brickObj;
             brick.placement = placement;
 

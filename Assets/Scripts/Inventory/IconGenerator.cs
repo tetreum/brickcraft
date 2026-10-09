@@ -56,7 +56,7 @@ namespace Brickcraft
                 cam.backgroundColorHDR = greenChroma;
             }
 
-            GameObject obj = Server.Instance.createBrickObject(item, Vector3.zero, Quaternion.identity);
+            GameObject obj = Server.Instance.createBrickObject(item, item.color, Vector3.zero, Quaternion.identity);
             MeshRenderer objRenderer = obj.GetComponent<MeshRenderer>();
             Camera.main.transform.rotation = cameraRotation;
 

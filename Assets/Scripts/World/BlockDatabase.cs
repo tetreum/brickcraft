@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using Brickcraft.Bricks;
 using UnityEngine;
 
 namespace Brickcraft.World
@@ -127,10 +128,39 @@ namespace Brickcraft.World
             definitions[(byte)BlockType.NULL] = createBuiltIn(BlockType.NULL, "void"); // outside the generated world
 
             textures = new TerrainTextures();
+
+            // a plain layer per brick colour, for blocks placed with a colour
+            Dictionary<int, int> layers = new Dictionary<int, int>();
+            HashSet<int> transparent = new HashSet<int>();
+            foreach (BrickColor color in BrickColorPalette.All) {
+                layers[color.id] = textures.AddSolid(color.Color32);
+                if (color.isTransparent) {
+                    transparent.Add(color.id);
+                }
+            }
+            colorLayers = layers;
+            transparentColors = transparent;
         }
 
-        /// <summary>The block of a brick item, named after it. Null (and logged) if it can't be added.</summary>
-        public static BlockDefinition AddBlock(string folder, string name, BlockInfo info) {
+        private static Dictionary<int, int> colorLayers = new Dictionary<int, int>();
+        private static HashSet<int> transparentColors = new HashSet<int>();
+
+        /// <summary>The texture layer of a brick colour, -1 if it isn't one (safe from any thread).</summary>
+        public static int ColorLayer(int colorId) {
+            int layer;
+            return colorLayers.TryGetValue(colorId, out layer) ? layer : -1;
+        }
+
+        /// <summary>See-through colours, whose blocks are drawn like water (safe from any thread).</summary>
+        public static bool IsTransparentColor(int colorId) {
+            return transparentColors.Contains(colorId);
+        }
+
+        /// <summary>
+        /// The block of a brick item, named after it. Null (and logged) if it can't be added. Blocks
+        /// without textures are drawn with their item's colour.
+        /// </summary>
+        public static BlockDefinition AddBlock(string folder, string name, BlockInfo info, int color = BrickColor.None) {
             if (info.hardness < 0) {
                 Debug.LogError("The block of " + name + " has a negative hardness, use \"breakable\": false instead");
                 return null;
@@ -153,7 +183,7 @@ namespace Brickcraft.World
                 itemId = name,
                 dropItemId = string.IsNullOrEmpty(info.drop) ? name : info.drop,
             };
-            loadTextures(definition, textures);
+            loadTextures(definition, textures, ColorLayer(color));
             loadShapes(definition);
 
             definitions[id] = definition;
@@ -179,9 +209,9 @@ namespace Brickcraft.World
             textures = null;
         }
 
-        private static void loadTextures(BlockDefinition definition, TerrainTextures textures) {
+        private static void loadTextures(BlockDefinition definition, TerrainTextures textures, int colorLayer) {
             string all = Path.Combine(definition.folder, TextureFile);
-            int allLayer = File.Exists(all) ? textures.Add(all) : TerrainTextures.MissingLayer;
+            int allLayer = File.Exists(all) ? textures.Add(all) : (colorLayer >= 0 ? colorLayer : TerrainTextures.MissingLayer);
 
             definition.topTextureLayer = loadSideTexture(definition.folder, "top.png", allLayer, textures);
             definition.sideTextureLayer = loadSideTexture(definition.folder, "side.png", allLayer, textures);

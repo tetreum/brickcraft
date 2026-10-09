@@ -224,7 +224,32 @@ function onHit(brick, player)
 end
 ```
 
-A `brick` has `item` (its id), `position` (`x`, `y`, `z` in grid cells: studs sideways, plates up; a world block is 2 x 3 x 2 cells), `color`, `rotation`, `isBlock` (part of the terrain, not a loose brick), `placedBy` (the player's id, 0 if no player placed it), `placedAt` (unix seconds) and `exists`. A `player` has `id`, `name`, `position` and `player:message(text)`. `log(...)` and `print(...)` write to the server log, prefixed with the mod's id.
+A `brick` has `item` (its id), `position` (`x`, `y`, `z` in grid cells: studs sideways, plates up; a world block is 2 x 3 x 2 cells), `color`, `rotation`, `isBlock` (part of the terrain, not a loose brick), `placedBy` (the player's id, 0 if no player placed it), `placedAt` (unix seconds) and `exists`. A `player` has `id`, `name`, `position`, `player:message(text)` and `player:give(item, count, color)` (false if it doesn't fit). `log(...)` and `print(...)` write to the server log, prefixed with the mod's id.
+
+What scripts can do with the world (changes need its part of the world loaded, and reach the players and the save like players' changes):
+
+- `world.spawn(item, position, {rotation = 0-3, color = id})`: places a loose brick, returns it (nil if it doesn't fit).
+- `brick:move(position)`: moves a brick (or a world block to another block's place); false if there's no room. `brick:remove()` takes it away, nobody gets it.
+- `world.brickAt(position)`: the brick or world block in that cell, nil if empty. `world.getBlock(position)` is the item of the world block there (nil for air), `world.setBlock(position, item, color)` changes it (`item` nil for air).
+- `world.bricksIn(from, to)`: the loose bricks whose first cell is in the box. `world.players()`: everyone in the game. `world.isLoaded(position)`.
+- `timer.after(seconds, fn)` and `timer.every(seconds, fn)` return an id for `timer.cancel(id)`; up to 256 per mod, repeating ones every 0.05 s at most.
+
+```lua
+-- a brick that, when used, launches a plate up into the air
+function onInteract(brick, player)
+  local p = brick.position
+  local plate = world.spawn("plate_1x1_green", {x = p.x, y = p.y + 3, z = p.z}, {color = 4})
+  if not plate then return end
+  local id
+  id = timer.every(0.1, function()
+    local q = plate.position
+    if not plate:move({x = q.x, y = q.y + 1, z = q.z}) or q.y > p.y + 30 then
+      plate:remove()
+      timer.cancel(id)
+    end
+  end)
+end
+```
 
 Each file has its own globals, so two items can both define `onPlaced`; the table `shared` is the same for all the mod's scripts. Each mod has its own Lua state and only gets `string`, `table`, `math`, `bit32`, coroutines, metatables, error handling and `os.time`/`os.clock`/`os.date`: no files, no loading code. A call that runs more than a million instructions is stopped, and a handler that fails 5 times is turned off; errors are logged with the file and line and never stop the game.
 

@@ -144,6 +144,33 @@ namespace Brickcraft.Network
             return serverChanges != null && serverChanges.TryGetBrick(new Guid(brick.id), brick.placement.origin, out SavedBrick saved) ? saved.placer : default(Placer);
         }
 
+        /// <summary>
+        /// Moves a brick (it keeps its id, colour and placer). Players see it removed and placed again,
+        /// so those that only have one of the two chunks get the right half. False if it doesn't fit there.
+        /// </summary>
+        public static bool ServerMoveBrick(Brick brick, BrickPlacement to) {
+            Placer placer = ServerPlacerOf(brick);
+            Vector3Int from = brick.placement.origin;
+
+            if (!Server.Instance.moveBrick(brick, to)) {
+                return false;
+            }
+            serverChanges.RemoveBrick(new Guid(brick.id), from);
+            sendToChunk(WorldChanges.ChunkOfBrick(from), new BrickRemovedMessage() { id = brick.id, origin = from });
+
+            serverChanges.AddBrick(toSaved(brick, placer));
+            sendToChunk(WorldChanges.ChunkOfBrick(to.origin), new BrickPlacedMessage() {
+                id = brick.id,
+                itemId = brick.itemId,
+                color = brick.color,
+                origin = to.origin,
+                rotation = (byte)to.rotation,
+                placedBy = placer.playerId,
+                placedAt = placer.placedAt,
+            });
+            return true;
+        }
+
         public static void ServerRemoveBrick(Brick brick) {
             Server.Instance.removeBrick(brick);
             serverChanges.RemoveBrick(new Guid(brick.id), brick.placement.origin);

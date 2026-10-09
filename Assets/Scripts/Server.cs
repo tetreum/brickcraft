@@ -169,6 +169,21 @@ namespace Brickcraft
             return brick;
         }
 
+        /// <summary>Moves a brick of this game instance, false (and it stays) if the cells there aren't free.</summary>
+        public bool moveBrick(Brick brick, BrickPlacement to) {
+            BrickGrid.Unregister(brick);
+            if (!BrickGrid.IsFree(to)) {
+                BrickGrid.Register(brick);
+                return false;
+            }
+            // the prefab's own rotation stays under the placement's
+            Quaternion prefabRotation = Quaternion.Inverse(brick.placement.Rotation) * brick.gameObject.transform.rotation;
+            brick.placement = to;
+            brick.gameObject.transform.SetPositionAndRotation(to.Position, to.Rotation * prefabRotation);
+            BrickGrid.Register(brick);
+            return true;
+        }
+
         public void removeBrick(Brick brick) {
             bricks.Remove(brick.id);
             BrickGrid.Unregister(brick);

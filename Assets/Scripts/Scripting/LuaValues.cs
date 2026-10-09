@@ -92,6 +92,53 @@ namespace Brickcraft.Scripting
             return (isBlock ? "block " : "brick ") + item + " at " + position;
         }
 
+        /// <summary>
+        /// Moves it (bricks anywhere their cells are free, blocks to another block's place that's free).
+        /// False if it can't: not there anymore, no room, or that part of the world isn't loaded.
+        /// </summary>
+        public bool move(DynValue to) {
+            Vector3Int target = LuaVector.Read(to, "move's position");
+            if (!exists || !LuaApi.IsLoaded(target)) {
+                return false;
+            }
+            if (!isBlock) {
+                Brick brick = Server.bricks[brickId];
+                if (!WorldNetwork.ServerMoveBrick(brick, new BrickPlacement(brick.model, target, brick.placement.rotation))) {
+                    return false;
+                }
+                cell = target;
+                return true;
+            }
+            Vector3Int from = BrickGrid.CellToBlock(cell);
+            Vector3Int block = BrickGrid.CellToBlock(target);
+            BlockType type = WorldBehaviour.Instance.GetBlockType(from);
+            if (block == from || !BlockDatabase.Get(WorldBehaviour.Instance.GetBlockType(block)).isReplaceable || !BrickGrid.IsFree(blockCells(block))) {
+                return false;
+            }
+            Placer placer = WorldNetwork.ServerPlacerOf(from);
+            WorldNetwork.ServerSetBlock(from, BlockType.Air, null);
+            WorldNetwork.ServerSetBlock(block, type, placer.playerId != 0 ? placer : (Placer?)null, color);
+            cell = BrickGrid.BlockToCell(block);
+            return true;
+        }
+
+        /// <summary>Takes it out of the world (nobody gets it). False if it wasn't there anymore.</summary>
+        public bool remove() {
+            if (!exists) {
+                return false;
+            }
+            if (isBlock) {
+                return WorldNetwork.ServerSetBlock(BrickGrid.CellToBlock(cell), BlockType.Air, null);
+            }
+            WorldNetwork.ServerRemoveBrick(Server.bricks[brickId]);
+            return true;
+        }
+
+        // the cells of a world block, to check no loose brick is in the way
+        private static BrickPlacement blockCells(Vector3Int block) {
+            return new BrickPlacement(Server.brickModels[3003], BrickGrid.BlockToCell(block));
+        }
+
         [MoonSharpHidden]
         public static BrickHandle ForBrick(Brick brick, Placer placer) {
             return new BrickHandle() {
@@ -136,6 +183,19 @@ namespace Brickcraft.Scripting
                 }
                 return new LuaVector(BrickGrid.WorldToCell(connection.identity.transform.position));
             }
+        }
+
+        /// <summary>Gives it items (in the item's default colour, or the given one). False if they don't fit.</summary>
+        public bool give(string itemId, int count = 1, int color = BrickColor.None) {
+            Item item = LuaApi.ItemOf(itemId);
+            if (count < 1) {
+                throw new ScriptRuntimeException("give's count should be at least 1");
+            }
+            if (color != BrickColor.None && !item.AllowsColor(color)) {
+                throw new ScriptRuntimeException(item.id + " can't have the colour " + color);
+            }
+            PlayerInventory inventory = connection != null && connection.identity != null ? connection.identity.GetComponent<PlayerInventory>() : null;
+            return inventory != null && inventory.ServerAdd(item.id, color == BrickColor.None ? item.color : color, count);
         }
 
         /// <summary>Shows a message in its chat.</summary>

@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Collections.Generic;
+using Brickcraft.Mods;
 using Mirror;
 using UnityEngine;
 
@@ -10,12 +12,16 @@ namespace Brickcraft.Network
         public string version;
         public string name;
         public string machineId;
+        /// <summary>The mods the player has installed, the server checks it has the world's.</summary>
+        public ModEntry[] mods;
     }
 
     public struct AuthResponseMessage : NetworkMessage
     {
         public bool accepted;
         public string message;
+        /// <summary>Accepted: the mods to play with, the world's.</summary>
+        public ModEntry[] mods;
     }
 
     /// <summary>A player that passed authentication, stored in the connection's authenticationData.</summary>
@@ -33,6 +39,8 @@ namespace Brickcraft.Network
     /// <summary>
     /// Identifies players by name + machine id (see <see cref="PlayerIdentity"/>). A new name is
     /// registered to the machine that first uses it; afterwards only that machine can play with it.
+    /// Players also need the game's version and the world's mods (see ModDatabase.CheckPlayerMods),
+    /// which they load once accepted.
     /// </summary>
     public class BrickcraftAuthenticator : NetworkAuthenticator
     {
@@ -57,7 +65,7 @@ namespace Brickcraft.Network
             GameDatabase database = BrickcraftNetworkManager.Instance.Database;
             string error = request.version != GameVersion.Current
                 ? "The server runs version " + GameVersion.Current + ", you have " + (string.IsNullOrEmpty(request.version) ? "an unknown version" : request.version)
-                : PlayerIdentity.ValidateName(request.name);
+                : ModDatabase.CheckPlayerMods(request.mods) ?? PlayerIdentity.ValidateName(request.name);
             PlayerRecord player = null;
 
             if (error == null) {
@@ -99,7 +107,7 @@ namespace Brickcraft.Network
                 session = database.StartSession(player, conn.address),
             };
 
-            conn.Send(new AuthResponseMessage() { accepted = true });
+            conn.Send(new AuthResponseMessage() { accepted = true, mods = ModDatabase.ActiveEntries() });
             ServerAccept(conn);
         }
 
@@ -135,11 +143,20 @@ namespace Brickcraft.Network
                 version = GameVersion.Current,
                 name = PlayerIdentity.Name,
                 machineId = PlayerIdentity.MachineId,
+                mods = ModDatabase.InstalledEntries(),
             });
         }
 
         private void onAuthResponse(AuthResponseMessage response) {
             if (response.accepted) {
+                // the world's mods (the host's client already has them, it shares the server's items)
+                if (!NetworkServer.active) {
+                    List<string> ids = new List<string>();
+                    foreach (ModEntry mod in response.mods ?? new ModEntry[0]) {
+                        ids.Add(mod.id);
+                    }
+                    ModDatabase.Activate(ids);
+                }
                 ClientAccept();
             } else {
                 LastRejection = response.message;

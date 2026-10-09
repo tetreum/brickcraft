@@ -270,10 +270,6 @@ namespace Brickcraft.Network
 
         public override void OnStartClient() {
             base.OnStartClient();
-            // the host's client shares the server's items; others, until joining checks the server's mods, use every installed one
-            if (!NetworkServer.active) {
-                ModDatabase.Activate(ModDatabase.Installed().ConvertAll(m => m.id));
-            }
             WorldNetwork.StartClient();
 
             Events.EventManager.ClientStarted.Raise(new Events.ClientStartedEvent());

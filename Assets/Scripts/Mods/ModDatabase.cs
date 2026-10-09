@@ -15,6 +15,15 @@ namespace Brickcraft.Mods
         public string description;
     }
 
+    /// <summary>A mod as players and servers tell each other about it, see ModDatabase.CheckPlayerMods.</summary>
+    public struct ModEntry
+    {
+        public string id;
+        public string version;
+        /// <summary>See ModInfo.Hash.</summary>
+        public string hash;
+    }
+
     /// <summary>A mod installed in the Mods folder.</summary>
     public class ModInfo
     {
@@ -25,6 +34,21 @@ namespace Brickcraft.Mods
         public string version;
         public string description;
         public string folder;
+
+        private string hash;
+
+        /// <summary>
+        /// SHA-256 of its files (their paths and contents), so a server can tell whether a player has the
+        /// same mod and not just one with the same id and version. Computed the first time it's asked.
+        /// </summary>
+        public string Hash {
+            get {
+                if (hash == null) {
+                    hash = ModDatabase.HashFolder(folder);
+                }
+                return hash;
+            }
+        }
 
         /// <summary>Folder with its items, see ItemDatabase.</summary>
         public string ItemsFolder {
@@ -108,6 +132,73 @@ namespace Brickcraft.Mods
                 Debug.Log("Mods: " + string.Join(", ", active.ConvertAll(m => m.id + " " + m.version)));
             }
             return missing;
+        }
+
+        /// <summary>The active mods as sent over the network.</summary>
+        public static ModEntry[] ActiveEntries() {
+            return active.ConvertAll(m => new ModEntry() { id = m.id, version = m.version, hash = m.Hash }).ToArray();
+        }
+
+        /// <summary>The installed mods as sent over the network, so the server can check them.</summary>
+        public static ModEntry[] InstalledEntries() {
+            return Installed().ConvertAll(m => new ModEntry() { id = m.id, version = m.version, hash = m.Hash }).ToArray();
+        }
+
+        /// <summary>
+        /// Server: whether a joining player has every active mod, the same version with the same files.
+        /// Null if so, otherwise what's missing, to show the player.
+        /// </summary>
+        public static string CheckPlayerMods(ModEntry[] playerMods) {
+            List<string> problems = new List<string>();
+
+            foreach (ModInfo mod in active) {
+                ModEntry? theirs = null;
+                foreach (ModEntry entry in playerMods ?? new ModEntry[0]) {
+                    if (entry.id == mod.id) {
+                        theirs = entry;
+                    }
+                }
+                string name = mod.name + " " + mod.version;
+                if (!theirs.HasValue) {
+                    problems.Add(name + " (you don't have it)");
+                } else if (theirs.Value.version != mod.version) {
+                    problems.Add(name + " (you have " + theirs.Value.version + ")");
+                } else if (theirs.Value.hash != mod.Hash) {
+                    problems.Add(name + " (your copy is different)");
+                }
+            }
+            if (problems.Count == 0) {
+                return null;
+            }
+            return "This server needs " + (problems.Count == 1 ? "the mod " : "these mods: ") + string.Join(", ", problems)
+                + ". Mods go in the Mods folder next to the game.";
+        }
+
+        /// <summary>SHA-256 of the files of a folder: each relative path (with / separators) and contents, sorted by path.</summary>
+        public static string HashFolder(string folder) {
+            List<string> files = new List<string>(Directory.GetFiles(folder, "*", SearchOption.AllDirectories));
+            List<string> relative = files.ConvertAll(f => f.Substring(folder.Length).TrimStart('\\', '/').Replace('\\', '/'));
+            int[] order = new int[files.Count];
+            for (int i = 0; i < order.Length; i++) {
+                order[i] = i;
+            }
+            Array.Sort(order, (a, b) => string.CompareOrdinal(relative[a], relative[b]));
+
+            using (System.Security.Cryptography.SHA256 sha = System.Security.Cryptography.SHA256.Create()) {
+                byte[] buffer = new byte[81920];
+                foreach (int i in order) {
+                    byte[] name = System.Text.Encoding.UTF8.GetBytes(relative[i] + "\0");
+                    sha.TransformBlock(name, 0, name.Length, null, 0);
+                    using (FileStream stream = File.OpenRead(files[i])) {
+                        int read;
+                        while ((read = stream.Read(buffer, 0, buffer.Length)) > 0) {
+                            sha.TransformBlock(buffer, 0, read, null, 0);
+                        }
+                    }
+                }
+                sha.TransformFinalBlock(new byte[0], 0, 0);
+                return BitConverter.ToString(sha.Hash).Replace("-", "").ToLowerInvariant();
+            }
         }
 
         private static ModInfo read(string folder) {

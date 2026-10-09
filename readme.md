@@ -198,6 +198,8 @@ Mods/
 
 Each world has its own mods, chosen when it's created (New world → Mods). They're saved in its `world.dat` (with the version it was last played with) and loaded when it's played, besides the game's own items. A world whose mods aren't installed shows them as missing in the list; it can still be played, but their items are unknown and their blocks become air.
 
+Players joining a server need its world's mods: the same version with the same files (the server compares a SHA-256 of each mod's files). Otherwise they're refused and told which ones, like *"This server needs the mod My Castle 1.2 (you have 1.0)"*. Once accepted they play with the server's mods only, whatever else they have installed.
+
 ## How can i add a new model?
 
 1. Brick models & their prefabs are stored in https://github.com/tetreum/brickcraft/tree/main/Assets/Models/Bricks

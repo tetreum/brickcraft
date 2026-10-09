@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Brickcraft.Bricks;
 using Brickcraft.Network;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,12 +10,15 @@ namespace Brickcraft.UI
     /// <summary>
     /// The ALL tab of the inventory, for admins: every item of the game, searchable by name or id,
     /// a page at a time. Clicking one adds it to the inventory (the server checks the player is an admin).
+    /// The colour picker next to the search chooses the colour they're given in: then only items that
+    /// can have it are listed. Without one, each item comes in its default colour.
     /// </summary>
     public class AllItemsTab : MonoBehaviour
     {
         public const int PageSize = 30;
 
         public InputField search;
+        public ColorPicker colorPicker;
         public RectTransform results;
         /// <summary>An entry, copied for every result: a Button with a RawImage "Icon" and a Text "Name" inside.</summary>
         public GameObject entryTemplate;
@@ -33,6 +37,10 @@ namespace Brickcraft.UI
         private readonly List<Entry> entries = new List<Entry>();
         private readonly List<Item> matches = new List<Item>();
         private int page;
+        // the picked colour, BrickColor.None for each item's default one
+        private int color {
+            get { return colorPicker.Selected; }
+        }
 
         private void Awake() {
             entryTemplate.SetActive(false);
@@ -55,6 +63,10 @@ namespace Brickcraft.UI
                 page = 0;
                 refresh();
             });
+            colorPicker.ColorChanged += picked => {
+                page = 0;
+                refresh();
+            };
             previousPage.onClick.AddListener(() => showPage(page - 1));
             nextPage.onClick.AddListener(() => showPage(page + 1));
         }
@@ -68,7 +80,7 @@ namespace Brickcraft.UI
             matches.Clear();
 
             foreach (Item item in Server.items.Values) {
-                if (isMatch(item, query)) {
+                if (isMatch(item, query) && (color == BrickColor.None || item.AllowsColor(color))) {
                     matches.Add(item);
                 }
             }
@@ -100,6 +112,7 @@ namespace Brickcraft.UI
                 }
                 entry.item = matches[index];
                 entry.icon.texture = entry.item.icon;
+                ItemColorSwatch.Set(entry.icon, entry.item, colorOf(entry.item));
                 entry.name.text = entry.item.name + "\n" + entry.item.id;
                 entry.gameObject.SetActive(true);
             }
@@ -113,8 +126,12 @@ namespace Brickcraft.UI
 
         private void take(Entry entry) {
             if (entry.item != null && Player.Instance != null) {
-                Player.Instance.GetComponent<PlayerInventory>().CmdAdminAdd(entry.item.id, 1);
+                Player.Instance.GetComponent<PlayerInventory>().CmdAdminAdd(entry.item.id, colorOf(entry.item), 1);
             }
+        }
+
+        private int colorOf(Item item) {
+            return color == BrickColor.None ? item.color : color;
         }
     }
 }

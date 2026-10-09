@@ -48,6 +48,7 @@ public class MainPanel : MonoBehaviour
     }
 
     // "-host" or "-join <address>" start a multiplayer game right away, handy to test with several instances
+    // "-test" starts the test scene, which has no button
     // "-name <name>" picks the player name
     private void Start () {
         if (hasReadCommandLine) {
@@ -65,6 +66,8 @@ public class MainPanel : MonoBehaviour
         for (int i = 0; i < args.Length; i++) {
             if (args[i] == "-host") {
                 host();
+            } else if (args[i] == "-test") {
+                playTest();
             } else if (args[i] == "-join" && i + 1 < args.Length) {
                 addressInput.text = args[i + 1];
                 join();

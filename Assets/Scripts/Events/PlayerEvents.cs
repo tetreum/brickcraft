@@ -13,4 +13,14 @@ namespace Brickcraft.Events
     public sealed class InventoryChangedEvent
     {
     }
+
+    public sealed class LocalPlayerStartedEvent
+    {
+    }
+
+    public sealed class SelectedSlotChangedEvent
+    {
+        /// <summary>The inventory slot now selected, -1 for none.</summary>
+        public int slot;
+    }
 }

@@ -30,7 +30,7 @@ namespace Brickcraft.UI
         }
 
         private void Update() {
-            bool show = Player.Instance != null && !ChatPanel.IsTyping && isHeld();
+            bool show = Player.Instance != null && !GameInput.IsTyping && isHeld();
 
             if (show != window.activeSelf) {
                 window.SetActive(show);

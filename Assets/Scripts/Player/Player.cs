@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Brickcraft.UI;
 using Brickcraft.Bricks;
 using Brickcraft.World;
 using Brickcraft.Network;
+using Brickcraft.Events;
 
 namespace Brickcraft
 {
@@ -66,6 +66,21 @@ namespace Brickcraft
         [HideInInspector]
         public PlayerNetwork network;
 
+        /// <summary>The first inventory slot of the fast inventory (the hotbar), slots 1 to 9 select from there.</summary>
+        public const int FirstFastSlot = 28;
+        public const int FastSlotCount = 9;
+
+        /// <summary>The inventory slot whose item is in hand, -1 for none. Changes raise EventManager.SelectedSlotChanged.</summary>
+        public int SelectedSlot { get; private set; } = FirstFastSlot;
+
+        /// <summary>The item in hand, null for none.</summary>
+        public UserItem SelectedItem {
+            get {
+                getInventoryBySlot().TryGetValue(SelectedSlot, out UserItem item);
+                return item;
+            }
+        }
+
         private void Awake() {
             firstPersonController = GetComponent<FirstPersonController>();
             triggerDetector = GetComponentInChildren<TriggerDetector>();
@@ -78,17 +93,13 @@ namespace Brickcraft
             Debug.Log("Player joined the game, " + Time.realtimeSinceStartup.ToString("0.0") + " s after the game started");
             Instance = this;
             brickPlacer = gameObject.AddComponent<BrickPlacer>();
-            Menu.Instance.showPanel("PlayerPanel");
+            EventManager.LocalPlayerStarted.Raise(new LocalPlayerStartedEvent());
         }
 
         private void OnDestroy() {
             if (Instance == this) {
                 Instance = null;
             }
-        }
-
-        private void Start() {
-            PlayerPanel.Instance.reload();
         }
 
         private void Update() {
@@ -109,7 +120,7 @@ namespace Brickcraft
                 if (isDigHeld) {
                     brickPlacer.hide();
                 } else {
-                    brickPlacer.tick(hasHit, latestHit, PlayerPanel.Instance.selectedItem);
+                    brickPlacer.tick(hasHit, latestHit, SelectedItem);
                 }
 
                 if (isDigHeld && (lookedBrick != null || lookedBlock.HasValue)) {
@@ -119,28 +130,21 @@ namespace Brickcraft
                 }
             }
 
-            // the keys typed in the chat or another text field (or the Escape closing the chat) aren't shortcuts
-            if (ChatPanel.IsTyping || ChatPanel.WasClosedThisFrame || isTypingInField()) {
+            // keys typed as text aren't shortcuts; the UI handles its own (inventory, menu...)
+            if (GameInput.IsTyping) {
                 return;
-            }
-            if (GameInput.GetButtonDown(GameInput.Inventory, KeyCode.I)) {
-                Menu.Instance.togglePanel("InventoryPanel");
-            }
-            if (GameInput.GetButtonDown(GameInput.Menu, KeyCode.Escape)) {
-                Menu.Instance.togglePanel("ESCPanel");
             }
             int slot = GameInput.GetSlotDown();
             if (slot != -1) {
-                PlayerPanel.Instance.selectFastSlot(slot);
+                selectFastSlot(slot);
             }
         }
 
-        private static bool isTypingInField() {
-            GameObject selected = UnityEngine.EventSystems.EventSystem.current != null
-                ? UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject
-                : null;
-            UnityEngine.UI.InputField field = selected != null ? selected.GetComponent<UnityEngine.UI.InputField>() : null;
-            return field != null && field.isFocused;
+        /// <summary>Selects the given slot of the fast inventory (0 to 8), or none if it's already selected.</summary>
+        public void selectFastSlot(int index) {
+            int slot = FirstFastSlot + index;
+            SelectedSlot = slot == SelectedSlot ? -1 : slot;
+            EventManager.SelectedSlotChanged.Raise(new SelectedSlotChangedEvent() { slot = SelectedSlot });
         }
 
         public void freeze(FreezeReason reason) {

@@ -199,7 +199,7 @@ namespace Brickcraft.Network
             }
             string result = clean.ToString().Trim();
 
-            return result.Length > UI.ChatPanel.MaxMessageLength ? result.Substring(0, UI.ChatPanel.MaxMessageLength) : result;
+            return result.Length > ChatMessage.MaxLength ? result.Substring(0, ChatMessage.MaxLength) : result;
         }
 
         [Server]

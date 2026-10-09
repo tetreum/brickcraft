@@ -38,6 +38,9 @@ namespace Brickcraft.Network
     /// <summary>Server to clients: a chat message, already checked by the server.</summary>
     public struct ChatMessage : NetworkMessage
     {
+        /// <summary>Longest message players can send.</summary>
+        public const int MaxLength = 200;
+
         public string sender;
         public string text;
     }

@@ -14,6 +14,20 @@ public class MainPanel : MonoBehaviour
     /// <summary>Message to show next time the menu opens, like why the server disconnected us.</summary>
     public static string PendingMessage;
 
+    // a disconnection can happen while this panel doesn't exist (in game), so it listens from the start
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void subscribe () {
+        Brickcraft.Events.EventManager.Disconnected.Subscribe(onDisconnected);
+    }
+
+    private static void onDisconnected (Brickcraft.Events.DisconnectedEvent e) {
+        if (e.isInMenu && Menu.Instance != null) {
+            Menu.Instance.showPanel("MainPanel").GetComponent<MainPanel>().showMessage(e.message);
+        } else {
+            PendingMessage = e.message; // shown once the menu loads
+        }
+    }
+
     private void OnEnable () {
         if (versionText != null) {
             versionText.text = "v" + Brickcraft.GameVersion.Current;

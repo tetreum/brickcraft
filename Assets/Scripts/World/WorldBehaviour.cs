@@ -90,7 +90,7 @@ namespace Brickcraft.World
 		}
 
 		void Start () {
-			Menu.Instance.showPanel("LoadingPanel");
+			Events.EventManager.WorldLoadingStarted.Raise(new Events.WorldLoadingStartedEvent());
 		}
 
 		/// <summary>Sets up the world, chunks are then loaded with <see cref="RequestChunk"/>.</summary>

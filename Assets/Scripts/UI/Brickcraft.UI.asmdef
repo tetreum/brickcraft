@@ -1,0 +1,18 @@
+{
+    "name": "Brickcraft.UI",
+    "rootNamespace": "Brickcraft.UI",
+    "references": [
+        "GUID:fccb863a75659ca43a11cb7f6d6cb018",
+        "GUID:4c1418fe33103b44dad8e935a7287c4c",
+        "GUID:30817c1a0e6d646d99c048fc403f5979"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

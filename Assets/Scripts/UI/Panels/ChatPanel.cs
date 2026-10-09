@@ -15,8 +15,6 @@ namespace Brickcraft.UI
     /// </summary>
     public class ChatPanel : MonoBehaviour
     {
-        public const int MaxMessageLength = 200;
-
         private const int HistorySize = 50;
         private const int LinesShown = 10;
         private const float SecondsShown = 10f;
@@ -32,15 +30,9 @@ namespace Brickcraft.UI
 
         // kept apart from the panel, messages can arrive before it exists
         private static readonly List<Line> history = new List<Line>();
-        private static int closedFrame = -1;
 
-        /// <summary>The player is typing, other keys shouldn't do anything.</summary>
+        /// <summary>The player is typing a message (GameInput.IsTyping tells the rest of the game).</summary>
         public static bool IsTyping { get; private set; }
-
-        /// <summary>The chat closed this frame, so the key that closed it (Escape) shouldn't do anything else.</summary>
-        public static bool WasClosedThisFrame {
-            get { return closedFrame == Time.frameCount; }
-        }
 
         // lines are kept even while the panel doesn't exist, so it listens from the start
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -63,7 +55,7 @@ namespace Brickcraft.UI
         }
 
         private void Awake() {
-            input.characterLimit = MaxMessageLength;
+            input.characterLimit = Network.ChatMessage.MaxLength;
             input.gameObject.SetActive(false);
             log.supportRichText = false; // so nobody can style their messages
         }
@@ -95,6 +87,7 @@ namespace Brickcraft.UI
 
         private void open() {
             IsTyping = true;
+            GameInput.SetTyping(true);
             Player.Instance.freeze(Player.FreezeReason.Chatting);
 
             input.gameObject.SetActive(true);
@@ -104,7 +97,7 @@ namespace Brickcraft.UI
 
         private void close() {
             IsTyping = false;
-            closedFrame = Time.frameCount;
+            GameInput.SetTyping(false);
 
             input.DeactivateInputField();
             input.gameObject.SetActive(false);

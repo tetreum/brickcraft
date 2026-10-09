@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace Brickcraft
 {
@@ -23,6 +25,31 @@ namespace Brickcraft
 
         // buttons the project doesn't define, so asking for them doesn't throw every frame
         private static readonly HashSet<string> missing = new HashSet<string>();
+
+        private static bool isTyping;
+        private static int stoppedTypingFrame = -1;
+
+        /// <summary>
+        /// Keys are being typed as text (in the chat, a search field...), so they aren't shortcuts.
+        /// Also true the frame typing stopped, so the key that stopped it (Escape) does nothing else.
+        /// </summary>
+        public static bool IsTyping {
+            get { return isTyping || stoppedTypingFrame == Time.frameCount || isInputFieldFocused(); }
+        }
+
+        /// <summary>For the UI: it starts or stops using the keyboard for text, like the chat.</summary>
+        public static void SetTyping(bool typing) {
+            if (isTyping && !typing) {
+                stoppedTypingFrame = Time.frameCount;
+            }
+            isTyping = typing;
+        }
+
+        private static bool isInputFieldFocused() {
+            GameObject selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+            InputField field = selected != null ? selected.GetComponent<InputField>() : null;
+            return field != null && field.isFocused;
+        }
 
         /// <summary>The button went down this frame.</summary>
         public static bool GetButtonDown(string button, KeyCode fallback, KeyCode altFallback = KeyCode.None) {

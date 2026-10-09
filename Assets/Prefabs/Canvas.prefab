@@ -201,7 +201,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 3908118936429085551}
-        m_TargetAssemblyTypeName: MainPanel, Brickcraft
+        m_TargetAssemblyTypeName: MainPanel, Brickcraft.UI
         m_MethodName: join
         m_Mode: 0
         m_Arguments:
@@ -1326,7 +1326,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 3908118936429085551}
-        m_TargetAssemblyTypeName: MainPanel, Brickcraft
+        m_TargetAssemblyTypeName: MainPanel, Brickcraft.UI
         m_MethodName: host
         m_Mode: 0
         m_Arguments:
@@ -2295,7 +2295,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 3908118936429085551}
-        m_TargetAssemblyTypeName: MainPanel, Assembly-CSharp
+        m_TargetAssemblyTypeName: MainPanel, Brickcraft.UI
         m_MethodName: playTest
         m_Mode: 1
         m_Arguments:
@@ -2646,7 +2646,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 3908118936429085551}
-        m_TargetAssemblyTypeName: MainPanel, Assembly-CSharp
+        m_TargetAssemblyTypeName: MainPanel, Brickcraft.UI
         m_MethodName: play
         m_Mode: 1
         m_Arguments:
@@ -3045,7 +3045,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 3908118936429085551}
-        m_TargetAssemblyTypeName: MainPanel, Assembly-CSharp
+        m_TargetAssemblyTypeName: MainPanel, Brickcraft.UI
         m_MethodName: exit
         m_Mode: 1
         m_Arguments:
@@ -4737,7 +4737,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 2017428837889692292}
-        m_TargetAssemblyTypeName: Brickcraft.UI.ESCPanel, Assembly-CSharp
+        m_TargetAssemblyTypeName: Brickcraft.UI.ESCPanel, Brickcraft.UI
         m_MethodName: exit
         m_Mode: 1
         m_Arguments:

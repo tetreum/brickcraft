@@ -307,12 +307,7 @@ namespace Brickcraft.Network
                 return;
             }
             Debug.LogWarning(message);
-
-            if (isInMenu() && Menu.Instance != null) {
-                Menu.Instance.showPanel("MainPanel").GetComponent<MainPanel>().showMessage(message);
-            } else {
-                MainPanel.PendingMessage = message; // shown once the menu loads
-            }
+            Events.EventManager.Disconnected.Raise(new Events.DisconnectedEvent() { message = message, isInMenu = isInMenu() });
         }
 
         private void requestWorldIfInGame() {

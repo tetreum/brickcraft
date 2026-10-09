@@ -9,45 +9,28 @@ namespace Brickcraft.UI
         public static PlayerPanel Instance;
         public Sprite selectedBackgroundSprite;
         public Sprite normalBackgroundSprite;
-        public UserItem selectedItem {
-            get {
-                var slots = Player.Instance.getInventoryBySlot();
 
-                if (!slots.ContainsKey(selectedSlot)) {
-                    return null;
-                }
-
-                return slots[selectedSlot];
-            }
-        }
-
+        /// <summary>The fast inventory (hotbar). Which slot is selected is up to the player, see Player.SelectedSlot.</summary>
         public InventorySlot[] fastInventorySlots;
-
-        private int selectedSlot {
-            get {
-                return _selectedSlot;
-            }
-            set {
-                _selectedSlot = value;
-                updateSelectedItemBackground();
-            }
-        }
-        private int _selectedSlot;
-        private int firstSlot = 28;
 
         void Awake()
         {
             Instance = this;
-            selectedSlot = firstSlot; // by default the first slot from fastInventory starting from the left
             Events.EventManager.InventoryChanged.Subscribe(onInventoryChanged);
+            Events.EventManager.SelectedSlotChanged.Subscribe(onSelectedSlotChanged);
         }
 
         private void OnDestroy() {
             Events.EventManager.InventoryChanged.Unsubscribe(onInventoryChanged);
+            Events.EventManager.SelectedSlotChanged.Unsubscribe(onSelectedSlotChanged);
         }
 
         private void onInventoryChanged(Events.InventoryChangedEvent e) {
             reload();
+        }
+
+        private void onSelectedSlotChanged(Events.SelectedSlotChangedEvent e) {
+            showSelectedSlot(e.slot);
         }
 
         private void OnEnable() {
@@ -59,6 +42,7 @@ namespace Brickcraft.UI
             if (Player.Instance == null) {
                 return;
             }
+            showSelectedSlot(Player.Instance.SelectedSlot);
 
             Dictionary<int, UserItem> inventory = Player.Instance.getInventoryBySlot();
             InventorySlot slot;
@@ -78,18 +62,7 @@ namespace Brickcraft.UI
             }
         }
 
-        public void selectFastSlot(int slotNumber) {
-            int newSlotNumber = firstSlot + slotNumber;
-
-            // has toggled the current slot, wants to unselect
-            if (newSlotNumber == selectedSlot) {
-                newSlotNumber = -1;
-            }
-
-            selectedSlot = newSlotNumber;
-        }
-
-        private void updateSelectedItemBackground () {
+        private void showSelectedSlot (int selectedSlot) {
             foreach (var slot in fastInventorySlots) {
                 slot.transform.parent.GetComponent<Image>().sprite = int.Parse(slot.transform.parent.name) == selectedSlot ? selectedBackgroundSprite : normalBackgroundSprite;
             }

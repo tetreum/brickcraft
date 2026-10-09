@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using System.Runtime.InteropServices;
 using Brickcraft;
+using Brickcraft.Events;
 using Brickcraft.UI;
 
 public class Menu : MonoBehaviour {
@@ -24,11 +25,36 @@ public class Menu : MonoBehaviour {
         //DontDestroyOnLoad(GameObject.Find("EventSystem"));
 		
         SceneManager.sceneLoaded += OnLevelFinishedLoading;
+		EventManager.LocalPlayerStarted.Subscribe(onLocalPlayerStarted);
+		EventManager.WorldLoadingStarted.Subscribe(onWorldLoadingStarted);
 
 		InventoryPanel.Instance = getPanel("InventoryPanel").GetComponent<InventoryPanel>();
     }
 	private void OnDestroy() {
 		SceneManager.sceneLoaded -= OnLevelFinishedLoading;
+		EventManager.LocalPlayerStarted.Unsubscribe(onLocalPlayerStarted);
+		EventManager.WorldLoadingStarted.Unsubscribe(onWorldLoadingStarted);
+	}
+
+	private void onLocalPlayerStarted(LocalPlayerStartedEvent e) {
+		showPanel("PlayerPanel");
+	}
+
+	private void onWorldLoadingStarted(WorldLoadingStartedEvent e) {
+		showPanel("LoadingPanel");
+	}
+
+	// the panels' shortcuts, while playing
+	private void Update() {
+		if (Player.Instance == null || GameInput.IsTyping) {
+			return;
+		}
+		if (GameInput.GetButtonDown(GameInput.Inventory, KeyCode.I)) {
+			togglePanel("InventoryPanel");
+		}
+		if (GameInput.GetButtonDown(GameInput.Menu, KeyCode.Escape)) {
+			togglePanel("ESCPanel");
+		}
 	}
 
 	public void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode) {

@@ -19,8 +19,9 @@ namespace Brickcraft.UI
         /// <summary>What the ALL tab (admins only) shows, see AllItemsTab.</summary>
         public GameObject allItemsView;
 
-        private static readonly Color SelectedTab = Color.white;
-        private static readonly Color UnselectedTab = new Color(0.75f, 0.75f, 0.75f, 1f);
+        // like the settings' tabs: the selected one in green
+        private static readonly Color SelectedTab = new Color(0.18f, 0.71f, 0.13f);
+        private static readonly Color UnselectedTab = new Color(1f, 1f, 1f, 0f);
 
         private void Awake() {
             Instance = this;
@@ -85,7 +86,11 @@ namespace Brickcraft.UI
             Events.EventManager.PlayerRoleChanged.Unsubscribe(onRoleChanged);
 
             Game.lockMouse();
-            Player.Instance.unFreeze(Player.FreezeReason.ViewingInventory);
+
+            // the player is already gone when leaving the game with the inventory open
+            if (Player.Instance != null) {
+                Player.Instance.unFreeze(Player.FreezeReason.ViewingInventory);
+            }
         }
 
         public void reload () {

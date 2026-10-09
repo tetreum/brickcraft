@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Brickcraft.Events;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Brickcraft.UI
@@ -112,6 +113,11 @@ namespace Brickcraft.UI
             waitingSince = Time.frameCount;
             // the key pressed now picks the action's key, it's no shortcut
             GameInput.SetTyping(true);
+            // the clicked button stays selected, and the UI's Submit (Enter, Space) would click it
+            // again instead of the key reaching us
+            if (EventSystem.current != null) {
+                EventSystem.current.SetSelectedGameObject(null);
+            }
             row.keyText.text = "Press a key...";
             row.keyImage.color = waitingColor;
             status.text = "";

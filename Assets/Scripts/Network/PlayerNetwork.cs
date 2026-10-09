@@ -112,9 +112,11 @@ namespace Brickcraft.Network
 
         // -------- client to server --------
 
+        /// <summary>Places the brick held in the inventory slot.</summary>
         [Command]
-        public void CmdPlaceBrick(int itemId, int health, Vector3Int origin, byte rotation) {
-            if (!Server.items.TryGetValue(itemId, out Item item) || item.type != Item.Type.Brick || !inventory.ServerHas(itemId, 1, health)) {
+        public void CmdPlaceBrick(int slot, Vector3Int origin, byte rotation) {
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            if (!held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || item.type != Item.Type.Brick) {
                 return;
             }
             BrickPlacement placement = new BrickPlacement(item.brickModel, origin, rotation);
@@ -131,7 +133,7 @@ namespace Brickcraft.Network
             if (!placedAsWorldBlock) {
                 WorldNetwork.ServerPlaceBrick(item, placement);
             }
-            inventory.ServerRemove(itemId, 1, health);
+            inventory.ServerRemoveFromSlot(slot, 1);
             TargetBrickPlaced();
         }
 

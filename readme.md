@@ -23,7 +23,7 @@ Players can change every key in Settings → Controls (their keys are kept in Pl
 - Left Shift (hold) - Sprint (Sprint)
 - TAB (hold) - Player list (PlayerList)
 - 1-9 - Select a fast inventory slot (Slot1 to Slot9)
-- I - Open inventory (Inventory)
+- I - Open inventory (Inventory). Drag items to move or swap them; right click slots while dragging to drop one unit in each (letting go then puts the rest back)
 - Escape - Menu, or close the chat (Menu)
 - Enter - Chat (Chat), Enter again to send
 - Left click (hold) - Remove placed bricks and terrain blocks (Dig)
@@ -163,12 +163,14 @@ Blocks/marble/
     "breakable": true,
     "replaceable": false,
     "transparent": false,
+    "translucent": false,
     "dropItemId": 0,
     "item": {
         "id": 200,
         "name": "Marble 2x2",
         "brickModel": 3003,
-        "material": "BrightBlue"
+        "material": "BrightBlue",
+        "maxStack": 64
     }
 }
 ```
@@ -177,12 +179,14 @@ Blocks/marble/
 - `hardness`: seconds to dig it with bare hands. `breakable: false` makes it undiggable.
 - `replaceable`: bricks can be placed inside it (like water).
 - `transparent`: sky light goes through it (like leaves or water).
+- `translucent`: drawn see-through (like water), with the terrain's translucent material (`Resources/Materials/Block_Translucent`, 60% opaque, its shader is `Resources/Shader/TerrainTranslucent`). What's behind it is drawn too, and its own sides only where they touch air.
 - `item`: optional item that places the block back. It needs an item id not used in Server.cs#items. Its icon is `icon.png`, which /Scenes/IconGenerator generates if missing; until then the game uses the block's `top.png` or `texture.png`.
+- `item.maxStack`: how many fit in one inventory slot, 64 by default (also `maxStack` on the items of Server.cs#items). Dragging a stack onto the same item merges them as far as that allows.
 - `dropItemId`: item given when dug. Defaults to the block's own item, `0` and no item means nothing.
 
 Every field but `id` and `name` is optional.
 
-Textures are square images (they're scaled to the biggest one). Models are OBJ files in game units: the pivot is at the center of the bottom face and a block spans 0.796 x 0.478 x 0.796 (the default model is in `StreamingAssets/Models`). Each triangle is drawn when the side of the block it's closest to is exposed to air; triangles facing the inside of the block are drawn with the bottom side. Far from the camera (`DetailRadius` chunks, on the World object), blocks are drawn with their collider shape instead, so detailed models only cost where they can be seen.
+Textures are square images (they're scaled to the biggest one). Models are OBJ files in game units: the pivot is at the center of the bottom face and a block spans 0.796 x 0.478 x 0.796 (the default model is in `StreamingAssets/Models`). Each triangle is drawn when the side of the block it's closest to is exposed to air (or, for opaque blocks, seen through a translucent one); triangles facing the inside of the block are drawn with the bottom side. Far from the camera (`DetailRadius` chunks, on the World object), blocks are drawn with their collider shape instead, so detailed models only cost where they can be seen.
 
 ## How can i add a new model?
 

@@ -16,6 +16,11 @@ namespace Brickcraft
         public Type type;
         public string name;
 
+        public const int DefaultMaxStack = 64;
+
+        /// <summary>How many fit in one inventory slot.</summary>
+        public int maxStack = DefaultMaxStack;
+
         // World block this item turns into when placed exactly over a world block (2x2 bricks only)
         public BlockType? blockType;
 

@@ -13,26 +13,33 @@ namespace Brickcraft.UI
         [HideInInspector]
         public Recipe currentRecipe;
 
-        private Vector3 initialPos;
+        private bool isDragging;
 
+        // only the left button drags (see InventorySlot)
         public void OnBeginDrag(PointerEventData eventData) {
-
+            if (eventData.button != PointerEventData.InputButton.Left || isDragging) {
+                return;
+            }
             if (originalParent == null) {
                 originalParent = transform.parent;
             }
-
-            //GamePanel.isMovingAPanel = true;
-            //isDragging = true;
-            initialPos = transform.position;
+            isDragging = true;
             transform.SetParent(Menu.Instance.transform);
             GetComponent<RectTransform>().SetAsLastSibling();
         }
 
         public void OnDrag(PointerEventData eventData) {
-            transform.position = eventData.position;
+            if (isDragging && eventData.button == PointerEventData.InputButton.Left) {
+                transform.position = eventData.position;
+            }
         }
 
         public void OnEndDrag(PointerEventData eventData) {
+            if (!isDragging || eventData.button != PointerEventData.InputButton.Left) {
+                return;
+            }
+            isDragging = false;
+
             List<RaycastResult> raycastResults = new List<RaycastResult>();
             EventSystem.current.RaycastAll(eventData, raycastResults);
 
@@ -58,8 +65,7 @@ namespace Brickcraft.UI
                 break;
             }
 
-            transform.position = initialPos;
-            transform.SetParent(originalParent);
+            InventorySlot.backInSlot(transform, originalParent);
         }
 
         public void setVisible(bool show) {

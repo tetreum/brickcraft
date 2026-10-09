@@ -288,15 +288,22 @@ namespace Brickcraft
         }
 
         // the server owns the inventory (see Network.PlayerInventory), this just asks it to move a stack
-        public void switchInventorySlots (int slot1, int slot2) {
-            inventory.CmdSwapSlots(slot1, slot2);
+        /// <summary>Moves the stack in a slot to another: merged if it's the same item (as much as fits), swapped otherwise.</summary>
+        public void moveInventoryStack (int fromSlot, int toSlot) {
+            inventory.CmdMoveStack(fromSlot, toSlot);
+        }
+
+        /// <summary>Asks the server to move one unit of the stack in a slot to another.</summary>
+        public void moveOneInventoryItem (int fromSlot, int toSlot) {
+            inventory.CmdMoveOne(fromSlot, toSlot);
         }
 
         public Dictionary<int, UserItem> getInventoryBySlot () {
             Dictionary<int, UserItem> items = new Dictionary<int, UserItem>();
 
+            // not Add: a slot never holds two stacks, but the list can be caught in the middle of a swap
             foreach (var item in getInventory()) {
-                items.Add(item.slot, item);
+                items[item.slot] = item;
             }
             return items;
         }

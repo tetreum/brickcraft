@@ -257,7 +257,7 @@ namespace Brickcraft.Network
             }
 
             if (!added) {
-                reply(sender, player.Name + "'s inventory is full");
+                reply(sender, "There's no room for " + count + " x " + item.name + " in " + player.Name + "'s inventory");
                 return;
             }
             Debug.Log(admin.record.Name + " gave " + count + " x " + item.name + " (" + itemId + ") to " + player.Name + " (" + player.Id + ")");

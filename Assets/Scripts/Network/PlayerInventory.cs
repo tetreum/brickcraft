@@ -39,7 +39,7 @@ namespace Brickcraft.Network
             return Inventory.Has(items, itemId, quantity, health);
         }
 
-        /// <summary>False if the inventory is full.</summary>
+        /// <summary>Adds them all, or none and false if they don't fit.</summary>
         [Server]
         public bool ServerAdd(int itemId, int quantity, int health = 0, int slot = 0) {
             bool added = Inventory.Add(items, itemId, quantity, health, slot);
@@ -48,6 +48,24 @@ namespace Brickcraft.Network
                 save();
             }
             return added;
+        }
+
+        /// <summary>Takes them from the stack in the slot, false if it hasn't enough.</summary>
+        [Server]
+        public bool ServerRemoveFromSlot(int slot, int quantity) {
+            bool removed = Inventory.RemoveFromSlot(items, slot, quantity);
+
+            if (removed) {
+                save();
+            }
+            return removed;
+        }
+
+        /// <summary>The stack in the slot, null if it's empty.</summary>
+        [Server]
+        public InventoryItem? ServerGetSlot(int slot) {
+            int index = Inventory.FindSlot(items, slot);
+            return index == -1 ? (InventoryItem?)null : items[index];
         }
 
         [Server]
@@ -73,8 +91,16 @@ namespace Brickcraft.Network
         // -------- client to server --------
 
         [Command]
-        public void CmdSwapSlots(int slotA, int slotB) {
-            if (Inventory.Swap(items, slotA, slotB)) {
+        public void CmdMoveStack(int fromSlot, int toSlot) {
+            if (Inventory.MoveStack(items, fromSlot, toSlot)) {
+                save();
+            }
+        }
+
+        /// <summary>Moves one unit of a stack to another slot (right click while dragging it).</summary>
+        [Command]
+        public void CmdMoveOne(int fromSlot, int toSlot) {
+            if (Inventory.MoveOne(items, fromSlot, toSlot)) {
                 save();
             }
         }
@@ -110,7 +136,7 @@ namespace Brickcraft.Network
                 return;
             }
             if (!Inventory.Add(items, itemId, quantity)) {
-                connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "Your inventory is full" });
+                connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "There's no room for " + quantity + " x " + item.name + " in your inventory" });
                 return;
             }
             save();
@@ -125,8 +151,19 @@ namespace Brickcraft.Network
             }
         }
 
+        // A change can take several steps (a swap moves two items one after the other, and each step
+        // is synced on its own), so the UI is told once per frame, after all of them.
+        private bool isUIOutdated;
+
         private void refreshUI() {
-            EventManager.InventoryChanged.Raise(new InventoryChangedEvent());
+            isUIOutdated = true;
+        }
+
+        private void LateUpdate() {
+            if (isUIOutdated) {
+                isUIOutdated = false;
+                EventManager.InventoryChanged.Raise(new InventoryChangedEvent());
+            }
         }
     }
 }

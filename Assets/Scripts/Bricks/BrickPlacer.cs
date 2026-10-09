@@ -112,7 +112,7 @@ namespace Brickcraft.Bricks
 
         // the server places it, and takes the item from our inventory if it could
         private void place(UserItem userItem, BrickPlacement placement) {
-            Player.Instance.network.CmdPlaceBrick(userItem.id, userItem.health, placement.origin, (byte)placement.rotation);
+            Player.Instance.network.CmdPlaceBrick(userItem.slot, placement.origin, (byte)placement.rotation);
         }
 
         public static bool overlapsPlayer(BrickPlacement placement) {

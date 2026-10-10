@@ -204,10 +204,15 @@ namespace Brickcraft.Network
                 attackerName = playerName,
             });
 
-            if (hurt && victimPlayer != null && victimPlayer.connectionToClient != null) {
+            if (hurt) {
                 Vector3 away = target.transform.position - transform.position;
                 away.y = 0;
-                victimPlayer.TargetKnockback(away.normalized * KnockbackSpeed + Vector3.up * KnockbackUp);
+                Vector3 push = away.normalized * KnockbackSpeed + Vector3.up * KnockbackUp;
+                if (victimPlayer != null) {
+                    victimPlayer.ServerKnockback(push);
+                } else if (target.TryGetComponent(out Npcs.Npc npc)) {
+                    npc.ServerKnockback(push);
+                }
             }
         }
 
@@ -434,6 +439,14 @@ namespace Brickcraft.Network
         [TargetRpc]
         private void TargetBrickPlaced() {
             SoundManager.Instance.play(SoundManager.EFFECT_TAPPING);
+        }
+
+        /// <summary>Pushes the player (a hit): its client moves it.</summary>
+        [Server]
+        public void ServerKnockback(Vector3 velocity) {
+            if (connectionToClient != null) {
+                TargetKnockback(velocity);
+            }
         }
 
         [TargetRpc]

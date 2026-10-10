@@ -44,6 +44,8 @@ namespace Brickcraft
         public bool transparent = false;
         /// <summary>Drawn see-through (like water).</summary>
         public bool translucent = false;
+        /// <summary>A liquid (water, lava): NPCs that walk keep out of it.</summary>
+        public bool fluid = false;
         /// <summary>Id of the item given when dug, the item itself if empty.</summary>
         public string drop;
     }

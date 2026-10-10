@@ -38,6 +38,9 @@ namespace Brickcraft.World
         /// </summary>
         public bool isTranslucent;
 
+        /// <summary>A liquid (water, lava): NPCs that walk keep out of it.</summary>
+        public bool isFluid;
+
         /// <summary>Item given when dug (its slug, see Slugs), null for none.</summary>
         public string dropItemId;
 

@@ -22,6 +22,8 @@ namespace Brickcraft.Network
     ///   /unban NICK|ID
     ///   /tp NICK|ID                 takes you to an online player
     ///   /pvp [on|off]               whether players can hurt each other, saved with the world
+    ///   /spawnnpc NPC [count]       puts NPCs in front of you
+    ///   /removenpcs                 takes every NPC out of the world
     ///   /role NICK|ID [role]        shows or changes a player's role (user, admin)
     ///   /additem ITEM[@COLOR] [count] [NICK|ID]   gives items to a player (yourself by default), online or not
     /// NICK|ID is a player name (any case) or, if no name matches, a player id.
@@ -92,6 +94,16 @@ namespace Brickcraft.Network
                 case "pvp":
                     pvp(sender, admin, target);
                     break;
+                case "spawnnpc":
+                    if (target == null) {
+                        reply(sender, "Usage: /spawnnpc NPC [count]");
+                    } else {
+                        spawnNpc(sender, target, reason);
+                    }
+                    break;
+                case "removenpcs":
+                    reply(sender, "Removed " + Npcs.NpcSystem.ServerRemoveAll() + " NPCs");
+                    break;
                 case "unban":
                     if (target == null) {
                         reply(sender, "Usage: /unban NICK|ID");
@@ -100,7 +112,7 @@ namespace Brickcraft.Network
                     }
                     break;
                 default:
-                    reply(sender, "Unknown command. Commands: /players, /kick NICK|ID [reason], /ban NICK|ID [reason], /unban NICK|ID, /tp NICK|ID, /pvp [on|off], /role NICK|ID [role], /additem ITEM[@COLOR] [count] [NICK|ID]");
+                    reply(sender, "Unknown command. Commands: /players, /kick NICK|ID [reason], /ban NICK|ID [reason], /unban NICK|ID, /tp NICK|ID, /pvp [on|off], /spawnnpc NPC [count], /removenpcs, /role NICK|ID [role], /additem ITEM[@COLOR] [count] [NICK|ID]");
                     break;
             }
         }
@@ -175,6 +187,42 @@ namespace Brickcraft.Network
             }
             BrickcraftNetworkManager.Instance.Database.SetBanned(player, false, null);
             reply(sender, player.Name + " can join again");
+        }
+
+        private const int MaxSpawnedNpcs = 20;
+
+        // a few meters in front of the admin, side by side
+        private static void spawnNpc(NetworkConnectionToClient sender, string npcId, string countText) {
+            Npcs.NpcInfo info = Npcs.NpcDatabase.Get(npcId.ToLowerInvariant());
+            if (info == null) {
+                List<string> ids = new List<string>();
+                foreach (Npcs.NpcInfo npc in Npcs.NpcDatabase.All) {
+                    ids.Add(npc.id);
+                }
+                reply(sender, "There's no NPC " + npcId + ". NPCs: " + string.Join(", ", ids));
+                return;
+            }
+            int count = 1;
+            if (countText != null && (!int.TryParse(countText, out count) || count < 1 || count > MaxSpawnedNpcs)) {
+                reply(sender, "The count must be a number from 1 to " + MaxSpawnedNpcs);
+                return;
+            }
+            if (sender.identity == null) {
+                return;
+            }
+            Transform player = sender.identity.transform;
+            Vector3 forward = player.forward;
+            forward.y = 0;
+            forward = forward.sqrMagnitude > 0 ? forward.normalized : Vector3.forward;
+            Vector3 right = Vector3.Cross(Vector3.up, forward);
+            int spawned = 0;
+            for (int i = 0; i < count; i++) {
+                Vector3 position = player.position + forward * 4 + right * ((i - (count - 1) / 2f) * 2) + Vector3.up;
+                if (Npcs.NpcSystem.ServerSpawn(info, position, Quaternion.LookRotation(-forward).eulerAngles.y) != null) {
+                    spawned++;
+                }
+            }
+            reply(sender, "Spawned " + spawned + " " + info.name + (spawned < count ? " (there are too many NPCs for more)" : ""));
         }
 
         private static void pvp(NetworkConnectionToClient sender, ConnectedPlayer admin, string value) {

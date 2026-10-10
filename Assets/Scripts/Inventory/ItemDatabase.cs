@@ -74,6 +74,7 @@ namespace Brickcraft
             BlockDatabase.FinishLoading();
             resolveDrops();
             loadRecipes();
+            Npcs.NpcDatabase.Load(mods); // their drops are items
         }
 
         private static void loadFolder(string folder, ModInfo mod) {

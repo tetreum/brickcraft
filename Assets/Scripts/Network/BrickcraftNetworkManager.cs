@@ -315,6 +315,7 @@ namespace Brickcraft.Network
 
             if (NetworkServer.active) {
                 WorldNetwork.ServerUpdate();
+                Npcs.NpcSystem.ServerUpdate();
                 LuaApi.Update();
             }
             if (NetworkClient.active) {

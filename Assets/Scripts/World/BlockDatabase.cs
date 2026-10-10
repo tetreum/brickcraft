@@ -180,6 +180,7 @@ namespace Brickcraft.World
                 isReplaceable = info.replaceable,
                 isTransparent = info.transparent,
                 isTranslucent = info.translucent,
+                isFluid = info.fluid,
                 itemId = name,
                 dropItemId = string.IsNullOrEmpty(info.drop) ? name : info.drop,
             };

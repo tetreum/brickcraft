@@ -90,9 +90,16 @@ namespace Brickcraft.Network
                 world.ChunkGenerated += onServerChunkGenerated;
                 world.ChunkUnloaded += onServerChunkUnloaded;
             }
+            Npcs.NpcSystem.StartServer();
+        }
+
+        /// <summary>Whether the server sent that chunk to the client (and it still has it).</summary>
+        public static bool HasSentChunk(NetworkConnectionToClient conn, Vector2Int chunk) {
+            return interests.TryGetValue(conn, out ClientInterest interest) && interest.sentChunks.Contains(chunk);
         }
 
         public static void StopServer() {
+            Npcs.NpcSystem.StopServer();
             if (WorldBehaviour.Instance != null) {
                 WorldBehaviour.Instance.ChunkGenerated -= onServerChunkGenerated;
                 WorldBehaviour.Instance.ChunkUnloaded -= onServerChunkUnloaded;

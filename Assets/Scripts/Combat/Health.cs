@@ -37,7 +37,7 @@ namespace Brickcraft.Combat
         public const float DefaultInvulnerableTime = 0.5f;
 
         [SyncVar(hook = nameof(onHealthChanged))] public int health = 20;
-        [SyncVar(hook = nameof(onHealthChanged))] public int maxHealth = 20;
+        [SyncVar(hook = nameof(onMaxHealthChanged))] public int maxHealth = 20;
         /// <summary>Who killed it, set before isDead (null for nobody).</summary>
         [SyncVar] public string killedBy;
         [SyncVar(hook = nameof(onDeadChanged))] public bool isDead;
@@ -53,6 +53,8 @@ namespace Brickcraft.Combat
         public event Action<DamageInfo> ServerDied;
         /// <summary>Everywhere: it died (true) or came back (false).</summary>
         public event Action<bool> DeadChanged;
+        /// <summary>Everywhere: its health went from one value to another (lower: it was hurt).</summary>
+        public event Action<int, int> HealthChanged;
 
         private double invulnerableUntil;
 
@@ -93,6 +95,15 @@ namespace Brickcraft.Combat
         }
 
         private void onHealthChanged(int oldValue, int newValue) {
+            HealthChanged?.Invoke(oldValue, newValue);
+            announceToLocalPlayer();
+        }
+
+        private void onMaxHealthChanged(int oldValue, int newValue) {
+            announceToLocalPlayer();
+        }
+
+        private void announceToLocalPlayer() {
             if (isLocalPlayer) {
                 EventManager.LocalPlayerHealthChanged.Raise(new LocalPlayerHealthChangedEvent() { health = health, maxHealth = maxHealth });
             }
@@ -111,7 +122,7 @@ namespace Brickcraft.Combat
         }
 
         public override void OnStartLocalPlayer() {
-            EventManager.LocalPlayerHealthChanged.Raise(new LocalPlayerHealthChangedEvent() { health = health, maxHealth = maxHealth });
+            announceToLocalPlayer();
         }
     }
 }

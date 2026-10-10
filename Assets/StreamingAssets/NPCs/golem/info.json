@@ -1,0 +1,20 @@
+{
+    "name": "Golem",
+    "model": "golem",
+    "health": 60,
+    "speed": 1.6,
+    "stepHeight": 0.5,
+    "behaviour": "aggressive",
+    "sightRange": 16,
+    "attack": {
+        "damage": 5,
+        "range": 0.9,
+        "cooldown": 1.8,
+        "hitTime": 1.2,
+        "knockback": 8
+    },
+    "drops": [
+        { "item": "iron_ore", "count": 3 },
+        { "item": "diamond_ore", "count": 1, "chance": 0.1 }
+    ]
+}

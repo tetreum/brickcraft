@@ -34,7 +34,7 @@ Its icons and rounded shapes are white sprites tinted in Unity, drawn by `python
 
 Multiplayer uses [Mirror](https://mirror-networking.gitbook.io/docs), patched in one place (search for "Brickcraft patch" in `Assets/Mirror`, and apply it again after upgrading Mirror): `NetworkIdentity._connectionToClient` is `[NonSerialized]`, otherwise reloading scripts with the player prefab loaded throws "get_time is not allowed to be called during serialization". Every game is networked:
 
-- **Singleplayer** lists the saved worlds, to play or delete them, or creates a new one with its name, seed (a number, any text, or empty for a random one) difficulty (Peaceful, Normal or Hard, kept with the world; nothing uses it yet) and PvP (on by default: whether players can hurt each other, kept with the world and changed by admins with `/pvp`). The world runs on a host that doesn't listen for connections, so nobody else can join.
+- **Singleplayer** lists the saved worlds, to play or delete them, or creates a new one with its name, seed (a number, any text, or empty for a random one), difficulty (Peaceful, Normal or Hard, kept with the world: NPCs don't hurt players in Peaceful worlds, and hurt them half as much again in Hard ones) and PvP (on by default: whether players can hurt each other, kept with the world and changed by admins with `/pvp`). The world runs on a host that doesn't listen for connections, so nobody else can join.
 - **Host game** runs a host other players can join (UDP port 7777 by default, see the KcpTransport in `Resources/NetworkManager`).
 - **Join game** connects to the address typed next to the button (`localhost` if empty).
 
@@ -58,6 +58,8 @@ Admins can type commands in the chat:
 - `/unban NICK|ID`
 - `/tp NICK|ID`: takes you to an online player.
 - `/pvp [on|off]`: shows or changes whether players can hurt each other, saved with the world.
+- `/spawnnpc NPC [count]`: puts `count` (1 by default, 20 at most) NPCs of that kind (like `golem`) a few meters in front of you.
+- `/removenpcs`: takes every NPC out of the world.
 - `/role NICK|ID [role]`: shows a player's role, or changes it (`user` or `admin`). Admins can't change their own.
 - `/additem ITEM[@COLOR] [count] [NICK|ID]`: gives `count` (1 by default) of the item with id `ITEM` (like `dirt_2x4`) to a player, yourself by default. `@COLOR` gives it in a colour it can have, by colour id or name (`plate_2x2_yellow@4`, `brick_2x2@trans-clear`), its default one otherwise. Offline players get them in their saved inventory. `/additem ITEM NICK` works too, but a number after the item is always the count, so give a player by id with `/additem ITEM count ID`.
 
@@ -183,6 +185,7 @@ Items/marble/
   - `hardness`: seconds to dig it with bare hands. `breakable: false` makes it undiggable.
   - `replaceable`: bricks can be placed inside it (like water).
   - `transparent`: sky light goes through it (like leaves or water).
+  - `fluid`: a liquid (like water and lava): NPCs that walk keep out of it.
   - `translucent`: drawn see-through (like water), with the terrain's translucent material (`Resources/Materials/Block_Translucent`, 60% opaque, its shader is `Resources/Shader/TerrainTranslucent`). What's behind it is drawn too, and its own sides only where they touch air.
   - `drop`: id of the item given when dug, like `"stone"`. The item itself if missing.
 - `recipes`: ways to craft the item. Each makes `quantity` of it (1 by default) from its `ingredients`, each one an item `id`, a `quantity` (1 by default) and a crafting `slot`, 1 to 4 (left to right, top to bottom). Recipes are identified as `<item>#<number>`, like `dirt_2x4#1`.
@@ -219,6 +222,38 @@ Players joining a server need its world's mods: the same version with the same f
 Mods can script their bricks in Lua ([MoonSharp](https://www.moonsharp.org/), Lua 5.2): `items/[item]/script.lua` handles the item's events (placed, hit, broken, used) and `scripts/*.lua` the mod's (loaded, players joining, leaving and chatting). Scripts run on the server only, sandboxed, and can spawn, move and remove bricks, change world blocks, message players and give them items, show them popups, toasts, titles and HUD panels, and run timers.
 
 The reference, a page per section, is in [docs/lua](docs/lua/README.md).
+
+## How can i add an NPC?
+
+NPCs are creatures the server runs (`Npcs.Npc`): they wander, go for players, attack, take hits and die (see `Combat.Health`), and whoever kills one gets its drops. Each kind has a folder in `Assets/StreamingAssets/NPCs` (mods: `npcs/` in the mod's folder, ids `[mod]:[npc]`) with an `info.json` (`Npcs.NpcInfo`, loaded with the items by `Npcs.NpcDatabase`):
+
+```json
+{
+    "name": "Golem",
+    "model": "golem",
+    "scale": 1,
+    "health": 60,
+    "speed": 1.6,
+    "stepHeight": 0.5,
+    "moves": "ground",
+    "behaviour": "aggressive",
+    "sightRange": 16,
+    "attack": { "damage": 5, "range": 0.9, "cooldown": 1.8, "hitTime": 1.2, "knockback": 8 },
+    "drops": [ { "item": "iron_ore", "count": 3, "chance": 1 } ],
+    "animations": { "idle": "idle", "walk": "walk", "attack": "attack", "death": "death" }
+}
+```
+
+- Distances are meters (a block is 0.8 wide and 0.48 high, a player 1.8 tall). `speed` is in meters per second, `stepHeight` how high it steps up without jumping.
+- `moves`: `ground` (the default) walks and keeps out of fluids (blocks with `fluid`, and water bricks): it doesn't step onto them nor walk off an edge into them. `water`, `amphibious` and `air` (swimming and flying) come with the navigation grid; until then they walk like `ground` ones.
+- `behaviour`: `neutral` (the default) wanders and fights back whoever hurts it, until it loses them (15 seconds, or too far); `aggressive` also goes for the nearest player within `sightRange` (not in Peaceful worlds).
+- `attack`: `range` from its side, `cooldown` seconds between attacks, `hitTime` seconds into the attack animation when the hit lands (if the target is still in reach), `knockback` how hard it pushes.
+- `drops`: items (and their `chance`, 0 to 1) whoever kills it gets in their inventory.
+- `animations`: the model's names for its idle, walk, attack and death animations, if they're named otherwise.
+
+For now NPCs walk straight to where they go, stepping up what's low enough (the navigation grid comes next). They only move and think in chunks within 4 chunks of a player (`Npcs.NpcSystem.ActiveRadius`), go away with the chunks the server unloads, and players only get the NPCs of the chunks they have (`Network.ChunkInterestManagement`).
+
+`model` is a prefab of `Assets/Resources/NpcModels` (`Npcs.NpcModel`), made from an animated glTF model with `Brickcraft > Import NPC model (glTF)...` (like `Assets/Models/NPCs/Golem/Golem.gltf`, exported from [Blockbench](https://www.blockbench.net/)): its nodes, textures (unfiltered, for pixel art), an AnimationClip per animation and an Animator controller with a state for each, saved next to the glTF. A node named `hitbox` isn't drawn: it's where the NPC can be hit and what it bumps into (all its meshes otherwise). Parts no animation moves are merged into one mesh per moving part. Models move their nodes (no skinned meshes). Mods can't bring their own models yet.
 
 ## How can i add a new model?
 

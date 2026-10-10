@@ -5,6 +5,7 @@
     "brickModel": 3003,
     "color": 4,
     "block": {
-        "breakable": false
+        "breakable": false,
+        "fluid": true
     }
 }

@@ -213,6 +213,7 @@ namespace Brickcraft
             addBrickModel(3024, BrickModel.Category.Plate, 1, 1, 1);
             addBrickModel(3001, BrickModel.Category.Brick, 4, 2, 3);
             addBrickModel(4186, BrickModel.Category.Plate, 48, 48, 1);
+            addBrickModel(3009, BrickModel.Category.Brick, 6, 1, 3);
         }
 
         private void addBrickModel(int type, BrickModel.Category category, int width, int depth, int heightInPlates) {

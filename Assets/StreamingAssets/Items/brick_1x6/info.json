@@ -1,0 +1,8 @@
+{
+    "id": "brick_1x6",
+    "name": "Brick 1x6",
+    "type": "brick",
+    "brickModel": 3009,
+    "color": 71,
+    "colors": "all"
+}

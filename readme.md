@@ -214,7 +214,9 @@ The reference, a page per section, is in [docs/lua](docs/lua/README.md).
 2. Prefab must be listed at Server -> prefabs scene object.
 3. Model specs (footprint in studs and height in plates) must be added at Server.cs#setupBrickModels(). The model's pivot must be at the center of its footprint, on its bottom face, like the existing ones.
 4. Items using it are added like any item (see How can i add a new item?), with its number as `brickModel`.
-5. To generate their icon, head to /Scenes/IconGenerator & simply hit Play. Items with missing icons will have their icon generated.
+5. Their icons: `Brickcraft > Generate missing item icons` renders one for every brick item without `icon.png` (items with a world block use their block's texture instead), in its colour, without playing (`BrickIconRenderer`). /Scenes/IconGenerator does the same in play mode.
+
+Models exported from [Mecabricks](https://www.mecabricks.com/) (a folder with `config.json`, `geometry.json` and its normals image, like `Assets/Models/Bricks/3009`) are imported with `Brickcraft > Import Mecabricks model...`: it makes the mesh (with its studs, which Mecabricks leaves out) and the prefab, with the pivot, collider and tag of the others and its normal map (its bevelled edges, see `BrickNormalMap`), adds it to the Server's prefabs, and renders the icons of the items made of it. Then add its size to `setupBrickModels` (the log says the line). Brick colour materials have normal mapping on (with `Textures/FlatNormal.png`) so models' own normal maps can replace it.
 
 ### Block and item ids
 

@@ -12,8 +12,6 @@ namespace Brickcraft
     {
         public static Server Instance;
         public static Dictionary<string, Brick> bricks = new Dictionary<string, Brick>();
-        public static Dictionary<int, BrickModel> brickModels = new Dictionary<int, BrickModel>();
-        public static Dictionary<string, GameObject> brickPrefabs = new Dictionary<string, GameObject>();
         // every item has its folder, see ItemDatabase. Ids are slugs, see Slugs
         public static Dictionary<string, Item> items = new Dictionary<string, Item>();
 
@@ -22,7 +20,6 @@ namespace Brickcraft
         public const float brickHeight = plateHeight * 3;
         public const float brickWidth = studSize * 2; // 2x2, the size of a world block
 
-        public GameObject[] prefabs;
 
         void Awake() {
             Instance = this;
@@ -30,11 +27,8 @@ namespace Brickcraft
             // static state survives scene changes, start every game clean
             bricks.Clear();
             BrickGrid.Clear();
-            brickModels.Clear();
-            brickPrefabs.Clear();
 
-            setupBrickModels();
-            processPrefabs();
+            checkBrickModels();
         }
 
         private void Start() {
@@ -45,12 +39,6 @@ namespace Brickcraft
 
             if (NetworkServer.active && SceneManager.GetActiveScene().name == BrickcraftNetworkManager.TestScene) {
                 setupTest();
-            }
-        }
-
-        void processPrefabs() {
-            foreach (var prefab in prefabs) {
-                brickPrefabs.Add(prefab.name, prefab);
             }
         }
 
@@ -107,6 +95,9 @@ namespace Brickcraft
                 brick = spawnBrick(item, item.color, new BrickPlacement(item.brickModel, cell));
                 brick.gameObject.layer = (int)Game.Layers.Default;
                 boxCollider = brick.gameObject.GetComponent<BoxCollider>();
+                if (boxCollider == null) {
+                    continue; // models with a mesh collider
+                }
                 boxCollider.isTrigger = true;
                 boxCollider.size = colliderSize;
                 blockAdder = brick.gameObject.AddComponent<BlockAdderTest>();
@@ -118,7 +109,7 @@ namespace Brickcraft
         /// Creates the GameObject of an item's brick without registering it in the world.
         /// </summary>
         public GameObject createBrickObject(Item item, int color, Vector3 position, Quaternion rotation) {
-            GameObject prefab = brickPrefabs[item.brickModelId.ToString()];
+            GameObject prefab = item.brickModel.prefab;
             GameObject brickObj = Instantiate(prefab, position, rotation * prefab.transform.rotation);
             Material brickMaterial = item.MaterialFor(color);
 
@@ -130,10 +121,7 @@ namespace Brickcraft
             }
 
             MeshRenderer meshRenderer = brickObj.GetComponent<MeshRenderer>();
-
-            if (brickMaterial != null) {
-                meshRenderer.material = brickMaterial;
-            }
+            BrickModels.ApplyColor(brickObj, brickMaterial);
             if (item.layer > 0) {
                 brickObj.layer = item.layer;
                 foreach (Transform tr in brickObj.transform) {
@@ -206,24 +194,14 @@ namespace Brickcraft
             return itemId != null && items.TryGetValue(itemId, out Item item) ? item : null;
         }
 
-        private void setupBrickModels() {
-            addBrickModel(3003, BrickModel.Category.Brick, 2, 2, 3);
-            addBrickModel(22885, BrickModel.Category.Brick, 2, 1, 5);
-            addBrickModel(3022, BrickModel.Category.Plate, 2, 2, 1);
-            addBrickModel(3024, BrickModel.Category.Plate, 1, 1, 1);
-            addBrickModel(3001, BrickModel.Category.Brick, 4, 2, 3);
-            addBrickModel(4186, BrickModel.Category.Plate, 48, 48, 1);
-            addBrickModel(3009, BrickModel.Category.Brick, 6, 1, 3);
-        }
-
-        private void addBrickModel(int type, BrickModel.Category category, int width, int depth, int heightInPlates) {
-            brickModels.Add(type, new BrickModel() {
-                type = type,
-                category = category,
-                width = width,
-                depth = depth,
-                heightInPlates = heightInPlates,
-            });
+        // every brick item needs its model's prefab
+        private void checkBrickModels() {
+            foreach (Item item in items.Values) {
+                if (item.type == Item.Type.Brick && !BrickModels.Exists(item.brickModelId)) {
+                    Debug.LogError("The item " + item.id + " is made of the brick model " + item.brickModelId
+                        + ", which doesn't exist (see BrickModels)");
+                }
+            }
         }
     }
 }

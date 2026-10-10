@@ -165,7 +165,7 @@ namespace Brickcraft.Scripting
                     throw new ScriptRuntimeException(item.id + " has no world block");
                 }
                 // loose bricks in the block's place would end up inside it
-                foreach (Vector3Int blockCell in new BrickPlacement(Server.brickModels[3003], BrickGrid.BlockToCell(block)).Cells) {
+                foreach (Vector3Int blockCell in new BrickPlacement(BrickModels.Get("3003"), BrickGrid.BlockToCell(block)).Cells) {
                     if (BrickGrid.GetBrickAt(blockCell) != null) {
                         return DynValue.False;
                     }

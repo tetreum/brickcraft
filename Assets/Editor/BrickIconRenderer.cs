@@ -32,6 +32,7 @@ public static class BrickIconRenderer
     /// <summary>Icons for the brick items that have none. Items with a world block are left out: their icon is their block's texture.</summary>
     [MenuItem("Brickcraft/Generate missing item icons")]
     public static void GenerateMissing() {
+        loadModels();
         int made = 0;
         foreach (string folder in itemFolders()) {
             if (!File.Exists(Path.Combine(folder, ItemDatabase.IconFile)) && !hasBlock(folder) && generate(folder, null)) {
@@ -51,7 +52,8 @@ public static class BrickIconRenderer
     }
 
     /// <summary>Renders the icon of every item whose brick is that model (overwriting theirs). Returns how many.</summary>
-    public static int GenerateForModel(int brickModel) {
+    public static int GenerateForModel(string brickModel) {
+        loadModels();
         int made = 0;
         foreach (string folder in itemFolders()) {
             if (generate(folder, brickModel)) {
@@ -80,8 +82,23 @@ public static class BrickIconRenderer
         }
     }
 
+    // the game's models and the installed mods' ones, as the game finds them (see BrickModels)
+    private static void loadModels() {
+        BrickColorPalette.Load();
+        BrickModels.Reload(Brickcraft.Mods.ModDatabase.Installed()); // files may have changed since
+    }
+
+    // the mod of an item folder (Mods/[mod]/items/[item]), null for the game's
+    private static Brickcraft.Mods.ModInfo modOf(string folder) {
+        string items = Path.GetDirectoryName(folder);
+        if (Path.GetFileName(items) != "items") {
+            return null;
+        }
+        return Brickcraft.Mods.ModDatabase.Find(Path.GetFileName(Path.GetDirectoryName(items)));
+    }
+
     // the icon of the item in the folder, if it's a brick (of that model, if given) with a prefab
-    private static bool generate(string folder, int? onlyModel) {
+    private static bool generate(string folder, string onlyModel) {
         string infoFile = Path.Combine(folder, ItemDatabase.InfoFile);
         if (!File.Exists(infoFile)) {
             return false;
@@ -95,24 +112,20 @@ public static class BrickIconRenderer
         if ((string)info["type"] != null && (string)info["type"] != "brick") {
             return false;
         }
-        int model = (int?)info["brickModel"] ?? 3003;
-        if (onlyModel.HasValue && model != onlyModel.Value) {
+        string model = BrickModels.Resolve((string)info["brickModel"] ?? "3003", modOf(folder));
+        if (onlyModel != null && model != onlyModel) {
             return false;
         }
-        GameObject prefab = findPrefab(model);
-        if (prefab == null) {
+        BrickModel brickModel = BrickModels.Get(model);
+        if (brickModel == null || brickModel.prefab == null) {
             return false;
         }
+        GameObject prefab = brickModel.prefab;
         Material material = colorMaterial((int?)info["color"]);
         Texture2D icon = Render(prefab, material);
         File.WriteAllBytes(Path.Combine(folder, ItemDatabase.IconFile), icon.EncodeToPNG());
         Object.DestroyImmediate(icon);
         return true;
-    }
-
-    private static GameObject findPrefab(int model) {
-        string path = "Assets/Models/Bricks/" + model + "/" + model + ".prefab";
-        return AssetDatabase.LoadAssetAtPath<GameObject>(path);
     }
 
     private static Material colorMaterial(int? color) {
@@ -137,13 +150,18 @@ public static class BrickIconRenderer
         int size = IconSize * Supersampling;
         RenderTexture target = new RenderTexture(size, size, 24, RenderTextureFormat.ARGB32);
         try {
-            GameObject brick = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
-            brick.transform.position = Vector3.zero;
-            foreach (MeshRenderer meshRenderer in brick.GetComponentsInChildren<MeshRenderer>()) {
-                if (material != null) {
-                    meshRenderer.sharedMaterial = material;
-                }
+            // the game's custom models are prefab assets, mods' are built from their files or come from AssetBundles (see BrickModels)
+            GameObject brick;
+            if (!string.IsNullOrEmpty(AssetDatabase.GetAssetPath(prefab))) { // bundles' prefabs are assets without a path
+                brick = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+            } else {
+                brick = Object.Instantiate(prefab);
+                brick.hideFlags = HideFlags.None;
+                brick.SetActive(true);
+                SceneManager.MoveGameObjectToScene(brick, scene);
             }
+            brick.transform.position = Vector3.zero;
+            BrickModels.ApplyColor(brick, material);
             // what the game applies at runtime (Awake doesn't run in the editor)
             foreach (BrickNormalMap normalMap in brick.GetComponentsInChildren<BrickNormalMap>()) {
                 normalMap.Apply();

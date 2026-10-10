@@ -169,7 +169,7 @@ Items/marble/
 - `name`: what players see. Required.
 - `type`: `brick` (the default), `helmet`, `weapon` or `food`. Only bricks can be placed.
 - `maxStack`: how many fit in one inventory slot, 64 by default. Dragging a stack onto the same item merges them as far as that allows.
-- `brickModel`: the brick it places (see How can i add a new model).
+- `brickModel`: the brick it places: a part number of the game's models (`"3003"`, see How can i add a new model) or a model of the mod (see Mods).
 - `color`: its colour, a colour id of the palette (like `4` for Red, see How can i add a new brick material). `colors`: other colours it can have, `"all"` or a list of ids; only its default one if missing. Each inventory stack is of one colour, recipes take ingredients of any colour and make the default one. Blocks placed in another colour are drawn in it, see-through for transparent colours; blocks without textures (like `brick_2x2`) use their default colour. Items without an icon nor textures get a square of their colour.
 - `material`: a special material instead of its colour's, from Canvas -> Game -> BrickMaterials (only `"Water"` for now). `layer` sets the Unity layer of placed bricks, like `"Water"`.
 - `block`: for bricks that are also a world block (it's named like the item, and placing the brick exactly over a world block places the block):
@@ -194,9 +194,14 @@ Mods/
     index.json        { "name": "My Castle", "author": "Me", "version": "1.0", "description": "Catapults and towers" }
     items/
       catapult/       an item, like the folders of StreamingAssets/Items (info.json, icon.png, textures, model.obj...)
+    models/
+      catapult/       a brick model: model.obj, model.glb or model.gltf, and optionally normal.png and model.json
+      towers.bundle   optional: an AssetBundle with prefabs, each a model named after it
 ```
 
 `name` and `version` are required. `Mods/example` is a small mod to start from: a sturdy brick that takes three hits, a launcher that shoots plates up when used, and a welcome message. Builds don't copy the `Mods` folder, it's put next to the game by hand. Mod items are named after their mod: `items/catapult` is `my_castle:catapult` (their `info.json` can't set a prefix). Item ids in a mod's `info.json` (recipe ingredients, block drops) are first looked for in the mod, so `"gear"` means `my_castle:gear` if the mod has it and the game's `gear` otherwise; `"other_mod:gear"` names any other loaded item.
+
+Mods' brick models are `[mod]:[name]`, and their items use them like the game's (`"brickModel": "catapult"` in the mod finds its own `my_castle:catapult` first). A model folder is like the game's file models (see How can i add a new model?). Complex models can come as prefabs in AssetBundles (`models/*.bundle`, built with Unity, this game's version): each prefab is a model named after it, with a BoxCollider of its size like the game's custom prefabs. Bundles are built for one platform, and their prefabs can only use components the game has (no code of their own). `Brickcraft > Generate missing item icons` renders mods' items' icons too.
 
 Each world has its own mods, chosen when it's created (New world → Mods). They're saved in its `world.dat` (with the version it was last played with) and loaded when it's played, besides the game's own items. A world whose mods aren't installed shows them as missing in the list; it can still be played, but their items are unknown and their blocks become air.
 
@@ -210,13 +215,35 @@ The reference, a page per section, is in [docs/lua](docs/lua/README.md).
 
 ## How can i add a new model?
 
-1. Brick models & their prefabs are stored in https://github.com/tetreum/brickcraft/tree/main/Assets/Models/Bricks
-2. Prefab must be listed at Server -> prefabs scene object.
-3. Model specs (footprint in studs and height in plates) must be added at Server.cs#setupBrickModels(). The model's pivot must be at the center of its footprint, on its bottom face, like the existing ones.
-4. Items using it are added like any item (see How can i add a new item?), with its number as `brickModel`.
-5. Their icons: `Brickcraft > Generate missing item icons` renders one for every brick item without `icon.png` (items with a world block use their block's texture instead), in its colour, without playing (`BrickIconRenderer`). /Scenes/IconGenerator does the same in play mode.
+Brick models (what items' `brickModel` names) are found by id when they're first needed, no list to keep: the game only lists the ids when it starts and reads a model the first time an item or a brick uses it, so the library can hold thousands of models while a world only loads what it uses (`Bricks.BrickModels`). An id is looked for in this order:
 
-Models exported from [Mecabricks](https://www.mecabricks.com/) (a folder with `config.json`, `geometry.json` and its normals image, like `Assets/Models/Bricks/3009`) are imported with `Brickcraft > Import Mecabricks model...`: it makes the mesh (with its studs, which Mecabricks leaves out) and the prefab, with the pivot, collider and tag of the others and its normal map (its bevelled edges, see `BrickNormalMap`), adds it to the Server's prefabs, and renders the icons of the items made of it. Then add its size to `setupBrickModels` (the log says the line). Brick colour materials have normal mapping on (with `Textures/FlatNormal.png`) so models' own normal maps can replace it.
+1. a mod's models (`Mods/[mod]/models/`, see Mods), named `[mod]:[name]`;
+2. a custom prefab of the game, `Assets/Resources/BrickModels/[id].prefab`, for complex models;
+3. a file model of the game, `StreamingAssets/BrickModels/[id]/`: most bricks, named by part number.
+
+A file model's folder has `model.obj`, `model.glb` or `model.gltf` (its shape; OBJ materials and glTF materials are its parts), an optional `normal.png` (a normal map for its first uv set, like its bevels) and an optional `model.json`:
+
+```json
+{
+    "scale": 0.05,
+    "collider": "mesh",
+    "parts": { "Glass": 47 },
+    "width": 2, "depth": 2, "plates": 3
+}
+```
+
+- `scale`: what its units are worth in the game's (1 for game units, where a stud is 0.398; the bricks from Mecabricks' OBJ exports are in millimeters, 0.05).
+- `collider`: `"box"` (the default, a box of its size) or `"mesh"` (its shape, for slopes, arches...).
+- `parts`: materials that keep a colour of their own (a palette colour id, like 47 Trans-Clear for a window); the others take the brick's colour.
+- `width`, `depth`, `plates`: its size, if the one worked out from its shape is wrong (footprint in studs, height in plates rounded down so studs on top don't count; under 3 plates it's a plate).
+
+The shape is moved so its pivot is at the center of its footprint, on its bottom face. OBJ files without normals get them smoothed under 60°, glTF primitives without normals are flat (only geometry is read from glTF: no textures, Draco or meshopt).
+
+A custom prefab is named after its id and has a BoxCollider that fills its footprint and height (studs left out): its size comes from it. Its pivot is at the center of its footprint, on its bottom face. Its materials are replaced by the brick's colour, except the parts a `BrickModelParts` component gives a colour of their own.
+
+Items using a model are added like any item (see How can i add a new item?), with its id as `brickModel`. Their icons: `Brickcraft > Generate missing item icons` renders one for every brick item without `icon.png` (items with a world block use their block's texture instead), in its colour, without playing (`BrickIconRenderer`).
+
+Models exported from [Mecabricks](https://www.mecabricks.com/) (a folder with `config.json`, `geometry.json` and its normals image, like `Assets/Models/Bricks/3009`) are imported with `Brickcraft > Import Mecabricks model...`: it makes the mesh (with its studs, which Mecabricks leaves out) and a custom prefab in `Resources/BrickModels` with its normal map (its bevelled edges, see `BrickNormalMap`), and renders the icons of the items made of it. Brick colour materials have normal mapping on (with `Textures/FlatNormal.png`) so models' own normal maps can replace it.
 
 ### Block and item ids
 

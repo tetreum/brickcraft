@@ -9,11 +9,11 @@ using UnityEngine;
 
 /// <summary>
 /// Turns a brick model exported from Mecabricks (a folder with config.json, geometry.json and its
-/// normals image) into a mesh and a prefab like the other bricks' (Assets/Models/Bricks/[id]/[id].prefab):
+/// normals image, in Assets/Models/Bricks/[id]) into a mesh (saved next to them) and a custom brick
+/// prefab (Assets/Resources/BrickModels/[id].prefab, found by id, see Bricks.BrickModels):
 /// pivot at the center of its bottom, a box collider of its size, studs where config.json puts them,
 /// and its normal map (see BrickNormalMap), and the icons of the items made of it (see BrickIconRenderer).
-/// It's added to the Server prefab's list; the brick's size
-/// still has to be added to Server.setupBrickModels (the log says what to add).
+/// Its size comes from its collider.
 ///
 /// geometry.json is three.js's JSON model format (version 3): vertices, normals and uvs in flat lists,
 /// faces as a type with bit flags followed by its indices. Mecabricks works in millimeters: a stud is
@@ -25,7 +25,7 @@ public static class MecabricksImporter
     private const float StudRadius = 2.4f;
     private const float StudHeight = 1.8f;
     private const int StudSegments = 24;
-    private const string ServerPrefab = "Assets/Prefabs/Server.prefab";
+    private const string PrefabsFolder = "Assets/Resources/" + BrickModels.ResourcesFolder;
     private const string DefaultMaterial = "Assets/Materials/BrickColors/Palette/71_LightBluishGray.mat";
 
     [MenuItem("Brickcraft/Import Mecabricks model...")]
@@ -83,21 +83,17 @@ public static class MecabricksImporter
         int depth = Mathf.RoundToInt(bounds.size.z / Server.studSize);
         int plates = Mathf.Max(1, Mathf.RoundToInt(bodyHeight / Server.plateHeight));
 
-        GameObject prefab = savePrefab(folder + "/" + name + ".prefab", name, mesh, normalMap, width, depth, plates);
-        register(prefab);
+        Directory.CreateDirectory(PrefabsFolder);
+        GameObject prefab = savePrefab(PrefabsFolder + "/" + name + ".prefab", name, mesh, normalMap, width, depth, plates);
 
         // the icons of the items made of it, in their colours
-        int model;
-        if (int.TryParse(name, out model)) {
-            int icons = BrickIconRenderer.GenerateForModel(model);
-            if (icons > 0) {
-                Debug.Log("Rendered the icons of " + icons + " item(s) made of " + name);
-            }
+        int icons = BrickIconRenderer.GenerateForModel(name);
+        if (icons > 0) {
+            Debug.Log("Rendered the icons of " + icons + " item(s) made of " + name);
         }
 
         Debug.Log("Imported the Mecabricks model " + name + ": " + width + "x" + depth + ", " + plates + " plates high, "
-            + mesh.vertexCount + " vertices. Add its size to Server.setupBrickModels if it isn't there: addBrickModel("
-            + name + ", BrickModel.Category." + (plates >= 3 ? "Brick" : "Plate") + ", " + width + ", " + depth + ", " + plates + ");");
+            + mesh.vertexCount + " vertices. Items use it with \"brickModel\": " + name);
         return prefab;
     }
 
@@ -308,21 +304,6 @@ public static class MecabricksImporter
             return PrefabUtility.SaveAsPrefabAsset(brick, path);
         } finally {
             UnityEngine.Object.DestroyImmediate(brick);
-        }
-    }
-
-    // the Server spawns bricks from its prefabs list, by name
-    private static void register(GameObject prefab) {
-        GameObject root = PrefabUtility.LoadPrefabContents(ServerPrefab);
-        try {
-            Server server = root.GetComponent<Server>();
-            List<GameObject> prefabs = new List<GameObject>(server.prefabs ?? new GameObject[0]);
-            prefabs.RemoveAll(p => p == null || p.name == prefab.name);
-            prefabs.Add(prefab);
-            server.prefabs = prefabs.ToArray();
-            PrefabUtility.SaveAsPrefabAsset(root, ServerPrefab);
-        } finally {
-            PrefabUtility.UnloadPrefabContents(root);
         }
     }
 }

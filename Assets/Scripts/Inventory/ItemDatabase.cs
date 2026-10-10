@@ -47,6 +47,7 @@ namespace Brickcraft
         /// <summary>Loads the game's items and those of the mods (see ModDatabase.Activate), replacing the loaded ones.</summary>
         public static void Load(IList<ModInfo> mods) {
             BrickColorPalette.Load(); // blocks and items need the colours
+            BrickModels.Index(mods); // mods' items can be made of their models
             foreach (Item old in Server.items.Values) {
                 if (old.iconTexture != null) {
                     TerrainTextures.Destroy(old.iconTexture);
@@ -175,7 +176,7 @@ namespace Brickcraft
                 type = type,
                 folder = folder,
                 maxStack = Math.Max(1, info.maxStack),
-                brickModelId = info.brickModel,
+                brickModelId = BrickModels.Resolve(info.brickModel, mod),
                 materialName = info.material,
                 layer = layer,
                 iconFile = iconPath,

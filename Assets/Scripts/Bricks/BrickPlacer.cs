@@ -139,7 +139,7 @@ namespace Brickcraft.Bricks
                 return;
             }
 
-            ghost = Instantiate(Server.brickPrefabs[model.type.ToString()]);
+            ghost = Instantiate(model.prefab);
             ghost.name = "BrickPreview";
             ghost.SetActive(false);
 
@@ -165,7 +165,7 @@ namespace Brickcraft.Bricks
             }
 
             BrickPlacement placement = target.Value;
-            GameObject prefab = Server.brickPrefabs[placement.model.type.ToString()];
+            GameObject prefab = placement.model.prefab;
 
             ghost.transform.SetPositionAndRotation(placement.Position, placement.Rotation * prefab.transform.rotation);
             ghost.SetActive(true);

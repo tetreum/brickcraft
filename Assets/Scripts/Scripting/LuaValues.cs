@@ -136,7 +136,7 @@ namespace Brickcraft.Scripting
 
         // the cells of a world block, to check no loose brick is in the way
         private static BrickPlacement blockCells(Vector3Int block) {
-            return new BrickPlacement(Server.brickModels[3003], BrickGrid.BlockToCell(block));
+            return new BrickPlacement(BrickModels.Get("3003"), BrickGrid.BlockToCell(block));
         }
 
         [MoonSharpHidden]

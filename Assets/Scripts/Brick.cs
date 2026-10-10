@@ -19,7 +19,7 @@ namespace Brickcraft
 
         public BrickModel model {
             get {
-                return Server.brickModels[item.brickModelId];
+                return BrickModels.Get(item.brickModelId);
             }
         }
     }

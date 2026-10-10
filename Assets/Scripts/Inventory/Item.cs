@@ -17,7 +17,8 @@ namespace Brickcraft
         }
         /// <summary>Its slug, see Slugs.</summary>
         public string id;
-        public int brickModelId;
+        /// <summary>Bricks: their model's id, see Bricks.BrickModels.</summary>
+        public string brickModelId;
         /// <summary>A special material (see Game.brickMaterials) used instead of its colour's, like Water.</summary>
         public string materialName;
         public int layer;
@@ -50,7 +51,7 @@ namespace Brickcraft
         }
         public BrickModel brickModel {
             get {
-                return Server.brickModels[brickModelId];
+                return BrickModels.Get(brickModelId);
             }
         }
 

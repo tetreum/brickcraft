@@ -22,6 +22,7 @@ namespace Brickcraft.Scripting
     ///   timer.after(seconds, fn), timer.every(seconds, fn), timer.cancel(id)
     /// Bricks (BrickHandle) also have move(position) and remove(), players (PlayerHandle) give(item, count, color).
     /// Positions are grid cells: {x =, y =, z =} tables or what bricks and players return.
+    /// Modders' documentation is in docs/lua (a page per section): keep it in step with this.
     /// </summary>
     public static class LuaApi
     {
@@ -159,6 +160,12 @@ namespace Brickcraft.Scripting
                 Item item = ItemOf(args.AsType(1, "setBlock", DataType.String).String);
                 if (!item.blockType.HasValue) {
                     throw new ScriptRuntimeException(item.id + " has no world block");
+                }
+                // loose bricks in the block's place would end up inside it
+                foreach (Vector3Int blockCell in new BrickPlacement(Server.brickModels[3003], BrickGrid.BlockToCell(block)).Cells) {
+                    if (BrickGrid.GetBrickAt(blockCell) != null) {
+                        return DynValue.False;
+                    }
                 }
                 int color = BrickColor.None;
                 if (args.Count > 2 && args[2].Type == DataType.Number) {

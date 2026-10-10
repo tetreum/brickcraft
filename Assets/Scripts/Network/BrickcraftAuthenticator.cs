@@ -58,7 +58,8 @@ namespace Brickcraft.Network
         }
 
         private void onAuthRequest(NetworkConnectionToClient conn, AuthRequestMessage request) {
-            if (conn.isAuthenticated || conn.authenticationData != null) {
+            // a server that couldn't start is about to stop, see BrickcraftNetworkManager.failStart
+            if (conn.isAuthenticated || conn.authenticationData != null || BrickcraftNetworkManager.Instance.HasFailedToStart) {
                 return;
             }
 

@@ -121,8 +121,11 @@ namespace Brickcraft.UI
                 Text details = row.transform.Find("Details").GetComponent<Text>();
                 details.text = world.Difficulty + "   Seed " + world.Seed + "   Played " + timeAgo(world.LastPlayedAt)
                     + (world.Mods.Count > 0 ? "   " + world.Mods.Count + (world.Mods.Count == 1 ? " mod" : " mods") : "");
-                showMissingMods(row, details, SavedWorlds.MissingMods(world));
-                row.transform.Find("Play").GetComponent<Button>().onClick.AddListener(() => play(saveName));
+                Button playButton = row.transform.Find("Play").GetComponent<Button>();
+                playButton.onClick.AddListener(() => play(saveName));
+                showNote(row, details, noteFor(world));
+                // worlds this version can't play (saved by a newer one...) stay listed, to delete them
+                playButton.interactable = world.Incompatibility == null;
 
                 Button delete = row.transform.Find("Delete").GetComponent<Button>();
                 delete.onClick.AddListener(() => onDelete(saveName, delete));
@@ -158,23 +161,40 @@ namespace Brickcraft.UI
             }
         }
 
-        // the mods that aren't installed (their items are lost while playing without them), on a line of their own
-        private const float MissingLineHeight = 20;
+        // what the player should know before playing it, null if nothing: why it can't be played, the mods
+        // that aren't installed (their items are lost while playing without them), or that it'll be upgraded
+        private static string noteFor(WorldStorage world) {
+            if (world.Incompatibility != null) {
+                return "<color=#ff9e94>Can't be played: " + world.Incompatibility + "</color>";
+            }
+            List<string> notes = new List<string>();
+            List<WorldMod> missing = SavedWorlds.MissingMods(world);
+            if (missing.Count > 0) {
+                // a couple of them, the line ends at the buttons
+                List<string> names = missing.ConvertAll(m => m.id + " " + m.version);
+                string shown = names.Count <= 2 ? string.Join(", ", names) : names[0] + ", " + names[1] + " and " + (names.Count - 2) + " more";
+                notes.Add("<color=#ff9e94>Missing mods: " + shown + "</color>");
+            }
+            if (world.NeedsUpgrade) {
+                notes.Add("<color=#f2d36b>Older save, upgraded when played</color>");
+            }
+            return notes.Count > 0 ? string.Join("   ", notes) : null;
+        }
 
-        private static void showMissingMods(GameObject row, Text details, List<WorldMod> missing) {
-            if (missing.Count == 0) {
+        // the note goes on a line of its own
+        private const float NoteLineHeight = 20;
+
+        private static void showNote(GameObject row, Text details, string note) {
+            if (note == null) {
                 return;
             }
-            // a couple of them, the line ends at the buttons
-            List<string> names = missing.ConvertAll(m => m.id + " " + m.version);
-            string shown = names.Count <= 2 ? string.Join(", ", names) : names[0] + ", " + names[1] + " and " + (names.Count - 2) + " more";
-            details.text += "\n<color=#ff9e94>Missing mods: " + shown + "</color>";
+            details.text += "\n" + note;
             details.horizontalOverflow = HorizontalWrapMode.Overflow;
-            ((RectTransform)details.transform).sizeDelta += new Vector2(0, MissingLineHeight);
+            ((RectTransform)details.transform).sizeDelta += new Vector2(0, NoteLineHeight);
 
             // name and details stay centered in the row
-            ((RectTransform)row.transform.Find("Name")).anchoredPosition += new Vector2(0, MissingLineHeight / 2);
-            ((RectTransform)details.transform).anchoredPosition += new Vector2(0, MissingLineHeight / 2);
+            ((RectTransform)row.transform.Find("Name")).anchoredPosition += new Vector2(0, NoteLineHeight / 2);
+            ((RectTransform)details.transform).anchoredPosition += new Vector2(0, NoteLineHeight / 2);
         }
 
         private static string timeAgo(long unixSeconds) {

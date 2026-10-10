@@ -112,22 +112,54 @@ namespace Brickcraft.Network
 
         public override void OnStartServer() {
             base.OnStartServer();
-            Database = new GameDatabase(SaveFolder);
-
+            startFailure = null;
             long newSeed = seed != 0 ? seed : Random.Range(1, int.MaxValue);
-
-            // the world's mods, before its scene loads and uses the items
-            WorldStorage info = isWorldScene(onlineScene) ? WorldStorage.ReadInfo(SaveFolder) : null;
-            ModDatabase.Activate(info != null ? info.ModIds : new List<string>());
-            ModScripts.Start();
-
             // only the generated world is saved, the test scene starts from scratch every time
-            WorldStorage storage = isWorldScene(onlineScene) ? WorldStorage.OpenOrCreate(SaveFolder, newSeed, saveName, Difficulty.Normal) : null;
+            bool isSaved = isWorldScene(onlineScene);
+
+            // a save of an older format is upgraded before anything opens it (see WorldStorage.FormatVersion)
+            WorldStorage storage;
+            try {
+                if (isSaved) {
+                    WorldStorage.UpgradeIfNeeded(SaveFolder);
+                }
+                Database = new GameDatabase(SaveFolder);
+
+                // the world's mods, before its scene loads and uses the items
+                WorldStorage info = isSaved ? WorldStorage.ReadInfo(SaveFolder) : null;
+                ModDatabase.Activate(info != null ? info.ModIds : new List<string>());
+                ModScripts.Start();
+
+                storage = isSaved ? WorldStorage.OpenOrCreate(SaveFolder, newSeed, saveName, Difficulty.Normal) : null;
+            } catch (System.Exception e) {
+                failStart("Couldn't open the world " + saveName + ": " + e.Message, e);
+                return;
+            }
             WorldNetwork.StartServer(storage, newSeed, defaultSpawnPosition);
 
             if (storage != null) {
                 StartCoroutine(autosave());
             }
+        }
+
+        // why the server couldn't start, told to the host's player once back in the menu
+        private static string startFailure;
+
+        /// <summary>The server couldn't start: nobody can join it.</summary>
+        public bool HasFailedToStart {
+            get { return startFailure != null; }
+        }
+
+        // stops the server the next frame (Mirror is still starting it) and goes back to the menu
+        private void failStart(string message, System.Exception e) {
+            startFailure = message;
+            Debug.LogError(message + "\n" + e);
+            StartCoroutine(stopAfterFailedStart());
+        }
+
+        private IEnumerator stopAfterFailedStart() {
+            yield return null;
+            Leave();
         }
 
         // the host's player objects are destroyed before the server stops, so save them first
@@ -144,8 +176,10 @@ namespace Brickcraft.Network
             }
             ModScripts.Stop();
             WorldNetwork.StopServer();
-            Database.Dispose();
-            Database = null;
+            if (Database != null) {
+                Database.Dispose();
+                Database = null;
+            }
             base.OnStopServer();
         }
 
@@ -318,7 +352,8 @@ namespace Brickcraft.Network
         public override void OnClientDisconnect() {
             base.OnClientDisconnect();
 
-            string message = BrickcraftAuthenticator.LastRejection ?? disconnectReason;
+            string message = startFailure ?? BrickcraftAuthenticator.LastRejection ?? disconnectReason;
+            startFailure = null;
 
             if (message == null && isInMenu()) {
                 message = "Couldn't join " + networkAddress; // a failed join leaves us in the menu

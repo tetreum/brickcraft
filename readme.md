@@ -72,6 +72,8 @@ Every world is saved in its own folder, `<persistentDataPath>/saves/<save name>/
 - `world.dat`: the world's name, seed, difficulty and generator version, when it was created and last played, which game versions created it and played it last, and its mods (see Mods).
 - `regions/r.<x>.<z>.bcr`: what players changed (blocks and bricks), in region files of 32x32 chunks. The terrain itself is never saved, it's generated again from the seed and the changes are applied on top, so a save only grows with what players do, not with the size of the world. Each chunk record is compressed and can be rewritten alone; new versions are written before the old ones are released, so a crash can't leave half a chunk. Regions nobody changed have no file. Placed blocks and bricks also store who placed them (their id in `players.db`) and when (unix seconds); dug blocks don't. Bricks store their colour, and blocks placed in a colour other than their item's default one store it too (they're drawn with it instead of their textures).
 
+Saves have a format number (`WorldStorage.FormatVersion`, written in `world.dat`) that covers all their files. Older saves are upgraded when they're played: each step is a migration in `Assets/Scripts/World/Persistence/Migrations` (`Migration3To4` upgrades format 3 to 4) and they're chained, so a save several formats old goes through each one. The save is backed up first in `<persistentDataPath>/backups/<save>-format<N>-<date>/` and put back if a migration fails. Migrations read and write the formats they convert between with their own code, so they keep working as the game changes. Saves of a newer game, older than `SaveMigrations.OldestSupported` or with no migration path stay in the list with why they can't be played. When a save's format changes (world.dat, chunk records, players.db), bump `FormatVersion` and add a migration from the previous one.
+
 Regions are streamed with the world: the changes of a region are read when the server loads its first chunk, and saved and dropped from memory when it unloads its last one, so memory only holds the areas around players.
 - `players.db`: the players database described below.
 
@@ -202,56 +204,9 @@ Players joining a server need its world's mods: the same version with the same f
 
 ### Scripts
 
-Mods can script their bricks in Lua ([MoonSharp](https://www.moonsharp.org/), Lua 5.2). Scripts only run on the server: what they do goes through it and reaches players like any other change, so they can't be used to cheat.
+Mods can script their bricks in Lua ([MoonSharp](https://www.moonsharp.org/), Lua 5.2): `items/[item]/script.lua` handles the item's events (placed, hit, broken, used) and `scripts/*.lua` the mod's (loaded, players joining, leaving and chatting). Scripts run on the server only, sandboxed, and can spawn, move and remove bricks, change world blocks, message players and give them items, and run timers.
 
-- `items/[item]/script.lua`: the item's events, called for its bricks and world blocks:
-  - `onPlaced(brick, player)`: it was placed.
-  - `onHit(brick, player)`: a player is breaking it; return `false` and it stays.
-  - `onBroken(brick, player)`: it was removed or dug out.
-  - `onInteract(brick, player)`: a player used it (E, "Use brick" in Controls).
-- `scripts/*.lua`: the mod's events: `onLoad()` (when the server starts, before the world loads), `onPlayerJoined(player)`, `onPlayerLeft(player)`, `onChat(player, text)` (return `false` and the message isn't sent).
-
-```lua
--- items/vault/script.lua: a brick that takes three hits to break
-local hits = 0
-
-function onHit(brick, player)
-  hits = hits + 1
-  if hits < 3 then
-    player:message("It's sturdy (" .. hits .. "/3)")
-    return false
-  end
-end
-```
-
-A `brick` has `item` (its id), `position` (`x`, `y`, `z` in grid cells: studs sideways, plates up; a world block is 2 x 3 x 2 cells), `color`, `rotation`, `isBlock` (part of the terrain, not a loose brick), `placedBy` (the player's id, 0 if no player placed it), `placedAt` (unix seconds) and `exists`. A `player` has `id`, `name`, `position`, `player:message(text)` and `player:give(item, count, color)` (false if it doesn't fit). `log(...)` and `print(...)` write to the server log, prefixed with the mod's id.
-
-What scripts can do with the world (changes need its part of the world loaded, and reach the players and the save like players' changes):
-
-- `world.spawn(item, position, {rotation = 0-3, color = id})`: places a loose brick, returns it (nil if it doesn't fit).
-- `brick:move(position)`: moves a brick (or a world block to another block's place); false if there's no room. `brick:remove()` takes it away, nobody gets it.
-- `world.brickAt(position)`: the brick or world block in that cell, nil if empty. `world.getBlock(position)` is the item of the world block there (nil for air), `world.setBlock(position, item, color)` changes it (`item` nil for air).
-- `world.bricksIn(from, to)`: the loose bricks whose first cell is in the box. `world.players()`: everyone in the game. `world.isLoaded(position)`.
-- `timer.after(seconds, fn)` and `timer.every(seconds, fn)` return an id for `timer.cancel(id)`; up to 256 per mod, repeating ones every 0.05 s at most.
-
-```lua
--- a brick that, when used, launches a plate up into the air
-function onInteract(brick, player)
-  local p = brick.position
-  local plate = world.spawn("plate_1x1_green", {x = p.x, y = p.y + 3, z = p.z}, {color = 4})
-  if not plate then return end
-  local id
-  id = timer.every(0.1, function()
-    local q = plate.position
-    if not plate:move({x = q.x, y = q.y + 1, z = q.z}) or q.y > p.y + 30 then
-      plate:remove()
-      timer.cancel(id)
-    end
-  end)
-end
-```
-
-Each file has its own globals, so two items can both define `onPlaced`; the table `shared` is the same for all the mod's scripts. Each mod has its own Lua state and only gets `string`, `table`, `math`, `bit32`, coroutines, metatables, error handling and `os.time`/`os.clock`/`os.date`: no files, no loading code. A call that runs more than a million instructions is stopped, and a handler that fails 5 times is turned off; errors are logged with the file and line and never stop the game.
+The reference, a page per section, is in [docs/lua](docs/lua/README.md).
 
 ## How can i add a new model?
 

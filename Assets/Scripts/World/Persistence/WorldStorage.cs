@@ -39,10 +39,23 @@ namespace Brickcraft.World
         public const ushort GeneratorVersion = 2;
 
         private const uint Magic = 0x44574342; // "BCWD"
-        // change it when the header changes, worlds with another one aren't opened
-        private const ushort FormatVersion = 4;
+        /// <summary>
+        /// The format of saves (world.dat, chunk records, players.db). Change it with any of them, and add
+        /// a migration from the previous one: older saves are upgraded when they're played (see
+        /// Migrations.SaveMigrations).
+        /// </summary>
+        public const ushort FormatVersion = 4;
 
         public string Folder { get; private set; }
+        /// <summary>The format it's saved in, see FormatVersion.</summary>
+        public int Format { get; private set; }
+        /// <summary>Why this version of the game can't play it, null if it can (maybe after upgrading it).</summary>
+        public string Incompatibility { get; private set; }
+
+        /// <summary>It's saved in an older format, it's upgraded when it's played.</summary>
+        public bool NeedsUpgrade {
+            get { return Incompatibility == null && Migrations.SaveMigrations.NeedsUpgrade(Format); }
+        }
         public long Seed { get; private set; }
         public long CreatedAt { get; private set; }
         /// <summary>When it was last played (saved, or opened), unix seconds.</summary>
@@ -79,14 +92,33 @@ namespace Brickcraft.World
         // every disk write, in order
         private Task ioQueue = Task.CompletedTask;
 
-        /// <summary>Opens the world saved in the folder, or creates it with what's given.</summary>
+        /// <summary>
+        /// Upgrades the world in the folder to the current format if it's older (see Migrations.SaveMigrations).
+        /// Throws, with why for the player, if this version can't play it.
+        /// </summary>
+        public static void UpgradeIfNeeded(string folder) {
+            if (!File.Exists(Path.Combine(folder, HeaderFile))) {
+                return; // a new world
+            }
+            WorldStorage info = ReadInfo(folder);
+            if (info == null) {
+                throw new InvalidDataException("Its " + HeaderFile + " can't be read");
+            }
+            if (info.Incompatibility != null) {
+                throw new InvalidDataException(info.Incompatibility);
+            }
+            Migrations.SaveMigrations.Upgrade(folder, info.Format);
+        }
+
+        /// <summary>Opens the world saved in the folder (upgraded first if it's older), or creates it with what's given.</summary>
         public static WorldStorage OpenOrCreate(string folder, long newSeed, string newName, Difficulty newDifficulty) {
             if (!File.Exists(Path.Combine(folder, HeaderFile))) {
                 Create(folder, newName, newSeed, newDifficulty);
             }
+            UpgradeIfNeeded(folder);
             WorldStorage storage = new WorldStorage() { Folder = folder, Changes = new WorldChanges() };
             Directory.CreateDirectory(Path.Combine(folder, RegionsFolder));
-            storage.readHeader();
+            storage.readHeader(false);
             storage.writeHeader(); // records that it was played now, and with which version
             return storage;
         }
@@ -107,14 +139,17 @@ namespace Brickcraft.World
             UnityEngine.Debug.Log("Created world \"" + name + "\" in " + folder + " with seed " + seed);
         }
 
-        /// <summary>Reads only the header of the world in the folder (to list saves), null if it isn't one.</summary>
+        /// <summary>
+        /// Reads only the header of the world in the folder (to list saves), null if it isn't one. Worlds
+        /// of other formats are read too: see Format, NeedsUpgrade and Incompatibility.
+        /// </summary>
         public static WorldStorage ReadInfo(string folder) {
             if (!File.Exists(Path.Combine(folder, HeaderFile))) {
                 return null;
             }
             WorldStorage storage = new WorldStorage() { Folder = folder };
             try {
-                storage.readHeader();
+                storage.readHeader(true);
             } catch (Exception e) {
                 UnityEngine.Debug.LogWarning("Can't read the world in " + folder + ": " + e.Message);
                 return null;
@@ -314,23 +349,30 @@ namespace Brickcraft.World
 
         // -------- header --------
 
-        private void readHeader() {
+        // Other formats are only read to list them (listing): the fields up to the difficulty are the
+        // same in every format since 3, keep it so. Playing them needs them upgraded first.
+        private void readHeader(bool listing) {
             using (BinaryReader reader = new BinaryReader(File.OpenRead(Path.Combine(Folder, HeaderFile)))) {
                 if (reader.ReadUInt32() != Magic) {
                     throw new InvalidDataException(HeaderFile + " isn't a world file");
                 }
-                ushort format = reader.ReadUInt16();
-                if (format != FormatVersion) {
-                    throw new InvalidDataException("The world was saved by another version of the game");
+                Format = reader.ReadUInt16();
+                if (Format != FormatVersion) {
+                    if (!listing) {
+                        throw new InvalidDataException("The world is saved in format " + Format + ", it has to be upgraded first");
+                    }
+                    Incompatibility = Migrations.SaveMigrations.CheckCompatibility(Format);
+                    Name = Path.GetFileName(Folder);
+                    if (Format >= 3) {
+                        try {
+                            readCommonFields(reader);
+                        } catch (Exception) {
+                            // an unknown format, its folder's name is enough to list it
+                        }
+                    }
+                    return;
                 }
-                Seed = reader.ReadInt64();
-                ushort generator = reader.ReadUInt16();
-                CreatedAt = reader.ReadInt64();
-                LastPlayedAt = reader.ReadInt64();
-                CreatedWithVersion = reader.ReadString();
-                LastSavedWithVersion = reader.ReadString();
-                Name = reader.ReadString();
-                Difficulty = (Difficulty)reader.ReadByte();
+                ushort generator = readCommonFields(reader);
 
                 int modCount = reader.ReadUInt16();
                 Mods = new List<WorldMod>(modCount);
@@ -342,6 +384,19 @@ namespace Brickcraft.World
                     UnityEngine.Debug.LogWarning("The world was created with another version of the generator, saved changes may not line up with the terrain");
                 }
             }
+        }
+
+        // seed, generator, timestamps, game versions, name and difficulty; returns the generator version
+        private ushort readCommonFields(BinaryReader reader) {
+            Seed = reader.ReadInt64();
+            ushort generator = reader.ReadUInt16();
+            CreatedAt = reader.ReadInt64();
+            LastPlayedAt = reader.ReadInt64();
+            CreatedWithVersion = reader.ReadString();
+            LastSavedWithVersion = reader.ReadString();
+            Name = reader.ReadString();
+            Difficulty = (Difficulty)reader.ReadByte();
+            return generator;
         }
 
         // written to a temporary file first, so the header is never half written

@@ -14,6 +14,8 @@ namespace Brickcraft
         public string type = "brick";
         /// <summary>How many fit in one inventory slot.</summary>
         public int maxStack = Item.DefaultMaxStack;
+        /// <summary>Health a hit takes while holding it, Item.HandDamage (a bare hand's) if missing.</summary>
+        public int? damage;
         /// <summary>Bricks: their model, a part number like "3003" or one of the mod's models (see Bricks.BrickModels).</summary>
         public string brickModel = "3003";
         /// <summary>Bricks: their default colour, a colour id of BrickColorPalette.</summary>

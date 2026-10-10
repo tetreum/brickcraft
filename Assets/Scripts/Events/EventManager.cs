@@ -45,6 +45,15 @@ namespace Brickcraft.Events
         /// <summary>A mod showed (or changed, or removed) something on this player's screen, see ModUiKind.</summary>
         public static readonly GameEvent<ModUiEvent> ModUi = new GameEvent<ModUiEvent>();
 
+        /// <summary>The local player's health or maximum health changed (and when it's first known).</summary>
+        public static readonly GameEvent<LocalPlayerHealthChangedEvent> LocalPlayerHealthChanged = new GameEvent<LocalPlayerHealthChangedEvent>();
+
+        /// <summary>The local player died: it can't play until it respawns.</summary>
+        public static readonly GameEvent<LocalPlayerDiedEvent> LocalPlayerDied = new GameEvent<LocalPlayerDiedEvent>();
+
+        /// <summary>The local player is alive again, at the spawn.</summary>
+        public static readonly GameEvent<LocalPlayerRespawnedEvent> LocalPlayerRespawned = new GameEvent<LocalPlayerRespawnedEvent>();
+
         // subscribers of a previous play session, when entering play mode doesn't reload the domain
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void clearAll() {
@@ -58,6 +67,9 @@ namespace Brickcraft.Events
             Disconnected.Clear();
             SettingChanged.Clear();
             ModUi.Clear();
+            LocalPlayerHealthChanged.Clear();
+            LocalPlayerDied.Clear();
+            LocalPlayerRespawned.Clear();
         }
     }
 }

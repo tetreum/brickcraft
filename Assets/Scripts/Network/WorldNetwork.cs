@@ -36,6 +36,19 @@ namespace Brickcraft.Network
         /// <summary>How hard the world is (saved with it, see WorldStorage), on the server and its clients.</summary>
         public static Difficulty Difficulty { get; private set; }
 
+        /// <summary>Server: players can hurt each other (see WorldStorage.Pvp; the test scene allows it).</summary>
+        public static bool Pvp {
+            get { return Storage != null ? Storage.Pvp : testScenePvp; }
+            set {
+                if (Storage != null) {
+                    Storage.SetPvp(value);
+                } else {
+                    testScenePvp = value;
+                }
+            }
+        }
+        private static bool testScenePvp = true;
+
         /// <summary>The saved world, null in scenes that aren't saved (the test scene).</summary>
         public static WorldStorage Storage { get; private set; }
 

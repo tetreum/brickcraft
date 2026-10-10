@@ -79,3 +79,21 @@ function onChat(player, text)
   end
 end
 ```
+
+### onPlayerDamaged(player, amount, attacker)
+
+Something is about to hurt the player by `amount`: `attacker` is the player hitting it, or `nil` (a script's `player:damage`). **Return `false` and it isn't hurt.**
+
+```lua
+-- nobody gets hurt near the spawn
+function onPlayerDamaged(player, amount, attacker)
+  local p = player.position
+  if math.abs(p.x) < 50 and math.abs(p.z) < 50 then
+    return false
+  end
+end
+```
+
+### onPlayerDied(player, killer)
+
+The player died; `killer` is the player that killed it, or `nil`. It comes back when it respawns.

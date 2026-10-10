@@ -44,7 +44,7 @@ namespace Brickcraft.World
         /// a migration from the previous one: older saves are upgraded when they're played (see
         /// Migrations.SaveMigrations).
         /// </summary>
-        public const ushort FormatVersion = 5;
+        public const ushort FormatVersion = 6;
 
         public string Folder { get; private set; }
         /// <summary>The format it's saved in, see FormatVersion.</summary>
@@ -65,6 +65,8 @@ namespace Brickcraft.World
         public Difficulty Difficulty { get; private set; }
         /// <summary>The mods it's played with, chosen when it was created.</summary>
         public List<WorldMod> Mods { get; private set; } = new List<WorldMod>();
+        /// <summary>Players can hurt each other, chosen when it was created (admins change it with /pvp).</summary>
+        public bool Pvp { get; private set; } = true;
 
         /// <summary>The ids of its mods.</summary>
         public List<string> ModIds {
@@ -113,7 +115,7 @@ namespace Brickcraft.World
         /// <summary>Opens the world saved in the folder (upgraded first if it's older), or creates it with what's given.</summary>
         public static WorldStorage OpenOrCreate(string folder, long newSeed, string newName, Difficulty newDifficulty) {
             if (!File.Exists(Path.Combine(folder, HeaderFile))) {
-                Create(folder, newName, newSeed, newDifficulty);
+                Create(folder, newName, newSeed, newDifficulty, true);
             }
             UpgradeIfNeeded(folder);
             WorldStorage storage = new WorldStorage() { Folder = folder, Changes = new WorldChanges() };
@@ -124,12 +126,13 @@ namespace Brickcraft.World
         }
 
         /// <summary>Creates a new world in the folder (nothing is generated until it's played).</summary>
-        public static void Create(string folder, string name, long seed, Difficulty difficulty, List<WorldMod> mods = null) {
+        public static void Create(string folder, string name, long seed, Difficulty difficulty, bool pvp, List<WorldMod> mods = null) {
             WorldStorage storage = new WorldStorage() {
                 Folder = folder,
                 Name = name,
                 Seed = seed,
                 Difficulty = difficulty,
+                Pvp = pvp,
                 Mods = mods ?? new List<WorldMod>(),
                 CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 CreatedWithVersion = GameVersion.Current,
@@ -137,6 +140,12 @@ namespace Brickcraft.World
             Directory.CreateDirectory(Path.Combine(folder, RegionsFolder));
             storage.writeHeader();
             UnityEngine.Debug.Log("Created world \"" + name + "\" in " + folder + " with seed " + seed);
+        }
+
+        /// <summary>Changes whether players can hurt each other, and saves it.</summary>
+        public void SetPvp(bool pvp) {
+            Pvp = pvp;
+            enqueueWrite(new List<KeyValuePair<Vector2Int, byte[]>>(), null); // writes the header
         }
 
         /// <summary>
@@ -379,6 +388,7 @@ namespace Brickcraft.World
                 for (int i = 0; i < modCount; i++) {
                     Mods.Add(new WorldMod() { id = reader.ReadString(), version = reader.ReadString() });
                 }
+                Pvp = reader.ReadBoolean();
 
                 if (generator != GeneratorVersion) {
                     UnityEngine.Debug.LogWarning("The world was created with another version of the generator, saved changes may not line up with the terrain");
@@ -428,6 +438,7 @@ namespace Brickcraft.World
                     writer.Write(mod.id);
                     writer.Write(active != null ? active.version : mod.version ?? "");
                 }
+                writer.Write(Pvp);
             }
 
             if (File.Exists(path)) {

@@ -47,6 +47,11 @@ namespace Brickcraft
         private float originalStickToGroundForce;
         private float originalJumpSpeed;
 
+        // a push from a hit, fading out, and how fast it throws the player up (applied once, like a jump)
+        private Vector3 m_Knockback;
+        private float m_KnockbackUp;
+        private const float KnockbackDrag = 12f;
+
         private void Awake() {
             originalWalkSpeed = m_WalkSpeed;
             originalRunSpeed = m_RunSpeed;
@@ -130,6 +135,13 @@ namespace Brickcraft
             m_PreviouslyGrounded = m_CharacterController.isGrounded;
         }
 
+        /// <summary>Pushes the player (a hit): horizontally for a moment, and up like a small jump.</summary>
+        public void Knockback(Vector3 velocity)
+        {
+            m_Knockback = new Vector3(velocity.x, 0, velocity.z);
+            m_KnockbackUp = Mathf.Max(0, velocity.y);
+        }
+
         public void resetGravity () {
             m_GravityMultiplier = originalGravityMultiplier;
             m_StickToGroundForce = originalStickToGroundForce;
@@ -177,7 +189,13 @@ namespace Brickcraft
             m_MoveDir.z = desiredMove.z*speed;
 
 
-            if (m_CharacterController.isGrounded)
+            if (m_KnockbackUp > 0)
+            {
+                m_MoveDir.y = m_KnockbackUp;
+                m_KnockbackUp = 0;
+                m_Jumping = true;
+            }
+            else if (m_CharacterController.isGrounded)
             {
                 m_MoveDir.y = -m_StickToGroundForce;
 
@@ -199,7 +217,8 @@ namespace Brickcraft
                     m_Jumping = true;
                 }
             }
-            m_CollisionFlags = m_CharacterController.Move(m_MoveDir*Time.fixedDeltaTime);
+            m_CollisionFlags = m_CharacterController.Move((m_MoveDir + m_Knockback)*Time.fixedDeltaTime);
+            m_Knockback = Vector3.MoveTowards(m_Knockback, Vector3.zero, KnockbackDrag*Time.fixedDeltaTime);
 
             ProgressStepCycle(speed);
             UpdateCameraPosition(speed);

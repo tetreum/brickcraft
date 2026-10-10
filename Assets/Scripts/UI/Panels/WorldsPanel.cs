@@ -10,7 +10,7 @@ namespace Brickcraft.UI
 {
     /// <summary>
     /// What Singleplayer opens: the saved worlds (play or delete them) and a form to create a new one
-    /// with its name, seed, difficulty and mods (see Mods.ModDatabase). See World.SavedWorlds.
+    /// with its name, seed, difficulty, PvP and mods (see Mods.ModDatabase). See World.SavedWorlds.
     /// </summary>
     public class WorldsPanel : MonoBehaviour
     {
@@ -36,6 +36,8 @@ namespace Brickcraft.UI
         public InputField nameInput;
         public InputField seedInput;
         public SegmentedControl difficulty;
+        /// <summary>Players can hurt each other, see WorldStorage.Pvp.</summary>
+        public Toggle pvp;
         public Button backButton;
         public Button createButton;
         /// <summary>What's wrong with the form.</summary>
@@ -119,7 +121,7 @@ namespace Brickcraft.UI
                 row.name = saveName;
                 row.transform.Find("Name").GetComponent<Text>().text = string.IsNullOrEmpty(world.Name) ? saveName : world.Name;
                 Text details = row.transform.Find("Details").GetComponent<Text>();
-                details.text = world.Difficulty + "   Seed " + world.Seed + "   Played " + timeAgo(world.LastPlayedAt)
+                details.text = world.Difficulty + (world.Pvp ? "   PvP" : "") + "   Seed " + world.Seed + "   Played " + timeAgo(world.LastPlayedAt)
                     + (world.Mods.Count > 0 ? "   " + world.Mods.Count + (world.Mods.Count == 1 ? " mod" : " mods") : "");
                 Button playButton = row.transform.Find("Play").GetComponent<Button>();
                 playButton.onClick.AddListener(() => play(saveName));
@@ -224,6 +226,7 @@ namespace Brickcraft.UI
             nameInput.text = "New world";
             seedInput.text = "";
             difficulty.Select((int)Difficulty.Normal);
+            pvp.isOn = true;
             error.text = "";
             refreshMods();
         }
@@ -274,7 +277,7 @@ namespace Brickcraft.UI
                         mods.Add(mod.Key);
                     }
                 }
-                saveName = SavedWorlds.Create(name, SavedWorlds.ParseSeed(seedInput.text), (Difficulty)Mathf.Max(0, difficulty.Selected), mods);
+                saveName = SavedWorlds.Create(name, SavedWorlds.ParseSeed(seedInput.text), (Difficulty)Mathf.Max(0, difficulty.Selected), pvp.isOn, mods);
             } catch (Exception e) {
                 error.text = "Couldn't create the world: " + e.Message;
                 return;

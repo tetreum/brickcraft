@@ -1,4 +1,5 @@
 using Brickcraft.Bricks;
+using Brickcraft.Combat;
 using Brickcraft.Events;
 using Brickcraft.Scripting;
 using Brickcraft.World;
@@ -15,7 +16,7 @@ namespace Brickcraft.Network
     /// Only the local player runs the first person controls; the others are just a body
     /// moved by their NetworkTransform.
     /// </summary>
-    [RequireComponent(typeof(Player), typeof(PlayerInventory))]
+    [RequireComponent(typeof(Player), typeof(PlayerInventory), typeof(Health))]
     public class PlayerNetwork : NetworkBehaviour
     {
         // how far from the player the server accepts changes, a bit more than the player's reach
@@ -43,9 +44,44 @@ namespace Brickcraft.Network
         [SyncVar] public float spawnYaw;
 
         private PlayerInventory inventory;
+        private Health health;
+
+        // a hit at most this often, from at most this far (a bit more than the player's reach, see Player)
+        private const double AttackCooldown = 0.4;
+        private const float MaxAttackReach = 6f;
+        // how a hit pushes who it hits: away, and a little up
+        private const float KnockbackSpeed = 6f;
+        private const float KnockbackUp = 3f;
+        private double nextAttackTime;
 
         private void Awake() {
             inventory = GetComponent<PlayerInventory>();
+            health = GetComponent<Health>();
+        }
+
+        public override void OnStartServer() {
+            health.ServerAllowDamage = allowDamage;
+            health.ServerDied += onServerDied;
+        }
+
+        // mods can keep a player from being hurt
+        [Server]
+        private bool allowDamage(DamageInfo damage) {
+            return ModScripts.ModEvent("onPlayerDamaged", PlayerHandle.For(connectionToClient), damage.amount, attackerHandle(damage));
+        }
+
+        [Server]
+        private void onServerDied(DamageInfo damage) {
+            ChatEvents.Send(new ChatEventMessage() { type = ChatEventType.Died, player = playerName, by = damage.attackerName });
+            ModScripts.ModEvent("onPlayerDied", PlayerHandle.For(connectionToClient), attackerHandle(damage));
+        }
+
+        // the player that did it, null if it wasn't one
+        private static PlayerHandle attackerHandle(DamageInfo damage) {
+            NetworkIdentity attacker = damage.attacker != null ? damage.attacker.GetComponent<NetworkIdentity>() : null;
+            return attacker != null && attacker.connectionToClient != null && attacker.GetComponent<PlayerNetwork>() != null
+                ? PlayerHandle.For(attacker.connectionToClient)
+                : null;
         }
 
         private void Update() {
@@ -69,6 +105,10 @@ namespace Brickcraft.Network
             if (!isLocalPlayer) {
                 setupRemotePlayer();
             }
+        }
+
+        public override void OnStopClient() {
+            health.DeadChanged -= showBody;
         }
 
         public override void OnStartLocalPlayer() {
@@ -111,13 +151,82 @@ namespace Brickcraft.Network
                 GameObject body = Instantiate(characterPrefab, transform, false);
                 body.name = "Body";
             }
+
+            // what other players' crosshairs hit (the player object is on Ignore Raycast, see Player): its capsule
+            CharacterController capsule = GetComponent<CharacterController>();
+            GameObject hitbox = new GameObject("Hitbox");
+            hitbox.layer = (int)Game.Layers.Default;
+            hitbox.transform.SetParent(transform, false);
+            CapsuleCollider collider = hitbox.AddComponent<CapsuleCollider>();
+            collider.center = capsule.center;
+            collider.height = capsule.height;
+            collider.radius = capsule.radius;
+
+            // dead players have neither
+            showBody(health.isDead);
+            health.DeadChanged += showBody;
+        }
+
+        private void showBody(bool dead) {
+            foreach (string part in new[] { "Body", "Hitbox" }) {
+                Transform child = transform.Find(part);
+                if (child != null) {
+                    child.gameObject.SetActive(!dead);
+                }
+            }
         }
 
         // -------- client to server --------
 
+        /// <summary>
+        /// Hits something that has health (a player when PvP is on, see WorldNetwork.Pvp) with what's
+        /// in the inventory slot (its damage, see Item.damage).
+        /// </summary>
+        [Command]
+        public void CmdAttack(NetworkIdentity target, int slot) {
+            if (health.isDead || target == null || target == netIdentity || NetworkTime.time < nextAttackTime) {
+                return;
+            }
+            Health victim = target.GetComponent<Health>();
+            PlayerNetwork victimPlayer = target.GetComponent<PlayerNetwork>();
+            if (victim == null || victim.isDead || Vector3.Distance(transform.position, target.transform.position) > MaxAttackReach
+                || (victimPlayer != null && !WorldNetwork.Pvp)) {
+                return;
+            }
+            nextAttackTime = NetworkTime.time + AttackCooldown;
+
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            int damage = held.HasValue && Server.items.TryGetValue(held.Value.itemId, out Item item) ? item.damage : Item.HandDamage;
+            bool hurt = victim.ServerDamage(new DamageInfo() {
+                amount = damage,
+                kind = DamageInfo.Kind.Melee,
+                attacker = gameObject,
+                attackerName = playerName,
+            });
+
+            if (hurt && victimPlayer != null && victimPlayer.connectionToClient != null) {
+                Vector3 away = target.transform.position - transform.position;
+                away.y = 0;
+                victimPlayer.TargetKnockback(away.normalized * KnockbackSpeed + Vector3.up * KnockbackUp);
+            }
+        }
+
+        /// <summary>A dead player comes back at the spawn, with all its health (and its inventory).</summary>
+        [Command]
+        public void CmdRespawn() {
+            if (!health.isDead) {
+                return;
+            }
+            ServerTeleport(BrickcraftNetworkManager.Instance.ServerSpawnPosition(out _));
+            health.ServerRevive();
+        }
+
         /// <summary>Places the brick held in the inventory slot.</summary>
         [Command]
         public void CmdPlaceBrick(int slot, Vector3Int origin, byte rotation) {
+            if (health.isDead) {
+                return;
+            }
             InventoryItem? held = inventory.ServerGetSlot(slot);
             if (!held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || item.type != Item.Type.Brick
                 || item.brickModel.IsAttachment) {
@@ -155,6 +264,9 @@ namespace Brickcraft.Network
         /// <summary>Puts the attachment held in the inventory slot (a door...) in a brick's slot, see BrickSlot.</summary>
         [Command]
         public void CmdAttachBrick(int slot, string holderId) {
+            if (health.isDead) {
+                return;
+            }
             InventoryItem? held = inventory.ServerGetSlot(slot);
             if (!held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || item.type != Item.Type.Brick
                 || !Server.bricks.TryGetValue(holderId, out Brick holder) || !CanAttach(item.brickModel, holder)
@@ -179,7 +291,7 @@ namespace Brickcraft.Network
 
         [Command]
         public void CmdRemoveBrick(string brickId) {
-            if (!Server.bricks.TryGetValue(brickId, out Brick brick) || !isInReach(brick.placement.WorldBounds.center)) {
+            if (health.isDead || !Server.bricks.TryGetValue(brickId, out Brick brick) || !isInReach(brick.placement.WorldBounds.center)) {
                 return;
             }
             // its script can make it resist
@@ -198,7 +310,7 @@ namespace Brickcraft.Network
         /// <summary>A click on a brick with a door (see BrickDoor): opens or closes it.</summary>
         [Command]
         public void CmdToggleDoor(string brickId) {
-            if (!Server.bricks.TryGetValue(brickId, out Brick brick) || !isInReach(brick.placement.WorldBounds.center)
+            if (health.isDead || !Server.bricks.TryGetValue(brickId, out Brick brick) || !isInReach(brick.placement.WorldBounds.center)
                 || brick.model.prefab.GetComponentInChildren<BrickDoor>(true) == null) {
                 return;
             }
@@ -208,7 +320,7 @@ namespace Brickcraft.Network
         /// <summary>The use key on a brick (see ModScripts, onInteract).</summary>
         [Command]
         public void CmdInteractBrick(string brickId) {
-            if (Server.bricks.TryGetValue(brickId, out Brick brick) && isInReach(brick.placement.WorldBounds.center)
+            if (!health.isDead && Server.bricks.TryGetValue(brickId, out Brick brick) && isInReach(brick.placement.WorldBounds.center)
                 && ModScripts.HasItemEvent(brick.itemId, "onInteract")) {
                 ModScripts.ItemEvent(brick.itemId, "onInteract", BrickHandle.ForBrick(brick, WorldNetwork.ServerPlacerOf(brick)), PlayerHandle.For(connectionToClient));
             }
@@ -217,7 +329,7 @@ namespace Brickcraft.Network
         /// <summary>The use key on a world block (see ModScripts, onInteract).</summary>
         [Command]
         public void CmdInteractBlock(Vector3Int block) {
-            if (WorldBehaviour.Instance == null) {
+            if (health.isDead || WorldBehaviour.Instance == null) {
                 return;
             }
             BlockType type = WorldBehaviour.Instance.GetBlockType(block);
@@ -232,7 +344,7 @@ namespace Brickcraft.Network
 
         [Command]
         public void CmdDigBlock(Vector3Int block) {
-            if (WorldBehaviour.Instance == null) {
+            if (health.isDead || WorldBehaviour.Instance == null) {
                 return;
             }
             BlockType blockType = WorldBehaviour.Instance.GetBlockType(block);
@@ -322,6 +434,11 @@ namespace Brickcraft.Network
         [TargetRpc]
         private void TargetBrickPlaced() {
             SoundManager.Instance.play(SoundManager.EFFECT_TAPPING);
+        }
+
+        [TargetRpc]
+        private void TargetKnockback(Vector3 velocity) {
+            GetComponent<FirstPersonController>().Knockback(velocity);
         }
 
         [TargetRpc]

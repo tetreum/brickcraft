@@ -8,6 +8,8 @@ namespace Brickcraft.Network
         Left = 2,
         Kicked = 3,
         Banned = 4,
+        /// <summary>A player died; by is who killed it, if anyone.</summary>
+        Died = 5,
     }
 
     /// <summary>
@@ -46,6 +48,8 @@ namespace Brickcraft.Network
                     return message.player + " was kicked by " + message.by + withReason(message.reason);
                 case ChatEventType.Banned:
                     return message.player + " was banned by " + message.by + withReason(message.reason);
+                case ChatEventType.Died:
+                    return string.IsNullOrEmpty(message.by) ? message.player + " died" : message.player + " was killed by " + message.by;
                 default:
                     return null; // from a newer server, nothing we know how to say
             }

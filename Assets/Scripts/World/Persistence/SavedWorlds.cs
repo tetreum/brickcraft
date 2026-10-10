@@ -35,7 +35,7 @@ namespace Brickcraft.World
         }
 
         /// <summary>Creates a world played with the given installed mods, returns its folder's name (its save name).</summary>
-        public static string Create(string name, long seed, Difficulty difficulty, IEnumerable<string> modIds = null) {
+        public static string Create(string name, long seed, Difficulty difficulty, bool pvp, IEnumerable<string> modIds = null) {
             List<WorldMod> mods = new List<WorldMod>();
             if (modIds != null) {
                 foreach (string id in modIds) {
@@ -44,7 +44,7 @@ namespace Brickcraft.World
                 }
             }
             string saveName = freeFolderName(name);
-            WorldStorage.Create(Path.Combine(Folder, saveName), name, seed, difficulty, mods);
+            WorldStorage.Create(Path.Combine(Folder, saveName), name, seed, difficulty, pvp, mods);
             return saveName;
         }
 

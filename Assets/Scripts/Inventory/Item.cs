@@ -32,6 +32,11 @@ namespace Brickcraft
         /// <summary>How many fit in one inventory slot.</summary>
         public int maxStack = DefaultMaxStack;
 
+        /// <summary>Health a hit with nothing in hand takes.</summary>
+        public const int HandDamage = 1;
+        /// <summary>Health a hit while holding it takes.</summary>
+        public int damage = HandDamage;
+
         /// <summary>Its colour when it isn't given one (see BrickColorPalette), BrickColor.None if it has none.</summary>
         public int color = BrickColor.None;
         /// <summary>It can have any colour of the palette.</summary>

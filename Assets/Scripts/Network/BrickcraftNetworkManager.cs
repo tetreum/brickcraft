@@ -239,20 +239,31 @@ namespace Brickcraft.Network
             base.OnServerConnect(conn);
         }
 
-        public override void OnServerAddPlayer(NetworkConnectionToClient conn) {
-            ConnectedPlayer connected = (ConnectedPlayer)conn.authenticationData;
+        /// <summary>Where new players appear, and dead ones come back (local position).</summary>
+        public Vector3 ServerSpawnPosition(out Quaternion rotation) {
             Transform start = GetStartPosition();
             Vector3 position = start != null ? start.position : FloatingOrigin.ToLocal(defaultSpawnPosition);
-            Quaternion rotation = start != null ? start.rotation : Quaternion.identity;
+            rotation = start != null ? start.rotation : Quaternion.identity;
+
+            if (start == null && WorldBehaviour.Instance != null && WorldBehaviour.Instance.IsGenerated(WorldBehaviour.ChunkAt(position))) {
+                // drop players just above the ground instead of from the sky
+                position.y = WorldBehaviour.Instance.GetSurfaceHeight(position) + SpawnHeightAboveGround;
+            }
+            return position;
+        }
+
+        public override void OnServerAddPlayer(NetworkConnectionToClient conn) {
+            ConnectedPlayer connected = (ConnectedPlayer)conn.authenticationData;
+            Vector3 position;
+            Quaternion rotation;
 
             if (HasSavedPosition(connected.record)) {
                 // back where it left
                 PlayerRecord record = connected.record;
                 position = FloatingOrigin.ToLocal(record.LastX.Value, record.LastY.Value, record.LastZ.Value);
                 rotation = Quaternion.Euler(0, record.LastYaw ?? 0, 0);
-            } else if (start == null && WorldBehaviour.Instance != null && WorldBehaviour.Instance.IsGenerated(WorldBehaviour.ChunkAt(position))) {
-                // drop players just above the ground instead of from the sky
-                position.y = WorldBehaviour.Instance.GetSurfaceHeight(position) + SpawnHeightAboveGround;
+            } else {
+                position = ServerSpawnPosition(out rotation);
             }
 
             GameObject player = Instantiate(playerPrefab, position, rotation);

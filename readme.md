@@ -34,7 +34,7 @@ Its icons and rounded shapes are white sprites tinted in Unity, drawn by `python
 
 Multiplayer uses [Mirror](https://mirror-networking.gitbook.io/docs), patched in one place (search for "Brickcraft patch" in `Assets/Mirror`, and apply it again after upgrading Mirror): `NetworkIdentity._connectionToClient` is `[NonSerialized]`, otherwise reloading scripts with the player prefab loaded throws "get_time is not allowed to be called during serialization". Every game is networked:
 
-- **Singleplayer** lists the saved worlds, to play or delete them, or creates a new one with its name, seed (a number, any text, or empty for a random one) and difficulty (Peaceful, Normal or Hard, kept with the world; nothing uses it yet). The world runs on a host that doesn't listen for connections, so nobody else can join.
+- **Singleplayer** lists the saved worlds, to play or delete them, or creates a new one with its name, seed (a number, any text, or empty for a random one) difficulty (Peaceful, Normal or Hard, kept with the world; nothing uses it yet) and PvP (on by default: whether players can hurt each other, kept with the world and changed by admins with `/pvp`). The world runs on a host that doesn't listen for connections, so nobody else can join.
 - **Host game** runs a host other players can join (UDP port 7777 by default, see the KcpTransport in `Resources/NetworkManager`).
 - **Join game** connects to the address typed next to the button (`localhost` if empty).
 
@@ -44,7 +44,9 @@ The world has no edges, it's streamed around the players: the server keeps the c
 
 To stay precise however far players go, the game uses a floating origin: game logic works in integer cells, blocks and chunks, Unity positions are relative to a chunk near the local player (subtracted while still integers), and when the player gets about 400 units away the origin moves and the scene shifts with it. Each peer has its own origin, so player positions are sent as absolute coordinates.
 
-Besides player messages, the chat shows events: players joining, leaving, being kicked or banned. The server sends a `ChatEventMessage` saying what happened (type, player, who did it, reason) and each client words it (`ChatEvents.Describe`); to add an event, add a `ChatEventType`, its sentence in `Describe`, and send it with `ChatEvents.Send`.
+Players have health (`Combat.Health`, 20 by default, decided by the server; NPCs will have it too). Left clicking something with health hits it for the damage of the item in hand (`damage` in its info.json, 1 for a bare hand), at most every 0.4 seconds and from close by, and pushes it back; players can only be hit with PvP on. After a hit there's half a second nothing can hurt it again. The health bar above the bottom bar shows it. A dead player can't move or act: a popup says who killed it, and closing it respawns it at the spawn with all its health and its inventory (`PlayerNetwork.CmdRespawn`). Health isn't saved: players join with all of it.
+
+Besides player messages, the chat shows events: players joining, leaving, being kicked, banned or killed. The server sends a `ChatEventMessage` saying what happened (type, player, who did it, reason) and each client words it (`ChatEvents.Describe`); to add an event, add a `ChatEventType`, its sentence in `Describe`, and send it with `ChatEvents.Send`.
 
 The first player to join a save without admins (the host, starting singleplayer or a server) becomes its admin; everyone else joins as a `user`.
 
@@ -55,6 +57,7 @@ Admins can type commands in the chat:
 - `/ban NICK|ID [reason]`: bans a player, online or not. Nobody can join from a banned player's machine either (except admins).
 - `/unban NICK|ID`
 - `/tp NICK|ID`: takes you to an online player.
+- `/pvp [on|off]`: shows or changes whether players can hurt each other, saved with the world.
 - `/role NICK|ID [role]`: shows a player's role, or changes it (`user` or `admin`). Admins can't change their own.
 - `/additem ITEM[@COLOR] [count] [NICK|ID]`: gives `count` (1 by default) of the item with id `ITEM` (like `dirt_2x4`) to a player, yourself by default. `@COLOR` gives it in a colour it can have, by colour id or name (`plate_2x2_yellow@4`, `brick_2x2@trans-clear`), its default one otherwise. Offline players get them in their saved inventory. `/additem ITEM NICK` works too, but a number after the item is always the count, so give a player by id with `/additem ITEM count ID`.
 
@@ -171,6 +174,7 @@ Items/marble/
 - `id` identifies the item, in saves too: a slug (see Block and item ids below). The folder's name if missing.
 - `name`: what players see. Required.
 - `type`: `brick` (the default), `helmet`, `weapon` or `food`. Only bricks can be placed.
+- `damage`: how much health a hit takes while holding it, 1 (a bare hand's) by default.
 - `maxStack`: how many fit in one inventory slot, 64 by default. Dragging a stack onto the same item merges them as far as that allows.
 - `brickModel`: the brick it places: a part number of the game's models (`"3003"`, see How can i add a new model) or a model of the mod (see Mods).
 - `color`: its colour, a colour id of the palette (like `4` for Red, see How can i add a new brick material). `colors`: other colours it can have, `"all"` or a list of ids; only its default one if missing. Each inventory stack is of one colour, recipes take ingredients of any colour and make the default one. Blocks placed in another colour are drawn in it, see-through for transparent colours; blocks without textures (like `brick_2x2`) use their default colour. Items without an icon nor textures get a square of their colour.

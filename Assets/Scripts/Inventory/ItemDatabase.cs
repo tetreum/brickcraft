@@ -176,6 +176,7 @@ namespace Brickcraft
                 type = type,
                 folder = folder,
                 maxStack = Math.Max(1, info.maxStack),
+                damage = Math.Max(0, info.damage ?? Item.HandDamage),
                 brickModelId = BrickModels.Resolve(info.brickModel, mod),
                 materialName = info.material,
                 layer = layer,

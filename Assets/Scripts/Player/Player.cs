@@ -5,6 +5,7 @@ using Brickcraft.Bricks;
 using Brickcraft.World;
 using Brickcraft.Network;
 using Brickcraft.Events;
+using Brickcraft.Combat;
 
 namespace Brickcraft
 {
@@ -23,6 +24,7 @@ namespace Brickcraft
             Chatting = 7,
             Settings = 8,
             PlayerList = 9,
+            Dead = 10,
         }
 
         public bool isFrozen {
@@ -51,9 +53,15 @@ namespace Brickcraft
         private BrickPlacer brickPlacer;
         private PlayerInventory inventory;
 
-        // what the player is looking at: either a placed brick or a world block
+        // what the player is looking at: either a placed brick or a world block, or something with health (another player...)
         private Brick lookedBrick;
         private Vector3Int? lookedBlock;
+        private Health lookedHealth;
+
+        // clicking something with health hits it, at most this often (the server checks it too)
+        private const float AttackCooldown = 0.4f;
+        private float nextAttack;
+        private Health health;
 
         // what the player is digging
         private bool isDigging;
@@ -94,18 +102,31 @@ namespace Brickcraft
             triggerDetector = GetComponentInChildren<TriggerDetector>();
             network = GetComponent<PlayerNetwork>();
             inventory = GetComponent<PlayerInventory>();
+            health = GetComponent<Health>();
         }
 
         // every player in the game has this component, but only the local one is controlled from here
         public void onStartLocalPlayer() {
             Instance = this;
             brickPlacer = gameObject.AddComponent<BrickPlacer>();
+            health.DeadChanged += onDeadChanged;
             EventManager.LocalPlayerStarted.Raise(new LocalPlayerStartedEvent());
         }
 
         private void OnDestroy() {
             if (Instance == this) {
+                health.DeadChanged -= onDeadChanged;
                 Instance = null;
+            }
+        }
+
+        // the dead don't move or act until they respawn, whatever else froze them
+        private void onDeadChanged(bool dead) {
+            if (dead) {
+                unFreeze();
+                freeze(FreezeReason.Dead);
+            } else {
+                unFreeze(FreezeReason.Dead);
             }
         }
 
@@ -125,6 +146,12 @@ namespace Brickcraft
             } else {
                 bool isDigHeld = GameInput.GetButton(GameInput.Dig);
                 bool isClickingDoor = clickDoors(isDigHeld);
+
+                // the server checks it can be hit (PvP for players...)
+                if (lookedHealth != null && GameInput.GetButtonDown(GameInput.Dig) && Time.time >= nextAttack) {
+                    nextAttack = Time.time + AttackCooldown;
+                    network.CmdAttack(lookedHealth.netIdentity, SelectedSlot);
+                }
 
                 // the placing preview would hide what's being dug
                 if (isDigHeld) {
@@ -244,6 +271,7 @@ namespace Brickcraft
         void frontRaycast () {
             lookedBrick = null;
             lookedBlock = null;
+            lookedHealth = null;
 
             Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0));
             hasHit = Physics.Raycast(ray, out latestHit, rayLength, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
@@ -253,6 +281,11 @@ namespace Brickcraft
             }
 
             lookedBrick = Server.findBrick(latestHit.collider);
+
+            Health hit = latestHit.collider.GetComponentInParent<Health>();
+            if (hit != null && hit != health && !hit.isDead) {
+                lookedHealth = hit;
+            }
 
             if (lookedBrick == null && WorldBehaviour.Instance != null && latestHit.collider.name.StartsWith("ChunkSlice")) {
                 // step slightly inside the face we hit to find which block it belongs to

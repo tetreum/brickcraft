@@ -1,4 +1,5 @@
 using Brickcraft.Bricks;
+using Brickcraft.Combat;
 using Brickcraft.Network;
 using Brickcraft.World;
 using Mirror;
@@ -196,6 +197,46 @@ namespace Brickcraft.Scripting
             }
             PlayerInventory inventory = connection != null && connection.identity != null ? connection.identity.GetComponent<PlayerInventory>() : null;
             return inventory != null && inventory.ServerAdd(item.id, color == BrickColor.None ? item.color : color, count);
+        }
+
+        /// <summary>Its health, 0 while it's dead (nil if it left).</summary>
+        public DynValue health {
+            get {
+                Health h = healthOf();
+                return h != null ? DynValue.NewNumber(h.health) : DynValue.Nil;
+            }
+        }
+
+        /// <summary>Its health when it's full (nil if it left).</summary>
+        public DynValue maxHealth {
+            get {
+                Health h = healthOf();
+                return h != null ? DynValue.NewNumber(h.maxHealth) : DynValue.Nil;
+            }
+        }
+
+        /// <summary>Hurts it (by nobody; PvP doesn't matter). False if it couldn't be: dead, just hurt, or onPlayerDamaged said no.</summary>
+        public bool damage(int amount) {
+            if (amount < 1) {
+                throw new ScriptRuntimeException("damage's amount should be at least 1");
+            }
+            Health h = healthOf();
+            return h != null && h.ServerDamage(new DamageInfo() { amount = amount, kind = DamageInfo.Kind.Script });
+        }
+
+        /// <summary>Gives it health back, up to its maximum (not to the dead).</summary>
+        public void heal(int amount) {
+            if (amount < 1) {
+                throw new ScriptRuntimeException("heal's amount should be at least 1");
+            }
+            Health h = healthOf();
+            if (h != null) {
+                h.ServerHeal(amount);
+            }
+        }
+
+        private Health healthOf() {
+            return connection != null && connection.identity != null ? connection.identity.GetComponent<Health>() : null;
         }
 
         /// <summary>Shows a message in its chat.</summary>

@@ -10,7 +10,7 @@ Places a loose brick of `item` (an item id, like `"plate_1x1_green"` or `"my_mod
 - `rotation`: quarter turns, 0 to 3 (0 by default).
 - `color`: a colour id the item can have (its default colour otherwise).
 
-It's an error if the item doesn't exist, isn't a brick, or can't have that colour.
+It's an error if the item doesn't exist, isn't a brick, can't have that colour, or is an attachment (like a door, which only goes in a door frame).
 
 ```lua
 local plate = world.spawn("plate_1x1_green", {x = 0, y = 250, z = 0}, {color = 4, rotation = 1})

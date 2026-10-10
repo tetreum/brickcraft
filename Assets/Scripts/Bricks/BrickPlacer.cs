@@ -12,6 +12,9 @@ namespace Brickcraft.Bricks
     /// number of blocks, and to studs along the others (so a 1x1 fits on any stud); holding Shift
     /// allows any stud.
     /// Mouse wheel or R rotates it.
+    ///
+    /// Attachments (doors, see BrickAttachment) go in the slot of the brick looked at instead (a door frame,
+    /// see BrickSlot), if they fit and it's free.
     /// </summary>
     public class BrickPlacer : MonoBehaviour
     {
@@ -50,6 +53,11 @@ namespace Brickcraft.Bricks
                 target = null;
                 return;
             }
+            if (model.IsAttachment) {
+                target = null;
+                tickAttachment(hasHit, hit, selectedItem, model);
+                return;
+            }
 
             // the mouse wheel picks the slot instead, see PlayerPanel
             if (GameInput.GetButtonDown(GameInput.Rotate)) {
@@ -64,6 +72,27 @@ namespace Brickcraft.Bricks
 
             if (isValid && GameInput.GetButtonDown(GameInput.Place)) {
                 place(selectedItem, target.Value);
+            }
+        }
+
+        private void tickAttachment(bool hasHit, RaycastHit hit, UserItem selectedItem, BrickModel model) {
+            Brick holder = hasHit ? Server.findBrick(hit.collider) : null;
+            // looking at what's in it already: its brick
+            if (holder != null && holder.attachedTo != null) {
+                Server.bricks.TryGetValue(holder.attachedTo, out holder);
+            }
+            BrickSlot slot = holder != null ? Server.slotOf(holder) : null;
+            if (slot == null || slot.fits != model.attachesTo) {
+                ghost.SetActive(false);
+                return;
+            }
+            bool isValid = Network.PlayerNetwork.CanAttach(model, holder);
+            ghost.transform.SetPositionAndRotation(slot.point.position, slot.point.rotation * model.prefab.transform.rotation);
+            ghost.SetActive(true);
+            setGhostColor(isValid);
+
+            if (isValid && GameInput.GetButtonDown(GameInput.Place)) {
+                Player.Instance.network.CmdAttachBrick(selectedItem.slot, holder.id);
             }
         }
 
@@ -169,7 +198,10 @@ namespace Brickcraft.Bricks
 
             ghost.transform.SetPositionAndRotation(placement.Position, placement.Rotation * prefab.transform.rotation);
             ghost.SetActive(true);
+            setGhostColor(isValid);
+        }
 
+        private void setGhostColor(bool isValid) {
             Color color = isValid ? Color.white : Color.red;
             color.a = ghostColor.a;
             ghostMaterial.SetColor("_BaseColor", color);

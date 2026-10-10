@@ -67,5 +67,59 @@ namespace Brickcraft.World.Migrations
                 }
             }
         }
+
+        // the varints of chunk records: unsigned in 7 bit groups, signed zigzagged
+        protected static uint ReadVarUInt(BinaryReader reader) {
+            return (uint)ReadVarULong(reader);
+        }
+
+        protected static ulong ReadVarULong(BinaryReader reader) {
+            ulong value = 0;
+            int shift = 0;
+            byte b;
+            do {
+                if (shift > 63) {
+                    throw new InvalidDataException("Invalid varint");
+                }
+                b = reader.ReadByte();
+                value |= (ulong)(b & 0x7F) << shift;
+                shift += 7;
+            } while ((b & 0x80) != 0);
+            return value;
+        }
+
+        protected static void WriteVarUInt(BinaryWriter writer, uint value) {
+            WriteVarULong(writer, value);
+        }
+
+        protected static void WriteVarULong(BinaryWriter writer, ulong value) {
+            while (value >= 0x80) {
+                writer.Write((byte)(value | 0x80));
+                value >>= 7;
+            }
+            writer.Write((byte)value);
+        }
+
+        protected static int ReadVarInt(BinaryReader reader) {
+            uint value = ReadVarUInt(reader);
+            return (int)(value >> 1) ^ -(int)(value & 1);
+        }
+
+        protected static void WriteVarInt(BinaryWriter writer, int value) {
+            WriteVarUInt(writer, (uint)((value << 1) ^ (value >> 31)));
+        }
+
+        // varint player id, followed (when not 0) by varint unix seconds
+        protected static void ReadPlacer(BinaryReader reader, out int playerId, out ulong placedAt) {
+            playerId = (int)ReadVarUInt(reader);
+            placedAt = playerId != 0 ? ReadVarULong(reader) : 0;
+        }
+
+        protected static void WritePlacer(BinaryWriter writer, int playerId, ulong placedAt) {
+            WriteVarUInt(writer, (uint)playerId);
+            if (playerId != 0) {
+                WriteVarULong(writer, placedAt);
+            }
+        }
     }
 }

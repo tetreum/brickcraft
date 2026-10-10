@@ -73,33 +73,33 @@ namespace Brickcraft.World.Migrations
                 if (version != 3 && version != 4) {
                     throw new InvalidDataException("Unknown chunk record version " + version);
                 }
-                int nameCount = (int)readVarUInt(reader);
+                int nameCount = (int)ReadVarUInt(reader);
                 for (int i = 0; i < nameCount; i++) {
                     names.Add(reader.ReadString());
                 }
-                int blockCount = (int)readVarUInt(reader);
+                int blockCount = (int)ReadVarUInt(reader);
                 int index = 0;
                 for (int i = 0; i < blockCount; i++) {
-                    index += (int)readVarUInt(reader);
-                    Block block = new Block() { index = index, name = (int)readVarUInt(reader), color = -1 };
+                    index += (int)ReadVarUInt(reader);
+                    Block block = new Block() { index = index, name = (int)ReadVarUInt(reader), color = -1 };
                     if (version >= 4) {
-                        readPlacer(reader, out block.placerId, out block.placedAt);
+                        ReadPlacer(reader, out block.placerId, out block.placedAt);
                     }
                     blocks.Add(block);
                 }
-                int brickCount = (int)readVarUInt(reader);
+                int brickCount = (int)ReadVarUInt(reader);
                 for (int i = 0; i < brickCount; i++) {
                     Brick brick = new Brick() {
                         id = reader.ReadBytes(16),
                         item = reader.ReadString(),
                         color = -1,
                     };
-                    brick.x = readVarInt(reader);
-                    brick.y = readVarInt(reader);
-                    brick.z = readVarInt(reader);
+                    brick.x = ReadVarInt(reader);
+                    brick.y = ReadVarInt(reader);
+                    brick.z = ReadVarInt(reader);
                     brick.rotation = reader.ReadByte();
                     if (version >= 4) {
-                        readPlacer(reader, out brick.placerId, out brick.placedAt);
+                        ReadPlacer(reader, out brick.placerId, out brick.placedAt);
                     }
                     bricks.Add(brick);
                 }
@@ -109,86 +109,33 @@ namespace Brickcraft.World.Migrations
                 using (DeflateStream deflate = new DeflateStream(output, CompressionLevel.Fastest, true))
                 using (BinaryWriter writer = new BinaryWriter(deflate)) {
                     writer.Write((byte)5);
-                    writeVarUInt(writer, (uint)names.Count);
+                    WriteVarUInt(writer, (uint)names.Count);
                     foreach (string name in names) {
                         writer.Write(name);
                     }
-                    writeVarUInt(writer, (uint)blocks.Count);
+                    WriteVarUInt(writer, (uint)blocks.Count);
                     int previous = 0;
                     foreach (Block block in blocks) {
-                        writeVarUInt(writer, (uint)(block.index - previous));
-                        writeVarUInt(writer, (uint)block.name);
-                        writeVarInt(writer, block.color);
-                        writePlacer(writer, block.placerId, block.placedAt);
+                        WriteVarUInt(writer, (uint)(block.index - previous));
+                        WriteVarUInt(writer, (uint)block.name);
+                        WriteVarInt(writer, block.color);
+                        WritePlacer(writer, block.placerId, block.placedAt);
                         previous = block.index;
                     }
-                    writeVarUInt(writer, (uint)bricks.Count);
+                    WriteVarUInt(writer, (uint)bricks.Count);
                     foreach (Brick brick in bricks) {
                         writer.Write(brick.id);
                         writer.Write(brick.item);
-                        writeVarInt(writer, brick.color);
-                        writeVarInt(writer, brick.x);
-                        writeVarInt(writer, brick.y);
-                        writeVarInt(writer, brick.z);
+                        WriteVarInt(writer, brick.color);
+                        WriteVarInt(writer, brick.x);
+                        WriteVarInt(writer, brick.y);
+                        WriteVarInt(writer, brick.z);
                         writer.Write(brick.rotation);
-                        writePlacer(writer, brick.placerId, brick.placedAt);
+                        WritePlacer(writer, brick.placerId, brick.placedAt);
                     }
                 }
                 return output.ToArray();
             }
-        }
-
-        // varint player id, followed (when not 0) by varint unix seconds
-        private static void readPlacer(BinaryReader reader, out int playerId, out ulong placedAt) {
-            playerId = (int)readVarUInt(reader);
-            placedAt = playerId != 0 ? readVarULong(reader) : 0;
-        }
-
-        private static void writePlacer(BinaryWriter writer, int playerId, ulong placedAt) {
-            writeVarUInt(writer, (uint)playerId);
-            if (playerId != 0) {
-                writeVarULong(writer, placedAt);
-            }
-        }
-
-        private static uint readVarUInt(BinaryReader reader) {
-            return (uint)readVarULong(reader);
-        }
-
-        private static ulong readVarULong(BinaryReader reader) {
-            ulong value = 0;
-            int shift = 0;
-            byte b;
-            do {
-                if (shift > 63) {
-                    throw new InvalidDataException("Invalid varint");
-                }
-                b = reader.ReadByte();
-                value |= (ulong)(b & 0x7F) << shift;
-                shift += 7;
-            } while ((b & 0x80) != 0);
-            return value;
-        }
-
-        private static void writeVarUInt(BinaryWriter writer, uint value) {
-            writeVarULong(writer, value);
-        }
-
-        private static void writeVarULong(BinaryWriter writer, ulong value) {
-            while (value >= 0x80) {
-                writer.Write((byte)(value | 0x80));
-                value >>= 7;
-            }
-            writer.Write((byte)value);
-        }
-
-        private static int readVarInt(BinaryReader reader) {
-            uint value = readVarUInt(reader);
-            return (int)(value >> 1) ^ -(int)(value & 1);
-        }
-
-        private static void writeVarInt(BinaryWriter writer, int value) {
-            writeVarUInt(writer, (uint)((value << 1) ^ (value >> 31)));
         }
     }
 }

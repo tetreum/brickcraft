@@ -88,7 +88,7 @@ namespace Brickcraft
             BlockAdderTest blockAdder;
 
             foreach (Item item in items.Values) {
-                if (item.type != Item.Type.Brick || item.brickModel.width > 4) {
+                if (item.type != Item.Type.Brick || item.brickModel.width > 4 || item.brickModel.IsAttachment) {
                     continue;
                 }
                 cell.x -= 5;
@@ -138,9 +138,22 @@ namespace Brickcraft
         /// Adds a brick to this game instance. In a networked game use Network.WorldNetwork instead,
         /// which calls this on the server and every client.
         /// </summary>
-        public Brick spawnBrick(Item item, int color, BrickPlacement placement, string id = null) {
+        public Brick spawnBrick(Item item, int color, BrickPlacement placement, string id = null, int state = 0, string attachedTo = null) {
             color = item.ValidColor(color);
-            GameObject brickObj = createBrickObject(item, color, placement.Position, placement.Rotation);
+            GameObject brickObj;
+            if (attachedTo != null) {
+                // in its brick's slot, moving with it
+                if (!bricks.TryGetValue(attachedTo, out Brick holder) || slotOf(holder) == null) {
+                    Debug.LogError("The brick " + attachedTo + " that " + item.id + " is attached to isn't there, or has no slot");
+                    return null;
+                }
+                Transform point = slotOf(holder).point;
+                brickObj = createBrickObject(item, color, point.position, point.rotation);
+                brickObj.transform.SetParent(holder.gameObject.transform, true);
+                placement = holder.placement;
+            } else {
+                brickObj = createBrickObject(item, color, placement.Position, placement.Rotation);
+            }
 
             Brick brick = new Brick();
             brick.id = id ?? System.Guid.NewGuid().ToString();
@@ -148,11 +161,18 @@ namespace Brickcraft
             brick.color = color;
             brick.gameObject = brickObj;
             brick.placement = placement;
+            brick.state = state;
+            brick.attachedTo = attachedTo;
 
             bricks.Add(brick.id, brick);
-            BrickGrid.Register(brick);
+            if (attachedTo == null) {
+                BrickGrid.Register(brick);
+            }
 
             brickObj.name = brick.id;
+            if (state != 0) {
+                showState(brick, false);
+            }
 
             return brick;
         }
@@ -172,9 +192,45 @@ namespace Brickcraft
             return true;
         }
 
+        /// <summary>Changes a brick's state in this game instance, its model shows it (see IBrickState).</summary>
+        public void setBrickState(Brick brick, int state) {
+            brick.state = state;
+            showState(brick, true);
+        }
+
+        private static void showState(Brick brick, bool animate) {
+            foreach (IBrickState shown in brick.gameObject.GetComponentsInChildren<IBrickState>()) {
+                shown.ShowState(brick.state, animate);
+            }
+        }
+
+        /// <summary>The slot of a brick (see BrickSlot), null if its model has none.</summary>
+        public static BrickSlot slotOf(Brick brick) {
+            return brick.gameObject != null ? brick.gameObject.GetComponent<BrickSlot>() : null;
+        }
+
+        /// <summary>What's attached to a brick (in its slot, see BrickSlot), null if nothing is.</summary>
+        public static Brick attachmentOf(Brick brick) {
+            foreach (Brick other in bricks.Values) {
+                if (other.attachedTo == brick.id) {
+                    return other;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>Removes a brick from this game instance, and what's attached to it.</summary>
         public void removeBrick(Brick brick) {
-            bricks.Remove(brick.id);
-            BrickGrid.Unregister(brick);
+            Brick attached = attachmentOf(brick);
+            if (attached != null) {
+                removeBrick(attached);
+            }
+            if (!bricks.Remove(brick.id)) {
+                return;
+            }
+            if (brick.attachedTo == null) {
+                BrickGrid.Unregister(brick);
+            }
             Destroy(brick.gameObject);
         }
 

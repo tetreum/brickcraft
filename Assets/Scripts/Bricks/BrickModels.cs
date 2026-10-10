@@ -97,7 +97,7 @@ namespace Brickcraft.Bricks
             return string.Join("|", folders);
         }
 
-        // a mod's AssetBundles: their prefabs are models named after them (they need a BoxCollider like the game's)
+        // a mod's AssetBundles: their prefabs are models named after them (sized like the game's, see fromPrefab)
         private static void indexBundles(string folder, ModInfo mod) {
             if (!Directory.Exists(folder)) {
                 return;
@@ -210,7 +210,7 @@ namespace Brickcraft.Bricks
 
         // -------- custom prefabs --------
 
-        // a prefab of Resources/BrickModels: its BoxCollider fills its footprint and height (studs left out)
+        // a prefab of Resources/BrickModels, see fromPrefab
         private static BrickModel loadPrefab(string id) {
             if (id.Contains(":")) {
                 return null; // mods' models are files
@@ -219,17 +219,30 @@ namespace Brickcraft.Bricks
             return prefab != null ? fromPrefab(id, prefab) : null;
         }
 
+        // its size: its BoxCollider's, or else its mesh's (like file models: studs on top don't count); attachments have none
         private static BrickModel fromPrefab(string id, GameObject prefab) {
             if (prefab == null) {
                 return null;
             }
+            BrickAttachment attachment = prefab.GetComponent<BrickAttachment>();
+            if (attachment != null) {
+                BrickModel attached = create(id, prefab, 1, 1, 1);
+                attached.attachesTo = attachment.fits ?? "";
+                return attached;
+            }
             BoxCollider collider = prefab.GetComponent<BoxCollider>();
-            if (collider == null) {
-                Debug.LogError("The brick model prefab " + id + " needs a BoxCollider of its size (studs left out)");
+            if (collider != null) {
+                Vector3 size = collider.size;
+                return create(id, prefab, Mathf.RoundToInt(size.x / Server.studSize), Mathf.RoundToInt(size.z / Server.studSize), Mathf.RoundToInt(size.y / Server.plateHeight));
+            }
+            MeshFilter meshFilter = prefab.GetComponent<MeshFilter>();
+            if (meshFilter == null || meshFilter.sharedMesh == null) {
+                Debug.LogError("The brick model prefab " + id + " needs a BoxCollider of its size (studs left out), or a mesh on its root");
                 return null;
             }
-            Vector3 size = collider.size;
-            return create(id, prefab, Mathf.RoundToInt(size.x / Server.studSize), Mathf.RoundToInt(size.z / Server.studSize), Mathf.RoundToInt(size.y / Server.plateHeight));
+            Bounds bounds = meshFilter.sharedMesh.bounds;
+            return create(id, prefab, Mathf.RoundToInt(bounds.size.x / Server.studSize), Mathf.RoundToInt(bounds.size.z / Server.studSize),
+                Mathf.FloorToInt(bounds.size.y / Server.plateHeight + 0.15f));
         }
 
         // -------- file models --------

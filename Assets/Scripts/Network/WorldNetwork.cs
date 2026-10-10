@@ -121,17 +121,33 @@ namespace Brickcraft.Network
         public static Brick ServerPlaceBrick(Item item, int color, BrickPlacement placement, Placer placer) {
             Brick brick = Server.Instance.spawnBrick(item, color, placement);
             serverChanges.AddBrick(toSaved(brick, placer));
-            sendToChunk(WorldChanges.ChunkOfBrick(placement.origin), new BrickPlacedMessage() {
+            sendPlaced(brick, placer);
+            return brick;
+        }
+
+        /// <summary>
+        /// Puts an attachment (a door...) in a brick's slot, see Bricks.BrickSlot. The caller checks it fits
+        /// and the slot is free.
+        /// </summary>
+        public static Brick ServerAttachBrick(Item item, int color, Brick holder, Placer placer) {
+            Brick brick = Server.Instance.spawnBrick(item, color, holder.placement, null, 0, holder.id);
+            serverChanges.AddBrick(toSaved(brick, placer));
+            sendPlaced(brick, placer);
+            return brick;
+        }
+
+        private static void sendPlaced(Brick brick, Placer placer) {
+            sendToChunk(WorldChanges.ChunkOfBrick(brick.placement.origin), new BrickPlacedMessage() {
                 id = brick.id,
                 itemId = brick.itemId,
                 color = brick.color,
-                origin = placement.origin,
-                rotation = (byte)placement.rotation,
+                origin = brick.placement.origin,
+                rotation = (byte)brick.placement.rotation,
                 placedBy = placer.playerId,
                 placedAt = placer.placedAt,
+                state = brick.state,
+                attachedTo = brick.attachedTo,
             });
-
-            return brick;
         }
 
         /// <summary>Who placed a world block, nobody (0) if it was generated.</summary>
@@ -145,36 +161,64 @@ namespace Brickcraft.Network
         }
 
         /// <summary>
-        /// Moves a brick (it keeps its id, colour and placer). Players see it removed and placed again,
-        /// so those that only have one of the two chunks get the right half. False if it doesn't fit there.
+        /// Moves a brick (it keeps its id, colour and placer) and what's attached to it. Players see them
+        /// removed and placed again, so those that only have one of the two chunks get the right half.
+        /// False if it doesn't fit there, or it's an attachment (they move with their brick).
         /// </summary>
         public static bool ServerMoveBrick(Brick brick, BrickPlacement to) {
+            if (brick.attachedTo != null) {
+                return false;
+            }
             Placer placer = ServerPlacerOf(brick);
             Vector3Int from = brick.placement.origin;
+            Brick attached = Server.attachmentOf(brick);
+            Placer attachedPlacer = attached != null ? ServerPlacerOf(attached) : default(Placer);
 
             if (!Server.Instance.moveBrick(brick, to)) {
                 return false;
             }
             serverChanges.RemoveBrick(new Guid(brick.id), from);
             sendToChunk(WorldChanges.ChunkOfBrick(from), new BrickRemovedMessage() { id = brick.id, origin = from });
-
             serverChanges.AddBrick(toSaved(brick, placer));
-            sendToChunk(WorldChanges.ChunkOfBrick(to.origin), new BrickPlacedMessage() {
-                id = brick.id,
-                itemId = brick.itemId,
-                color = brick.color,
-                origin = to.origin,
-                rotation = (byte)to.rotation,
-                placedBy = placer.playerId,
-                placedAt = placer.placedAt,
-            });
+            sendPlaced(brick, placer);
+
+            // its object moved along, its placement is its brick's
+            if (attached != null) {
+                serverChanges.RemoveBrick(new Guid(attached.id), from);
+                attached.placement = brick.placement;
+                serverChanges.AddBrick(toSaved(attached, attachedPlacer));
+                sendPlaced(attached, attachedPlacer);
+            }
             return true;
         }
 
-        public static void ServerRemoveBrick(Brick brick) {
+        /// <summary>Changes a brick's state (opens a door...), see Brick.state.</summary>
+        public static void ServerSetBrickState(Brick brick, int state) {
+            if (brick.state == state) {
+                return;
+            }
+            Placer placer = ServerPlacerOf(brick);
+            Server.Instance.setBrickState(brick, state);
+            serverChanges.AddBrick(toSaved(brick, placer));
+            sendToChunk(WorldChanges.ChunkOfBrick(brick.placement.origin), new BrickStateMessage() {
+                id = brick.id,
+                origin = brick.placement.origin,
+                state = state,
+            });
+        }
+
+        /// <summary>Removes a brick and what's attached to it (which players remove with it). Returns them all.</summary>
+        public static List<Brick> ServerRemoveBrick(Brick brick) {
+            List<Brick> removed = new List<Brick>();
+            Brick attached = Server.attachmentOf(brick);
+            if (attached != null) {
+                removed.AddRange(ServerRemoveBrick(attached));
+            }
             Server.Instance.removeBrick(brick);
             serverChanges.RemoveBrick(new Guid(brick.id), brick.placement.origin);
             sendToChunk(WorldChanges.ChunkOfBrick(brick.placement.origin), new BrickRemovedMessage() { id = brick.id, origin = brick.placement.origin });
+            removed.Add(brick);
+            return removed;
         }
 
         /// <summary>Loads and unloads chunks around the players and streams them to the clients.</summary>
@@ -329,6 +373,8 @@ namespace Brickcraft.Network
                 origin = brick.placement.origin,
                 rotation = (byte)brick.placement.rotation,
                 placer = placer,
+                state = brick.state,
+                attachedTo = brick.attachedTo != null ? new Guid(brick.attachedTo) : Guid.Empty,
             };
         }
 
@@ -354,6 +400,7 @@ namespace Brickcraft.Network
             NetworkClient.RegisterHandler<BlockChangedMessage>(onBlockChanged);
             NetworkClient.RegisterHandler<BrickPlacedMessage>(onBrickPlaced);
             NetworkClient.RegisterHandler<BrickRemovedMessage>(onBrickRemoved);
+            NetworkClient.RegisterHandler<BrickStateMessage>(onBrickState);
         }
 
         public static void StopClient() {
@@ -509,6 +556,8 @@ namespace Brickcraft.Network
                 origin = message.origin,
                 rotation = message.rotation,
                 placer = new Placer() { playerId = message.placedBy, placedAt = message.placedAt },
+                state = message.state,
+                attachedTo = string.IsNullOrEmpty(message.attachedTo) ? Guid.Empty : new Guid(message.attachedTo),
             };
             clientChanges.AddBrick(brick);
 
@@ -528,6 +577,19 @@ namespace Brickcraft.Network
             }
         }
 
+        private static void onBrickState(BrickStateMessage message) {
+            if (NetworkServer.active) {
+                return;
+            }
+            if (clientChanges.TryGetBrick(new Guid(message.id), message.origin, out SavedBrick saved)) {
+                saved.state = message.state;
+                clientChanges.AddBrick(saved);
+            }
+            if (Server.bricks.TryGetValue(message.id, out Brick brick)) {
+                Server.Instance.setBrickState(brick, message.state);
+            }
+        }
+
         private static void onClientChunkGenerated(Chunk chunk) {
             spawnBricks(clientChanges.GetBricks(new Vector2Int(chunk.X, chunk.Z)));
         }
@@ -539,6 +601,8 @@ namespace Brickcraft.Network
         // -------- both --------
 
         private static void spawnBricks(List<SavedBrick> bricks) {
+            // attachments after the bricks they go in
+            bricks.Sort((a, b) => (a.attachedTo != Guid.Empty).CompareTo(b.attachedTo != Guid.Empty));
             foreach (SavedBrick saved in bricks) {
                 string id = saved.id.ToString();
 
@@ -549,7 +613,11 @@ namespace Brickcraft.Network
                     Debug.LogError("Unknown item " + saved.itemId + " for brick " + id);
                     continue;
                 }
-                Server.Instance.spawnBrick(item, saved.color, new BrickPlacement(item.brickModel, saved.origin, saved.rotation), id);
+                string attachedTo = saved.attachedTo != Guid.Empty ? saved.attachedTo.ToString() : null;
+                if (attachedTo != null && !Server.bricks.ContainsKey(attachedTo)) {
+                    continue; // its brick isn't there (yet)
+                }
+                Server.Instance.spawnBrick(item, saved.color, new BrickPlacement(item.brickModel, saved.origin, saved.rotation), id, saved.state, attachedTo);
             }
         }
 

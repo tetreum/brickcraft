@@ -71,6 +71,18 @@ namespace Brickcraft.Network
         /// <summary>Who placed it (players.db id, 0 when no player did) and when (unix seconds).</summary>
         public int placedBy;
         public long placedAt;
+        /// <summary>See Brick.state.</summary>
+        public int state;
+        /// <summary>The brick it's attached to (see Brick.attachedTo), null for bricks on the grid.</summary>
+        public string attachedTo;
+    }
+
+    /// <summary>Server to client: a brick's state changed (a door opened...), see Brick.state.</summary>
+    public struct BrickStateMessage : NetworkMessage
+    {
+        public string id;
+        public Vector3Int origin;
+        public int state;
     }
 
     /// <summary>Server to client: a brick was removed.</summary>

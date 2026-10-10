@@ -19,7 +19,7 @@ A brick's fields are read when you get it. If something else changes the brick l
 
 ## brick:move(position)
 
-Moves it so its first cell is at `position`. Loose bricks can go wherever their cells are free; world blocks go to another block's place that's empty (air or water) with no loose bricks in it. It keeps its colour, rotation and who placed it. Returns `false`, and the brick stays, if there's no room, that part of the world isn't loaded, or the brick isn't there anymore.
+Moves it so its first cell is at `position`. Loose bricks can go wherever their cells are free; world blocks go to another block's place that's empty (air or water) with no loose bricks in it. It keeps its colour, rotation and who placed it, and what's attached to it (a door in a frame) moves along. Returns `false`, and the brick stays, if there's no room, that part of the world isn't loaded, the brick isn't there anymore, or it's an attachment (they move with their brick).
 
 ```lua
 -- one plate up every 0.05 seconds, until something is in the way
@@ -34,4 +34,4 @@ end)
 
 ## brick:remove()
 
-Takes it out of the world; nobody gets its item, and `onBroken` isn't called. Returns `false` if it wasn't there anymore.
+Takes it out of the world, with what's attached to it; nobody gets their items, and `onBroken` isn't called. Returns `false` if it wasn't there anymore.

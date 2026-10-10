@@ -109,6 +109,9 @@ namespace Brickcraft.Scripting
                 if (item.type != Item.Type.Brick) {
                     throw new ScriptRuntimeException(item.id + " isn't a brick, it can't be placed");
                 }
+                if (item.brickModel.IsAttachment) {
+                    throw new ScriptRuntimeException(item.id + " goes in another brick's slot (like a door in its frame), it can't be spawned on its own");
+                }
                 int rotation = options != null && options.Get("rotation").Type == DataType.Number ? ((int)options.Get("rotation").Number % 4 + 4) % 4 : 0;
                 int color = item.color;
                 if (options != null && options.Get("color").Type == DataType.Number) {

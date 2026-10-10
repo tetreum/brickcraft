@@ -119,7 +119,8 @@ namespace Brickcraft.Network
         [Command]
         public void CmdPlaceBrick(int slot, Vector3Int origin, byte rotation) {
             InventoryItem? held = inventory.ServerGetSlot(slot);
-            if (!held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || item.type != Item.Type.Brick) {
+            if (!held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || item.type != Item.Type.Brick
+                || item.brickModel.IsAttachment) {
                 return;
             }
             BrickPlacement placement = new BrickPlacement(item.brickModel, origin, rotation);
@@ -151,6 +152,31 @@ namespace Brickcraft.Network
             ModScripts.ItemEvent(item.id, "onPlaced", placed, PlayerHandle.For(connectionToClient));
         }
 
+        /// <summary>Puts the attachment held in the inventory slot (a door...) in a brick's slot, see BrickSlot.</summary>
+        [Command]
+        public void CmdAttachBrick(int slot, string holderId) {
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            if (!held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || item.type != Item.Type.Brick
+                || !Server.bricks.TryGetValue(holderId, out Brick holder) || !CanAttach(item.brickModel, holder)
+                || !isInReach(holder.placement.WorldBounds.center)) {
+                return;
+            }
+            ConnectedPlayer player = connectionToClient.authenticationData as ConnectedPlayer;
+            Placer placer = Placer.Now(player != null ? player.record.Id : 0);
+            Brick brick = WorldNetwork.ServerAttachBrick(item, item.ValidColor(held.Value.color), holder, placer);
+
+            inventory.ServerRemoveFromSlot(slot, 1);
+            TargetBrickPlaced();
+            ModScripts.ItemEvent(item.id, "onPlaced", BrickHandle.ForBrick(brick, placer), PlayerHandle.For(connectionToClient));
+        }
+
+        /// <summary>Whether bricks of the model can go in the brick's slot now: it fits, and it's free.</summary>
+        public static bool CanAttach(BrickModel model, Brick holder) {
+            BrickSlot slot = Server.slotOf(holder);
+            return model.IsAttachment && holder.attachedTo == null && slot != null && slot.fits == model.attachesTo
+                && Server.attachmentOf(holder) == null;
+        }
+
         [Command]
         public void CmdRemoveBrick(string brickId) {
             if (!Server.bricks.TryGetValue(brickId, out Brick brick) || !isInReach(brick.placement.WorldBounds.center)) {
@@ -162,9 +188,21 @@ namespace Brickcraft.Network
             if (!ModScripts.ItemEvent(brick.itemId, "onHit", handle, player)) {
                 return;
             }
-            WorldNetwork.ServerRemoveBrick(brick);
-            inventory.ServerAdd(brick.itemId, brick.color, 1);
+            // what was attached to it comes along
+            foreach (Brick removed in WorldNetwork.ServerRemoveBrick(brick)) {
+                inventory.ServerAdd(removed.itemId, removed.color, 1);
+            }
             ModScripts.ItemEvent(brick.itemId, "onBroken", handle, player);
+        }
+
+        /// <summary>A click on a brick with a door (see BrickDoor): opens or closes it.</summary>
+        [Command]
+        public void CmdToggleDoor(string brickId) {
+            if (!Server.bricks.TryGetValue(brickId, out Brick brick) || !isInReach(brick.placement.WorldBounds.center)
+                || brick.model.prefab.GetComponentInChildren<BrickDoor>(true) == null) {
+                return;
+            }
+            WorldNetwork.ServerSetBrickState(brick, brick.state == BrickDoor.Open ? BrickDoor.Closed : BrickDoor.Open);
         }
 
         /// <summary>The use key on a brick (see ModScripts, onInteract).</summary>

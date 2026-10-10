@@ -31,6 +31,10 @@ namespace Brickcraft.World
         /// <summary>Its colour, see BrickColorPalette.</summary>
         public int color;
         public Placer placer;
+        /// <summary>See Brick.state.</summary>
+        public int state;
+        /// <summary>The brick it's attached to (see Brick.attachedTo), Guid.Empty for bricks on the grid.</summary>
+        public Guid attachedTo;
     }
 
     /// <summary>
@@ -265,7 +269,7 @@ namespace Brickcraft.World
     public static class ChunkChangesSerializer
     {
         // change it when the format changes, records of other versions are rejected
-        public const byte Version = 5;
+        public const byte Version = 6;
 
         // pages keep network messages small, even for heavily modified chunks
         private const int BlocksPerPage = 8192;
@@ -336,6 +340,8 @@ namespace Brickcraft.World
                         origin = new Vector3Int(readVarInt(reader), readVarInt(reader), readVarInt(reader)),
                         rotation = reader.ReadByte(),
                         placer = readPlacer(reader) ?? default(Placer),
+                        state = readVarInt(reader),
+                        attachedTo = reader.ReadByte() != 0 ? new Guid(reader.ReadBytes(16)) : Guid.Empty,
                     };
                     // a colour removed from the palette (or the item no longer has it): its item's default one
                     if (Server.items.TryGetValue(brick.itemId, out Item item)) {
@@ -389,6 +395,12 @@ namespace Brickcraft.World
                         writeVarInt(writer, brick.origin.z);
                         writer.Write(brick.rotation);
                         writePlacer(writer, brick.placer);
+                        writeVarInt(writer, brick.state);
+                        // a flag, followed by the brick it's attached to
+                        writer.Write((byte)(brick.attachedTo != Guid.Empty ? 1 : 0));
+                        if (brick.attachedTo != Guid.Empty) {
+                            writer.Write(brick.attachedTo.ToByteArray());
+                        }
                     }
                 }
                 return output.ToArray();

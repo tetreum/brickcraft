@@ -15,6 +15,9 @@ using UnityEngine;
 /// and its normal map (see BrickNormalMap), and the icons of the items made of it (see BrickIconRenderer).
 /// Its size comes from its collider.
 ///
+/// Importing it again updates its mesh in place and leaves an existing prefab as it is, so prefabs
+/// made from it (a mesh collider, moving parts like 7102's door) keep what was added to them.
+///
 /// geometry.json is three.js's JSON model format (version 3): vertices, normals and uvs in flat lists,
 /// faces as a type with bit flags followed by its indices. Mecabricks works in millimeters: a stud is
 /// 8 wide and a brick 9.6 high, the game's 0.398 and 0.478.
@@ -84,7 +87,11 @@ public static class MecabricksImporter
         int plates = Mathf.Max(1, Mathf.RoundToInt(bodyHeight / Server.plateHeight));
 
         Directory.CreateDirectory(PrefabsFolder);
-        GameObject prefab = savePrefab(PrefabsFolder + "/" + name + ".prefab", name, mesh, normalMap, width, depth, plates);
+        string prefabPath = PrefabsFolder + "/" + name + ".prefab";
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        if (prefab == null) {
+            prefab = savePrefab(prefabPath, name, mesh, normalMap, width, depth, plates);
+        }
 
         // the icons of the items made of it, in their colours
         int icons = BrickIconRenderer.GenerateForModel(name);

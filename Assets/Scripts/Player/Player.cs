@@ -65,6 +65,12 @@ namespace Brickcraft
         private float _duration = 0.5f;
         private float _timer = 0f;
 
+        // a door is opened or closed with a click (pressed for less than this), holding it breaks the door
+        private const float ClickTime = 0.25f;
+        private Brick clickedDoor;
+        private float clickStart;
+        private bool wasDigHeld;
+
         [HideInInspector]
         public PlayerNetwork network;
 
@@ -114,8 +120,11 @@ namespace Brickcraft
             if (isFrozen) {
                 brickPlacer.hide();
                 stopDigging();
+                clickedDoor = null;
+                wasDigHeld = false;
             } else {
                 bool isDigHeld = GameInput.GetButton(GameInput.Dig);
+                bool isClickingDoor = clickDoors(isDigHeld);
 
                 // the placing preview would hide what's being dug
                 if (isDigHeld) {
@@ -124,7 +133,7 @@ namespace Brickcraft
                     brickPlacer.tick(hasHit, latestHit, SelectedItem);
                 }
 
-                if (isDigHeld && (lookedBrick != null || lookedBlock.HasValue)) {
+                if (isDigHeld && !isClickingDoor && (lookedBrick != null || lookedBlock.HasValue)) {
                     dig();
                 } else {
                     stopDigging();
@@ -171,6 +180,30 @@ namespace Brickcraft
             }
             SelectedSlot = FirstFastSlot + index;
             EventManager.SelectedSlotChanged.Raise(new SelectedSlotChangedEvent() { slot = SelectedSlot });
+        }
+
+        // a click on a door opens or closes it; true while it may still be one (digging waits for it)
+        private bool clickDoors(bool isDigHeld) {
+            bool isPressed = isDigHeld && !wasDigHeld;
+            bool isReleased = !isDigHeld && wasDigHeld;
+            wasDigHeld = isDigHeld;
+
+            if (isPressed) {
+                clickedDoor = lookedBrick != null && lookedBrick.gameObject.GetComponentInChildren<BrickDoor>() != null ? lookedBrick : null;
+                clickStart = Time.time;
+            }
+            if (clickedDoor == null) {
+                return false;
+            }
+            bool isQuick = Time.time - clickStart < ClickTime;
+            if (isReleased) {
+                if (isQuick && lookedBrick == clickedDoor) {
+                    network.CmdToggleDoor(clickedDoor.id);
+                }
+                clickedDoor = null;
+                return false;
+            }
+            return isQuick;
         }
 
         public void freeze(FreezeReason reason) {
@@ -281,6 +314,13 @@ namespace Brickcraft
 
         // what the cracks cover: the whole brick or block, not just the face under the crosshair
         Bounds diggedBounds () {
+            if (diggedBrick != null && diggedBrick.attachedTo != null) {
+                Bounds attached = new Bounds(diggedBrick.gameObject.transform.position, Vector3.zero);
+                foreach (Renderer part in diggedBrick.gameObject.GetComponentsInChildren<Renderer>()) {
+                    attached.Encapsulate(part.bounds);
+                }
+                return attached;
+            }
             if (diggedBrick != null) {
                 return diggedBrick.placement.WorldBounds;
             }

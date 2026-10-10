@@ -1,0 +1,8 @@
+{
+    "id": "door_frame",
+    "name": "Door Frame 1x4x6",
+    "type": "brick",
+    "brickModel": "60596",
+    "color": 15,
+    "colors": "all"
+}

@@ -269,11 +269,28 @@ namespace Brickcraft.Network
             return Vector3.Distance(transform.position, position) <= MaxReach;
         }
 
+        /// <summary>
+        /// Moves the player there. Players move themselves (their transform is client authoritative), so
+        /// the server tells its client, in absolute coordinates as each side has its own floating origin.
+        /// </summary>
+        [Server]
+        public void ServerTeleport(Vector3 localPosition) {
+            FloatingOrigin.ToAbsolute(localPosition, out double x, out double y, out double z);
+            TargetTeleport(x, y, z);
+        }
+
         // -------- server to the player's client --------
 
         [TargetRpc]
         private void TargetBrickPlaced() {
             SoundManager.Instance.play(SoundManager.EFFECT_TAPPING);
+        }
+
+        [TargetRpc]
+        private void TargetTeleport(double x, double y, double z) {
+            transform.position = FloatingOrigin.ToLocal(x, y, z);
+            // the character controller keeps its own position, it would move the player back otherwise
+            Physics.SyncTransforms();
         }
     }
 }

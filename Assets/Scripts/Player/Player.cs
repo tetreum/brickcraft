@@ -22,6 +22,7 @@ namespace Brickcraft
             LoadingWorld = 6,
             Chatting = 7,
             Settings = 8,
+            PlayerList = 9,
         }
 
         public bool isFrozen {

@@ -20,6 +20,7 @@ namespace Brickcraft.Network
     ///   /kick NICK|ID [reason]      disconnects an online player
     ///   /ban NICK|ID [reason]       bans a player (and its machine), online or not
     ///   /unban NICK|ID
+    ///   /tp NICK|ID                 takes you to an online player
     ///   /role NICK|ID [role]        shows or changes a player's role (user, admin)
     ///   /additem ITEM[@COLOR] [count] [NICK|ID]   gives items to a player (yourself by default), online or not
     /// NICK|ID is a player name (any case) or, if no name matches, a player id.
@@ -80,6 +81,13 @@ namespace Brickcraft.Network
                         addItem(sender, admin, target, reason);
                     }
                     break;
+                case "tp":
+                    if (target == null) {
+                        reply(sender, "Usage: /tp NICK|ID");
+                    } else {
+                        teleport(sender, admin, target);
+                    }
+                    break;
                 case "unban":
                     if (target == null) {
                         reply(sender, "Usage: /unban NICK|ID");
@@ -88,7 +96,7 @@ namespace Brickcraft.Network
                     }
                     break;
                 default:
-                    reply(sender, "Unknown command. Commands: /players, /kick NICK|ID [reason], /ban NICK|ID [reason], /unban NICK|ID, /role NICK|ID [role], /additem ITEM[@COLOR] [count] [NICK|ID]");
+                    reply(sender, "Unknown command. Commands: /players, /kick NICK|ID [reason], /ban NICK|ID [reason], /unban NICK|ID, /tp NICK|ID, /role NICK|ID [role], /additem ITEM[@COLOR] [count] [NICK|ID]");
                     break;
             }
         }
@@ -163,6 +171,26 @@ namespace Brickcraft.Network
             }
             BrickcraftNetworkManager.Instance.Database.SetBanned(player, false, null);
             reply(sender, player.Name + " can join again");
+        }
+
+        private static void teleport(NetworkConnectionToClient sender, ConnectedPlayer admin, string target) {
+            NetworkConnectionToClient conn = findOnline(target, out ConnectedPlayer player);
+
+            if (conn == null) {
+                reply(sender, "Nobody called " + target + " is online");
+                return;
+            }
+            if (conn == sender) {
+                reply(sender, "You're already there");
+                return;
+            }
+            if (conn.identity == null || sender.identity == null) {
+                reply(sender, "Still joining, try again in a moment");
+                return;
+            }
+            sender.identity.GetComponent<PlayerNetwork>().ServerTeleport(conn.identity.transform.position);
+            Debug.Log(admin.record.Name + " teleported to " + player.record.Name);
+            reply(sender, "Teleported to " + player.record.Name);
         }
 
         private static void role(NetworkConnectionToClient sender, ConnectedPlayer admin, string target, string newRole) {

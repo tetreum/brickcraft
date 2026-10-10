@@ -186,7 +186,7 @@ namespace Brickcraft.UI
         private void showNextPopup() {
             ModUiEvent next = waitingPopups.Dequeue();
             if (!isShowingPopup) {
-                enterDialog();
+                DialogMode.Enter();
             }
             isShowingPopup = true;
             shownPopup = next.id;
@@ -228,31 +228,7 @@ namespace Brickcraft.UI
             isShowingPopup = false;
             shownPopup = 0;
             popupLayer.SetActive(false);
-            exitDialog();
-        }
-
-        // while a popup is open the player stands still, the mouse is free and keys aren't shortcuts
-        private static void enterDialog() {
-            GameInput.SetTyping(true);
-            Game.unlockMouse();
-            if (Player.Instance != null) {
-                Player.Instance.freeze(Player.FreezeReason.Dialog);
-            }
-        }
-
-        private static void exitDialog() {
-            GameInput.SetTyping(false);
-            if (Player.Instance == null) {
-                return;
-            }
-            Player.Instance.unFreeze(Player.FreezeReason.Dialog);
-            // back to playing, unless another panel (the inventory...) still needs the mouse
-            foreach (GameObject panel in Menu.Instance.Menus) {
-                if (panel.activeSelf && panel.GetComponent<PlayerPanel>() == null) {
-                    return;
-                }
-            }
-            Game.lockMouse();
+            DialogMode.Exit();
         }
 
         // the game is over: everything mods showed goes, popups unanswered

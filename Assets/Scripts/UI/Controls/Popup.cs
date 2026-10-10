@@ -22,6 +22,9 @@ namespace Brickcraft.UI
         public Button closeButton;
         public Color primaryColor = new Color(0.18f, 0.71f, 0.13f);
         public Color secondaryColor = new Color(0.20f, 0.27f, 0.36f);
+        /// <summary>The outline of the buttons (their "Border" child).</summary>
+        public Color primaryBorderColor = new Color(0.45f, 0.85f, 0.35f);
+        public Color secondaryBorderColor = new Color(0.26f, 0.33f, 0.43f);
 
         private Action<int, string> onClosed;
         private readonly List<GameObject> buttonObjects = new List<GameObject>();
@@ -55,6 +58,10 @@ namespace Brickcraft.UI
                 button.name = "Button " + (i + 1);
                 button.GetComponentInChildren<Text>().text = labels[i];
                 button.GetComponent<Image>().color = i == 0 ? primaryColor : secondaryColor;
+                Transform border = button.transform.Find("Border");
+                if (border != null) {
+                    border.GetComponent<Image>().color = i == 0 ? primaryBorderColor : secondaryBorderColor;
+                }
                 button.onClick.AddListener(() => Close(index));
                 button.gameObject.SetActive(true);
                 buttonObjects.Add(button.gameObject);

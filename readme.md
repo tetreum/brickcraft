@@ -54,10 +54,13 @@ Admins can type commands in the chat:
 - `/kick NICK|ID [reason]`: disconnects a player, who sees the reason in the menu.
 - `/ban NICK|ID [reason]`: bans a player, online or not. Nobody can join from a banned player's machine either (except admins).
 - `/unban NICK|ID`
+- `/tp NICK|ID`: takes you to an online player.
 - `/role NICK|ID [role]`: shows a player's role, or changes it (`user` or `admin`). Admins can't change their own.
 - `/additem ITEM[@COLOR] [count] [NICK|ID]`: gives `count` (1 by default) of the item with id `ITEM` (like `dirt_2x4`) to a player, yourself by default. `@COLOR` gives it in a colour it can have, by colour id or name (`plate_2x2_yellow@4`, `brick_2x2@trans-clear`), its default one otherwise. Offline players get them in their saved inventory. `/additem ITEM NICK` works too, but a number after the item is always the count, so give a player by id with `/additem ITEM count ID`.
 
 Admins also get an ALL tab in the inventory: every item of the game, searchable by name or id, 30 per page. Clicking one adds it to their inventory. The colour picker next to the search (a swatch per colour, hovering one shows its name) chooses the colour they're given in: only the items that can have it are listed. `Default` gives each item in its default colour.
+
+The player list (held Tab) gives admins TP, Kick and Ban buttons on each player: right-click while it's shown frees the mouse to click them. They send the commands above, kicking and banning ask first, with an optional reason.
 
 `NICK|ID` is a player name (any case) or, if no name matches, a player id. Admins can't kick or ban themselves, other admins or the host.
 

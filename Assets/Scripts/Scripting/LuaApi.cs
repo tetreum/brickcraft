@@ -20,6 +20,7 @@ namespace Brickcraft.Scripting
     ///   world.players()                            the players in the game
     ///   world.isLoaded(position)                   whether that part of the world is loaded (changes need it)
     ///   timer.after(seconds, fn), timer.every(seconds, fn), timer.cancel(id)
+    ///   ui.*                                       popups, toasts, titles and HUD panels, see LuaUi
     /// Bricks (BrickHandle) also have move(position) and remove(), players (PlayerHandle) give(item, count, color).
     /// Positions are grid cells: {x =, y =, z =} tables or what bricks and players return.
     /// Modders' documentation is in docs/lua (a page per section): keep it in step with this.
@@ -55,11 +56,13 @@ namespace Brickcraft.Scripting
             });
             script.Globals["world"] = createWorld(script);
             script.Globals["timer"] = createTimer(script, mod);
+            LuaUi.Install(script, mod);
         }
 
         /// <summary>Forgets the timers, when the scripts stop.</summary>
         public static void Reset() {
             timers.Clear();
+            LuaUi.Reset();
         }
 
         /// <summary>Runs the timers that are due, every frame on the server.</summary>

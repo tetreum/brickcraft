@@ -113,6 +113,7 @@ namespace Brickcraft.Network
         public override void OnStartServer() {
             base.OnStartServer();
             startFailure = null;
+            LuaUi.StartServer();
             long newSeed = seed != 0 ? seed : Random.Range(1, int.MaxValue);
             // only the generated world is saved, the test scene starts from scratch every time
             bool isSaved = isWorldScene(onlineScene);
@@ -175,6 +176,7 @@ namespace Brickcraft.Network
                 endSession(conn, false);
             }
             ModScripts.Stop();
+            LuaUi.StopServer();
             WorldNetwork.StopServer();
             if (Database != null) {
                 Database.Dispose();
@@ -224,6 +226,7 @@ namespace Brickcraft.Network
                 if (player.hasJoined) {
                     ModScripts.ModEvent("onPlayerLeft", PlayerHandle.For(conn));
                 }
+                LuaUi.PlayerLeft(conn);
             }
         }
 
@@ -313,6 +316,7 @@ namespace Brickcraft.Network
         public override void OnStartClient() {
             base.OnStartClient();
             WorldNetwork.StartClient();
+            ModUiClient.Start();
 
             Events.EventManager.ClientStarted.Raise(new Events.ClientStartedEvent());
             NetworkClient.RegisterHandler<ChatMessage>(message => Events.EventManager.ChatLineReceived.Raise(new Events.ChatLineReceivedEvent() {
@@ -333,6 +337,7 @@ namespace Brickcraft.Network
 
         public override void OnStopClient() {
             WorldNetwork.StopClient();
+            ModUiClient.Stop();
             base.OnStopClient();
         }
 

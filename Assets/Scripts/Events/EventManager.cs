@@ -42,6 +42,9 @@ namespace Brickcraft.Events
         /// <summary>This client left the server, or couldn't join it, and there's something to tell the player.</summary>
         public static readonly GameEvent<DisconnectedEvent> Disconnected = new GameEvent<DisconnectedEvent>();
 
+        /// <summary>A mod showed (or changed, or removed) something on this player's screen, see ModUiKind.</summary>
+        public static readonly GameEvent<ModUiEvent> ModUi = new GameEvent<ModUiEvent>();
+
         // subscribers of a previous play session, when entering play mode doesn't reload the domain
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void clearAll() {
@@ -54,6 +57,7 @@ namespace Brickcraft.Events
             ChatLineReceived.Clear();
             Disconnected.Clear();
             SettingChanged.Clear();
+            ModUi.Clear();
         }
     }
 }

@@ -95,7 +95,7 @@ The code is split in assemblies, so each part only sees what it needs:
 - `Brickcraft` (`Assets/Scripts`): the game itself: world, bricks, player, network, database.
 - `Brickcraft.UI` (`Assets/Scripts/UI`): menus and panels. It uses the game, but the game never calls the UI: it raises events the UI listens to, and the UI owns its own shortcuts (inventory, menu, chat, player list).
 
-Reusable UI controls live in `Assets/Scripts/UI/Controls`: `MenuButton` (the `Prefabs/UI/MenuButton` prefab: set its label, icon and Primary/Secondary variant, and its click on the Button), `SwitchToggle` and `SegmentedControl`.
+Reusable UI controls live in `Assets/Scripts/UI/Controls`: `MenuButton` (the `Prefabs/UI/MenuButton` prefab: set its label, icon and Primary/Secondary variant, and its click on the Button), `SwitchToggle`, `SegmentedControl`, `ColorPicker`, and `Popup`, `Toast` and `HudPanel` (prefabs in `Prefabs/UI`, used by `ModUiPanel` to show what mods' scripts ask for, see [docs/lua/ui.md](docs/lua/ui.md)).
 
 ## Events
 
@@ -204,7 +204,7 @@ Players joining a server need its world's mods: the same version with the same f
 
 ### Scripts
 
-Mods can script their bricks in Lua ([MoonSharp](https://www.moonsharp.org/), Lua 5.2): `items/[item]/script.lua` handles the item's events (placed, hit, broken, used) and `scripts/*.lua` the mod's (loaded, players joining, leaving and chatting). Scripts run on the server only, sandboxed, and can spawn, move and remove bricks, change world blocks, message players and give them items, and run timers.
+Mods can script their bricks in Lua ([MoonSharp](https://www.moonsharp.org/), Lua 5.2): `items/[item]/script.lua` handles the item's events (placed, hit, broken, used) and `scripts/*.lua` the mod's (loaded, players joining, leaving and chatting). Scripts run on the server only, sandboxed, and can spawn, move and remove bricks, change world blocks, message players and give them items, show them popups, toasts, titles and HUD panels, and run timers.
 
 The reference, a page per section, is in [docs/lua](docs/lua/README.md).
 

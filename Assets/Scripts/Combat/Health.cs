@@ -51,6 +51,8 @@ namespace Brickcraft.Combat
         public event Action<DamageInfo> ServerDamaged;
         /// <summary>Server: it died of that hit.</summary>
         public event Action<DamageInfo> ServerDied;
+        /// <summary>Server: anything was hurt (by whom is in the damage), for who keeps an eye on fights (pets...).</summary>
+        public static event Action<Health, DamageInfo> ServerAnyDamaged;
         /// <summary>Everywhere: it died (true) or came back (false).</summary>
         public event Action<bool> DeadChanged;
         /// <summary>Everywhere: its health went from one value to another (lower: it was hurt).</summary>
@@ -70,6 +72,7 @@ namespace Brickcraft.Combat
             invulnerableUntil = NetworkTime.time + invulnerableTime;
             health = Mathf.Max(0, health - damage.amount);
             ServerDamaged?.Invoke(damage);
+            ServerAnyDamaged?.Invoke(this, damage);
 
             if (health == 0) {
                 killedBy = damage.attackerName;

@@ -24636,6 +24636,7 @@ GameObject:
   - component: {fileID: 6359582168002243777}
   - component: {fileID: 6359582168002243776}
   - component: {fileID: 8227218561333421925}
+  - component: {fileID: 6931595385040348545}
   m_Layer: 5
   m_Name: PlayerPanel
   m_TagString: Untagged
@@ -24713,6 +24714,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0a9923e0a1529e441a32949fc294c9d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  popupPrefab: {fileID: 1197642722323282647, guid: 64ac5e4c754ed2845a641a78592b8410, type: 3}
+--- !u!114 &6931595385040348545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6359582168002243779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eeb795eb39d0ff64691d72f19ae946ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   popupPrefab: {fileID: 1197642722323282647, guid: 64ac5e4c754ed2845a641a78592b8410, type: 3}

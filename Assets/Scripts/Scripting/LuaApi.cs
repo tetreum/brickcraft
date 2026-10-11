@@ -18,6 +18,8 @@ namespace Brickcraft.Scripting
     ///   world.setBlock(position, item, color)      changes the world block there (item nil for air), false if it can't
     ///   world.bricksIn(from, to)                   the loose bricks whose first cell is in the box
     ///   world.players()                            the players in the game
+    ///   world.spawnNpc(npc, position)              puts an NPC in the world, returns it (NpcHandle, see LuaNpcs)
+    ///   world.npcs(position, radius)               the NPCs within radius cells of a position (every one without them)
     ///   world.isLoaded(position)                   whether that part of the world is loaded (changes need it)
     ///   timer.after(seconds, fn), timer.every(seconds, fn), timer.cancel(id)
     ///   ui.*                                       popups, toasts, titles and HUD panels, see LuaUi
@@ -209,6 +211,33 @@ namespace Brickcraft.Scripting
                     }
                 }
                 return DynValue.NewTable(players);
+            });
+
+            world["spawnNpc"] = DynValue.NewCallback((context, args) => {
+                string id = args.AsType(0, "spawnNpc", DataType.String).String;
+                Npcs.NpcInfo info = Npcs.NpcDatabase.Get(id) ?? Npcs.NpcDatabase.Get(ModScripts.ModOf(script) + ":" + id);
+                if (info == null) {
+                    throw new ScriptRuntimeException("There's no NPC " + id);
+                }
+                Vector3Int cell = LuaVector.Read(args[1], "spawnNpc's position");
+                if (!IsLoaded(cell)) {
+                    return DynValue.Nil;
+                }
+                Npcs.Npc npc = Npcs.NpcSystem.ServerSpawn(info, BrickGrid.CellToWorld(cell, new Vector3(0.5f, 0, 0.5f)), 0);
+                return npc != null ? DynValue.FromObject(script, NpcHandle.For(npc)) : DynValue.Nil;
+            });
+
+            world["npcs"] = DynValue.NewCallback((context, args) => {
+                Table npcs = new Table(script);
+                bool near = args.Count > 0 && args[0].Type != DataType.Nil;
+                Vector3 center = near ? BrickGrid.CellToWorld(LuaVector.Read(args[0], "npcs' position")) : Vector3.zero;
+                float radius = near ? (float)args.AsType(1, "npcs", DataType.Number).Number * Server.studSize : 0;
+                foreach (Npcs.Npc npc in Npcs.NpcSystem.All) {
+                    if (!npc.Health.isDead && (!near || Vector3.Distance(npc.transform.position, center) <= radius)) {
+                        npcs.Append(DynValue.FromObject(script, NpcHandle.For(npc)));
+                    }
+                }
+                return DynValue.NewTable(npcs);
             });
 
             world["isLoaded"] = DynValue.NewCallback((context, args) => {

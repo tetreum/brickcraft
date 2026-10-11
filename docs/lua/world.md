@@ -63,6 +63,20 @@ for _, player in ipairs(world.players()) do
 end
 ```
 
+## world.spawnNpc(npc, position)
+
+Puts an NPC of that kind (`"golem"`, `"my_mod:wolf"`, or just `"wolf"` for your mod's own) in the world at `position`. Returns the [NPC](npcs.md), or `nil` if that part of the world isn't loaded or there are too many NPCs. It's an error if there's no such NPC.
+
+## world.npcs(position, radius)
+
+The [NPCs](npcs.md) within `radius` cells of `position`, or every NPC in the world without them.
+
+```lua
+for _, npc in ipairs(world.npcs(player.position, 40)) do
+  npc:follow(player)
+end
+```
+
 ## world.isLoaded(position)
 
 Whether that part of the world is loaded, so it can be changed.

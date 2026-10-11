@@ -190,10 +190,11 @@ namespace Brickcraft.Network
             Health victim = target.GetComponent<Health>();
             PlayerNetwork victimPlayer = target.GetComponent<PlayerNetwork>();
             if (victim == null || victim.isDead || Vector3.Distance(transform.position, target.transform.position) > MaxAttackReach
-                || (victimPlayer != null && !WorldNetwork.Pvp)) {
+                || (victimPlayer != null && !WorldNetwork.Pvp) || !canHitPet(target)) {
                 return;
             }
             nextAttackTime = NetworkTime.time + AttackCooldown;
+            Npcs.NpcPerception.MakeNoise(transform.position, FightNoise, health, Npcs.Noise.Fight);
 
             InventoryItem? held = inventory.ServerGetSlot(slot);
             int damage = held.HasValue && Server.items.TryGetValue(held.Value.itemId, out Item item) ? item.damage : Item.HandDamage;
@@ -214,6 +215,66 @@ namespace Brickcraft.Network
                     npc.ServerKnockback(push);
                 }
             }
+        }
+
+        // nobody hits their own pets, and others' only with PvP (pets are their owner's)
+        private bool canHitPet(NetworkIdentity target) {
+            if (!target.TryGetComponent(out Npcs.Npc npc) || npc.Brain == null || npc.Brain.Owner == 0) {
+                return true;
+            }
+            ConnectedPlayer player = connectionToClient.authenticationData as ConnectedPlayer;
+            return player != null && npc.Brain.Owner != player.record.Id && WorldNetwork.Pvp;
+        }
+
+        // how far noises carry, for NPCs (see Npcs.NpcPerception)
+        private const float FightNoise = 10;
+        private const float DigNoise = 8;
+        private const float PlaceNoise = 6;
+        private const float DoorNoise = 8;
+
+        /// <summary>
+        /// The use key on an NPC: its script's onInteract first; then holding what tames it, it becomes the
+        /// player's pet; on one of their pets, its menu (TargetPetMenu).
+        /// </summary>
+        [Command]
+        public void CmdInteractNpc(NetworkIdentity target, int slot) {
+            if (health.isDead || target == null || !target.TryGetComponent(out Npcs.Npc npc) || npc.Brain == null || npc.Health.isDead
+                    || Vector3.Distance(transform.position, target.transform.position) > MaxAttackReach) {
+                return;
+            }
+            if (!ModScripts.NpcEvent(npc.type, "onInteract", script => new object[] { NpcHandle.For(npc), PlayerHandle.For(connectionToClient) })) {
+                return;
+            }
+            ConnectedPlayer player = connectionToClient.authenticationData as ConnectedPlayer;
+            if (player == null) {
+                return;
+            }
+            if (npc.Brain.Owner == player.record.Id) {
+                TargetPetMenu(npc.netId, npc.Info.name, npc.Brain.IsFollowing, (byte)npc.Brain.Attacks);
+                return;
+            }
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            if (npc.Brain.Owner == 0 && !string.IsNullOrEmpty(npc.Info.tameWith) && held.HasValue && held.Value.itemId == npc.Info.tameWith) {
+                inventory.ServerRemoveFromSlot(slot, 1);
+                npc.Brain.Tame(player.record.Id, player.record.Name);
+                connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "The " + npc.Info.name + " is yours now. Use it again for its orders." });
+            }
+        }
+
+        /// <summary>A pet's orders from its owner: follow (or stay where it is), and what to attack.</summary>
+        [Command]
+        public void CmdPetOrders(uint npcId, bool following, byte attacks) {
+            ConnectedPlayer player = connectionToClient.authenticationData as ConnectedPlayer;
+            if (player == null || !NetworkServer.spawned.TryGetValue(npcId, out NetworkIdentity identity) || !identity.TryGetComponent(out Npcs.Npc npc)
+                    || npc.Brain == null || npc.Brain.Owner != player.record.Id || attacks > (byte)Npcs.NpcBrain.PetAttack.Everyone) {
+                return;
+            }
+            npc.Brain.SetOrders(following, (Npcs.NpcBrain.PetAttack)attacks);
+        }
+
+        [TargetRpc]
+        private void TargetPetMenu(uint npcId, string name, bool following, byte attacks) {
+            EventManager.PetMenuRequested.Raise(new PetMenuRequestedEvent() { npcId = npcId, name = name, following = following, attacks = attacks });
         }
 
         /// <summary>A dead player comes back at the spawn, with all its health (and its inventory).</summary>
@@ -263,6 +324,7 @@ namespace Brickcraft.Network
 
             inventory.ServerRemoveFromSlot(slot, 1);
             TargetBrickPlaced();
+            Npcs.NpcPerception.MakeNoise(placement.WorldBounds.center, PlaceNoise, health, Npcs.Noise.Place);
             ModScripts.ItemEvent(item.id, "onPlaced", placed, PlayerHandle.For(connectionToClient));
         }
 
@@ -305,6 +367,7 @@ namespace Brickcraft.Network
             if (!ModScripts.ItemEvent(brick.itemId, "onHit", handle, player)) {
                 return;
             }
+            Npcs.NpcPerception.MakeNoise(brick.placement.WorldBounds.center, DigNoise, health, Npcs.Noise.Dig);
             // what was attached to it comes along
             foreach (Brick removed in WorldNetwork.ServerRemoveBrick(brick)) {
                 inventory.ServerAdd(removed.itemId, removed.color, 1);
@@ -320,6 +383,7 @@ namespace Brickcraft.Network
                 return;
             }
             WorldNetwork.ServerSetBrickState(brick, brick.state == BrickDoor.Open ? BrickDoor.Closed : BrickDoor.Open);
+            Npcs.NpcPerception.MakeNoise(brick.placement.WorldBounds.center, DoorNoise, health, Npcs.Noise.Door);
         }
 
         /// <summary>The use key on a brick (see ModScripts, onInteract).</summary>
@@ -367,6 +431,7 @@ namespace Brickcraft.Network
                 return;
             }
             if (WorldNetwork.ServerSetBlock(block, BlockType.Air, null)) {
+                Npcs.NpcPerception.MakeNoise(blockCenter, DigNoise, health, Npcs.Noise.Dig);
                 // a block placed with a colour gives back its brick in that colour
                 Item item = blockColor != BrickColor.None
                     ? (Server.items.TryGetValue(BlockDatabase.Get(blockType).itemId ?? "", out Item colored) ? colored : null)

@@ -15,7 +15,8 @@ namespace Brickcraft.Scripting
     /// Each mod has its own Lua state, sandboxed (no files, no loading code, no os but the time).
     /// Its scripts are:
     ///   items/[item]/script.lua   the item's events: onPlaced, onHit, onBroken, onInteract
-    ///   scripts/*.lua             the mod's events: onLoad, onPlayerJoined, onPlayerLeft, onChat
+    ///   npcs/[npc]/script.lua     the NPC's events: onSpawn, onThink, onDamaged, onDeath, onTargetLost, onInteract
+    ///   scripts/*.lua             the mod's events: onLoad, onPlayerJoined, onPlayerLeft, onChat, onPlayerDamaged, onPlayerDied
     /// Each file has its own globals (so two items can both have an onPlaced); the mod's shared ones,
     /// like the table "shared" and the API (see LuaApi), are read through them.
     ///
@@ -43,6 +44,7 @@ namespace Brickcraft.Scripting
 
         private static readonly Dictionary<string, Script> scripts = new Dictionary<string, Script>();
         private static readonly Dictionary<string, ScriptFile> itemScripts = new Dictionary<string, ScriptFile>();
+        private static readonly Dictionary<string, ScriptFile> npcScripts = new Dictionary<string, ScriptFile>();
         private static readonly List<ScriptFile> modScripts = new List<ScriptFile>();
 
         public static bool IsRunning { get; private set; }
@@ -72,6 +74,19 @@ namespace Brickcraft.Scripting
                         }
                     }
                 }
+                string npcsFolder = Path.Combine(mod.folder, Npcs.NpcDatabase.ModFolder);
+                if (Directory.Exists(npcsFolder)) {
+                    foreach (string npcFolder in Directory.GetDirectories(npcsFolder)) {
+                        string file = Path.Combine(npcFolder, ItemScriptFile);
+                        string npcId = mod.id + ":" + Path.GetFileName(npcFolder);
+                        if (File.Exists(file) && Npcs.NpcDatabase.Get(npcId) != null) {
+                            ScriptFile loaded = load(mod, script, file);
+                            if (loaded != null) {
+                                npcScripts[npcId] = loaded;
+                            }
+                        }
+                    }
+                }
                 string folder = Path.Combine(mod.folder, ScriptsFolder);
                 if (Directory.Exists(folder)) {
                     string[] files = Directory.GetFiles(folder, "*.lua");
@@ -91,6 +106,7 @@ namespace Brickcraft.Scripting
             IsRunning = false;
             scripts.Clear();
             itemScripts.Clear();
+            npcScripts.Clear();
             modScripts.Clear();
             LuaApi.Reset();
         }
@@ -111,6 +127,23 @@ namespace Brickcraft.Scripting
                 return true;
             }
             DynValue result = call(file, handler, args);
+            return !(result != null && result.Type == DataType.Boolean && !result.Boolean);
+        }
+
+        /// <summary>Whether the kind of NPC has a script with that event.</summary>
+        public static bool HasNpcEvent(string npcId, string handler) {
+            return IsRunning && npcId != null && npcScripts.TryGetValue(npcId, out ScriptFile file) && file.env.Get(handler).Type == DataType.Function;
+        }
+
+        /// <summary>
+        /// Calls an event of the NPC's script, its arguments made for its Lua state (tables belong to one).
+        /// Returns false only if the script returned false, true otherwise.
+        /// </summary>
+        public static bool NpcEvent(string npcId, string handler, Func<Script, object[]> args) {
+            if (!IsRunning || npcId == null || !npcScripts.TryGetValue(npcId, out ScriptFile file) || file.env.Get(handler).Type != DataType.Function) {
+                return true;
+            }
+            DynValue result = call(file, handler, args(file.script));
             return !(result != null && result.Type == DataType.Boolean && !result.Boolean);
         }
 

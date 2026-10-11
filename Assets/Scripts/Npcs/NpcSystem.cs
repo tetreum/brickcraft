@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Brickcraft.Combat;
+using Brickcraft.Network;
 using Mirror;
 using UnityEngine;
 
@@ -10,6 +11,9 @@ namespace Brickcraft.Npcs
     /// are active: NPCs elsewhere stand still, and those in a chunk the server unloads go with it (keeping
     /// them for later comes with the saves). In scenes without a streamed world (the test scene) every
     /// place is active. Players get the NPCs of the chunks they have (see Network.ChunkInterestManagement).
+    ///
+    /// It also keeps what NPCs' brains look up: who hit whom lately (pets defend their owners), players
+    /// by their id, and players' footsteps as noises (see NpcPerception).
     /// </summary>
     public static class NpcSystem
     {
@@ -22,6 +26,23 @@ namespace Brickcraft.Npcs
         private const float RefreshInterval = 0.5f;
 
         private static readonly List<Npc> npcs = new List<Npc>();
+
+        // who hit whom, the last seconds
+        private const float HitMemory = 10;
+        private struct Hit
+        {
+            public Health attacker;
+            public Health victim;
+            public double time;
+        }
+        private static readonly List<Hit> hits = new List<Hit>();
+
+        // players' footsteps: how fast they moved since the last look
+        private const float WalkSpeed = 1;
+        private const float SprintSpeed = 4.5f;
+        private const float StepsRadius = 4;
+        private const float SprintRadius = 10;
+        private static readonly Dictionary<NetworkConnectionToClient, Vector3> lastPositions = new Dictionary<NetworkConnectionToClient, Vector3>();
         private static readonly HashSet<Vector2Int> activeChunks = new HashSet<Vector2Int>();
         private static float nextRefresh;
         private static World.WorldBehaviour subscribedWorld;
@@ -42,6 +63,10 @@ namespace Brickcraft.Npcs
             npcs.Clear();
             activeChunks.Clear();
             Navigation.NavGrid.Start();
+            NpcPerception.Clear();
+            hits.Clear();
+            lastPositions.Clear();
+            Health.ServerAnyDamaged += onAnyDamaged;
             subscribedWorld = World.WorldBehaviour.Instance;
             if (subscribedWorld != null) {
                 subscribedWorld.ChunkUnloaded += onChunkUnloaded;
@@ -50,6 +75,10 @@ namespace Brickcraft.Npcs
 
         public static void StopServer() {
             Navigation.NavGrid.Stop();
+            NpcPerception.Clear();
+            Health.ServerAnyDamaged -= onAnyDamaged;
+            hits.Clear();
+            lastPositions.Clear();
             if (subscribedWorld != null) {
                 subscribedWorld.ChunkUnloaded -= onChunkUnloaded;
                 subscribedWorld = null;
@@ -85,20 +114,89 @@ namespace Brickcraft.Npcs
 
         public static void ServerUpdate() {
             Navigation.NavGrid.Update();
+            NpcPerception.Update();
             if (Time.unscaledTime < nextRefresh) {
                 return;
             }
             nextRefresh = Time.unscaledTime + RefreshInterval;
+            hits.RemoveAll(h => Time.timeAsDouble - h.time > HitMemory || h.attacker == null || h.victim == null);
             activeChunks.Clear();
             foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {
                 if (conn.identity == null) {
                     continue;
                 }
+                footsteps(conn);
                 Vector2Int center = World.WorldBehaviour.ChunkAt(conn.identity.transform.position);
                 for (int x = -ActiveRadius; x <= ActiveRadius; x++) {
                     for (int z = -ActiveRadius; z <= ActiveRadius; z++) {
                         activeChunks.Add(center + new Vector2Int(x, z));
                     }
+                }
+            }
+        }
+
+        // walking players are heard a little, running ones further
+        private static void footsteps(NetworkConnectionToClient conn) {
+            Vector3 position = conn.identity.transform.position;
+            if (lastPositions.TryGetValue(conn, out Vector3 last)) {
+                float speed = Npc.horizontalDistance(position, last) / RefreshInterval;
+                Health player = conn.identity.GetComponent<Health>();
+                if (speed >= SprintSpeed) {
+                    NpcPerception.MakeNoise(position, SprintRadius, player, Noise.Sprint);
+                } else if (speed >= WalkSpeed) {
+                    NpcPerception.MakeNoise(position, StepsRadius, player, Noise.Steps);
+                }
+            }
+            lastPositions[conn] = position;
+        }
+
+        private static void onAnyDamaged(Health victim, DamageInfo damage) {
+            Health attacker = damage.attacker != null ? damage.attacker.GetComponent<Health>() : null;
+            if (attacker != null) {
+                hits.Add(new Hit() { attacker = attacker, victim = victim, time = Time.timeAsDouble });
+            }
+        }
+
+        /// <summary>Who hurt it the last seconds.</summary>
+        public static IEnumerable<Health> RecentAttackersOf(Health victim) {
+            foreach (Hit hit in hits) {
+                if (hit.victim == victim && hit.attacker != null) {
+                    yield return hit.attacker;
+                }
+            }
+        }
+
+        /// <summary>Whom it hurt the last seconds.</summary>
+        public static IEnumerable<Health> RecentTargetsOf(Health attacker) {
+            foreach (Hit hit in hits) {
+                if (hit.attacker == attacker && hit.victim != null) {
+                    yield return hit.victim;
+                }
+            }
+        }
+
+        /// <summary>The player with that players.db id, null if they're not in the game.</summary>
+        public static Health PlayerHealth(int playerId) {
+            if (playerId == 0) {
+                return null;
+            }
+            foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {
+                if (conn.identity != null && conn.authenticationData is ConnectedPlayer player && player.record.Id == playerId && !player.hasLeft) {
+                    return conn.identity.GetComponent<Health>();
+                }
+            }
+            return null;
+        }
+
+        /// <summary>A player left: their pets go with them.</summary>
+        public static void ServerPlayerLeft(NetworkConnectionToClient conn) {
+            lastPositions.Remove(conn);
+            if (!(conn.authenticationData is ConnectedPlayer player)) {
+                return;
+            }
+            foreach (Npc npc in new List<Npc>(npcs)) {
+                if (npc.Brain != null && npc.Brain.Owner == player.record.Id) {
+                    npc.Despawn();
                 }
             }
         }

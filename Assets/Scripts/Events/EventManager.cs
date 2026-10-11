@@ -54,6 +54,9 @@ namespace Brickcraft.Events
         /// <summary>The local player is alive again, at the spawn.</summary>
         public static readonly GameEvent<LocalPlayerRespawnedEvent> LocalPlayerRespawned = new GameEvent<LocalPlayerRespawnedEvent>();
 
+        /// <summary>The local player used one of their pets: the UI shows its orders.</summary>
+        public static readonly GameEvent<PetMenuRequestedEvent> PetMenuRequested = new GameEvent<PetMenuRequestedEvent>();
+
         // subscribers of a previous play session, when entering play mode doesn't reload the domain
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void clearAll() {
@@ -70,6 +73,7 @@ namespace Brickcraft.Events
             LocalPlayerHealthChanged.Clear();
             LocalPlayerDied.Clear();
             LocalPlayerRespawned.Clear();
+            PetMenuRequested.Clear();
         }
     }
 }

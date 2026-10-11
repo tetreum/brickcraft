@@ -6,6 +6,7 @@
     "stepHeight": 0.5,
     "behaviour": "aggressive",
     "sightRange": 16,
+    "tameWith": "iron_ore",
     "attack": {
         "damage": 5,
         "range": 0.9,

@@ -115,6 +115,7 @@ namespace Brickcraft.Network
 
         public static void ServerDisconnect(NetworkConnectionToClient conn) {
             interests.Remove(conn);
+            Npcs.NpcSystem.ServerPlayerLeft(conn);
         }
 
         /// <summary>

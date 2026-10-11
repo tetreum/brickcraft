@@ -6,17 +6,31 @@ using UnityEngine;
 
 namespace Brickcraft.Npcs
 {
+    /// <summary>What an NPC is doing, as its brain (or a script) ordered.</summary>
+    public enum NpcOrderKind : byte
+    {
+        Idle = 0,
+        Wander = 1,
+        /// <summary>To a place, within a range of it.</summary>
+        MoveTo = 2,
+        /// <summary>After someone, staying within a range of them.</summary>
+        Follow = 3,
+        /// <summary>After someone, hitting them when they're in reach.</summary>
+        Attack = 4,
+    }
+
     /// <summary>
     /// A creature of the world, of a kind of NpcDatabase (its type). The server runs it (in active chunks, see
-    /// NpcSystem): it picks a target, walks, attacks and dies; everybody sees its model (see NpcModel) play its
-    /// animations: idle or walk all the time, attack and death when they happen.
+    /// NpcSystem); everybody sees its model (see NpcModel) play its animations: idle or walk all the time,
+    /// attack and death when they happen. Its capsule is what it bumps into things with and what players hit.
     ///
-    /// It chases along paths of the navigation grid (see Navigation.NavGrid), asked for again as its target
-    /// moves; where there's no grid it walks straight. Moving, it steps up what's low enough and keeps out of
-    /// fluids (water, lava). When it doesn't get anywhere (something the grid doesn't know of in the way: an
-    /// NPC, a player) it asks for a new path or goes sideways for a moment; when the best path can't take it
-    /// closer it gives up on that target for a while, unless it's hurt by it again.
-    /// Its capsule is what it bumps into things with and what players hit (see Combat.Health).
+    /// This is its body: it does what it's ordered (Order: idle, wander, go somewhere, follow or attack
+    /// someone), and its brain (NpcBrain: senses, targets, pets, scripts) decides the orders. It goes along
+    /// paths of the navigation grid (see Navigation.NavGrid), asked for again as who it goes after moves;
+    /// where there's no grid it walks straight. Moving, it steps up what's low enough and keeps out of fluids.
+    /// When it doesn't get anywhere (something the grid doesn't know of in the way: an NPC, a player) it asks for
+    /// a new path or goes sideways for a moment; when the best path can't take it closer, it can't get there
+    /// (IsUnreachable) and stops.
     /// </summary>
     [RequireComponent(typeof(Health), typeof(CapsuleCollider))]
     public class Npc : NetworkBehaviour
@@ -30,15 +44,18 @@ namespace Brickcraft.Npcs
         [SyncVar(hook = nameof(onTypeChanged))] public string type;
         /// <summary>What it plays when nothing else is: idle or walk.</summary>
         [SyncVar(hook = nameof(onLoopChanged))] public string loop = Idle;
+        /// <summary>Its owner's name if it's a pet, empty otherwise.</summary>
+        [SyncVar] public string ownerName = "";
 
         public NpcInfo Info { get; private set; }
+        public Health Health { get; private set; }
+        /// <summary>Server: what decides its orders.</summary>
+        public NpcBrain Brain { get; private set; }
 
         private const float ThinkInterval = 0.25f;
         private const float Gravity = 20;
         private const float TurnSpeed = 540;
-        // how long the dead stay, and how long it remembers who hurt it
         private const float DeathLinger = 3;
-        private const float ForgetTime = 15;
         private const float KnockbackDrag = 12;
         // a player's radius, for how close it has to be to hit one
         private const float TargetRadius = 0.35f;
@@ -49,15 +66,16 @@ namespace Brickcraft.Npcs
         // what it walks on and bumps into: not water, nor what's on Ignore Raycast (players' own capsules)
         private const int SolidLayers = Physics.DefaultRaycastLayers & ~(1 << (int)Game.Layers.Water);
 
-        private Health health;
         private CapsuleCollider body;
         private NpcModel model;
         private Animator animator;
 
-        // server
-        private Health target;
-        private Health lastAttacker;
-        private double lastAttackedAt;
+        // server: its order
+        private NpcOrderKind order;
+        private Health orderTarget;
+        private Vector3 orderPosition;
+        private float orderRange;
+
         private Vector3 heading;      // where it walks, a horizontal unit vector or zero
         private Vector3 facing;       // where it looks
         private float verticalSpeed;
@@ -69,22 +87,20 @@ namespace Brickcraft.Npcs
         private double nextWander;
         private bool bumped;          // walked into something since it last thought
 
-        // not getting anywhere: checked every ProgressInterval, then it goes sideways for a moment (a detour)
+        // not getting anywhere: checked every ProgressInterval
         private const float ProgressInterval = 1.5f;
         private const float MinProgress = 0.3f;
         private const int MaxStrikes = 3;
-        // a new path when the target moved this far from where the last one went, or this often
+        // a new path when the destination moved this far from where the last one went, or this often
         private const float RepathDistance = 1.5f;
         private const float RepathInterval = 2;
-        // a waypoint is reached this close
         private const float WaypointReach = 0.25f;
-        private const float GiveUpTime = 10;
         private double progressCheckAt;
         private Vector3 progressPosition;
-        private Vector3 progressTargetPosition;
-        // the closest it got to the target since the target last moved: detours that only seem to get closer don't count
+        private Vector3 progressDestination;
+        // the closest it got to the destination since it last moved: detours that only seem to get closer don't count
         private float bestDistance;
-        private int strikes;          // checks in a row it didn't get anywhere
+        private int strikes;
         private NavAgent agent;
         private NavPath path;
         private int pathIndex;
@@ -93,8 +109,6 @@ namespace Brickcraft.Npcs
         private Vector3 pathGoal;
         private double detourUntil;
         private Vector3 detourHeading;
-        private Health ignored;
-        private double ignoredUntil;
 
         // client
         private float oneShotUntil = -1;
@@ -103,16 +117,17 @@ namespace Brickcraft.Npcs
         private MaterialPropertyBlock flashProperties;
 
         private void Awake() {
-            health = GetComponent<Health>();
+            Health = GetComponent<Health>();
             body = GetComponent<CapsuleCollider>();
         }
 
         public override void OnStartServer() {
             setup();
-            health.ServerDamaged += onServerDamaged;
-            health.ServerDied += onServerDied;
-            NpcSystem.Register(this);
+            Health.ServerDied += onServerDied;
             facing = transform.forward;
+            Brain = new NpcBrain(this);
+            NpcSystem.Register(this);
+            Brain.Start();
         }
 
         public override void OnStopServer() {
@@ -121,17 +136,17 @@ namespace Brickcraft.Npcs
 
         public override void OnStartClient() {
             setup();
-            health.HealthChanged += onHealthChanged;
-            health.DeadChanged += onDeadChanged;
-            body.enabled = !health.isDead;
-            if (health.isDead) {
+            Health.HealthChanged += onHealthChanged;
+            Health.DeadChanged += onDeadChanged;
+            body.enabled = !Health.isDead;
+            if (Health.isDead) {
                 play(Death);
             }
         }
 
         public override void OnStopClient() {
-            health.HealthChanged -= onHealthChanged;
-            health.DeadChanged -= onDeadChanged;
+            Health.HealthChanged -= onHealthChanged;
+            Health.DeadChanged -= onDeadChanged;
         }
 
         private void onTypeChanged(string oldType, string newType) {
@@ -170,6 +185,19 @@ namespace Brickcraft.Npcs
             get { return body.radius; }
         }
 
+        public float Height {
+            get { return body.height; }
+        }
+
+        /// <summary>Where it looks from.</summary>
+        public Vector3 EyePosition {
+            get { return transform.position + Vector3.up * (body.height * 0.85f); }
+        }
+
+        public bool IsPet {
+            get { return Brain != null ? Brain.Owner != 0 : ownerName.Length > 0; }
+        }
+
         private void Update() {
             if (Info == null) {
                 return;
@@ -182,10 +210,76 @@ namespace Brickcraft.Npcs
             }
         }
 
-        // -------- server --------
+        // -------- server: orders --------
+
+        public NpcOrderKind Order {
+            get { return order; }
+        }
+
+        public Health OrderTarget {
+            get { return orderTarget; }
+        }
+
+        /// <summary>It can't get to where it was ordered: it stopped. Cleared by the next order.</summary>
+        public bool IsUnreachable { get; private set; }
+
+        /// <summary>It got to where it was ordered to move (MoveTo), or it's within range of who it follows.</summary>
+        public bool HasArrived { get; private set; }
+
+        [Server]
+        public void OrderIdle() {
+            setOrder(NpcOrderKind.Idle, null, Vector3.zero, 0);
+        }
+
+        [Server]
+        public void OrderWander() {
+            setOrder(NpcOrderKind.Wander, null, Vector3.zero, 0);
+        }
+
+        /// <summary>To a local position, close enough within range meters.</summary>
+        [Server]
+        public void OrderMoveTo(Vector3 position, float range = 0.5f) {
+            setOrder(NpcOrderKind.MoveTo, null, position, range);
+        }
+
+        [Server]
+        public void OrderFollow(Health target, float range) {
+            setOrder(NpcOrderKind.Follow, target, Vector3.zero, range);
+        }
+
+        [Server]
+        public void OrderAttack(Health target) {
+            setOrder(NpcOrderKind.Attack, target, Vector3.zero, 0);
+        }
+
+        // the same order again keeps how it's going about it
+        private void setOrder(NpcOrderKind kind, Health target, Vector3 position, float range) {
+            bool same = kind == order && target == orderTarget && range == orderRange
+                && (kind != NpcOrderKind.MoveTo || horizontalDistance(position, orderPosition) < RepathDistance);
+            order = kind;
+            orderTarget = target;
+            orderPosition = position;
+            orderRange = range;
+            if (!same) {
+                resetProgress(NetworkTime.time);
+                IsUnreachable = false;
+                HasArrived = false;
+            }
+        }
+
+        /// <summary>Moves it there right away (a pet catching up with its owner).</summary>
+        [Server]
+        public void ServerTeleport(Vector3 position) {
+            transform.position = position;
+            verticalSpeed = 0;
+            knockback = Vector3.zero;
+            resetProgress(NetworkTime.time);
+        }
+
+        // -------- server: every frame --------
 
         private void serverUpdate() {
-            if (health.isDead || !NpcSystem.IsActive(transform.position)) {
+            if (Health.isDead || !NpcSystem.IsActive(transform.position)) {
                 return;
             }
             double now = NetworkTime.time;
@@ -195,7 +289,8 @@ namespace Brickcraft.Npcs
             }
             if (now >= nextThink) {
                 nextThink = now + ThinkInterval;
-                think(now);
+                Brain.Think(now);
+                act(now);
             }
             move(Time.deltaTime);
             if (NavGrid.DebugDraw && path != null) {
@@ -205,49 +300,94 @@ namespace Brickcraft.Npcs
             }
         }
 
-        private void think(double now) {
-            Health previous = target;
-            target = chooseTarget(now);
-            if (target != previous) {
-                resetProgress(now);
+        /// <summary>Thinks again next frame (it was just hurt...).</summary>
+        public void ThinkSoon() {
+            nextThink = 0;
+        }
+
+        // carries its order out
+        private void act(double now) {
+            if (orderTarget != null && orderTarget.isDead) {
+                orderTarget = null;
             }
-            if (target == null) {
-                wander(now);
-                return;
+            switch (order) {
+                case NpcOrderKind.Wander:
+                    wander(now);
+                    break;
+                case NpcOrderKind.MoveTo:
+                    goTo(now, orderPosition, orderRange);
+                    break;
+                case NpcOrderKind.Follow:
+                    if (orderTarget == null) {
+                        stand();
+                    } else {
+                        goTo(now, orderTarget.transform.position, orderRange);
+                    }
+                    break;
+                case NpcOrderKind.Attack:
+                    if (orderTarget == null) {
+                        stand();
+                    } else if (IsInReach(orderTarget)) {
+                        Vector3 to = orderTarget.transform.position - transform.position;
+                        to.y = 0;
+                        facing = to;
+                        heading = Vector3.zero;
+                        resetProgress(now);
+                        tryAttack(now);
+                    } else {
+                        goTo(now, orderTarget.transform.position, Info.attack.range + body.radius);
+                    }
+                    break;
+                default:
+                    stand();
+                    break;
             }
-            Vector3 to = target.transform.position - transform.position;
+        }
+
+        private void stand() {
+            heading = Vector3.zero;
+        }
+
+        // along a path to a (maybe moving) destination, stopping within range of it
+        private void goTo(double now, Vector3 destination, float range) {
+            Vector3 to = destination - transform.position;
             to.y = 0;
-            if (isInReach(target)) {
-                facing = to;
+            if (IsUnreachable) {
                 heading = Vector3.zero;
-                resetProgress(now);
-                tryAttack(now);
+                facing = to;
                 return;
             }
+            if (to.magnitude <= range && Mathf.Abs(destination.y - transform.position.y) <= body.height) {
+                heading = Vector3.zero;
+                HasArrived = true;
+                resetProgress(now);
+                return;
+            }
+            HasArrived = false;
             if (now < detourUntil) {
                 heading = detourHeading;
                 facing = heading;
                 return;
             }
-            if (!isPathPending && (path == null || now >= nextRepath || horizontalDistance(target.transform.position, pathGoal) > RepathDistance)) {
-                requestPath(now);
+            if (!isPathPending && (path == null || now >= nextRepath || horizontalDistance(destination, pathGoal) > RepathDistance)) {
+                requestPath(now, destination, range);
             }
             if (now >= progressCheckAt) {
-                checkProgress(now, to);
-                if (target == null || now < detourUntil) {
-                    return; // gave up, or going around
+                checkProgress(now, destination, to);
+                if (IsUnreachable || now < detourUntil) {
+                    return; // stopped, or going around
                 }
             }
             followPath(to);
         }
 
-        private void requestPath(double now) {
+        private void requestPath(double now, Vector3 destination, float range) {
             isPathPending = true;
             nextRepath = now + RepathInterval;
-            pathGoal = target.transform.position;
-            NavGrid.RequestPath(agent, transform.position, pathGoal, Info.attack.range + body.radius, result => {
+            pathGoal = destination;
+            NavGrid.RequestPath(agent, transform.position, destination, range, result => {
                 isPathPending = false;
-                if (this == null || health.isDead) {
+                if (this == null || Health.isDead) {
                     return;
                 }
                 path = result.result == NavResult.Failed ? null : result;
@@ -255,12 +395,12 @@ namespace Brickcraft.Npcs
             });
         }
 
-        // towards the next waypoint; straight at the target without a path; still at the end of one that
+        // towards the next waypoint; straight at the destination without a path; still at the end of one that
         // can't get closer
-        private void followPath(Vector3 toTarget) {
-            facing = toTarget;
+        private void followPath(Vector3 toDestination) {
+            facing = toDestination;
             if (path == null) {
-                heading = toTarget.normalized;
+                heading = toDestination.normalized;
                 return;
             }
             while (pathIndex < path.Count && horizontalDistance(transform.position, path.PointAt(pathIndex)) < WaypointReach) {
@@ -272,7 +412,7 @@ namespace Brickcraft.Npcs
                 heading = to.normalized;
                 facing = to;
             } else {
-                heading = path.result == NavResult.Partial ? Vector3.zero : toTarget.normalized;
+                heading = path.result == NavResult.Partial ? Vector3.zero : toDestination.normalized;
             }
         }
 
@@ -285,8 +425,8 @@ namespace Brickcraft.Npcs
             get { return body.radius + Info.attack.range + TargetRadius; }
         }
 
-        // close enough sideways, and not too far above or below (on a cliff...)
-        private bool isInReach(Health victim) {
+        /// <summary>Close enough to hit them: sideways, and not too far above or below (on a cliff...).</summary>
+        public bool IsInReach(Health victim) {
             Vector3 to = victim.transform.position - transform.position;
             float up = to.y;
             to.y = 0;
@@ -296,8 +436,8 @@ namespace Brickcraft.Npcs
         private void resetProgress(double now) {
             progressCheckAt = now + ProgressInterval;
             progressPosition = transform.position;
-            progressTargetPosition = target != null ? target.transform.position : Vector3.zero;
-            bestDistance = target != null ? horizontalDistance(transform.position, target.transform.position) : 0;
+            progressDestination = orderTarget != null ? orderTarget.transform.position : orderPosition;
+            bestDistance = horizontalDistance(transform.position, progressDestination);
             strikes = 0;
             detourUntil = 0;
             path = null;
@@ -305,10 +445,10 @@ namespace Brickcraft.Npcs
 
         // stuck: following a path, it hardly moved (something the grid doesn't know of is in the way); at the end
         // of a path that can't get closer, it can't get there; without a path, it got no closer than it ever did
-        private void checkProgress(double now, Vector3 to) {
+        private void checkProgress(double now, Vector3 destination, Vector3 to) {
             float moved = horizontalDistance(transform.position, progressPosition);
             float distance = to.magnitude;
-            if (horizontalDistance(target.transform.position, progressTargetPosition) >= 1) {
+            if (horizontalDistance(destination, progressDestination) >= 1) {
                 bestDistance = float.MaxValue; // it went somewhere else: a fresh start
                 strikes = 0;
             }
@@ -319,7 +459,7 @@ namespace Brickcraft.Npcs
 
             progressCheckAt = now + ProgressInterval;
             progressPosition = transform.position;
-            progressTargetPosition = target.transform.position;
+            progressDestination = destination;
             bestDistance = Mathf.Min(bestDistance, distance);
             if (!stuck) {
                 strikes = 0;
@@ -332,20 +472,17 @@ namespace Brickcraft.Npcs
             } else if (tried && (path == null || isFollowingPath)) {
                 tried = startDetour(now, to);
             } else if (tried) {
-                nextRepath = 0; // the target may be somewhere else by then
+                nextRepath = 0; // the destination may be somewhere else by then
             }
             if (!tried) {
-                // can't get there: somebody else, or wandering, for a while
-                ignored = target;
-                ignoredUntil = now + GiveUpTime;
-                target = null;
+                IsUnreachable = true;
                 strikes = 0;
                 path = null;
                 heading = Vector3.zero;
             }
         }
 
-        // the free direction closest to the target's, trying both sides further and further round
+        // the free direction closest to the destination's, trying both sides further and further round
         private bool startDetour(double now, Vector3 to) {
             float side = Random.value < 0.5f ? 1 : -1;
             foreach (float angle in new[] { 45f, 90f, 135f }) {
@@ -363,6 +500,25 @@ namespace Brickcraft.Npcs
             return false;
         }
 
+        // now and then it walks somewhere for a while, or stands
+        private void wander(double now) {
+            if (bumped) {
+                nextWander = 0; // walked into a wall: somewhere else
+            }
+            bumped = false;
+            if (now < nextWander) {
+                return;
+            }
+            nextWander = now + Random.Range(2f, 6f);
+            if (Random.value < 0.5f) {
+                Vector2 direction = Random.insideUnitCircle.normalized;
+                heading = new Vector3(direction.x, 0, direction.y);
+                facing = heading;
+            } else {
+                heading = Vector3.zero;
+            }
+        }
+
         // it can go that way for that distance (checked with its capsule off)
         private bool canWalk(Vector3 direction, float distance) {
             body.enabled = false;
@@ -371,7 +527,7 @@ namespace Brickcraft.Npcs
             return free;
         }
 
-        // nothing in the way, the world is there, and no fluid under where it'd be (swimmers come with the navigation grid)
+        // nothing in the way, the world is there, and no fluid under where it'd be (swimmers come later)
         private bool isWalkable(Vector3 position, Vector3 step) {
             if (isBlocked(position, step) || !NpcSystem.IsLoaded(position + step)) {
                 return false;
@@ -409,62 +565,13 @@ namespace Brickcraft.Npcs
             return world != null && World.BlockDatabase.Get(world.GetBlockType(Bricks.BrickGrid.CellToBlock(cell))).isFluid;
         }
 
-        private static float horizontalDistance(Vector3 a, Vector3 b) {
+        public static float horizontalDistance(Vector3 a, Vector3 b) {
             a.y = 0;
             b.y = 0;
             return Vector3.Distance(a, b);
         }
 
-        // who hurt it (until it forgets or loses them), or for aggressive ones the nearest player in sight
-        private Health chooseTarget(double now) {
-            if (now >= ignoredUntil) {
-                ignored = null;
-            }
-            if (canTarget(lastAttacker, Info.sightRange * 1.5f) && now - lastAttackedAt < ForgetTime) {
-                return lastAttacker;
-            }
-            lastAttacker = null;
-            if (Info.behaviour != "aggressive" || WorldNetwork.Difficulty == Difficulty.Peaceful) {
-                return null;
-            }
-            Health nearest = null;
-            float nearestDistance = float.MaxValue;
-            foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {
-                Health player = conn.identity != null ? conn.identity.GetComponent<Health>() : null;
-                if (player != ignored && canTarget(player, Info.sightRange)) {
-                    float distance = Vector3.Distance(transform.position, player.transform.position);
-                    if (distance < nearestDistance) {
-                        nearest = player;
-                        nearestDistance = distance;
-                    }
-                }
-            }
-            return nearest;
-        }
-
-        private bool canTarget(Health candidate, float range) {
-            return candidate != null && !candidate.isDead && candidate != health
-                && Vector3.Distance(transform.position, candidate.transform.position) <= range;
-        }
-
-        // now and then it walks somewhere for a while, or stands
-        private void wander(double now) {
-            if (bumped) {
-                nextWander = 0; // walked into a wall: somewhere else
-            }
-            bumped = false;
-            if (now < nextWander) {
-                return;
-            }
-            nextWander = now + Random.Range(2f, 6f);
-            if (Random.value < 0.5f) {
-                Vector2 direction = Random.insideUnitCircle.normalized;
-                heading = new Vector3(direction.x, 0, direction.y);
-                facing = heading;
-            } else {
-                heading = Vector3.zero;
-            }
-        }
+        // -------- server: attacking --------
 
         private void tryAttack(double now) {
             if (now < nextAttack) {
@@ -472,7 +579,7 @@ namespace Brickcraft.Npcs
             }
             nextAttack = now + Info.attack.cooldown;
             attackLandsAt = now + Info.attack.hitTime;
-            attackTarget = target;
+            attackTarget = orderTarget;
             RpcPlay(Attack);
         }
 
@@ -493,6 +600,7 @@ namespace Brickcraft.Npcs
                 attacker = gameObject,
                 attackerName = Info.name,
             });
+            NpcPerception.MakeNoise(transform.position, 8, Health, Noise.Fight);
             if (hurt) {
                 Vector3 push = away.normalized * Info.attack.knockback + Vector3.up * 3;
                 PlayerNetwork player = attackTarget.GetComponent<PlayerNetwork>();
@@ -504,10 +612,13 @@ namespace Brickcraft.Npcs
             }
         }
 
-        // players are hurt more in hard worlds, and not at all in peaceful ones
+        // players are hurt more in hard worlds, and not at all in peaceful ones; pets only hurt players with PvP
         private int damageFor(Health victim) {
             if (victim.GetComponent<PlayerNetwork>() == null) {
                 return Info.attack.damage;
+            }
+            if (IsPet && !WorldNetwork.Pvp) {
+                return 0;
             }
             switch (WorldNetwork.Difficulty) {
                 case Difficulty.Peaceful:
@@ -526,37 +637,29 @@ namespace Brickcraft.Npcs
             verticalSpeed = Mathf.Max(verticalSpeed, velocity.y);
         }
 
-        private void onServerDamaged(DamageInfo damage) {
-            Health attacker = damage.attacker != null ? damage.attacker.GetComponent<Health>() : null;
-            if (attacker != null) {
-                lastAttacker = attacker;
-                lastAttackedAt = NetworkTime.time;
-                if (attacker == ignored) {
-                    ignored = null; // it'll try again
-                }
-                nextThink = 0; // turns on them right away
-            }
-        }
-
         // whoever killed it gets its drops; it stays a moment to fall
         private void onServerDied(DamageInfo damage) {
             heading = Vector3.zero;
             body.enabled = false;
             RpcPlay(Death);
             PlayerInventory killer = damage.attacker != null ? damage.attacker.GetComponent<PlayerInventory>() : null;
-            if (killer != null) {
+            if (killer != null && !IsPet) {
                 foreach (DropInfo drop in Info.drops) {
                     if (Random.value <= drop.chance && Server.items.TryGetValue(drop.item ?? "", out Item item)) {
                         killer.ServerAdd(item.id, item.color, drop.count);
                     }
                 }
             }
-            Invoke(nameof(despawn), DeathLinger);
+            Invoke(nameof(Despawn), DeathLinger);
         }
 
-        private void despawn() {
+        /// <summary>Takes it out of the world (nobody gets its drops).</summary>
+        [Server]
+        public void Despawn() {
             NetworkServer.Destroy(gameObject);
         }
+
+        // -------- server: moving --------
 
         // walks where it heads, stepping up what's low enough and falling down what isn't under it
         private void move(float deltaTime) {
@@ -594,7 +697,7 @@ namespace Brickcraft.Npcs
                 loop = wanted;
             }
             if (next.y < FallLimit) {
-                despawn(); // fell out of the world
+                Despawn(); // fell out of the world
             }
         }
 

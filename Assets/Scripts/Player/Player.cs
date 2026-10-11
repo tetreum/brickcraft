@@ -166,9 +166,11 @@ namespace Brickcraft
                     stopDigging();
                 }
 
-                // what happens is up to the brick's mod, see ModScripts
+                // what happens is up to the brick's mod, see ModScripts; NPCs are tamed or given orders
                 if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Interact)) {
-                    if (lookedBrick != null) {
+                    if (lookedHealth != null && lookedHealth.GetComponent<Npcs.Npc>() != null) {
+                        network.CmdInteractNpc(lookedHealth.netIdentity, SelectedSlot);
+                    } else if (lookedBrick != null) {
                         network.CmdInteractBrick(lookedBrick.id);
                     } else if (lookedBlock.HasValue) {
                         network.CmdInteractBlock(lookedBlock.Value);

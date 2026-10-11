@@ -240,6 +240,17 @@ NPCs are creatures the server runs (`Npcs.Npc`): they wander, go for players, at
     "maxDrop": 3,
     "behaviour": "aggressive",
     "sightRange": 16,
+    "fieldOfView": 140,
+    "hearingRange": 12,
+    "memory": 8,
+    "aggro": [
+        { "sense": "sight", "range": 16, "fov": 140 },
+        { "sense": "hearing", "range": 9 },
+        { "sense": "distance", "range": 3 },
+        { "sense": "attacked" }
+    ],
+    "targets": "players",
+    "tameWith": "iron_ore",
     "attack": { "damage": 5, "range": 0.9, "cooldown": 1.8, "hitTime": 1.2, "knockback": 8 },
     "drops": [ { "item": "iron_ore", "count": 3, "chance": 1 } ],
     "animations": { "idle": "idle", "walk": "walk", "attack": "attack", "death": "death" }
@@ -248,9 +259,13 @@ NPCs are creatures the server runs (`Npcs.Npc`): they wander, go for players, at
 
 - Distances are meters (a block is 0.8 wide and 0.48 high, a player 1.8 tall). `speed` is in meters per second, `stepHeight` how high it steps up without jumping, `maxDrop` how far down it walks off an edge.
 - `moves`: `ground` (the default) walks and keeps out of fluids (blocks with `fluid`, and water bricks): it doesn't step onto them nor walk off an edge into them. `water`, `amphibious` and `air` (swimming and flying) come with the navigation grid; until then they walk like `ground` ones.
-- `behaviour`: `neutral` (the default) wanders and fights back whoever hurts it, until it loses them (15 seconds, or too far); `aggressive` also goes for the nearest player within `sightRange` (not in Peaceful worlds).
+- What it notices (`Npcs.NpcPerception`): what it sees (within `sightRange` and `fieldOfView`, in degrees, and not hidden: lines of sight are cast in batches on worker threads), what it hears within `hearingRange` (players' footsteps, louder running; digging, placing, fights and doors, each carrying so far) and who hurts it. It remembers where each was for `memory` seconds.
+- `aggro`: what makes it go for someone, any of these: seen (within `range`, in its `fov`), heard (within `range`), that close (`distance`, seen or not), or hurt by them (`attacked`). Without it, its `behaviour`'s: `passive` none (it runs from whoever hurts it), `neutral` (the default) `attacked`, `aggressive` all four (and only `attacked` for players in Peaceful worlds). `targets`: who it goes for, `players` (the default), `npcs` or `all` (anyone who hurts it, always).
+- It goes for the nearest of them; one it loses from sight it looks for where they last were, then gives up (`Npcs.NpcBrain`).
+- `tameWith`: the item a player holds to make it their pet with the use key (E): it follows them (catching up when left behind) and defends them. Using a pet again gives its orders: follow or stay, and what it attacks (nothing; who hurts its owner or whom they hit; hostile NPCs too; players too, with PvP). Nobody can hurt their own pets, nor others' without PvP; pets leave with their owner.
 - `attack`: `range` from its side, `cooldown` seconds between attacks, `hitTime` seconds into the attack animation when the hit lands (if the target is still in reach), `knockback` how hard it pushes.
-- `drops`: items (and their `chance`, 0 to 1) whoever kills it gets in their inventory.
+- `drops`: items (and their `chance`, 0 to 1) whoever kills it gets in their inventory (pets drop nothing).
+- Mods' NPCs can have a `script.lua` with their events and orders (see [docs/lua/npcs.md](docs/lua/npcs.md)): `onThink` gets what they perceive and can take over their thinking.
 - `animations`: the model's names for its idle, walk, attack and death animations, if they're named otherwise.
 
 NPCs chase along paths of the navigation grid (`Npcs.Navigation.NavGrid`), on the server: the brick grid's cells (studs sideways, plates up) seen as columns, each with its spans, where there's solid ground with room above. Solid is the terrain's blocks (fluids and replaceable blocks aren't) and the cells bricks fill: their placement, or for bricks with other colliders (a door frame's opening, a door, open or closed) the cells their colliders touch. Tiles are chunks, built around NPCs on worker threads (Burst jobs) and built again when blocks, bricks or doors change there; paths (A* in a job) step up and drop down as far as the NPC can, with room for its whole body (its capsule's width and height), and are straightened. A path is asked for again as the target moves; one that can't get there takes the NPC as close as it can, and if that's no closer it gives up on the target for a while. Something the grid doesn't know of in the way (an NPC, a player) makes it ask for a new path or go sideways for a moment. `/navdebug` draws the floors around NPCs and their paths in the editor's scene view. They only move and think in chunks within 4 chunks of a player (`Npcs.NpcSystem.ActiveRadius`), go away with the chunks the server unloads, and players only get the NPCs of the chunks they have (`Network.ChunkInterestManagement`).

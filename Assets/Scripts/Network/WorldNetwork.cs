@@ -698,9 +698,9 @@ namespace Brickcraft.Network
         private static void removeBricks(Vector2Int chunk) {
             List<Brick> removed = new List<Brick>();
 
-            foreach (Brick brick in Server.bricks.Values) {
+            foreach (Brick brick in BrickGrid.BricksInChunk(chunk)) {
                 if (WorldChanges.ChunkOfBrick(brick.placement.origin) == chunk) {
-                    removed.Add(brick);
+                    removed.Add(brick); // and what's attached to it, with it
                 }
             }
             foreach (Brick brick in removed) {

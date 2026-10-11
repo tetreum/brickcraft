@@ -193,10 +193,15 @@ namespace Brickcraft.Scripting
                 Vector3Int b = LuaVector.Read(args[1], "bricksIn's second corner");
                 Vector3Int min = Vector3Int.Min(a, b), max = Vector3Int.Max(a, b);
                 Table found = new Table(script);
-                foreach (Brick brick in Server.bricks.Values) {
+                foreach (Brick brick in BrickGrid.BricksNear(min, max)) {
                     Vector3Int o = brick.placement.origin;
                     if (o.x >= min.x && o.x <= max.x && o.y >= min.y && o.y <= max.y && o.z >= min.z && o.z <= max.z) {
                         found.Append(DynValue.FromObject(script, BrickHandle.ForBrick(brick, WorldNetwork.ServerPlacerOf(brick))));
+                        // what's attached to it is in its place
+                        Brick attached = Server.attachmentOf(brick);
+                        if (attached != null) {
+                            found.Append(DynValue.FromObject(script, BrickHandle.ForBrick(attached, WorldNetwork.ServerPlacerOf(attached))));
+                        }
                     }
                 }
                 return DynValue.NewTable(found);

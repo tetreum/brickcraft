@@ -351,10 +351,9 @@ namespace Brickcraft.Npcs.Navigation
         private static NativeArray<int4> bricksIn(int2 origin) {
             List<int4> cells = new List<int4>();
             RectInt tile = new RectInt(origin.x, origin.y, TileCells, TileCells);
-            foreach (Brick brick in Server.bricks.Values) {
-                if (brick.attachedTo != null) {
-                    continue; // its colliders are its holder's children, they're done with it
-                }
+            // tiles are chunks: only the bricks in it (attachments' colliders are their holder's children, done with it)
+            Vector2Int chunk = BrickGrid.ChunkOfCell(new Vector3Int(origin.x, 0, origin.y));
+            foreach (Brick brick in BrickGrid.BricksInChunk(chunk)) {
                 byte kind = isFluid(brick.item) ? NavTileBuildJob.FluidCell : NavTileBuildJob.Solid;
                 if (isPlainBox(brick)) {
                     Vector3Int min = brick.placement.origin;

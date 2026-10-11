@@ -12,6 +12,8 @@ namespace Brickcraft
     {
         public static Server Instance;
         public static Dictionary<string, Brick> bricks = new Dictionary<string, Brick>();
+        // what's attached to each brick (by its id), see attachmentOf
+        private static readonly Dictionary<string, Brick> attachments = new Dictionary<string, Brick>();
         // every item has its folder, see ItemDatabase. Ids are slugs, see Slugs
         public static Dictionary<string, Item> items = new Dictionary<string, Item>();
 
@@ -26,6 +28,7 @@ namespace Brickcraft
 
             // static state survives scene changes, start every game clean
             bricks.Clear();
+            attachments.Clear();
             BrickGrid.Clear();
 
             checkBrickModels();
@@ -167,6 +170,8 @@ namespace Brickcraft
             bricks.Add(brick.id, brick);
             if (attachedTo == null) {
                 BrickGrid.Register(brick);
+            } else {
+                attachments[attachedTo] = brick;
             }
 
             brickObj.name = brick.id;
@@ -211,12 +216,7 @@ namespace Brickcraft
 
         /// <summary>What's attached to a brick (in its slot, see BrickSlot), null if nothing is.</summary>
         public static Brick attachmentOf(Brick brick) {
-            foreach (Brick other in bricks.Values) {
-                if (other.attachedTo == brick.id) {
-                    return other;
-                }
-            }
-            return null;
+            return attachments.TryGetValue(brick.id, out Brick attached) ? attached : null;
         }
 
         /// <summary>Removes a brick from this game instance, and what's attached to it.</summary>
@@ -230,6 +230,8 @@ namespace Brickcraft
             }
             if (brick.attachedTo == null) {
                 BrickGrid.Unregister(brick);
+            } else if (attachments.TryGetValue(brick.attachedTo, out Brick inSlot) && inSlot == brick) {
+                attachments.Remove(brick.attachedTo);
             }
             Destroy(brick.gameObject);
         }

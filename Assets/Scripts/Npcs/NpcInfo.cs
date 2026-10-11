@@ -4,7 +4,7 @@ namespace Brickcraft.Npcs
 {
     /// <summary>
     /// Shape of an NPC's info.json (StreamingAssets/NPCs/[npc]/info.json, Mods/[mod]/npcs/[npc]/info.json,
-    /// see NpcDatabase). Every field but name and model is optional. Distances are in meters (a stud is
+    /// see NpcDatabase). Every field but name is optional. Distances are in meters (a stud is
     /// 0.4, a block 0.8 wide and 0.48 high, a player 1.8 tall).
     /// </summary>
     public class NpcInfo
@@ -15,7 +15,10 @@ namespace Brickcraft.Npcs
         public string id;
         /// <summary>What players see (in the chat when it kills them...).</summary>
         public string name;
-        /// <summary>Its model: Assets/Resources/NpcModels/[model].prefab (see NpcModel).</summary>
+        /// <summary>
+        /// Its model, when its folder has no model.glb or model.gltf: a prefab of its mod's AssetBundles or
+        /// Assets/Resources/NpcModels/[model].prefab (see NpcDatabase, NpcModel).
+        /// </summary>
         public string model;
         /// <summary>The model's size.</summary>
         public float scale = 1;

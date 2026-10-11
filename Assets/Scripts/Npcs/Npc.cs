@@ -69,7 +69,6 @@ namespace Brickcraft.Npcs
 
         private CapsuleCollider body;
         private NpcModel model;
-        private Animator animator;
 
         // server: its order
         private NpcOrderKind order;
@@ -176,7 +175,6 @@ namespace Brickcraft.Npcs
                 Destroy(collider);
             }
             model = instance.GetComponent<NpcModel>();
-            animator = instance.GetComponent<Animator>();
 
             Bounds hitbox = model.hitbox;
             body.center = hitbox.center * Info.scale;
@@ -775,14 +773,14 @@ namespace Brickcraft.Npcs
 
         // loops (idle, walk) play until told otherwise; the others once, then the loop again (death stays)
         private void play(string animation) {
-            if (animator == null) {
+            if (model == null) {
                 return;
             }
             string state = NpcDatabase.AnimationOf(Info, animation);
-            if (System.Array.IndexOf(model.animations, state) < 0) {
+            if (!model.Has(state)) {
                 return;
             }
-            animator.CrossFadeInFixedTime(state, 0.1f, 0, 0);
+            model.Play(state, 0.1f);
             bool isLoop = animation == Idle || animation == Walk;
             oneShotUntil = isLoop ? -1 : animation == Death ? float.MaxValue : Time.time + model.DurationOf(state);
         }

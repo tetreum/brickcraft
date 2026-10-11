@@ -1,10 +1,11 @@
 # NPCs
 
-Mods can add creatures: a folder in `npcs/` with an `info.json` (what it is, see the NPC section of the [readme](../../readme.md#how-can-i-add-an-npc)) and, optionally, a `script.lua` with its events. Without a script it does what its `behaviour` says; with one, the script hears what happens to it and can take over its thinking.
+Mods can add creatures: a folder in `npcs/` with an `info.json` (what it is, see the NPC section of the [readme](../../readme.md#how-can-i-add-an-npc)), its model (a `model.glb` or `model.gltf`, like Blockbench exports) and, optionally, a `script.lua` with its events. Without a script it does what its `behaviour` says; with one, the script hears what happens to it and can take over its thinking.
 
 ```
 Mods/my_mod/
   npcs/wolf/info.json     the wolf (its id is "my_mod:wolf")
+  npcs/wolf/model.glb     its model, with its animations (idle, walk, attack, death)
   npcs/wolf/script.lua    its events
 ```
 

@@ -51,13 +51,13 @@ namespace Brickcraft
         [HideInInspector]
         RaycastHit latestHit;
 
-        [HideInInspector]
-        public bool isOnWater = false;
+        /// <summary>In water to the waist or more: it swims (see FirstPersonController).</summary>
+        public bool isOnWater {
+            get { return firstPersonController != null && firstPersonController.IsSwimming; }
+        }
 
         [HideInInspector]
         public FirstPersonController firstPersonController;
-        [HideInInspector]
-        public TriggerDetector triggerDetector;
 
         private float rayLength = 5f;
         private bool hasHit;
@@ -100,6 +100,8 @@ namespace Brickcraft
         private Vector3Int? diggedBlock;
         private float digTime;
         private float digHardness;
+        // what digging it sounds like (see BlockDefinition.digSound)
+        private string digSound = SoundManager.EFFECT_DIG;
 
         private float _duration = 0.5f;
         private float _timer = 0f;
@@ -130,7 +132,6 @@ namespace Brickcraft
 
         private void Awake() {
             firstPersonController = GetComponent<FirstPersonController>();
-            triggerDetector = GetComponentInChildren<TriggerDetector>();
             network = GetComponent<PlayerNetwork>();
             inventory = GetComponent<PlayerInventory>();
             health = GetComponent<Health>();
@@ -179,7 +180,7 @@ namespace Brickcraft
                 stopDigging();
                 clickedDoor = null;
                 wasDigHeld = false;
-                drawStart = -1;
+                cancelDraw();
             } else {
                 // with a ranged weapon (and its ammo) the dig button draws it instead
                 bool isDrawing = updateDrawing();
@@ -357,17 +358,19 @@ namespace Brickcraft
             Item weapon = SelectedItem != null ? SelectedItem.item : null;
             if (weapon == null || !weapon.IsRanged || isBlocking
                     || Brickcraft.Inventory.Count(inventory.items, weapon.ammo, Brickcraft.Inventory.AnyColor, 0) == 0) {
-                drawStart = -1;
+                cancelDraw();
                 return false;
             }
             if (drawStart < 0) {
                 if (GameInput.GetButtonDown(GameInput.Dig) && Time.time >= nextAttack) {
                     drawStart = Time.time;
                     network.CmdDraw();
+                    SoundManager.Instance.startHeld(SoundManager.EFFECT_STRING_BOW);
                 }
             } else if (!GameInput.GetButton(GameInput.Dig)) {
                 float power = DrawPower;
-                drawStart = -1;
+                cancelDraw();
+                SoundManager.Instance.playOnce(SoundManager.EFFECT_SHOOT_BOW);
                 nextAttack = Time.time + 1 / weapon.attackSpeed;
                 if (network.heldItems != null) {
                     network.heldItems.Swing();
@@ -375,6 +378,14 @@ namespace Brickcraft
                 network.CmdShoot(SelectedSlot, Camera.main.transform.forward, power);
             }
             return true;
+        }
+
+        // no longer drawing (shot, or stopped): the string stops creaking
+        void cancelDraw () {
+            if (drawStart >= 0) {
+                drawStart = -1;
+                SoundManager.Instance.stopHeld();
+            }
         }
 
         // a hit with what's in hand (see Item's attack stats) at what's looked at. Weapons swing even at nothing.
@@ -390,6 +401,10 @@ namespace Brickcraft
             nextAttack = Time.time + 1 / (weapon != null ? weapon.attackSpeed : Item.HandAttackSpeed);
             if (network.heldItems != null && weapon != null && weapon.type == Item.Type.Weapon) {
                 network.heldItems.Swing();
+            }
+            // a weapon swishes at anything, a hand only punches something
+            if (weapon != null && weapon.type == Item.Type.Weapon || target != null) {
+                SoundManager.Instance.playOnce(SoundManager.HitSound(weapon));
             }
             if (target != null) {
                 network.CmdAttack(target.netIdentity, SelectedSlot);
@@ -435,7 +450,7 @@ namespace Brickcraft
             _timer += Time.deltaTime;
             if (_timer >= _duration) {
                 _timer = 0f;
-                SoundManager.Instance.play(SoundManager.EFFECT_DIG);
+                SoundManager.Instance.play(digSound);
             }
         }
 
@@ -445,6 +460,9 @@ namespace Brickcraft
             if (lookedBrick != null) {
                 digHardness = lookedBrick.model.hardness;
                 diggedBrick = lookedBrick;
+                // bricks that are also a block (2x2s) sound like it
+                Item item = lookedBrick.item;
+                digSound = item != null && item.blockType.HasValue ? BlockDatabase.Get(item.blockType.Value).digSound : SoundManager.EFFECT_DIG;
             } else {
                 BlockDefinition block = BlockDatabase.Get(WorldBehaviour.Instance.GetBlockType(lookedBlock.Value));
 
@@ -453,6 +471,7 @@ namespace Brickcraft
                 }
                 digHardness = block.hardness;
                 diggedBlock = lookedBlock;
+                digSound = block.digSound;
             }
 
             isDigging = true;

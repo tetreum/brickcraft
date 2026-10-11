@@ -202,9 +202,11 @@ namespace Brickcraft.Network
             }
             if (victim != null) {
                 // what it didn't hurt (a raised shield...) it bounces off, falling to the ground
+                Vector3 at = from + direction * victimDistance;
                 if (!serverHurt(victim, direction)) {
                     DroppedItems.ServerDrop(itemId, color, 1, 0, from + direction * Mathf.Max(0, victimDistance - 0.3f), -direction * 2);
                 }
+                serverImpact(at);
                 NetworkServer.Destroy(gameObject);
                 return true;
             }
@@ -313,7 +315,20 @@ namespace Brickcraft.Network
         }
 
         // into the world: it stays there, pointing the way it flew, its tip a bit in
+        // everybody hears it hit there
+        private void serverImpact(Vector3 point) {
+            FloatingOrigin.ToAbsolute(point, out double x, out double y, out double z);
+            RpcImpact(x, y, z);
+        }
+
+        // an absolute position: every peer has its own floating origin
+        [ClientRpc]
+        private void RpcImpact(double x, double y, double z) {
+            SoundManager.Instance.playAt(SoundManager.EFFECT_BOW_IMPACT, FloatingOrigin.ToLocal(x, y, z));
+        }
+
         private void serverStick(Vector3 point, Vector3 direction) {
+            serverImpact(point);
             Vector3 at = point - direction * (ModelLength / 2 - StickDepth);
             FloatingOrigin.ToAbsolute(at, out double x, out double y, out double z);
             stuckX = x;

@@ -41,6 +41,21 @@ namespace Brickcraft.Network
         [SyncVar(hook = nameof(onHeldChanged))] public string offhandItem = "";
         [SyncVar] public bool blocking;
 
+        /// <summary>
+        /// Air left, in tenths of a second (see MaxAir): with its eyes under water it runs out, and then it drowns
+        /// (DrownDamage every DrownInterval); out of the water it comes back. Its owner sees it (EventManager.LocalPlayerAirChanged).
+        /// </summary>
+        [SyncVar(hook = nameof(onAirChanged))] public int air = MaxAir * 10;
+        /// <summary>Seconds of air under water before drowning.</summary>
+        public const int MaxAir = 15;
+        // how fast air comes back out of the water (seconds of air a second), and drowning's damage and pace
+        private const float AirRefill = 5;
+        private const int DrownDamage = 2;
+        private const double DrownInterval = 1;
+        // server: the air left (air is it rounded), and when drowning hurts next
+        private float airLeft = MaxAir;
+        private double nextDrown;
+
         // server: the slot whose item is in its hand, see CmdSelectSlot
         private int selectedSlot = Inventory.FirstFastSlot;
         // hits from within this angle of where it looks are blocked by its shield (90: anything in front)
@@ -91,6 +106,9 @@ namespace Brickcraft.Network
         // a hit it takes: blocked by its shield (which wears), or eased by what it wears
         [Server]
         private int reduceDamage(DamageInfo damage) {
+            if (damage.kind == DamageInfo.Kind.Drowning) {
+                return damage.amount;
+            }
             if (blocking && damage.kind != DamageInfo.Kind.Script && comesFromFront(damage)) {
                 inventory.ServerWear(Inventory.EquipmentSlot(Item.ArmorSlot.Offhand));
                 return 0;
@@ -155,7 +173,8 @@ namespace Brickcraft.Network
         [Server]
         private void onServerDied(DamageInfo damage) {
             blocking = false;
-            ChatEvents.Send(new ChatEventMessage() { type = ChatEventType.Died, player = playerName, by = damage.attackerName });
+            ChatEventType type = damage.kind == DamageInfo.Kind.Drowning ? ChatEventType.Drowned : ChatEventType.Died;
+            ChatEvents.Send(new ChatEventMessage() { type = type, player = playerName, by = damage.attackerName });
             ModScripts.ModEvent("onPlayerDied", PlayerHandle.For(connectionToClient), attackerHandle(damage));
         }
 
@@ -172,6 +191,54 @@ namespace Brickcraft.Network
             if (isServer && connectionToClient != null && Time.unscaledTime >= nextPingUpdate) {
                 nextPingUpdate = Time.unscaledTime + PingUpdateInterval;
                 pingMs = (int)(connectionToClient.rtt * 1000);
+            }
+            if (isServer) {
+                serverBreathe();
+            }
+        }
+
+        // with its eyes under water its air runs out, then it drowns; out of it, air comes back
+        [Server]
+        private void serverBreathe() {
+            bool under = !health.isDead && World.Water.IsAt(transform.position + Vector3.up * EyeHeight);
+            airLeft = under ? Mathf.Max(0, airLeft - Time.deltaTime) : Mathf.Min(MaxAir, airLeft + AirRefill * Time.deltaTime);
+            int shown = Mathf.CeilToInt(airLeft * 10);
+            if (shown != air) {
+                air = shown;
+            }
+            if (!under || airLeft > 0) {
+                nextDrown = NetworkTime.time + DrownInterval;
+                return;
+            }
+            if (NetworkTime.time >= nextDrown) {
+                nextDrown = NetworkTime.time + DrownInterval;
+                if (health.ServerDamage(new DamageInfo() { amount = DrownDamage, kind = DamageInfo.Kind.Drowning })) {
+                    RpcDrowning();
+                }
+            }
+        }
+
+        // everybody hears it drown (itself over everything, the others from where it is), a clip at a time
+        [ClientRpc]
+        private void RpcDrowning() {
+            if (Time.time < nextDrowningSound) {
+                return;
+            }
+            nextDrowningSound = Time.time + DrowningSoundInterval;
+            if (isLocalPlayer) {
+                SoundManager.Instance.playOnce(SoundManager.EFFECT_DROWNING);
+            } else {
+                SoundManager.Instance.playAt(SoundManager.EFFECT_DROWNING, transform.position);
+            }
+        }
+
+        // client: when its drowning can be heard again (its clip lasts about this)
+        private float nextDrowningSound;
+        private const float DrowningSoundInterval = 3.2f;
+
+        private void onAirChanged(int oldAir, int newAir) {
+            if (isLocalPlayer) {
+                EventManager.LocalPlayerAirChanged.Raise(new LocalPlayerAirChangedEvent() { air = newAir / 10f, maxAir = MaxAir });
             }
         }
 
@@ -225,10 +292,6 @@ namespace Brickcraft.Network
             }
             foreach (AudioListener listener in GetComponentsInChildren<AudioListener>(true)) {
                 listener.enabled = false;
-            }
-            // only the local player swims
-            foreach (TriggerDetector detector in GetComponentsInChildren<TriggerDetector>(true)) {
-                detector.gameObject.SetActive(false);
             }
 
             // the animated body, the local player doesn't see its own
@@ -318,6 +381,13 @@ namespace Brickcraft.Network
         [Command]
         public void CmdDraw() {
             drawStartedAt = NetworkTime.time;
+            RpcDraw();
+        }
+
+        // the others hear it draw (its own client already does)
+        [ClientRpc(includeOwner = false)]
+        private void RpcDraw() {
+            SoundManager.Instance.playAt(SoundManager.EFFECT_STRING_BOW, transform.position);
         }
 
         /// <summary>
@@ -372,12 +442,14 @@ namespace Brickcraft.Network
             return target != null && (target.GetComponent<PlayerNetwork>() == null || WorldNetwork.Pvp) && canHitPet(target);
         }
 
-        // the others see it swing (its own client already did)
+        // the others see it swing and hear it (its own client already did)
         [ClientRpc(includeOwner = false)]
         private void RpcSwing() {
             if (heldItems != null) {
                 heldItems.Swing();
             }
+            Server.items.TryGetValue(heldItem ?? "", out Item held);
+            SoundManager.Instance.playAt(SoundManager.HitSound(held), transform.position);
         }
 
         /// <summary>The hotbar slot whose item is in its hand (what the others see it hold), -1 for none.</summary>
@@ -456,7 +528,7 @@ namespace Brickcraft.Network
             EventManager.PetMenuRequested.Raise(new PetMenuRequestedEvent() { npcId = npcId, name = name, following = following, attacks = attacks });
         }
 
-        /// <summary>A dead player comes back at the spawn, with all its health (and its inventory).</summary>
+        /// <summary>A dead player comes back at the spawn, with all its health and air (and its inventory).</summary>
         [Command]
         public void CmdRespawn() {
             if (!health.isDead) {
@@ -464,6 +536,7 @@ namespace Brickcraft.Network
             }
             ServerTeleport(BrickcraftNetworkManager.Instance.ServerSpawnPosition(out _));
             health.ServerRevive();
+            airLeft = MaxAir;
         }
 
         /// <summary>Places the brick held in the inventory slot.</summary>

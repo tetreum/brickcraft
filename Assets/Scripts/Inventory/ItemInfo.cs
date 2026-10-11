@@ -79,6 +79,8 @@ namespace Brickcraft
         public bool fluid = false;
         /// <summary>Id of the item given when dug, the item itself if empty.</summary>
         public string drop;
+        /// <summary>The sound effect played while it's dug (Resources/Sound/Effects), like "PickaxeDig"; "Dig" if empty.</summary>
+        public string digSound;
     }
 
     public class RecipeInfo

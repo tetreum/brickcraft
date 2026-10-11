@@ -41,6 +41,9 @@ namespace Brickcraft.World
         /// <summary>A liquid (water, lava): NPCs that walk keep out of it.</summary>
         public bool isFluid;
 
+        /// <summary>The sound effect played while it's dug (see SoundManager).</summary>
+        public string digSound = SoundManager.EFFECT_DIG;
+
         /// <summary>Item given when dug (its slug, see Slugs), null for none.</summary>
         public string dropItemId;
 

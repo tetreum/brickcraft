@@ -16,6 +16,8 @@ namespace Brickcraft.Combat
             Script = 2,
             /// <summary>A shot: a player's bow.</summary>
             Ranged = 3,
+            /// <summary>Out of air under water (armor and shields don't help).</summary>
+            Drowning = 4,
         }
 
         public int amount;

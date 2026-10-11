@@ -220,9 +220,10 @@ Items/marble/
   - `hardness`: seconds to dig it with bare hands. `breakable: false` makes it undiggable.
   - `replaceable`: bricks can be placed inside it (like water).
   - `transparent`: sky light goes through it (like leaves or water).
-  - `fluid`: a liquid (like water and lava): NPCs that walk keep out of it.
+  - `fluid`: a liquid (like water and lava): it doesn't collide, players go in and swim (they sink unless jump is held, at the surface too; they move along where they look once their eyes are under, and climb out at an edge with jump; wading slows them) and drown with their eyes under it (15 seconds of air, shown above the hotbar, then 2 health a second; armor doesn't help), items on the ground float up to its surface, and NPCs that walk keep out of it.
   - `translucent`: drawn see-through (like water), with the terrain's translucent material (`Resources/Materials/Block_Translucent`, 60% opaque, its shader is `Resources/Shader/TerrainTranslucent`). What's behind it is drawn too, and its own sides only where they touch air.
   - `drop`: id of the item given when dug, like `"stone"`. The item itself if missing.
+  - `digSound`: the sound effect played while it's dug, a file of `Resources/Sound/Effects` without its extension (`"PickaxeDig"` for stone and ores, `"HitTree"` for wood). `"Dig"` if missing.
 - `tags`: what it is to the game besides its type, like `["bed"]`: NPCs sleep in placed bricks of items tagged `bed` (see How can i add an NPC?), players sleep in them, and bricks of items tagged `storage` keep items (see Storage).
 - `storageSlots`: items tagged `storage`: how many slots a placed one has, 1 to 54, 27 by default (the storage panel scrolls past 27). Lowering it, what a placed one kept past its slots falls out the next time it's opened.
 - `recipes`: ways to craft the item. Each makes `quantity` of it (1 by default) from its `ingredients`, each one an item `id`, a `quantity` (1 by default) and a crafting `slot`, 1 to 4 (left to right, top to bottom). Recipes are identified as `<item>#<number>`, like `dirt_2x4#1`.

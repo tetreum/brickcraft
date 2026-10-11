@@ -5,7 +5,7 @@ namespace Brickcraft.Network
 {
     /// <summary>
     /// A stack of items lying on the ground (see DroppedItems): the item's model, small, turning and bobbing.
-    /// The server makes it fall onto what's under it, merges it with drops of the same item next to it, gives
+    /// The server makes it fall onto what's under it (or float up to the surface of water), merges it with drops of the same item next to it, gives
     /// it to players who walk onto it (as much as fits, the rest stays) and takes it away after a while.
     /// Players get the drops of the chunks they have (see ChunkInterestManagement).
     /// </summary>
@@ -24,6 +24,9 @@ namespace Brickcraft.Network
         private const float BobHeight = 0.05f;
         private const float Gravity = 15;
         private const float FallLimit = -200;
+        // in water it rises this fast to float this far under the surface (see World.Water)
+        private const float FloatSpeed = 1.5f;
+        private const float FloatDepth = 0.1f;
         // what it lands on: not water, nor players (Ignore Raycast)
         private const int SolidLayers = Physics.DefaultRaycastLayers & ~(1 << (int)Game.Layers.Water);
 
@@ -99,12 +102,23 @@ namespace Brickcraft.Network
             }
         }
 
-        // falling (and sliding out where it was thrown) until something holds it up
+        // falling (and sliding out where it was thrown) until something holds it up, or floating up in water
         private void serverUpdate() {
             if (isResting) {
                 return;
             }
             float delta = Time.deltaTime;
+            Vector3 here = transform.position;
+            if (World.Water.IsAt(here + Vector3.up * FloatDepth)) {
+                Velocity = Vector3.zero;
+                transform.position = here + Vector3.up * FloatSpeed * delta;
+                return;
+            }
+            if (World.Water.IsAt(here)) {
+                Velocity = Vector3.zero;
+                isResting = true; // floating at the surface
+                return;
+            }
             Vector3 velocity = Velocity;
             velocity.y -= Gravity * delta;
             Vector3 step = velocity * delta;

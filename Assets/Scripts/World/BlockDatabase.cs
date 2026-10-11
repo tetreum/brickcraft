@@ -181,6 +181,7 @@ namespace Brickcraft.World
                 isTransparent = info.transparent,
                 isTranslucent = info.translucent,
                 isFluid = info.fluid,
+                digSound = string.IsNullOrEmpty(info.digSound) ? SoundManager.EFFECT_DIG : info.digSound,
                 itemId = name,
                 dropItemId = string.IsNullOrEmpty(info.drop) ? name : info.drop,
             };

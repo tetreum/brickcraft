@@ -30,6 +30,30 @@ namespace Brickcraft
         [SerializeField] private float m_StepHeight = 0.5f;
         // how fast the camera catches up after stepping up, meters per second
         [SerializeField] private float m_StepSmoothing = 3f;
+        // in water (see World.Water): swimming speed, going up (jump held), sinking (fully under, doing nothing),
+        // how fast it gets to those speeds, how fast it climbs out at an edge, and walking with water to the knees
+        [SerializeField] private float m_SwimSpeed = 2.2f;
+        [SerializeField] private float m_SwimUpSpeed = 2.5f;
+        [SerializeField] private float m_SinkSpeed = 0.6f;
+        [SerializeField] private float m_SwimAcceleration = 8f;
+        [SerializeField] private float m_ClimbOutSpeed = 5f;
+        [SerializeField] private float m_WadingSpeedFactor = 0.7f;
+
+        /// <summary>How deep in water it is: not, to the knees (it wades), to the waist (it swims), or with its eyes under.</summary>
+        public enum WaterDepth
+        {
+            None = 0,
+            Feet = 1,
+            Body = 2,
+            Eyes = 3,
+        }
+
+        public WaterDepth Depth { get; private set; }
+
+        /// <summary>In water to the waist or more: it swims.</summary>
+        public bool IsSwimming {
+            get { return Depth >= WaterDepth.Body; }
+        }
         private float originalWalkSpeed;
         private float originalRunSpeed;
 
@@ -47,9 +71,6 @@ namespace Brickcraft
         private bool m_Jumping;
         private AudioSource m_AudioSource;
         private float m_BaseVolume;
-        private float originalGravityMultiplier;
-        private float originalStickToGroundForce;
-        private float originalJumpSpeed;
 
         // a push from a hit, fading out, and how fast it throws the player up (applied once, like a jump)
         private Vector3 m_Knockback;
@@ -62,9 +83,6 @@ namespace Brickcraft
         private void Awake() {
             originalWalkSpeed = m_WalkSpeed;
             originalRunSpeed = m_RunSpeed;
-            originalGravityMultiplier = m_GravityMultiplier;
-            originalStickToGroundForce = m_StickToGroundForce;
-            originalJumpSpeed = m_JumpSpeed;
         }
 
         private void Start()
@@ -108,25 +126,11 @@ namespace Brickcraft
         {
             RotateView();
             // the jump state needs to read here to make sure it is not missed
-            if (!m_Jump)
+            if (!m_Jump && !IsSwimming)
             {
-                if (Player.Instance.isOnWater) {
-                    m_Jump = GameInput.GetButton(GameInput.Jump) || GameInput.GetButtonDown(GameInput.Jump);
-                } else {
-                    m_Jump = GameInput.GetButtonDown(GameInput.Jump);
-                }
+                m_Jump = GameInput.GetButtonDown(GameInput.Jump);
             }
-
-            if (Player.Instance.isOnWater) {
-                if (m_Jump) {
-                    m_GravityMultiplier = 0;
-                    m_StickToGroundForce = 0.8f;
-                    m_JumpSpeed = 1;
-                } else {
-                    m_GravityMultiplier = 0.1f;
-                    m_StickToGroundForce = 0.2f;
-                }
-            }
+            UnderwaterView.Show(Depth == WaterDepth.Eyes);
 
             if (!m_PreviouslyGrounded && m_CharacterController.isGrounded)
             {
@@ -143,17 +147,75 @@ namespace Brickcraft
             m_PreviouslyGrounded = m_CharacterController.isGrounded;
         }
 
+        // how deep in water it is: its feet, its middle and its eyes (the camera)
+        private void updateDepth()
+        {
+            WaterDepth before = Depth;
+            Vector3 middle = transform.TransformPoint(m_CharacterController.center);
+            if (World.Water.IsAt(m_Camera.transform.position))
+                Depth = WaterDepth.Eyes;
+            else if (World.Water.IsAt(middle))
+                Depth = WaterDepth.Body;
+            else if (World.Water.IsAt(middle + Vector3.down * (m_CharacterController.height / 2 - 0.15f)))
+                Depth = WaterDepth.Feet;
+            else
+                Depth = WaterDepth.None;
+
+            if (Depth >= WaterDepth.Body && before < WaterDepth.Body)
+            {
+                SoundManager.Instance.play(SoundManager.EFFECT_ENTER_WATER);
+                m_Jump = false;
+                m_Jumping = false;
+            }
+            if (Depth == WaterDepth.Eyes && before != WaterDepth.Eyes)
+            {
+                SoundManager.Instance.playOnce(SoundManager.EFFECT_SUBMERGE);
+            }
+        }
+
+        // in water: it moves where it looks once its eyes are under (along the ground otherwise), goes up while jump
+        // is held and sinks slowly otherwise (at the surface too); at an edge, jump climbs out
+        private void swim()
+        {
+            Vector3 forward = Depth == WaterDepth.Eyes ? m_Camera.transform.forward : transform.forward;
+            Vector3 move = forward*m_Input.y + transform.right*m_Input.x;
+            if (move.sqrMagnitude > 1)
+                move.Normalize();
+            Vector3 target = move*m_SwimSpeed;
+
+            bool up = GameInput.GetButton(GameInput.Jump);
+            if (up && Depth != WaterDepth.Eyes && (m_CollisionFlags & CollisionFlags.Sides) != 0)
+                target.y = m_ClimbOutSpeed; // out over the edge
+            else if (up)
+                target.y = m_SwimUpSpeed; // at the surface it bobs: up out of the water, and back in
+            else
+                target.y -= m_SinkSpeed;
+
+            m_MoveDir = Vector3.MoveTowards(m_MoveDir, target, m_SwimAcceleration*Time.fixedDeltaTime);
+            if (m_KnockbackUp > 0)
+            {
+                m_MoveDir.y = m_KnockbackUp;
+                m_KnockbackUp = 0;
+            }
+            m_Jump = false;
+            m_Jumping = false;
+            m_CollisionFlags = m_CharacterController.Move((m_MoveDir + m_Knockback)*Time.fixedDeltaTime);
+            m_Knockback = Vector3.MoveTowards(m_Knockback, Vector3.zero, KnockbackDrag*Time.fixedDeltaTime);
+            m_StepCameraOffset = Mathf.MoveTowards(m_StepCameraOffset, 0, m_StepSmoothing*Time.fixedDeltaTime);
+            UpdateCameraPosition(0);
+            m_PreviouslyGrounded = m_CharacterController.isGrounded;
+        }
+
+        private void OnDisable()
+        {
+            UnderwaterView.Show(false);
+        }
+
         /// <summary>Pushes the player (a hit): horizontally for a moment, and up like a small jump.</summary>
         public void Knockback(Vector3 velocity)
         {
             m_Knockback = new Vector3(velocity.x, 0, velocity.z);
             m_KnockbackUp = Mathf.Max(0, velocity.y);
-        }
-
-        public void resetGravity () {
-            m_GravityMultiplier = originalGravityMultiplier;
-            m_StickToGroundForce = originalStickToGroundForce;
-            m_JumpSpeed = originalJumpSpeed;
         }
 
         public bool setOverWeightSpeed (bool isOverWeight) {
@@ -184,6 +246,16 @@ namespace Brickcraft
         {
             float speed;
             GetInput(out speed);
+            updateDepth();
+            if (IsSwimming)
+            {
+                swim();
+                return;
+            }
+            if (Depth == WaterDepth.Feet)
+            {
+                speed *= m_WadingSpeedFactor;
+            }
             // always move along the camera forward as it is the direction that it being aimed at
             Vector3 desiredMove = transform.forward*m_Input.y + transform.right*m_Input.x;
 
@@ -218,12 +290,6 @@ namespace Brickcraft
             else
             {
                 m_MoveDir += Physics.gravity*m_GravityMultiplier*Time.fixedDeltaTime;
-
-                if (m_Jump && Player.Instance.isOnWater && Player.Instance.triggerDetector.waterBlocks.Count > 1) {
-                    m_MoveDir.y = m_JumpSpeed;
-                    m_Jump = false;
-                    m_Jumping = true;
-                }
             }
             bool wasGrounded = m_CharacterController.isGrounded;
             float heightBefore = transform.position.y;

@@ -129,6 +129,9 @@ namespace Brickcraft.World
 							if (translucent)
 								translucentTriangleCount += faceMap.triangles.Length;
 
+							// liquids are drawn but don't collide: things go into them (see Water)
+							if (definition.isFluid)
+								continue;
 							FaceMap colliderFaceMap = definition.colliderShape.GetSide((BlockSide)side);
 							colliderVertexCount += colliderFaceMap.vertices.Length;
 							colliderTriangleCount += colliderFaceMap.triangles.Length;
@@ -231,7 +234,10 @@ namespace Brickcraft.World
 				triangles[triangle] = sideTriangles[i] + firstVertex;
 			}
 
-			// the collider is usually way simpler than the rendered mesh, as it hasn't the studs
+			// the collider is usually way simpler than the rendered mesh, as it hasn't the studs; liquids have none
+			if (visible.definition.isFluid) {
+				return;
+			}
 			FaceMap colliderFaceMap = visible.definition.colliderShape.GetSide(visible.side);
 			Vector3[] colliderSideVertices = colliderFaceMap.vertices;
 			int[] colliderSideTriangles = colliderFaceMap.triangles;

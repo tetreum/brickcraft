@@ -48,6 +48,9 @@ namespace Brickcraft.Events
         /// <summary>The local player's health or maximum health changed (and when it's first known).</summary>
         public static readonly GameEvent<LocalPlayerHealthChangedEvent> LocalPlayerHealthChanged = new GameEvent<LocalPlayerHealthChangedEvent>();
 
+        /// <summary>The local player's air under water changed (it's full again out of the water).</summary>
+        public static readonly GameEvent<LocalPlayerAirChangedEvent> LocalPlayerAirChanged = new GameEvent<LocalPlayerAirChangedEvent>();
+
         /// <summary>The local player died: it can't play until it respawns.</summary>
         public static readonly GameEvent<LocalPlayerDiedEvent> LocalPlayerDied = new GameEvent<LocalPlayerDiedEvent>();
 
@@ -71,6 +74,7 @@ namespace Brickcraft.Events
             SettingChanged.Clear();
             ModUi.Clear();
             LocalPlayerHealthChanged.Clear();
+            LocalPlayerAirChanged.Clear();
             LocalPlayerDied.Clear();
             LocalPlayerRespawned.Clear();
             PetMenuRequested.Clear();

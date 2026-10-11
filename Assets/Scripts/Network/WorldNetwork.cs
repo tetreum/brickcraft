@@ -100,6 +100,7 @@ namespace Brickcraft.Network
             WorldTime.DayLength = storage != null ? storage.DayLength : WorldTime.DefaultDayLength;
             WorldTime.IsPaused = false;
             nextTimeBroadcast = 0;
+            PlayerSleep.Start();
             Npcs.NpcSystem.StartServer();
         }
 
@@ -109,6 +110,7 @@ namespace Brickcraft.Network
         }
 
         public static void StopServer() {
+            PlayerSleep.Stop();
             Npcs.NpcSystem.StopServer();
             SaveTime();
             if (WorldBehaviour.Instance != null) {
@@ -333,6 +335,7 @@ namespace Brickcraft.Network
         public static void ServerUpdate() {
             WorldBehaviour world = WorldBehaviour.Instance;
             updateTime();
+            PlayerSleep.Update();
 
             if (world == null || !world.Seed.HasValue || Time.unscaledTime < nextServerUpdate) {
                 return;
@@ -466,6 +469,7 @@ namespace Brickcraft.Network
             if (!(conn is LocalConnectionToClient)) {
                 conn.Send(timeMessage());
             }
+            PlayerSleep.SendStatus(conn);
             conn.Send(new WorldInfoMessage() {
                 seed = Seed,
                 difficulty = (byte)Difficulty,
@@ -535,6 +539,8 @@ namespace Brickcraft.Network
             NetworkClient.RegisterHandler<BrickRemovedMessage>(onBrickRemoved);
             NetworkClient.RegisterHandler<BrickStateMessage>(onBrickState);
             NetworkClient.RegisterHandler<TimeMessage>(onTime);
+            NetworkClient.RegisterHandler<SleepStatusMessage>(message => SleepStatus = message);
+            SleepStatus = default(SleepStatusMessage);
             Events.EventManager.SettingChanged.Subscribe(onSettingChanged);
         }
 
@@ -548,6 +554,9 @@ namespace Brickcraft.Network
                 WorldBehaviour.Instance.ChunkUnloaded -= onClientChunkUnloaded;
             }
         }
+
+        /// <summary>How many players sleep on the server we're on (see PlayerSleep).</summary>
+        public static SleepStatusMessage SleepStatus { get; private set; }
 
         /// <summary>The furthest the server sends us the world, in chunks (0 until we're in one).</summary>
         public static int ServerMaxViewDistance { get; private set; }

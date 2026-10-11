@@ -49,7 +49,8 @@ public class Menu : MonoBehaviour {
 		if (Player.Instance == null || GameInput.IsTyping || SettingsPanel.IsOpen || SettingsPanel.WasClosedThisFrame) {
 			return;
 		}
-		if (GameInput.GetButtonDown(GameInput.Inventory)) {
+		// sleeping, the inventory stays closed (the chat and the player list work)
+		if (GameInput.GetButtonDown(GameInput.Inventory) && !Player.Instance.IsSleeping) {
 			togglePanel("InventoryPanel");
 		}
 		if (GameInput.GetButtonDown(GameInput.Menu)) {

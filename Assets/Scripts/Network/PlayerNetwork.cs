@@ -30,6 +30,8 @@ namespace Brickcraft.Network
 
         // shown in the player list; changes raise EventManager.PlayerRoleChanged
         [SyncVar(hook = nameof(onRoleChanged))] public string role;
+        /// <summary>The bed it sleeps in (a brick id), empty when awake, see PlayerSleep.</summary>
+        [SyncVar(hook = nameof(onSleepingChanged))] public string sleepingIn = "";
         [SyncVar] public int pingMs;
 
         private const float PingUpdateInterval = 2f;
@@ -373,6 +375,69 @@ namespace Brickcraft.Network
                 inventory.ServerAdd(removed.itemId, removed.color, 1);
             }
             ModScripts.ItemEvent(brick.itemId, "onBroken", handle, player);
+        }
+
+        /// <summary>A click on a bed: sleeps in it (see PlayerSleep), or hears why not.</summary>
+        [Command]
+        public void CmdSleep(string brickId) {
+            if (health.isDead || !string.IsNullOrEmpty(sleepingIn) || !Server.bricks.TryGetValue(brickId, out Brick bed)
+                    || !isInReach(bed.placement.WorldBounds.center)) {
+                return;
+            }
+            string problem = PlayerSleep.WhyNot(this, bed);
+            if (problem != null) {
+                connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = problem });
+                return;
+            }
+            PlayerSleep.Sleep(this, bed);
+        }
+
+        [Command]
+        public void CmdStopSleeping() {
+            PlayerSleep.Wake(this);
+        }
+
+        /// <summary>Puts the player lying in a bed: feet on the point, head the other way from where it faces.</summary>
+        [Server]
+        public void ServerLieDown(Vector3 feet, Quaternion rotation) {
+            // the player's position is the middle of its body, lying it's above the mattress halfway to its head
+            Vector3 middle = feet - rotation * Vector3.forward * 0.9f + Vector3.up * 0.15f;
+            FloatingOrigin.ToAbsolute(middle, out double x, out double y, out double z);
+            TargetLieDown(x, y, z, rotation.eulerAngles.y);
+        }
+
+        [TargetRpc]
+        private void TargetLieDown(double x, double y, double z, float yaw) {
+            transform.SetPositionAndRotation(FloatingOrigin.ToLocal(x, y, z), Quaternion.Euler(0, yaw, 0));
+            Physics.SyncTransforms();
+            showSleeping();
+        }
+
+        // the local player sleeping can't move and looks up (behind the sleep panel); others see it lying
+        private void onSleepingChanged(string oldBed, string newBed) {
+            showSleeping();
+        }
+
+        private void showSleeping() {
+            bool asleep = !string.IsNullOrEmpty(sleepingIn);
+            if (isLocalPlayer) {
+                Player player = GetComponent<Player>();
+                if (asleep) {
+                    player.freeze(Player.FreezeReason.Sleeping);
+                    Camera view = GetComponentInChildren<Camera>();
+                    if (view != null) {
+                        view.transform.localRotation = Quaternion.Euler(-80, 0, 0);
+                    }
+                } else {
+                    player.unFreeze(Player.FreezeReason.Sleeping);
+                }
+                return;
+            }
+            Transform body = transform.Find("Body");
+            if (body != null) {
+                // on its back: its head goes the other way from where it faces
+                body.localRotation = asleep ? Quaternion.Euler(-90, 0, 0) : Quaternion.identity;
+            }
         }
 
         /// <summary>A click on a brick with a door (see BrickDoor): opens or closes it.</summary>

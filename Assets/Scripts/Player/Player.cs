@@ -25,6 +25,17 @@ namespace Brickcraft
             Settings = 8,
             PlayerList = 9,
             Dead = 10,
+            Sleeping = 11,
+        }
+
+        /// <summary>It's sleeping in a bed (see Network.PlayerSleep): it can't move nor open its inventory, but it can chat.</summary>
+        public bool IsSleeping {
+            get { return network != null && !string.IsNullOrEmpty(network.sleepingIn); }
+        }
+
+        /// <summary>It can open the chat: when nothing froze it, or it's only sleeping.</summary>
+        public bool CanChat {
+            get { return !isFrozen || freezeReason == FreezeReason.Sleeping; }
         }
 
         public bool isFrozen {
@@ -73,7 +84,7 @@ namespace Brickcraft
         private float _duration = 0.5f;
         private float _timer = 0f;
 
-        // a door is opened or closed with a click (pressed for less than this), holding it breaks the door
+        // a door is opened or closed with a click (pressed for less than this), a bed slept in; holding it breaks them
         private const float ClickTime = 0.25f;
         private Brick clickedDoor;
         private float clickStart;
@@ -211,14 +222,14 @@ namespace Brickcraft
             EventManager.SelectedSlotChanged.Raise(new SelectedSlotChangedEvent() { slot = SelectedSlot });
         }
 
-        // a click on a door opens or closes it; true while it may still be one (digging waits for it)
+        // a click on a door opens or closes it, on a bed sleeps in it; true while it may still be one (digging waits for it)
         private bool clickDoors(bool isDigHeld) {
             bool isPressed = isDigHeld && !wasDigHeld;
             bool isReleased = !isDigHeld && wasDigHeld;
             wasDigHeld = isDigHeld;
 
             if (isPressed) {
-                clickedDoor = lookedBrick != null && lookedBrick.gameObject.GetComponentInChildren<BrickDoor>() != null ? lookedBrick : null;
+                clickedDoor = lookedBrick != null && (lookedBrick.gameObject.GetComponentInChildren<BrickDoor>() != null || isBed(lookedBrick)) ? lookedBrick : null;
                 clickStart = Time.time;
             }
             if (clickedDoor == null) {
@@ -227,12 +238,20 @@ namespace Brickcraft
             bool isQuick = Time.time - clickStart < ClickTime;
             if (isReleased) {
                 if (isQuick && lookedBrick == clickedDoor) {
-                    network.CmdToggleDoor(clickedDoor.id);
+                    if (isBed(clickedDoor)) {
+                        network.CmdSleep(clickedDoor.id);
+                    } else {
+                        network.CmdToggleDoor(clickedDoor.id);
+                    }
                 }
                 clickedDoor = null;
                 return false;
             }
             return isQuick;
+        }
+
+        private static bool isBed(Brick brick) {
+            return Server.items.TryGetValue(brick.itemId, out Item item) && item.tags.Contains(Item.BedTag);
         }
 
         public void freeze(FreezeReason reason) {

@@ -68,7 +68,7 @@ namespace Brickcraft.UI
 
         private void Update() {
             if (!IsTyping) {
-                if (isChatPressed() && Player.Instance != null && !Player.Instance.isFrozen) {
+                if (isChatPressed() && Player.Instance != null && Player.Instance.CanChat) {
                     open();
                 }
             } else if (GameInput.GetButtonDown(GameInput.Menu)) {

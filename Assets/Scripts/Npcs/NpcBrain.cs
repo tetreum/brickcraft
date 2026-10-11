@@ -314,6 +314,9 @@ namespace Brickcraft.Npcs
                 return;
             }
             Brick bed = NpcBeds.Claim(npc);
+            if (bed != null && Network.PlayerSleep.IsTakenByPlayer(bed.id)) {
+                bed = null; // a player sleeps in it tonight: at home then
+            }
             Vector3 place = npc.HomePosition;
             float reach = 1.2f;
             if (bed != null) {

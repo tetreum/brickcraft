@@ -10,9 +10,9 @@ namespace Brickcraft.UI
     /// another slot swaps them, onto a crafting slot uses it there. Right clicking a slot while dragging
     /// moves one unit there; after that, letting go puts the rest back. Slots in a storage grid (see
     /// SlotGroup) are a storage brick's: moves to, from or within them go through
-    /// Network.PlayerInventory.CmdStorageMove.
+    /// Network.PlayerInventory.CmdStorageMove. The pointer over it shows its item's tooltip (see ItemTooltip).
     /// </summary>
-    public class InventorySlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public class InventorySlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public Text quantity;
         [HideInInspector]
@@ -57,6 +57,7 @@ namespace Brickcraft.UI
             }
             isDragging = true;
             hasSplit = false;
+            ItemTooltip.Hide();
             transform.SetParent(Menu.Instance.transform);
             GetComponent<RectTransform> ().SetAsLastSibling ();
         }
@@ -192,6 +193,46 @@ namespace Brickcraft.UI
                 }
             }
             return false;
+        }
+
+        // the stack's item and health in that slot, null if it's empty
+        private static Item itemIn(int slot, bool storage, out int health) {
+            health = 0;
+            if (storage) {
+                InventoryItem? stack = Network.ClientStorage.InSlot(slot);
+                if (!stack.HasValue || !Server.items.TryGetValue(stack.Value.itemId, out Item kept)) {
+                    return null;
+                }
+                health = stack.Value.health;
+                return kept;
+            }
+            if (Player.Instance == null || !Player.Instance.getInventoryBySlot().TryGetValue(slot, out UserItem item)) {
+                return null;
+            }
+            health = item.health;
+            return item.item;
+        }
+
+        public void OnPointerEnter(PointerEventData eventData) {
+            Transform cell = originalParent != null ? originalParent : transform.parent;
+            if (isDragging || eventData.dragging || !int.TryParse(cell.name, out int slot)) {
+                return;
+            }
+            Item item = itemIn(slot, SlotGroup.IsStorage(cell), out int health);
+            if (item != null) {
+                ItemTooltip.Show(item, health);
+            } else {
+                ItemTooltip.Hide();
+            }
+        }
+
+        public void OnPointerExit(PointerEventData eventData) {
+            ItemTooltip.Hide();
+        }
+
+        // its panel closed under the pointer
+        private void OnDisable() {
+            ItemTooltip.Hide();
         }
 
         private static int quantityIn(int slot, bool storage) {

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace Brickcraft.UI
 {
-    public class CraftingSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public class CraftingSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public Text quantity;
         [HideInInspector]
@@ -25,8 +25,24 @@ namespace Brickcraft.UI
                 originalParent = transform.parent;
             }
             isDragging = true;
+            ItemTooltip.Hide();
             transform.SetParent(Menu.Instance.transform);
             GetComponent<RectTransform>().SetAsLastSibling();
+        }
+
+        // the ingredient's tooltip (see ItemTooltip)
+        public void OnPointerEnter(PointerEventData eventData) {
+            if (!isDragging && !eventData.dragging && currentItem != null && Server.items.ContainsKey(currentItem.id)) {
+                ItemTooltip.Show(currentItem.item, currentItem.health);
+            }
+        }
+
+        public void OnPointerExit(PointerEventData eventData) {
+            ItemTooltip.Hide();
+        }
+
+        private void OnDisable() {
+            ItemTooltip.Hide();
         }
 
         public void OnDrag(PointerEventData eventData) {

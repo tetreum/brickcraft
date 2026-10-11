@@ -11,7 +11,6 @@ public class Menu : MonoBehaviour {
 
 	public List<GameObject> Menus;
 
-	public GameObject ItemTooltipPanel;
 
 	public static Menu Instance;
 
@@ -171,28 +170,5 @@ public class Menu : MonoBehaviour {
 		
 		Menu.Instance.showPanel("SmartphonePanel", false);
 		Menu.Instance.showPanel("PlayerPanel", false);
-	}
-
-	/**
-		Shows a tooltip near to item slot
-		@param Vector3 pos Position to show the tooltip
-		@param Item item Item which we want to show its information
-		@return void
-	 */
-	public void showTooltip (Vector3 pos) {
-		ItemTooltipPanel.SetActive (true);
-		ItemTooltipPanel.GetComponent<RectTransform> ().SetAsLastSibling ();
-		ItemTooltipPanel.transform.position = pos;
-		/*
-		ItemTooltipPanel.transform.Find("TitleLabel").GetComponent<Text>().text = item.name;
-		ItemTooltipPanel.transform.Find("TextLabel").GetComponent<Text>().text = item.description;*/
-	}
-	
-	/**
-		hides the tooltip
-		@return void
-	*/
-	public void hideTooltip () {
-		ItemTooltipPanel.SetActive (false);
 	}
 }

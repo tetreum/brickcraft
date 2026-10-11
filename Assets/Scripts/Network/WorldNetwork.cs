@@ -101,6 +101,7 @@ namespace Brickcraft.Network
             WorldTime.IsPaused = false;
             nextTimeBroadcast = 0;
             PlayerSleep.Start();
+            BrickStorage.Clear();
             Npcs.NpcSystem.StartServer();
         }
 
@@ -192,6 +193,15 @@ namespace Brickcraft.Network
             return serverChanges != null && serverChanges.TryGetPlacer(block, out Placer placer) ? placer : default(Placer);
         }
 
+        /// <summary>What a storage brick keeps (a copy), see BrickStorage.</summary>
+        public static List<InventoryItem> ServerGetStorage(Brick brick) {
+            return serverChanges.GetStorage(new Guid(brick.id), brick.placement.origin);
+        }
+
+        public static void ServerSetStorage(Brick brick, List<InventoryItem> items) {
+            serverChanges.SetStorage(new Guid(brick.id), brick.placement.origin, items);
+        }
+
         /// <summary>Who placed a brick, nobody (0) if no player did.</summary>
         public static Placer ServerPlacerOf(Brick brick) {
             return serverChanges != null && serverChanges.TryGetBrick(new Guid(brick.id), brick.placement.origin, out SavedBrick saved) ? saved.placer : default(Placer);
@@ -209,6 +219,7 @@ namespace Brickcraft.Network
             Placer placer = ServerPlacerOf(brick);
             Vector3Int from = brick.placement.origin;
             Brick attached = Server.attachmentOf(brick);
+            List<InventoryItem> kept = serverChanges.GetStorage(new Guid(brick.id), from);
             Placer attachedPlacer = attached != null ? ServerPlacerOf(attached) : default(Placer);
             Npcs.Navigation.NavGrid.MarkDirty(brick); // where it was
 
@@ -219,6 +230,9 @@ namespace Brickcraft.Network
             serverChanges.RemoveBrick(new Guid(brick.id), from);
             sendToChunk(WorldChanges.ChunkOfBrick(from), new BrickRemovedMessage() { id = brick.id, origin = from });
             serverChanges.AddBrick(toSaved(brick, placer));
+            if (kept.Count > 0) {
+                serverChanges.SetStorage(new Guid(brick.id), brick.placement.origin, kept); // what it keeps moves with it
+            }
             sendPlaced(brick, placer);
 
             // its object moved along, its placement is its brick's
@@ -250,6 +264,10 @@ namespace Brickcraft.Network
         /// <summary>Removes a brick and what's attached to it (which players remove with it). Returns them all.</summary>
         public static List<Brick> ServerRemoveBrick(Brick brick) {
             List<Brick> removed = new List<Brick>();
+            // what a chest kept falls around it
+            if (BrickStorage.IsStorage(brick)) {
+                BrickStorage.ServerBroken(brick);
+            }
             Brick attached = Server.attachmentOf(brick);
             if (attached != null) {
                 removed.AddRange(ServerRemoveBrick(attached));
@@ -336,6 +354,8 @@ namespace Brickcraft.Network
             WorldBehaviour world = WorldBehaviour.Instance;
             updateTime();
             PlayerSleep.Update();
+            DroppedItems.Update();
+            BrickStorage.Update();
 
             if (world == null || !world.Seed.HasValue || Time.unscaledTime < nextServerUpdate) {
                 return;
@@ -540,6 +560,7 @@ namespace Brickcraft.Network
             NetworkClient.RegisterHandler<BrickStateMessage>(onBrickState);
             NetworkClient.RegisterHandler<TimeMessage>(onTime);
             NetworkClient.RegisterHandler<SleepStatusMessage>(message => SleepStatus = message);
+            ClientStorage.Register();
             SleepStatus = default(SleepStatusMessage);
             Events.EventManager.SettingChanged.Subscribe(onSettingChanged);
         }

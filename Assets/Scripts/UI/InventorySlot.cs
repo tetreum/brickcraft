@@ -8,7 +8,9 @@ namespace Brickcraft.UI
     /// <summary>
     /// The item shown in an inventory slot (its parent, named after the slot number). Dragging it onto
     /// another slot swaps them, onto a crafting slot uses it there. Right clicking a slot while dragging
-    /// moves one unit there; after that, letting go puts the rest back.
+    /// moves one unit there; after that, letting go puts the rest back. Slots in a storage grid (see
+    /// SlotGroup) are a storage brick's: moves to, from or within them go through
+    /// Network.PlayerInventory.CmdStorageMove.
     /// </summary>
     public class InventorySlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
@@ -21,6 +23,27 @@ namespace Brickcraft.UI
 
         private int sourceSlot {
             get { return int.Parse(originalParent.name); }
+        }
+
+        private bool sourceIsStorage {
+            get { return SlotGroup.IsStorage(originalParent); }
+        }
+
+        // a stack (or one unit) from where it's dragged to that cell, whichever grids they're in
+        private void move(Transform cell, bool one) {
+            bool toStorage = SlotGroup.IsStorage(cell);
+            int to = int.Parse(cell.name);
+            if (!sourceIsStorage && !toStorage) {
+                if (one) {
+                    Player.Instance.moveOneInventoryItem(sourceSlot, to);
+                } else {
+                    Player.Instance.moveInventoryStack(sourceSlot, to);
+                }
+                return;
+            }
+            if (Network.ClientStorage.IsOpen) {
+                Player.Instance.GetComponent<Network.PlayerInventory>().CmdStorageMove(Network.ClientStorage.BrickId, sourceIsStorage, sourceSlot, toStorage, to, one);
+            }
         }
 
         // only the left button drags: Unity starts drags with every button, and a right click (to split)
@@ -52,11 +75,15 @@ namespace Brickcraft.UI
             Component target;
             Transform cell = findCell(eventData.position, out target);
 
+            // let go over the world (no interface under the pointer): the stack is thrown
+            if (cell == null && !hasSplit && !sourceIsStorage && quantityIn(sourceSlot, false) > 0 && !isOverInterface(eventData.position)) {
+                Player.Instance.GetComponent<Network.PlayerInventory>().CmdDrop(sourceSlot, quantityIn(sourceSlot, false));
+            }
             // nothing is moved if the slot got emptied meanwhile, or units were split off (the rest goes back)
-            if (cell != null && !hasSplit && hasItem(sourceSlot)) {
+            if (cell != null && !hasSplit && quantityIn(sourceSlot, sourceIsStorage) > 0) {
                 if (target is InventorySlot) {
-                    Player.Instance.moveInventoryStack(sourceSlot, int.Parse(cell.name));
-                } else if (target is CraftingSlot) {
+                    move(cell, false);
+                } else if (target is CraftingSlot && !sourceIsStorage) {
                     ((CraftingSlot)target).setCurrentItem(sourceSlot);
                 }
             }
@@ -77,15 +104,15 @@ namespace Brickcraft.UI
 
             Component target;
             Transform cell = findCell(input.mousePosition, out target);
-            if (cell == null || !(target is InventorySlot) || int.Parse(cell.name) == sourceSlot) {
+            if (cell == null || !(target is InventorySlot) || (int.Parse(cell.name) == sourceSlot && SlotGroup.IsStorage(cell) == sourceIsStorage)) {
                 return;
             }
 
-            int left = quantityIn(sourceSlot);
+            int left = quantityIn(sourceSlot, sourceIsStorage);
             if (left == 0) {
                 return;
             }
-            Player.Instance.moveOneInventoryItem(sourceSlot, int.Parse(cell.name));
+            move(cell, true);
             hasSplit = true;
 
             // that was the last one, there's nothing left to hold
@@ -155,13 +182,25 @@ namespace Brickcraft.UI
             return null;
         }
 
-        private static int quantityIn(int slot) {
-            UserItem item;
-            return Player.Instance.getInventoryBySlot().TryGetValue(slot, out item) ? item.quantity : 0;
+        // any interface under that point, besides what's being dragged
+        private bool isOverInterface(Vector2 position) {
+            List<RaycastResult> hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position = position }, hits);
+            foreach (RaycastResult hit in hits) {
+                if (!hit.gameObject.transform.IsChildOf(transform)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
-        private static bool hasItem(int slot) {
-            return quantityIn(slot) > 0;
+        private static int quantityIn(int slot, bool storage) {
+            if (storage) {
+                InventoryItem? stack = Network.ClientStorage.InSlot(slot);
+                return stack.HasValue ? stack.Value.quantity : 0;
+            }
+            UserItem item;
+            return Player.Instance.getInventoryBySlot().TryGetValue(slot, out item) ? item.quantity : 0;
         }
 
         public void setVisible (bool show) {

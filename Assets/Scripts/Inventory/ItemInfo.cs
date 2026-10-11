@@ -32,6 +32,8 @@ namespace Brickcraft
         public RecipeInfo[] recipes;
         /// <summary>What it is to the game besides its type, like "bed" (NPCs sleep in placed beds).</summary>
         public string[] tags;
+        /// <summary>Items tagged "storage": how many slots a placed one has, 1 to 54 (27 by default).</summary>
+        public int storageSlots = Item.DefaultStorageSlots;
     }
 
     /// <summary>The world block of a brick item, the "block" of its info.json.</summary>

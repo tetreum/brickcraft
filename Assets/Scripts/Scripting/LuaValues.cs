@@ -89,6 +89,23 @@ namespace Brickcraft.Scripting
             }
         }
 
+        /// <summary>What a storage brick (a chest) keeps: a list of { slot, item, count, color }, nil for other bricks.</summary>
+        public DynValue items(Script script) {
+            if (isBlock || brickId == null || !Server.bricks.TryGetValue(brickId, out Brick brick) || !Network.BrickStorage.IsStorage(brick)) {
+                return DynValue.Nil;
+            }
+            Table list = new Table(script);
+            foreach (InventoryItem stack in Network.BrickStorage.Contents(brick)) {
+                Table entry = new Table(script);
+                entry["slot"] = stack.slot;
+                entry["item"] = stack.itemId;
+                entry["count"] = stack.quantity;
+                entry["color"] = stack.color;
+                list.Append(DynValue.NewTable(entry));
+            }
+            return DynValue.NewTable(list);
+        }
+
         public override string ToString() {
             return (isBlock ? "block " : "brick ") + item + " at " + position;
         }

@@ -63,6 +63,19 @@ namespace Brickcraft.World
         public Guid bed;
     }
 
+    /// <summary>Items lying on the ground in a chunk, as stored in a save (see Network.DroppedItems; never sent to clients).</summary>
+    public struct SavedDrop
+    {
+        public string itemId;
+        public int color;
+        public int quantity;
+        public int health;
+        /// <summary>Where it lay, absolute (see FloatingOrigin).</summary>
+        public double x, y, z;
+        /// <summary>Seconds it had left before going away.</summary>
+        public float lifetime;
+    }
+
     /// <summary>
     /// What players changed in a chunk since it was generated: blocks (by their index inside the
     /// chunk, see <see cref="BlockIndex"/>) and bricks (whose origin cell is in the chunk).
@@ -78,9 +91,13 @@ namespace Brickcraft.World
         public readonly Dictionary<ushort, int> colors = new Dictionary<ushort, int>();
         public readonly Dictionary<Guid, SavedBrick> bricks = new Dictionary<Guid, SavedBrick>();
         public List<SavedNpc> npcs = new List<SavedNpc>();
+        /// <summary>What storage bricks keep (see Network.BrickStorage), by brick id: server only, never sent.</summary>
+        public readonly Dictionary<Guid, List<InventoryItem>> storage = new Dictionary<Guid, List<InventoryItem>>();
+        /// <summary>Items on the ground: server only, never sent.</summary>
+        public List<SavedDrop> drops = new List<SavedDrop>();
 
         public bool IsEmpty {
-            get { return blocks.Count == 0 && bricks.Count == 0 && npcs.Count == 0; }
+            get { return blocks.Count == 0 && bricks.Count == 0 && npcs.Count == 0 && storage.Count == 0 && drops.Count == 0; }
         }
 
         public static ushort BlockIndex(int x, int y, int z) {
@@ -173,6 +190,7 @@ namespace Brickcraft.World
                 Vector2Int coords = ChunkOfBrick(origin);
 
                 if (chunks.TryGetValue(coords, out ChunkChanges changes) && changes.bricks.Remove(id)) {
+                    changes.storage.Remove(id);
                     dirtyChunks.Add(coords);
                 }
             }
@@ -200,6 +218,55 @@ namespace Brickcraft.World
                 if (loaded.npcs.Count > 0) {
                     changes.npcs = new List<SavedNpc>(loaded.npcs);
                 }
+                foreach (KeyValuePair<Guid, List<InventoryItem>> kept in loaded.storage) {
+                    changes.storage[kept.Key] = new List<InventoryItem>(kept.Value);
+                }
+                if (loaded.drops.Count > 0) {
+                    changes.drops = new List<SavedDrop>(loaded.drops);
+                }
+            }
+        }
+
+        /// <summary>The items saved on the ground of a chunk.</summary>
+        public List<SavedDrop> GetDrops(Vector2Int coords) {
+            lock (sync) {
+                return chunks.TryGetValue(coords, out ChunkChanges changes) ? new List<SavedDrop>(changes.drops) : new List<SavedDrop>();
+            }
+        }
+
+        /// <summary>The items on the ground of a chunk now, saved with it.</summary>
+        public void SetDrops(Vector2Int coords, List<SavedDrop> drops) {
+            lock (sync) {
+                chunks.TryGetValue(coords, out ChunkChanges changes);
+                if (drops.Count == 0 && (changes == null || changes.drops.Count == 0)) {
+                    return;
+                }
+                changes = changes ?? getOrCreate(coords);
+                changes.drops = new List<SavedDrop>(drops);
+                dirtyChunks.Add(coords);
+            }
+        }
+
+        /// <summary>What a storage brick keeps (a copy), empty if nothing.</summary>
+        public List<InventoryItem> GetStorage(Guid id, Vector3Int origin) {
+            lock (sync) {
+                return chunks.TryGetValue(ChunkOfBrick(origin), out ChunkChanges changes) && changes.storage.TryGetValue(id, out List<InventoryItem> items)
+                    ? new List<InventoryItem>(items) : new List<InventoryItem>();
+            }
+        }
+
+        /// <summary>What a storage brick keeps now, saved with its chunk.</summary>
+        public void SetStorage(Guid id, Vector3Int origin, IEnumerable<InventoryItem> items) {
+            lock (sync) {
+                Vector2Int coords = ChunkOfBrick(origin);
+                ChunkChanges changes = getOrCreate(coords);
+                List<InventoryItem> list = new List<InventoryItem>(items);
+                if (list.Count == 0) {
+                    changes.storage.Remove(id);
+                } else {
+                    changes.storage[id] = list;
+                }
+                dirtyChunks.Add(coords);
             }
         }
 
@@ -318,6 +385,10 @@ namespace Brickcraft.World
     ///     u8 pack flag (then 16 bytes pack id)
     ///   varint count of the NPCs' extras (0, or the NPC count), then per NPC in the same order: u8 flags
     ///     (1 natural, 2 home, 4 bed), then for a home zigzag varint x y z, for a bed its 16 bytes id
+    ///   varint count of storage bricks with something in them (always 0 to clients), then per brick: its 16 bytes
+    ///     id, varint stack count, per stack: varint slot, string item, zigzag varint colour, varint quantity, varint health
+    ///   varint count of items on the ground (always 0 to clients), then per one: string item, zigzag varint colour,
+    ///     varint quantity, varint health, double x y z (absolute), float seconds left
     /// where placer is a varint player id (0 when no player placed it) followed, when not 0, by varint unix seconds.
     /// Blocks are saved by name, the numbers chunks use are only valid in the game that gave them (see
     /// BlockDatabase).
@@ -325,14 +396,14 @@ namespace Brickcraft.World
     public static class ChunkChangesSerializer
     {
         // change it when the format changes, records of other versions are rejected
-        public const byte Version = 8;
+        public const byte Version = 9;
 
         // pages keep network messages small, even for heavily modified chunks
         private const int BlocksPerPage = 8192;
         private const int BricksPerPage = 512;
 
         public static byte[] Serialize(ChunkChanges changes) {
-            return serialize(new List<KeyValuePair<ushort, byte>>(changes.blocks), changes, new List<SavedBrick>(changes.bricks.Values), changes.npcs);
+            return serialize(new List<KeyValuePair<ushort, byte>>(changes.blocks), changes, new List<SavedBrick>(changes.bricks.Values), changes.npcs, changes.storage, changes.drops);
         }
 
         public static List<byte[]> SerializePages(ChunkChanges changes) {
@@ -345,7 +416,9 @@ namespace Brickcraft.World
                     blocks.GetRange(Math.Min(b, blocks.Count), Math.Max(0, Math.Min(BlocksPerPage, blocks.Count - b))),
                     changes,
                     bricks.GetRange(Math.Min(k, bricks.Count), Math.Max(0, Math.Min(BricksPerPage, bricks.Count - k))),
-                    new List<SavedNpc>() // NPCs are network objects of their own, clients don't get them here
+                    new List<SavedNpc>(), // NPCs are network objects of their own, clients don't get them here
+                    new Dictionary<Guid, List<InventoryItem>>(), // nor what chests keep: it's sent when they're opened
+                    new List<SavedDrop>() // nor what's on the ground: drops are network objects
                 ));
             }
             return pages;
@@ -441,11 +514,51 @@ namespace Brickcraft.World
                         changes.npcs[i] = npc;
                     }
                 }
+
+                int stores = (int)readVarUInt(reader);
+                for (int i = 0; i < stores; i++) {
+                    Guid id = new Guid(reader.ReadBytes(16));
+                    int stacks = (int)readVarUInt(reader);
+                    List<InventoryItem> items = new List<InventoryItem>(stacks);
+                    for (int s = 0; s < stacks; s++) {
+                        InventoryItem stack = new InventoryItem() {
+                            slot = (int)readVarUInt(reader),
+                            itemId = reader.ReadString(),
+                            color = readVarInt(reader),
+                            quantity = (int)readVarUInt(reader),
+                            health = (int)readVarUInt(reader),
+                        };
+                        // an item of a mod that isn't there now is lost, like in inventories
+                        if (Server.items.TryGetValue(stack.itemId, out Item item)) {
+                            stack.color = item.ValidColor(stack.color);
+                            items.Add(stack);
+                        }
+                    }
+                    changes.storage[id] = items;
+                }
+
+                int drops = (int)readVarUInt(reader);
+                for (int i = 0; i < drops; i++) {
+                    SavedDrop drop = new SavedDrop() {
+                        itemId = reader.ReadString(),
+                        color = readVarInt(reader),
+                        quantity = (int)readVarUInt(reader),
+                        health = (int)readVarUInt(reader),
+                        x = reader.ReadDouble(),
+                        y = reader.ReadDouble(),
+                        z = reader.ReadDouble(),
+                        lifetime = reader.ReadSingle(),
+                    };
+                    if (Server.items.ContainsKey(drop.itemId)) {
+                        changes.drops.Add(drop);
+                    }
+                }
             }
             return changes;
         }
 
-        private static byte[] serialize(List<KeyValuePair<ushort, byte>> blocks, ChunkChanges changes, List<SavedBrick> bricks, List<SavedNpc> npcs) {
+        private static byte[] serialize(List<KeyValuePair<ushort, byte>> blocks, ChunkChanges changes, List<SavedBrick> bricks, List<SavedNpc> npcs,
+                Dictionary<Guid, List<InventoryItem>> storage, List<SavedDrop> drops) {
             blocks.Sort((a, b) => a.Key.CompareTo(b.Key));
 
             using (MemoryStream output = new MemoryStream()) {
@@ -525,6 +638,31 @@ namespace Brickcraft.World
                         if (npc.bed != Guid.Empty) {
                             writer.Write(npc.bed.ToByteArray());
                         }
+                    }
+
+                    writeVarUInt(writer, (uint)storage.Count);
+                    foreach (KeyValuePair<Guid, List<InventoryItem>> kept in storage) {
+                        writer.Write(kept.Key.ToByteArray());
+                        writeVarUInt(writer, (uint)kept.Value.Count);
+                        foreach (InventoryItem stack in kept.Value) {
+                            writeVarUInt(writer, (uint)stack.slot);
+                            writer.Write(stack.itemId);
+                            writeVarInt(writer, stack.color);
+                            writeVarUInt(writer, (uint)Math.Max(0, stack.quantity));
+                            writeVarUInt(writer, (uint)Math.Max(0, stack.health));
+                        }
+                    }
+
+                    writeVarUInt(writer, (uint)drops.Count);
+                    foreach (SavedDrop drop in drops) {
+                        writer.Write(drop.itemId);
+                        writeVarInt(writer, drop.color);
+                        writeVarUInt(writer, (uint)Math.Max(0, drop.quantity));
+                        writeVarUInt(writer, (uint)Math.Max(0, drop.health));
+                        writer.Write(drop.x);
+                        writer.Write(drop.y);
+                        writer.Write(drop.z);
+                        writer.Write(drop.lifetime);
                     }
                 }
                 return output.ToArray();

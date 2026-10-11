@@ -89,6 +89,7 @@ namespace Brickcraft.Npcs
             petsBack.Clear();
             isStopped = false;
             NpcBeds.Clear();
+            DroppedItems.Clear();
             Health.ServerAnyDamaged += onAnyDamaged;
             WorldTime.ServerHourStarted += onHourStarted;
             subscribedWorld = World.WorldBehaviour.Instance;
@@ -325,6 +326,7 @@ namespace Brickcraft.Npcs
                 List<SavedNpc> none = new List<SavedNpc>();
                 foreach (Vector2Int coords in populated) {
                     changes.SetNpcs(coords, byChunk.TryGetValue(coords, out List<SavedNpc> list) ? list : none);
+                    changes.SetDrops(coords, DroppedItems.SavedIn(coords, false)); // items on the ground go with the chunks too
                 }
             }
             foreach (int owner in petsBack) {
@@ -408,6 +410,7 @@ namespace Brickcraft.Npcs
                     foreach (SavedNpc saved in changes.GetNpcs(coords)) {
                         restore(saved);
                     }
+                    DroppedItems.Restore(changes.GetDrops(coords));
                 }
             }
         }
@@ -435,8 +438,10 @@ namespace Brickcraft.Npcs
                 NetworkServer.Destroy(npc.gameObject);
             }
             WorldChanges changes = savedChanges;
+            List<SavedDrop> drops = DroppedItems.SavedIn(coords, true);
             if (wasPopulated && !isStopped && changes != null) {
                 changes.SetNpcs(coords, left);
+                changes.SetDrops(coords, drops);
             }
         }
 

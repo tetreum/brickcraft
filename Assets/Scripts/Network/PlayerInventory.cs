@@ -108,6 +108,60 @@ namespace Brickcraft.Network
             }
         }
 
+        /// <summary>
+        /// Moves a stack (or one unit) between this inventory and the storage brick it's looking into, or within
+        /// that brick (see BrickStorage, Inventory.MoveBetween).
+        /// </summary>
+        [Command]
+        public void CmdStorageMove(string brickId, bool fromStorage, int fromSlot, bool toStorage, int toSlot, bool one) {
+            if (!BrickStorage.IsViewing(connectionToClient, brickId, out Brick storage)) {
+                return;
+            }
+            List<InventoryItem> kept = BrickStorage.Contents(storage);
+            int slots = BrickStorage.SlotsOf(storage);
+            bool moved;
+            if (fromStorage && toStorage) {
+                moved = one ? Inventory.MoveOne(kept, fromSlot, toSlot, slots) : Inventory.MoveStack(kept, fromSlot, toSlot, slots);
+            } else if (fromStorage) {
+                moved = Inventory.MoveBetween(kept, slots, fromSlot, items, Inventory.SlotCount, toSlot, one);
+            } else if (toStorage) {
+                moved = Inventory.MoveBetween(items, Inventory.SlotCount, fromSlot, kept, slots, toSlot, one);
+            } else {
+                moved = one ? Inventory.MoveOne(items, fromSlot, toSlot) : Inventory.MoveStack(items, fromSlot, toSlot);
+            }
+            if (!moved) {
+                return;
+            }
+            if (fromStorage || toStorage) {
+                BrickStorage.ServerChanged(storage, kept);
+            }
+            if (!fromStorage || !toStorage) {
+                save();
+            }
+        }
+
+        /// <summary>Throws some of the stack in a slot in front of the player (see DroppedItems): it can't pick them up again right away.</summary>
+        [Command]
+        public void CmdDrop(int slot, int quantity) {
+            InventoryItem? stack = ServerGetSlot(slot);
+            Combat.Health health = GetComponent<Combat.Health>();
+            if (!stack.HasValue || quantity < 1 || health.isDead) {
+                return;
+            }
+            quantity = UnityEngine.Mathf.Min(quantity, stack.Value.quantity);
+            if (!ServerRemoveFromSlot(slot, quantity)) {
+                return;
+            }
+            UnityEngine.Vector3 forward = transform.forward;
+            forward.y = 0;
+            forward.Normalize();
+            DroppedItems.ServerDrop(stack.Value.itemId, stack.Value.color, quantity, stack.Value.health,
+                transform.position + forward * 0.6f + UnityEngine.Vector3.up * 0.5f, forward * 4 + UnityEngine.Vector3.up * 2, ThrowPickupDelay);
+        }
+
+        /// <summary>Seconds before what a player throws can be picked up (by them too).</summary>
+        public const float ThrowPickupDelay = 2;
+
         /// <summary>Crafts a recipe (see Recipes), putting the result in the given slot.</summary>
         [Command]
         public void CmdCraft(string recipeId, int targetSlot) {

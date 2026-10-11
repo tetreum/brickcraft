@@ -7,9 +7,9 @@ using UnityEngine;
 namespace Brickcraft.Network
 {
     /// <summary>
-    /// Who sees which networked objects: NPCs only go to the players that have their chunk (see WorldNetwork's
-    /// streaming), everything else (players) to everybody. The host shares the server's world, so it sees them
-    /// all, like every player in scenes without a streamed world.
+    /// Who sees which networked objects: players go to everybody, the rest (NPCs, items on the ground) only to
+    /// the players that have their chunk (see WorldNetwork's streaming). The host shares the server's world, so
+    /// it sees them all, like every player in scenes without a streamed world.
     /// </summary>
     public class ChunkInterestManagement : InterestManagement
     {
@@ -31,7 +31,7 @@ namespace Brickcraft.Network
         }
 
         private static bool isVisible(NetworkIdentity identity, NetworkConnectionToClient conn) {
-            if (identity.GetComponent<Npc>() == null || WorldBehaviour.Instance == null || conn is LocalConnectionToClient) {
+            if (identity.GetComponent<PlayerNetwork>() != null || WorldBehaviour.Instance == null || conn is LocalConnectionToClient) {
                 return true;
             }
             return WorldNetwork.HasSentChunk(conn, WorldBehaviour.ChunkAt(identity.transform.position));

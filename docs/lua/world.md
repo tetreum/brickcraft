@@ -63,6 +63,10 @@ for _, player in ipairs(world.players()) do
 end
 ```
 
+## world.dropItem(item, position, count, color)
+
+Puts items on the ground at `position` (`count` 1 and the item's own colour by default): players pick them up by walking onto them, and they go after 5 minutes. Returns `false` if that part of the world isn't loaded. It's an error if there's no such item.
+
 ## world.spawnNpc(npc, position)
 
 Puts an NPC of that kind (`"golem"`, `"my_mod:wolf"`, or just `"wolf"` for your mod's own) in the world at `position`. Returns the [NPC](npcs.md), or `nil` if that part of the world isn't loaded or there are too many NPCs. It's an error if there's no such NPC.

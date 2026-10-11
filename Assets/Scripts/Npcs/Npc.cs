@@ -745,16 +745,18 @@ namespace Brickcraft.Npcs
             verticalSpeed = Mathf.Max(verticalSpeed, velocity.y);
         }
 
-        // whoever killed it gets its drops; it stays a moment to fall
+        // killed by a player, its drops fall around it (see DroppedItems); it stays a moment to fall
         private void onServerDied(DamageInfo damage) {
             heading = Vector3.zero;
             body.enabled = false;
             RpcPlay(Death);
             PlayerInventory killer = damage.attacker != null ? damage.attacker.GetComponent<PlayerInventory>() : null;
             if (killer != null && !IsPet) {
+                Vector3 where = transform.position + Vector3.up * (body.height / 2);
                 foreach (DropInfo drop in Info.drops) {
                     if (Random.value <= drop.chance && Server.items.TryGetValue(drop.item ?? "", out Item item)) {
-                        killer.ServerAdd(item.id, item.color, drop.count);
+                        Vector2 away = Random.insideUnitCircle * 1.5f;
+                        DroppedItems.ServerDrop(item.id, item.color, drop.count, 0, where, new Vector3(away.x, 3, away.y));
                     }
                 }
             }

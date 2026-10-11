@@ -35,6 +35,19 @@ end
 
 The brick was removed or dug out, and the player got its item. `brick.exists` is already `false`.
 
+### onStorageOpened(brick, player)
+
+Items tagged `storage` (see the readme): a player opens the brick (clicks it) to look inside, after the game checked it can (its lid). **Return `false`** to keep it closed.
+
+```lua
+function onStorageOpened(brick, player)
+  if world.isNight() then
+    player:message("It won't open at night")
+    return false
+  end
+end
+```
+
 ### onInteract(brick, player)
 
 A player used the brick (the "Use brick" key, E by default) from within reach.

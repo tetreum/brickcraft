@@ -29,11 +29,20 @@ public class Menu : MonoBehaviour {
 		EventManager.WorldLoadingStarted.Subscribe(onWorldLoadingStarted);
 
 		InventoryPanel.Instance = getPanel("InventoryPanel").GetComponent<InventoryPanel>();
+		Brickcraft.Network.ClientStorage.Changed += onStorageChanged;
     }
+
+	// a storage brick the server opened for us: its panel, over the others
+	private void onStorageChanged() {
+		if (Brickcraft.Network.ClientStorage.IsOpen && !getPanel(StoragePanel.PanelName).activeSelf) {
+			showPanel(StoragePanel.PanelName, false);
+		}
+	}
 	private void OnDestroy() {
 		SceneManager.sceneLoaded -= OnLevelFinishedLoading;
 		EventManager.LocalPlayerStarted.Unsubscribe(onLocalPlayerStarted);
 		EventManager.WorldLoadingStarted.Unsubscribe(onWorldLoadingStarted);
+		Brickcraft.Network.ClientStorage.Changed -= onStorageChanged;
 	}
 
 	private void onLocalPlayerStarted(LocalPlayerStartedEvent e) {
@@ -47,6 +56,14 @@ public class Menu : MonoBehaviour {
 	// the panels' shortcuts, while playing
 	private void Update() {
 		if (Player.Instance == null || GameInput.IsTyping || SettingsPanel.IsOpen || SettingsPanel.WasClosedThisFrame) {
+			return;
+		}
+		// a storage panel open: the inventory key and Escape close it
+		GameObject storage = getPanel(StoragePanel.PanelName);
+		if (storage.activeSelf) {
+			if (GameInput.GetButtonDown(GameInput.Inventory) || GameInput.GetButtonDown(GameInput.Menu)) {
+				storage.SetActive(false);
+			}
 			return;
 		}
 		// sleeping, the inventory stays closed (the chat and the player list work)

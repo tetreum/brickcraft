@@ -17,7 +17,8 @@ namespace Brickcraft
     /// Inventory rules. Only the server changes inventories, clients get the result synced.
     /// Slots go from 1 to <see cref="SlotCount"/>, the last ones being the fast inventory. An item
     /// can be in several stacks, each holding up to its Item.maxStack. Stacks are of one item, colour
-    /// and health.
+    /// and health. Other containers (a chest's slots, see Network.BrickStorage) follow the same rules with
+    /// their own number of slots (slots), filled from the first one.
     /// </summary>
     public static class Inventory
     {
@@ -42,8 +43,8 @@ namespace Brickcraft
             return -1;
         }
 
-        public static bool IsSlotFree(IList<InventoryItem> items, int slot) {
-            return slot >= 1 && slot <= SlotCount && FindSlot(items, slot) == -1;
+        public static bool IsSlotFree(IList<InventoryItem> items, int slot, int slots = SlotCount) {
+            return slot >= 1 && slot <= slots && FindSlot(items, slot) == -1;
         }
 
         private static bool isSame(InventoryItem stack, string itemId, int color, int health) {
@@ -70,7 +71,7 @@ namespace Brickcraft
         }
 
         /// <summary>How many more fit: what's missing in their stacks, plus whole empty slots.</summary>
-        public static int Room(IList<InventoryItem> items, string itemId, int color, int health) {
+        public static int Room(IList<InventoryItem> items, string itemId, int color, int health, int slots = SlotCount) {
             int max = MaxStack(itemId);
             int room = 0;
             foreach (InventoryItem stack in items) {
@@ -78,7 +79,7 @@ namespace Brickcraft
                     room += max - stack.quantity;
                 }
             }
-            for (int slot = 1; slot <= SlotCount; slot++) {
+            for (int slot = 1; slot <= slots; slot++) {
                 if (FindSlot(items, slot) == -1) {
                     room += max;
                 }
@@ -90,13 +91,13 @@ namespace Brickcraft
         /// Adds them all or none: first filling their stacks, then new ones in free slots (preferring the
         /// fast inventory). With a slot, all of them go there (empty or with room). False if they don't fit.
         /// </summary>
-        public static bool Add(IList<InventoryItem> items, string itemId, int color, int quantity, int health = 0, int slot = 0) {
+        public static bool Add(IList<InventoryItem> items, string itemId, int color, int quantity, int health = 0, int slot = 0, int slots = SlotCount) {
             int max = MaxStack(itemId);
 
             if (slot != 0) {
                 int stack = FindSlot(items, slot);
                 if (stack == -1) {
-                    if (slot < 1 || slot > SlotCount || quantity > max) {
+                    if (slot < 1 || slot > slots || quantity > max) {
                         return false;
                     }
                     items.Add(new InventoryItem() { slot = slot, itemId = itemId, color = color, quantity = quantity, health = health });
@@ -111,7 +112,7 @@ namespace Brickcraft
                 return true;
             }
 
-            if (Room(items, itemId, color, health) < quantity) {
+            if (Room(items, itemId, color, health, slots) < quantity) {
                 return false;
             }
             for (int i = 0; i < items.Count && quantity > 0; i++) {
@@ -125,7 +126,7 @@ namespace Brickcraft
             }
             while (quantity > 0) {
                 int added = System.Math.Min(max, quantity);
-                items.Add(new InventoryItem() { slot = firstFreeSlot(items), itemId = itemId, color = color, quantity = added, health = health });
+                items.Add(new InventoryItem() { slot = firstFreeSlot(items, slots), itemId = itemId, color = color, quantity = added, health = health });
                 quantity -= added;
             }
             return true;
@@ -175,12 +176,12 @@ namespace Brickcraft
         /// Moves the stack in <paramref name="from"/> to <paramref name="to"/>: onto the same item it merges,
         /// as much as fits (the rest stays), otherwise they swap. False if nothing changed.
         /// </summary>
-        public static bool MoveStack(IList<InventoryItem> items, int from, int to) {
+        public static bool MoveStack(IList<InventoryItem> items, int from, int to, int slots = SlotCount) {
             int source = FindSlot(items, from);
             int target = FindSlot(items, to);
 
             if (source == -1 || target == -1 || !isSame(items[target], items[source])) {
-                return Swap(items, from, to);
+                return Swap(items, from, to, slots);
             }
             if (from == to) {
                 return false;
@@ -200,8 +201,8 @@ namespace Brickcraft
         /// Moves one unit of the stack in <paramref name="from"/> to <paramref name="to"/>, which has to be
         /// empty or hold the same item with room for it. False if it couldn't.
         /// </summary>
-        public static bool MoveOne(IList<InventoryItem> items, int from, int to) {
-            if (from == to || to < 1 || to > SlotCount) {
+        public static bool MoveOne(IList<InventoryItem> items, int from, int to, int slots = SlotCount) {
+            if (from == to || to < 1 || to > slots) {
                 return false;
             }
             int source = FindSlot(items, from);
@@ -226,8 +227,8 @@ namespace Brickcraft
         }
 
         /// <summary>Moves a stack to another slot, swapping it with whatever is there.</summary>
-        public static bool Swap(IList<InventoryItem> items, int slotA, int slotB) {
-            if (slotA < 1 || slotA > SlotCount || slotB < 1 || slotB > SlotCount || slotA == slotB) {
+        public static bool Swap(IList<InventoryItem> items, int slotA, int slotB, int slots = SlotCount) {
+            if (slotA < 1 || slotA > slots || slotB < 1 || slotB > slots || slotA == slotB) {
                 return false;
             }
             int a = FindSlot(items, slotA);
@@ -246,7 +247,60 @@ namespace Brickcraft
             return a != -1 || b != -1;
         }
 
-        private static int firstFreeSlot(IList<InventoryItem> items) {
+        /// <summary>
+        /// Moves the stack in a slot of one container to a slot of another (a player's inventory and a chest):
+        /// whole (onto the same item it merges as much as fits, onto another they swap) or one unit (onto an
+        /// empty slot or the same item with room). False if nothing changed.
+        /// </summary>
+        public static bool MoveBetween(IList<InventoryItem> source, int sourceSlots, int from, IList<InventoryItem> target, int targetSlots, int to, bool one) {
+            int s = FindSlot(source, from);
+            if (s == -1 || from < 1 || from > sourceSlots || to < 1 || to > targetSlots) {
+                return false;
+            }
+            InventoryItem moving = source[s];
+            int t = FindSlot(target, to);
+            int max = MaxStack(moving.itemId);
+            if (t != -1 && isSame(target[t], moving)) {
+                InventoryItem into = target[t];
+                int moved = System.Math.Min(max - into.quantity, one ? 1 : moving.quantity);
+                if (moved <= 0) {
+                    return false;
+                }
+                into.quantity += moved;
+                target[t] = into;
+                takeFrom(source, s, moved);
+                return true;
+            }
+            if (one) {
+                if (t != -1) {
+                    return false;
+                }
+                target.Add(new InventoryItem() { slot = to, itemId = moving.itemId, color = moving.color, quantity = 1, health = moving.health });
+                takeFrom(source, s, 1);
+                return true;
+            }
+            // whole: to an empty slot, or swapping with what's there
+            source.RemoveAt(s);
+            if (t != -1) {
+                InventoryItem back = target[t];
+                target.RemoveAt(t);
+                back.slot = from;
+                source.Add(back);
+            }
+            moving.slot = to;
+            target.Add(moving);
+            return true;
+        }
+
+        private static int firstFreeSlot(IList<InventoryItem> items, int slots = SlotCount) {
+            if (slots != SlotCount) {
+                for (int slot = 1; slot <= slots; slot++) {
+                    if (IsSlotFree(items, slot, slots)) {
+                        return slot;
+                    }
+                }
+                return 0;
+            }
             for (int slot = FirstFastSlot; slot <= SlotCount; slot++) {
                 if (IsSlotFree(items, slot)) {
                     return slot;

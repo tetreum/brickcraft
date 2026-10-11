@@ -188,6 +188,7 @@ namespace Brickcraft
             if (!loadColors(item, info.colors, file)) {
                 return;
             }
+            item.storageSlots = Math.Max(1, Math.Min(info.storageSlots, Item.MaxStorageSlots));
             foreach (string tag in info.tags ?? new string[0]) {
                 if (!string.IsNullOrWhiteSpace(tag)) {
                     item.tags.Add(tag.Trim().ToLowerInvariant());

@@ -49,8 +49,16 @@ public static class MecabricksImporter
     /// <summary>Imports the model in the folder (a path like Assets/Models/Bricks/3009), returns its prefab.</summary>
     public static GameObject Import(string folder) {
         JObject config = JObject.Parse(File.ReadAllText(Path.Combine(folder, "config.json")));
+        // newer exports wrap it: {"status": "pass", "data": {"configuration": {...}}}
+        if (config["data"]?["configuration"] is JObject wrapped) {
+            config = wrapped;
+        }
         JObject geometry = JObject.Parse(File.ReadAllText(Path.Combine(folder, "geometry.json")));
+        // the folder's name if it has none (or a file's, like "4738v4.json")
         string name = (string)config["name"];
+        if (string.IsNullOrEmpty(name) || name.EndsWith(".json")) {
+            name = Path.GetFileName(folder.TrimEnd('/', '\\'));
+        }
 
         // the normal map, applied with the first uv set
         Texture2D normalMap = null;
@@ -123,7 +131,7 @@ public static class MecabricksImporter
         float[] positions = geometry["vertices"].ToObject<float[]>();
         float[] normals = geometry["normals"].ToObject<float[]>();
         int[] faces = geometry["faces"].ToObject<int[]>();
-        JArray uvLayers = (JArray)geometry["uvs"];
+        JArray uvLayers = geometry["uvs"] as JArray ?? new JArray(); // models without uvs have none
         float[][] uvs = new float[uvLayers.Count][];
         for (int i = 0; i < uvs.Length; i++) {
             uvs[i] = uvLayers[i].ToObject<float[]>();

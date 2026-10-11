@@ -1,0 +1,9 @@
+{
+    "name": "Chest",
+    "type": "brick",
+    "brickModel": "4738v4",
+    "color": 70,
+    "colors": "all",
+    "tags": ["storage"],
+    "storageSlots": 27
+}

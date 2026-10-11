@@ -377,6 +377,50 @@ namespace Brickcraft.Network
             ModScripts.ItemEvent(brick.itemId, "onBroken", handle, player);
         }
 
+        /// <summary>A click on a storage brick (or its lid): looks inside, or hears why not (see BrickStorage).</summary>
+        [Command]
+        public void CmdOpenStorage(string brickId) {
+            if (health.isDead || !Server.bricks.TryGetValue(brickId, out Brick clicked)) {
+                return;
+            }
+            Brick storage = BrickStorage.StorageOf(clicked);
+            if (storage == null || !isInReach(storage.placement.WorldBounds.center)) {
+                return;
+            }
+            if (!BrickStorage.CanOpen(connectionToClient, storage)) {
+                connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "It's locked: only its owner can open it" });
+                return;
+            }
+            if (BrickStorage.IsInUse(storage, connectionToClient)) {
+                connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "Someone else is looking inside" });
+                return;
+            }
+            // a mod can keep it closed
+            if (ModScripts.HasItemEvent(storage.itemId, "onStorageOpened")
+                    && !ModScripts.ItemEvent(storage.itemId, "onStorageOpened", BrickHandle.ForBrick(storage, WorldNetwork.ServerPlacerOf(storage)), PlayerHandle.For(connectionToClient))) {
+                return;
+            }
+            BrickStorage.ServerOpen(connectionToClient, storage);
+        }
+
+        [Command]
+        public void CmdCloseStorage(string brickId) {
+            BrickStorage.ServerClose(connectionToClient, brickId, false);
+        }
+
+        /// <summary>It picked up something from the ground (see DroppedItems).</summary>
+        [Server]
+        public void ServerPickedUp() {
+            if (connectionToClient != null) {
+                TargetPickedUp();
+            }
+        }
+
+        [TargetRpc]
+        private void TargetPickedUp() {
+            SoundManager.Instance.play(SoundManager.EFFECT_TAPPING);
+        }
+
         /// <summary>A click on a bed: sleeps in it (see PlayerSleep), or hears why not.</summary>
         [Command]
         public void CmdSleep(string brickId) {

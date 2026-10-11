@@ -223,6 +223,22 @@ namespace Brickcraft.Scripting
                 return DynValue.NewTable(players);
             });
 
+            // items on the ground there, picked up by players walking onto them (see Network.DroppedItems)
+            world["dropItem"] = DynValue.NewCallback((context, args) => {
+                Item item = ItemOf(args.AsType(0, "dropItem", DataType.String).String);
+                Vector3Int cell = LuaVector.Read(args[1], "dropItem's position");
+                int count = args.Count > 2 && args[2].Type == DataType.Number ? (int)args[2].Number : 1;
+                int color = args.Count > 3 && args[3].Type == DataType.Number ? (int)args[3].Number : item.color;
+                if (count < 1) {
+                    throw new ScriptRuntimeException("dropItem's count should be at least 1");
+                }
+                if (!IsLoaded(cell)) {
+                    return DynValue.False;
+                }
+                Network.DroppedItems.ServerDrop(item.id, item.ValidColor(color), count, 0, BrickGrid.CellToWorld(cell, new Vector3(0.5f, 0.2f, 0.5f)), Vector3.zero);
+                return DynValue.True;
+            });
+
             world["spawnNpc"] = DynValue.NewCallback((context, args) => {
                 string id = args.AsType(0, "spawnNpc", DataType.String).String;
                 Npcs.NpcInfo info = Npcs.NpcDatabase.Get(id) ?? Npcs.NpcDatabase.Get(ModScripts.ModOf(script) + ":" + id);

@@ -177,6 +177,12 @@ namespace Brickcraft
                     stopDigging();
                 }
 
+                // throwing what's in hand: one, or the whole stack with Ctrl
+                if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Drop) && SelectedItem != null) {
+                    bool whole = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+                    inventory.CmdDrop(SelectedSlot, whole ? SelectedItem.quantity : 1);
+                }
+
                 // what happens is up to the brick's mod, see ModScripts; NPCs are tamed or given orders
                 if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Interact)) {
                     if (lookedHealth != null && lookedHealth.GetComponent<Npcs.Npc>() != null) {
@@ -222,14 +228,15 @@ namespace Brickcraft
             EventManager.SelectedSlotChanged.Raise(new SelectedSlotChangedEvent() { slot = SelectedSlot });
         }
 
-        // a click on a door opens or closes it, on a bed sleeps in it; true while it may still be one (digging waits for it)
+        // a click on a door opens or closes it, on a bed sleeps in it, on a chest looks inside; true while it may still be one (digging waits for it)
         private bool clickDoors(bool isDigHeld) {
             bool isPressed = isDigHeld && !wasDigHeld;
             bool isReleased = !isDigHeld && wasDigHeld;
             wasDigHeld = isDigHeld;
 
             if (isPressed) {
-                clickedDoor = lookedBrick != null && (lookedBrick.gameObject.GetComponentInChildren<BrickDoor>() != null || isBed(lookedBrick)) ? lookedBrick : null;
+                clickedDoor = lookedBrick != null && (lookedBrick.gameObject.GetComponentInChildren<BrickDoor>() != null || isBed(lookedBrick)
+                    || BrickStorage.StorageOf(lookedBrick) != null) ? lookedBrick : null;
                 clickStart = Time.time;
             }
             if (clickedDoor == null) {
@@ -240,6 +247,8 @@ namespace Brickcraft
                 if (isQuick && lookedBrick == clickedDoor) {
                     if (isBed(clickedDoor)) {
                         network.CmdSleep(clickedDoor.id);
+                    } else if (BrickStorage.StorageOf(clickedDoor) != null) {
+                        network.CmdOpenStorage(clickedDoor.id);
                     } else {
                         network.CmdToggleDoor(clickedDoor.id);
                     }

@@ -47,6 +47,18 @@ namespace Brickcraft
         public HashSet<string> tags = new HashSet<string>();
 
         public const string BedTag = "bed";
+        /// <summary>Placed, it keeps items (see Network.BrickStorage).</summary>
+        public const string StorageTag = "storage";
+        public const int DefaultStorageSlots = 27;
+        /// <summary>The most a storage item can have (the storage panel scrolls past 27).</summary>
+        public const int MaxStorageSlots = 54;
+
+        /// <summary>Items tagged "storage": how many slots a placed one has.</summary>
+        public int storageSlots = DefaultStorageSlots;
+
+        public bool IsStorage {
+            get { return tags.Contains(StorageTag); }
+        }
 
         // World block this item turns into when placed exactly over a world block (2x2 bricks only)
         public BlockType? blockType;

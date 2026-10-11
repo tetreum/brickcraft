@@ -4,3 +4,10 @@ function onInteract(npc, player)
     player:message("The moss golem rumbles. It seems to like leaves.")
   end
 end
+
+-- Its schedule (info.json) sends it to bed at 21:00, in a bed near where it appeared if there is one.
+function onActivity(npc, activity)
+  if activity == "sleep" then
+    log(npc.name .. " goes to sleep, it's " .. string.format("%02d:%02d", math.floor(world.time()), math.floor(world.time() % 1 * 60)))
+  end
+end

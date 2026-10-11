@@ -188,6 +188,11 @@ namespace Brickcraft
             if (!loadColors(item, info.colors, file)) {
                 return;
             }
+            foreach (string tag in info.tags ?? new string[0]) {
+                if (!string.IsNullOrWhiteSpace(tag)) {
+                    item.tags.Add(tag.Trim().ToLowerInvariant());
+                }
+            }
             if (item.iconTexture == null && item.color != BrickColor.None) {
                 item.iconTexture = colorIcon(BrickColorPalette.Get(item.color));
             }

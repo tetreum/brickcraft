@@ -77,6 +77,18 @@ for _, npc in ipairs(world.npcs(player.position, 40)) do
 end
 ```
 
+## world.time()
+
+The game's time of day in hours, from 0 (midnight) to 24: `7.5` is 07:30. The sun rises at 6 and sets at 18.
+
+## world.day()
+
+Which day of the world it is, counting from 1.
+
+## world.isNight()
+
+Whether it's night: from 20:00 to 06:00 (when `"night"` NPCs appear).
+
 ## world.isLoaded(position)
 
 Whether that part of the world is loaded, so it can be changed.

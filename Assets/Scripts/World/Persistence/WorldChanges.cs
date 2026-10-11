@@ -54,6 +54,13 @@ namespace Brickcraft.World
         public byte attacks;
         /// <summary>Its pack (see Npcs.NpcGroups), Guid.Empty if it has none.</summary>
         public Guid pack;
+        /// <summary>It appeared by itself (see Npcs.NpcSpawner), it may go away.</summary>
+        public bool natural;
+        /// <summary>Its home, an absolute cell (see Npcs.Npc.Home), when it has one.</summary>
+        public bool hasHome;
+        public Vector3Int home;
+        /// <summary>The bed it sleeps in (a brick id), Guid.Empty if none.</summary>
+        public Guid bed;
     }
 
     /// <summary>
@@ -309,6 +316,8 @@ namespace Brickcraft.World
     ///   varint NPC count (always 0 in what's sent to clients), then per NPC: string type, double x y z (absolute),
     ///     float yaw, varint health, varint owner (then, when not 0, string owner name and u8 attack mode),
     ///     u8 pack flag (then 16 bytes pack id)
+    ///   varint count of the NPCs' extras (0, or the NPC count), then per NPC in the same order: u8 flags
+    ///     (1 natural, 2 home, 4 bed), then for a home zigzag varint x y z, for a bed its 16 bytes id
     /// where placer is a varint player id (0 when no player placed it) followed, when not 0, by varint unix seconds.
     /// Blocks are saved by name, the numbers chunks use are only valid in the game that gave them (see
     /// BlockDatabase).
@@ -316,7 +325,7 @@ namespace Brickcraft.World
     public static class ChunkChangesSerializer
     {
         // change it when the format changes, records of other versions are rejected
-        public const byte Version = 7;
+        public const byte Version = 8;
 
         // pages keep network messages small, even for heavily modified chunks
         private const int BlocksPerPage = 8192;
@@ -416,6 +425,22 @@ namespace Brickcraft.World
                     npc.pack = reader.ReadByte() != 0 ? new Guid(reader.ReadBytes(16)) : Guid.Empty;
                     changes.npcs.Add(npc);
                 }
+
+                // what came after (records from before have no extras: 0)
+                int extras = (int)readVarUInt(reader);
+                for (int i = 0; i < extras; i++) {
+                    byte flags = reader.ReadByte();
+                    SavedNpc npc = i < changes.npcs.Count ? changes.npcs[i] : default(SavedNpc);
+                    npc.natural = (flags & 1) != 0;
+                    npc.hasHome = (flags & 2) != 0;
+                    if (npc.hasHome) {
+                        npc.home = new Vector3Int(readVarInt(reader), readVarInt(reader), readVarInt(reader));
+                    }
+                    npc.bed = (flags & 4) != 0 ? new Guid(reader.ReadBytes(16)) : Guid.Empty;
+                    if (i < changes.npcs.Count) {
+                        changes.npcs[i] = npc;
+                    }
+                }
             }
             return changes;
         }
@@ -486,6 +511,19 @@ namespace Brickcraft.World
                         writer.Write((byte)(npc.pack != Guid.Empty ? 1 : 0));
                         if (npc.pack != Guid.Empty) {
                             writer.Write(npc.pack.ToByteArray());
+                        }
+                    }
+
+                    writeVarUInt(writer, (uint)npcs.Count);
+                    foreach (SavedNpc npc in npcs) {
+                        writer.Write((byte)((npc.natural ? 1 : 0) | (npc.hasHome ? 2 : 0) | (npc.bed != Guid.Empty ? 4 : 0)));
+                        if (npc.hasHome) {
+                            writeVarInt(writer, npc.home.x);
+                            writeVarInt(writer, npc.home.y);
+                            writeVarInt(writer, npc.home.z);
+                        }
+                        if (npc.bed != Guid.Empty) {
+                            writer.Write(npc.bed.ToByteArray());
                         }
                     }
                 }

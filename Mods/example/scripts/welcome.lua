@@ -49,3 +49,12 @@ function onPlayerLeft(player)
   shared.launches = shared.launches or {}
   shared.launches[player.id] = nil
 end
+
+-- Every hour of the game: at 20:00, players hear the night is coming.
+function onHour(hour, day)
+  if hour == 20 then
+    for _, player in ipairs(world.players()) do
+      player:message("Night is falling on day " .. day .. ". Golems are about.")
+    end
+  end
+end

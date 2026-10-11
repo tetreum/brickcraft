@@ -16,8 +16,10 @@ namespace Brickcraft.Npcs
     /// Wild NPCs go for whoever matches one of their aggro rules (NpcInfo.aggro, or their behaviour's), the
     /// nearest of them; one they lose from sight they look for where it last was, and after their memory
     /// runs out they give up (onTargetLost). One they can't get to they leave alone for a while. Passive
-    /// ones run from who hurts them; with nobody to go for they wander, or follow their pack's leader (see
-    /// NpcGroups: a pack goes for whoever one of them goes for).
+    /// ones run from who hurts them; with nobody to go for they do what their schedule says for this time of
+    /// day (NpcInfo.schedule: wander, stay home, sleep in a bed near home...), or else wander, or follow their
+    /// pack's leader (see NpcGroups: a pack goes for whoever one of them goes for). Asleep, they don't see and
+    /// hear a third as far: being hurt, or a noise close by, wakes them up.
     ///
     /// Pets (tamed with NpcInfo.tameWith) follow their owner (or stay), catching up when left behind, and
     /// attack what their attack mode says: those who hurt their owner or whom their owner hits, hostile NPCs
@@ -81,6 +83,12 @@ namespace Brickcraft.Npcs
         /// <summary>Who hurt it since it last thought, null if nobody.</summary>
         public Health AttackedBy { get; private set; }
 
+        /// <summary>What its schedule says it does now (NpcInfo.schedule), "wander" without one.</summary>
+        public string Activity { get; private set; } = ScheduleEntry.Wander;
+        private ScheduleEntry scheduled;
+        // asleep it hears this much of what it would awake
+        private const float SleepHearing = 0.33f;
+
         public Health Target {
             get { return target; }
         }
@@ -104,6 +112,7 @@ namespace Brickcraft.Npcs
         // -------- thinking --------
 
         public void Think(double now) {
+            updateActivity();
             perceive(now);
             if (ModScripts.HasNpcEvent(npc.type, "onThink")
                     && !ModScripts.NpcEvent(npc.type, "onThink", script => new object[] { NpcHandle.For(npc), LuaSenses.Table(script, this) })) {
@@ -122,6 +131,7 @@ namespace Brickcraft.Npcs
             Seen.Clear();
             Heard.Clear();
             AttackedBy = lastAttackedAt > previousThink ? lastAttacker : null;
+            bool asleep = npc.isLying;
             float half = info.fieldOfView / 2;
             float feel = feelRange();
             foreach (Health candidate in candidates()) {
@@ -130,7 +140,7 @@ namespace Brickcraft.Npcs
                 if (distance <= feel) {
                     remember(candidate, now); // that close, seen or not (a "distance" rule)
                 }
-                if (distance > info.sightRange) {
+                if (distance > info.sightRange || asleep) {
                     continue;
                 }
                 to.y = 0;
@@ -143,7 +153,7 @@ namespace Brickcraft.Npcs
                 if (noise.time <= lastNoise || noise.source == npc.Health) {
                     continue;
                 }
-                if (Vector3.Distance(noise.position, npc.transform.position) <= Mathf.Min(noise.radius, info.hearingRange)) {
+                if (Vector3.Distance(noise.position, npc.transform.position) <= Mathf.Min(noise.radius, info.hearingRange) * (asleep ? SleepHearing : 1)) {
                     Heard.Add(noise);
                     if (noise.source != null) {
                         remember(noise.source, now).position = noise.position;
@@ -241,6 +251,9 @@ namespace Brickcraft.Npcs
                 npc.OrderMoveTo(npc.transform.position + away.normalized * FleeDistance, 1);
                 return;
             }
+            if (followSchedule()) {
+                return;
+            }
             NpcGroups.Pack pack = NpcGroups.PackOf(npc);
             Npc leader = pack != null ? pack.Leader : null;
             if (leader != null && leader != npc) {
@@ -248,6 +261,75 @@ namespace Brickcraft.Npcs
                 return;
             }
             npc.OrderWander();
+        }
+
+        // -------- schedule --------
+
+        // what it does now, telling its script when that changes (pets have no schedule)
+        private void updateActivity() {
+            scheduled = null;
+            if (Owner == 0) {
+                foreach (ScheduleEntry entry in info.schedule ?? new ScheduleEntry[0]) {
+                    if (entry.window.IsNow) {
+                        scheduled = entry;
+                        break;
+                    }
+                }
+            }
+            string activity = scheduled != null ? scheduled.activity : ScheduleEntry.Wander;
+            if (activity != Activity) {
+                Activity = activity;
+                scriptEvent("onActivity", script => new object[] { NpcHandle.For(npc), activity });
+            }
+        }
+
+        // false: nothing scheduled (it wanders, or follows its pack)
+        private bool followSchedule() {
+            if (scheduled == null) {
+                return false;
+            }
+            switch (scheduled.activity) {
+                case ScheduleEntry.Wander:
+                    if (scheduled.range <= 0) {
+                        return false;
+                    }
+                    npc.OrderWanderNear(npc.Home, scheduled.range);
+                    return true;
+                case ScheduleEntry.Stay:
+                    npc.OrderMoveTo(npc.HomePosition, 1);
+                    return true;
+                case ScheduleEntry.Sleep:
+                    sleep();
+                    return true;
+                default:
+                    npc.OrderIdle(); // a script's own activity: its onThink gives the orders
+                    return true;
+            }
+        }
+
+        // to its bed (or home), and lies down there; where it is if it can't get there
+        private void sleep() {
+            if (npc.isLying) {
+                npc.OrderIdle();
+                return;
+            }
+            Brick bed = NpcBeds.Claim(npc);
+            Vector3 place = npc.HomePosition;
+            float reach = 1.2f;
+            if (bed != null) {
+                Bounds bounds = bed.placement.WorldBounds;
+                place = bounds.center;
+                reach = Mathf.Max(bounds.extents.x, bounds.extents.z) + npc.Radius + 0.8f;
+            }
+            if (Npc.horizontalDistance(npc.transform.position, place) <= reach) {
+                Transform point = bed != null ? NpcBeds.SleepPointOf(bed) : null;
+                npc.LieDown(point != null ? point.position : npc.transform.position, point != null ? point.rotation : npc.transform.rotation);
+                return;
+            }
+            npc.OrderMoveTo(place, reach - 0.3f);
+            if (npc.IsUnreachable) {
+                npc.LieDown(npc.transform.position, npc.transform.rotation);
+            }
         }
 
         /// <summary>A packmate goes for someone: it does too, if it would go for them.</summary>

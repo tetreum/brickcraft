@@ -274,7 +274,9 @@ namespace Brickcraft.Network
 
         /// <summary>Changes the game's time (days since the world began) and tells the clients.</summary>
         public static void ServerSetTime(double time) {
+            double before = WorldTime.Time;
             WorldTime.Time = Math.Max(0, time);
+            WorldTime.RaiseHoursBetween(before, WorldTime.Time);
             SaveTime();
             broadcastTime();
         }
@@ -295,7 +297,9 @@ namespace Brickcraft.Network
                 WorldTime.IsPaused = paused;
                 nextTimeBroadcast = 0;
             }
+            double before = WorldTime.Time;
             WorldTime.Advance(Time.deltaTime);
+            WorldTime.RaiseHoursBetween(before, WorldTime.Time);
             if (Time.unscaledTime >= nextTimeBroadcast) {
                 broadcastTime();
             }

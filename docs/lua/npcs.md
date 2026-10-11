@@ -23,6 +23,8 @@ NPCs run on the server, a few times a second each, and only near players. Use `:
 | `health`, `maxHealth` | Its health now and when full. |
 | `target` | Who it's after, a [player](players.md) or an NPC, `nil` if nobody. |
 | `owner` | If it's a pet, its owner (a [player](players.md); `nil` while they're away). `nil` if it's wild. |
+| `activity` | What its schedule (its info.json's `schedule`) says it does now: `"wander"`, `"stay"`, `"sleep"`, or a name of your own. |
+| `asleep` | It's lying down asleep. |
 
 ## Orders
 
@@ -92,3 +94,21 @@ It gave up on who it was after: it lost them from sight for longer than it remem
 ### onInteract(npc, player)
 
 A player used it (the "Use brick" key, E by default). **Return `false`** to keep the game from doing anything else (taming it, or a pet's orders).
+
+### onActivity(npc, activity)
+
+Its schedule moved it to another activity (see `npc.activity`). For an activity of your own (any name the game doesn't know), the game only stands it still: give it its orders in `onThink`.
+
+```lua
+-- info.json: "schedule": [ { "time": "08:00-18:00", "activity": "patrol" } ]
+function onThink(npc, senses)
+  if npc.activity == "patrol" and npc.target == nil then
+    npc:moveTo(nextWaypoint(npc))
+    return false
+  end
+end
+```
+
+### onHour(npc, hour)
+
+An hour of the game began (0 to 23), see the mod event `onHour`.

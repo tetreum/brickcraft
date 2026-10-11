@@ -43,6 +43,19 @@ namespace Brickcraft.World
             get { return TimeOfDay >= 0.25f && TimeOfDay < 0.75f; }
         }
 
+        /// <summary>Server: an hour of the game began (0 to 23), every hour passed once even when time jumps (/time).</summary>
+        public static event Action<int> ServerHourStarted;
+
+        /// <summary>Server: tells ServerHourStarted about the hours from one time to another (at most a day's).</summary>
+        public static void RaiseHoursBetween(double from, double to) {
+            long first = (long)Math.Floor(from * 24) + 1;
+            long last = (long)Math.Floor(to * 24);
+            first = Math.Max(first, last - 23);
+            for (long hour = first; hour <= last; hour++) {
+                ServerHourStarted?.Invoke((int)(hour % 24));
+            }
+        }
+
         /// <summary>Moves it on by that many real seconds, unless it's paused.</summary>
         public static void Advance(float seconds) {
             if (!IsPaused && DayLength > 0) {

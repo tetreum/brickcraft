@@ -18,8 +18,8 @@ Mods can script their bricks in Lua ([MoonSharp](https://www.moonsharp.org/), Lu
 ```
 Mods/my_mod/
   items/catapult/script.lua   the catapult's events (onPlaced, onHit, onBroken, onInteract)
-  npcs/wolf/script.lua        the wolf's events (onSpawn, onThink, onDamaged, onDeath, onTargetLost, onInteract)
-  scripts/*.lua               the mod's events (onLoad, onPlayerJoined, onPlayerLeft, onChat), any number of files
+  npcs/wolf/script.lua        the wolf's events (onSpawn, onThink, onDamaged, onDeath, onTargetLost, onInteract, onActivity, onHour)
+  scripts/*.lua               the mod's events (onLoad, onPlayerJoined, onPlayerLeft, onChat, onHour...), any number of files
 ```
 
 ```lua

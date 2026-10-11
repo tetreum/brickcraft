@@ -189,6 +189,24 @@ namespace Brickcraft.Npcs
             }
             models[info.id] = model;
             info.attack = info.attack ?? new AttackInfo();
+            if (info.spawn != null) {
+                if (!World.TimeWindow.TryParse(info.spawn.time, out info.spawn.window)) {
+                    Debug.LogError("The NPC " + info.id + " has the spawn time \"" + info.spawn.time + "\", times are day, night, any or HH:MM-HH:MM");
+                }
+                if (info.spawn.atDay != SpawnInfo.Stay && info.spawn.atDay != SpawnInfo.Despawn) {
+                    Debug.LogError("The NPC " + info.id + " has the spawn atDay \"" + info.spawn.atDay + "\", it's stay or despawn");
+                    info.spawn.atDay = SpawnInfo.Stay;
+                }
+            }
+            List<ScheduleEntry> schedule = new List<ScheduleEntry>();
+            foreach (ScheduleEntry entry in info.schedule ?? new ScheduleEntry[0]) {
+                if (entry == null || !World.TimeWindow.TryParse(entry.time, out entry.window) || string.IsNullOrEmpty(entry.activity)) {
+                    Debug.LogError("The NPC " + info.id + " has a schedule entry it can't read (time " + entry?.time + ", activity " + entry?.activity + ")");
+                    continue;
+                }
+                schedule.Add(entry);
+            }
+            info.schedule = schedule.ToArray();
             info.drops = info.drops ?? new DropInfo[0];
             foreach (DropInfo drop in info.drops) {
                 // the mod's item if it has one with that name

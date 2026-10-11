@@ -88,7 +88,9 @@ namespace Brickcraft.Npcs
             populated.Clear();
             petsBack.Clear();
             isStopped = false;
+            NpcBeds.Clear();
             Health.ServerAnyDamaged += onAnyDamaged;
+            WorldTime.ServerHourStarted += onHourStarted;
             subscribedWorld = World.WorldBehaviour.Instance;
             if (subscribedWorld != null) {
                 subscribedWorld.ChunkGenerated += onChunkGenerated;
@@ -103,6 +105,8 @@ namespace Brickcraft.Npcs
             NpcSteering.Clear();
             NpcGroups.Clear();
             Health.ServerAnyDamaged -= onAnyDamaged;
+            WorldTime.ServerHourStarted -= onHourStarted;
+            NpcBeds.Clear();
             hits.Clear();
             lastPositions.Clear();
             if (subscribedWorld != null) {
@@ -347,6 +351,10 @@ namespace Brickcraft.Npcs
                 ownerName = npc.ownerName,
                 attacks = (byte)npc.Brain.Attacks,
                 pack = pack != null ? pack.id : Guid.Empty, // (its packmates may be gone already, saved with another chunk)
+                natural = npc.IsNatural,
+                hasHome = true,
+                home = npc.Home,
+                bed = npc.BedId != null && Guid.TryParse(npc.BedId, out Guid bed) ? bed : Guid.Empty,
             };
         }
 
@@ -366,6 +374,13 @@ namespace Brickcraft.Npcs
             }
             if (saved.pack != Guid.Empty) {
                 NpcGroups.Join(npc, saved.pack);
+            }
+            npc.IsNatural = saved.natural;
+            if (saved.hasHome) {
+                npc.Home = saved.home;
+            }
+            if (saved.bed != Guid.Empty) {
+                NpcBeds.Restore(npc, saved.bed.ToString());
             }
         }
 
@@ -422,6 +437,16 @@ namespace Brickcraft.Npcs
             WorldChanges changes = savedChanges;
             if (wasPopulated && !isStopped && changes != null) {
                 changes.SetNpcs(coords, left);
+            }
+        }
+
+        // a new hour: mods' scripts and NPCs' scripts hear it
+        private static void onHourStarted(int hour) {
+            Scripting.ModScripts.ModEvent("onHour", hour, WorldTime.Day + 1); // days count from 1 for scripts, like world.day()
+            foreach (Npc npc in new List<Npc>(npcs)) {
+                if (npc != null && !npc.Health.isDead && Scripting.ModScripts.HasNpcEvent(npc.type, "onHour")) {
+                    Scripting.ModScripts.NpcEvent(npc.type, "onHour", script => new object[] { Scripting.NpcHandle.For(npc), hour });
+                }
             }
         }
 

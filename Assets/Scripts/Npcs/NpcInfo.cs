@@ -70,6 +70,31 @@ namespace Brickcraft.Npcs
         public Dictionary<string, string> animations;
         /// <summary>Where it appears by itself around players (see NpcSpawner), null if it doesn't.</summary>
         public SpawnInfo spawn;
+        /// <summary>
+        /// What it does at each time of day when nothing else is going on (see NpcBrain): the first entry whose
+        /// time it is now; wandering freely if none.
+        /// </summary>
+        public ScheduleEntry[] schedule;
+    }
+
+    /// <summary>What an NPC does part of the day, see NpcInfo.schedule.</summary>
+    public class ScheduleEntry
+    {
+        /// <summary>When, see World.TimeWindow: "21:00-06:30", "night", "day".</summary>
+        public string time;
+        /// <summary>
+        /// "wander" (around, near home if range is given), "stay" (at home), "sleep" (in a bed near home, or
+        /// at home without one), or any other name a script handles (it gets it as npc.activity).
+        /// </summary>
+        public string activity = Wander;
+        /// <summary>wander: how far from home it goes, in meters (anywhere if 0).</summary>
+        public float range;
+
+        public const string Wander = "wander";
+        public const string Stay = "stay";
+        public const string Sleep = "sleep";
+
+        [Newtonsoft.Json.JsonIgnore] public World.TimeWindow window;
     }
 
     /// <summary>Where and how an NPC appears by itself, see NpcSpawner.</summary>
@@ -85,6 +110,18 @@ namespace Brickcraft.Npcs
         /// <summary>Between which heights, in blocks (the sea is at 64).</summary>
         public int minHeight = 0;
         public int maxHeight = 255;
+        /// <summary>When, see World.TimeWindow: "night", "day", "21:00-05:00"; any time if empty.</summary>
+        public string time;
+        /// <summary>
+        /// What those that appeared by themselves do once it's no longer their time (see NpcSpawner): "stay"
+        /// (the default), or "despawn": they go when no player is near.
+        /// </summary>
+        public string atDay = Stay;
+
+        public const string Stay = "stay";
+        public const string Despawn = "despawn";
+
+        [Newtonsoft.Json.JsonIgnore] public World.TimeWindow window;
     }
 
     public class AggroRule

@@ -207,6 +207,11 @@ namespace Brickcraft.Scripting
                 return DynValue.NewTable(found);
             });
 
+            // the game's time: hours (0 to 24), the day (from 1), and whether it's night (20:00 to 06:00)
+            world["time"] = DynValue.NewCallback((context, args) => DynValue.NewNumber(World.WorldTime.Hours));
+            world["day"] = DynValue.NewCallback((context, args) => DynValue.NewNumber(World.WorldTime.Day + 1));
+            world["isNight"] = DynValue.NewCallback((context, args) => DynValue.NewBoolean(World.TimeWindow.Night.IsNow));
+
             world["players"] = DynValue.NewCallback((context, args) => {
                 Table players = new Table(script);
                 foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {

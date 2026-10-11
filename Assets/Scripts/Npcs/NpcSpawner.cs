@@ -11,9 +11,10 @@ namespace Brickcraft.Npcs
     /// NPCs appearing by themselves, on the server: every few seconds, around each player with fewer than
     /// MaxAround wild NPCs near them, a place on the surface out of their way (MinDistance to MaxDistance
     /// from every player) is picked, and one of the NPCs whose spawn rules (NpcInfo.spawn) fit its block and
-    /// height appears there, with its group (a pack). Not on fluids, and aggressive ones not in Peaceful
-    /// worlds. Only in the generated world (not the test scene). They're saved with their chunks like
-    /// any other, so the places players went keep theirs.
+    /// height appears there, with its group (a pack). Not on fluids, at their time of day (SpawnInfo.time),
+    /// and aggressive ones not in Peaceful worlds. Only in the generated world (not the test scene). They're
+    /// saved with their chunks like any other, so the places players went keep theirs; those whose
+    /// SpawnInfo.atDay is "despawn" go once it's no longer their time and no player is near.
     /// </summary>
     public static class NpcSpawner
     {
@@ -26,6 +27,9 @@ namespace Brickcraft.Npcs
         private const int Tries = 4;
         // how far around the first the rest of its group appears, in blocks
         private const int GroupSpread = 2;
+        // out of their time, they go when no player is this close, a few at a time
+        private const float DespawnDistance = 32;
+        private const int DespawnsPerTry = 4;
 
         /// <summary>Whether they appear (scripts or admins may turn it off).</summary>
         public static bool Enabled = true;
@@ -38,9 +42,10 @@ namespace Brickcraft.Npcs
                 return;
             }
             nextTry = Time.unscaledTime + Interval;
+            despawnOutOfTime();
             List<NpcInfo> kinds = new List<NpcInfo>();
             foreach (NpcInfo info in NpcDatabase.All) {
-                if (info.spawn != null && info.spawn.weight > 0
+                if (info.spawn != null && info.spawn.weight > 0 && info.spawn.window.IsNow
                         && !(WorldNetwork.Difficulty == Difficulty.Peaceful && info.behaviour == NpcInfo.Aggressive)) {
                     kinds.Add(info);
                 }
@@ -92,6 +97,7 @@ namespace Brickcraft.Npcs
             if (first == null) {
                 return;
             }
+            first.IsNatural = true;
             for (int i = 1; i < count; i++) {
                 // the rest around it, where the ground is as high (not in a wall, not down a cliff)
                 for (int attempt = 0; attempt < 4; attempt++) {
@@ -100,6 +106,7 @@ namespace Brickcraft.Npcs
                     if (surface(world, mx, mz, out int h, out _) && Mathf.Abs(h - height) <= 1) {
                         Npc member = NpcSystem.ServerSpawn(info, onTop(mx, h, mz), Random.Range(0f, 360f));
                         if (member != null) {
+                            member.IsNatural = true;
                             NpcGroups.Join(member, first);
                         }
                         break;
@@ -153,9 +160,31 @@ namespace Brickcraft.Npcs
             return fitting.Count > 0 ? fitting[fitting.Count - 1] : null;
         }
 
+        // those that came by themselves for a time of day that's over go, away from players (and not fighting)
+        private static void despawnOutOfTime() {
+            int despawned = 0;
+            foreach (Npc npc in new List<Npc>(NpcSystem.All)) {
+                if (despawned >= DespawnsPerTry) {
+                    return;
+                }
+                SpawnInfo spawn = npc.Info != null ? npc.Info.spawn : null;
+                if (!npc.IsNatural || spawn == null || spawn.atDay != SpawnInfo.Despawn || spawn.window.IsNow
+                        || npc.Health.isDead || (npc.Brain != null && (npc.Brain.Owner != 0 || npc.Brain.Target != null))
+                        || isNearPlayer(npc.transform.position, DespawnDistance)) {
+                    continue;
+                }
+                npc.Despawn();
+                despawned++;
+            }
+        }
+
         private static bool isNearPlayer(Vector3 place) {
+            return isNearPlayer(place, MinDistance);
+        }
+
+        private static bool isNearPlayer(Vector3 place, float distance) {
             foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {
-                if (conn.identity != null && Npc.horizontalDistance(conn.identity.transform.position, place) < MinDistance) {
+                if (conn.identity != null && Npc.horizontalDistance(conn.identity.transform.position, place) < distance) {
                     return true;
                 }
             }

@@ -213,6 +213,7 @@ Items/marble/
   - `fluid`: a liquid (like water and lava): NPCs that walk keep out of it.
   - `translucent`: drawn see-through (like water), with the terrain's translucent material (`Resources/Materials/Block_Translucent`, 60% opaque, its shader is `Resources/Shader/TerrainTranslucent`). What's behind it is drawn too, and its own sides only where they touch air.
   - `drop`: id of the item given when dug, like `"stone"`. The item itself if missing.
+- `tags`: what it is to the game besides its type, like `["bed"]`: NPCs sleep in placed bricks of items tagged `bed` (see How can i add an NPC?).
 - `recipes`: ways to craft the item. Each makes `quantity` of it (1 by default) from its `ingredients`, each one an item `id`, a `quantity` (1 by default) and a crafting `slot`, 1 to 4 (left to right, top to bottom). Recipes are identified as `<item>#<number>`, like `dirt_2x4#1`.
 
 Every field but `name` is optional. /Scenes/IconGenerator generates the missing `icon.png` of brick items.
@@ -280,7 +281,11 @@ NPCs are creatures the server runs (`Npcs.Npc`): they wander, go for players, at
     "tameWith": "iron_ore",
     "attack": { "damage": 5, "range": 0.9, "cooldown": 1.8, "hitTime": 1.2, "knockback": 8 },
     "drops": [ { "item": "iron_ore", "count": 3, "chance": 1 } ],
-    "spawn": { "on": ["stone", "gravel", "snow"], "weight": 1, "minGroup": 1, "maxGroup": 2, "minHeight": 0, "maxHeight": 255 },
+    "spawn": { "on": ["stone", "gravel", "snow"], "weight": 1, "minGroup": 1, "maxGroup": 2, "minHeight": 0, "maxHeight": 255, "time": "any", "atDay": "stay" },
+    "schedule": [
+        { "time": "21:00-06:30", "activity": "sleep" },
+        { "time": "06:30-21:00", "activity": "wander", "range": 16 }
+    ],
     "animations": { "idle": "idle", "walk": "walk", "attack": "attack", "death": "death" }
 }
 ```
@@ -293,7 +298,8 @@ NPCs are creatures the server runs (`Npcs.Npc`): they wander, go for players, at
 - `tameWith`: the item a player holds to make it their pet with the use key (E): it follows them (catching up when left behind) and defends them. Using a pet again gives its orders: follow or stay, and what it attacks (nothing; who hurts its owner or whom they hit; hostile NPCs too; players too, with PvP). Nobody can hurt their own pets, nor others' without PvP. Pets following their owner leave with them and come back next to them when they join (saved in players.db); pets told to stay stay where they are.
 - `attack`: `range` from its side, `cooldown` seconds between attacks, `hitTime` seconds into the attack animation when the hit lands (if the target is still in reach), `knockback` how hard it pushes.
 - `drops`: items (and their `chance`, 0 to 1) whoever kills it gets in their inventory (pets drop nothing).
-- `spawn`: where it appears by itself (`Npcs.NpcSpawner`): on which blocks (`on`, their ids; any solid one if empty), how likely next to the others that fit the same place (`weight`), how many together (`minGroup` to `maxGroup`, a pack) and between which heights in blocks (the sea is at 64). Every few seconds, around each player with fewer than 8 wild NPCs within 64 meters, a place on the surface 24 to 44 meters from every player is picked and one of the NPCs whose rules fit appears there with its group; never on fluids, and aggressive ones not in Peaceful worlds. Without `spawn` it only appears when spawned (`/spawnnpc`, scripts).
+- `spawn`: where it appears by itself (`Npcs.NpcSpawner`): on which blocks (`on`, their ids; any solid one if empty), how likely next to the others that fit the same place (`weight`), how many together (`minGroup` to `maxGroup`, a pack) and between which heights in blocks (the sea is at 64). Every few seconds, around each player with fewer than 8 wild NPCs within 64 meters, a place on the surface 24 to 44 meters from every player is picked and one of the NPCs whose rules fit appears there with its group; never on fluids, and aggressive ones not in Peaceful worlds. `time`: when it appears (`"day"` 06:00 to 20:00, `"night"` 20:00 to 06:00, `"HH:MM-HH:MM"`, which can go past midnight; any time by default). `atDay`: what those that appeared by themselves do once it's no longer their time: `"stay"` (the default) or `"despawn"`: they go, a few at a time, when no player is within 32 meters (and they aren't fighting); pets and NPCs spawned by admins or scripts never do. Without `spawn` it only appears when spawned (`/spawnnpc`, scripts).
+- `schedule`: what it does at each time of day when it has nobody to fight, run from or follow (`Npcs.NpcBrain`): the first entry whose `time` (written like `spawn`'s) it is. `activity` is `wander` (around, within `range` meters of its home if given), `stay` (at home), `sleep` or any other name, which its script handles (`npc.activity`, `onActivity`; the brain only stands it still). Its home is where it appeared. To sleep it claims the nearest free bed within 32 meters of home (a brick of an item tagged `bed`, see `Npcs.NpcBeds`) and lies on it, at the bed's `SleepPoint` (a child of the prefab: the sleeper's feet go there, its head the other way from where it faces); without a bed it lies down at home, and where it is if it can't get there. Lying, it plays its `sleep` animation, or lies on its back playing `idle` if its model has none. Asleep it doesn't see and hears a third as far: being hurt or a noise close by wakes it, and it goes back to sleep once nothing's going on. Home, bed and whether it appeared by itself are saved with it; pets have no schedule. The game's bed is `Items/bed` (model `Resources/BrickModels/bed`, from `Models/Items/Bed.fbx`).
 - Mods' NPCs can have a `script.lua` with their events and orders (see [docs/lua/npcs.md](docs/lua/npcs.md)): `onThink` gets what they perceive and can take over their thinking.
 - `animations`: the model's names for its idle, walk, attack and death animations, if they're named otherwise.
 

@@ -97,3 +97,17 @@ end
 ### onPlayerDied(player, killer)
 
 The player died; `killer` is the player that killed it, or `nil`. It comes back when it respawns.
+
+### onHour(hour, day)
+
+An hour of the game began: `hour` from 0 to 23, `day` counting from 1 (see `world.time()`). Every hour is told once, also when admins move time on with `/time` (at most a day's worth); none while the game is paused.
+
+```lua
+function onHour(hour, day)
+  if hour == 20 then
+    for _, player in ipairs(world.players()) do
+      player:message("Night is falling on day " .. day)
+    end
+  end
+end
+```

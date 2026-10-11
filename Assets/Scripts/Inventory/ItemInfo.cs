@@ -30,6 +30,8 @@ namespace Brickcraft
         public BlockInfo block;
         /// <summary>Ways to craft the item.</summary>
         public RecipeInfo[] recipes;
+        /// <summary>What it is to the game besides its type, like "bed" (NPCs sleep in placed beds).</summary>
+        public string[] tags;
     }
 
     /// <summary>The world block of a brick item, the "block" of its info.json.</summary>

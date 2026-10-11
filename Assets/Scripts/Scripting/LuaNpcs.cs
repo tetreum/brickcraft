@@ -48,6 +48,16 @@ namespace Brickcraft.Scripting
             get { return npc != null && npc.Brain != null ? LuaHandles.For(npc.Brain.Target ?? npc.OrderTarget) : null; }
         }
 
+        /// <summary>What its schedule says it does now (NpcInfo.schedule): "wander", "stay", "sleep" or a script's own.</summary>
+        public string activity {
+            get { return npc != null && npc.Brain != null ? npc.Brain.Activity : null; }
+        }
+
+        /// <summary>It's asleep (lying down).</summary>
+        public bool asleep {
+            get { return npc != null && npc.isLying; }
+        }
+
         /// <summary>Its owner if it's a pet (a player, nil while they're away), nil if it's wild.</summary>
         public PlayerHandle owner {
             get {

@@ -43,6 +43,10 @@ namespace Brickcraft
         public bool anyColor;
         /// <summary>Other colours it can have, besides its default one.</summary>
         public HashSet<int> colors = new HashSet<int>();
+        /// <summary>What it is to the game besides its type, from its info.json (lowercase), like "bed".</summary>
+        public HashSet<string> tags = new HashSet<string>();
+
+        public const string BedTag = "bed";
 
         // World block this item turns into when placed exactly over a world block (2x2 bricks only)
         public BlockType? blockType;

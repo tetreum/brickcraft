@@ -40,6 +40,7 @@ namespace Brickcraft.Npcs
         public const string Walk = "walk";
         public const string Attack = "attack";
         public const string Death = "death";
+        public const string Sleep = "sleep";
 
         /// <summary>Its kind, see NpcDatabase.</summary>
         [SyncVar(hook = nameof(onTypeChanged))] public string type;
@@ -47,6 +48,15 @@ namespace Brickcraft.Npcs
         [SyncVar(hook = nameof(onLoopChanged))] public string loop = Idle;
         /// <summary>Its owner's name if it's a pet, empty otherwise.</summary>
         [SyncVar] public string ownerName = "";
+        /// <summary>It's lying down (asleep): its model lies on its back, unless it has a sleep animation.</summary>
+        [SyncVar(hook = nameof(onLyingChanged))] public bool isLying;
+
+        /// <summary>Server: where it lives, an absolute cell (where it appeared, unless set): it sleeps in a bed near it, stays or wanders around it (see NpcInfo.schedule).</summary>
+        public Vector3Int Home { get; set; }
+        /// <summary>Server: it appeared by itself (NpcSpawner): it may go away (see SpawnInfo.atDay).</summary>
+        public bool IsNatural { get; set; }
+        /// <summary>Server: the bed it sleeps in (a brick id), null if none, see NpcBeds.</summary>
+        public string BedId { get; set; }
 
         public NpcInfo Info { get; private set; }
         public Health Health { get; private set; }
@@ -75,6 +85,8 @@ namespace Brickcraft.Npcs
         private Health orderTarget;
         private Vector3 orderPosition;
         private float orderRange;
+        private Vector3Int wanderHome;      // wandering: around there, within wanderRange (anywhere if 0)
+        private float wanderRange;
 
         private Vector3 heading;      // where it walks, a horizontal unit vector or zero
         private Vector3 steering;     // the velocity NpcSteering found, used while it's fresh
@@ -126,6 +138,7 @@ namespace Brickcraft.Npcs
         }
 
         public override void OnStartServer() {
+            Home = Bricks.BrickGrid.WorldToCell(transform.position + Vector3.up * 0.05f);
             setup();
             Health.ServerDied += onServerDied;
             facing = transform.forward;
@@ -137,6 +150,7 @@ namespace Brickcraft.Npcs
         public override void OnStopServer() {
             NpcSystem.Unregister(this);
             NpcGroups.Forget(this);
+            NpcBeds.Release(this);
         }
 
         public override void OnStartClient() {
@@ -182,6 +196,7 @@ namespace Brickcraft.Npcs
             body.radius = Mathf.Min(Mathf.Max(hitbox.size.x, hitbox.size.z) * Info.scale / 2, body.height / 2);
             agent = NavGrid.AgentFor(Info, body.radius, body.height);
             play(loop);
+            showLying();
         }
 
         /// <summary>Its capsule's radius.</summary>
@@ -251,7 +266,45 @@ namespace Brickcraft.Npcs
 
         [Server]
         public void OrderWander() {
+            wanderRange = 0;
             setOrder(NpcOrderKind.Wander, null, Vector3.zero, 0);
+        }
+
+        /// <summary>Wanders, but not further than range meters from that cell.</summary>
+        [Server]
+        public void OrderWanderNear(Vector3Int cell, float range) {
+            wanderHome = cell;
+            wanderRange = range;
+            setOrder(NpcOrderKind.Wander, null, Vector3.zero, range);
+        }
+
+        /// <summary>Lies down there (asleep), still until it gets an order other than standing.</summary>
+        [Server]
+        public void LieDown(Vector3 position, Quaternion rotation) {
+            OrderIdle();
+            heading = Vector3.zero;
+            knockback = Vector3.zero;
+            verticalSpeed = 0;
+            transform.SetPositionAndRotation(position, rotation);
+            facing = rotation * Vector3.forward;
+            isLying = true;
+            loop = Sleep; // it doesn't move while lying, nothing else changes it
+        }
+
+        /// <summary>Gets up (it was lying), stepping off what it lay on.</summary>
+        [Server]
+        public void GetUp() {
+            if (!isLying) {
+                return;
+            }
+            isLying = false;
+            loop = Idle;
+            Transform here = transform;
+            body.enabled = false;
+            if (NpcSystem.SpotNear(here, body.radius, body.height, out Vector3 spot)) {
+                ServerTeleport(spot);
+            }
+            body.enabled = true;
         }
 
         /// <summary>To a local position, close enough within range meters.</summary>
@@ -270,8 +323,11 @@ namespace Brickcraft.Npcs
             setOrder(NpcOrderKind.Attack, target, Vector3.zero, 0);
         }
 
-        // the same order again keeps how it's going about it
+        // the same order again keeps how it's going about it; lying, anything but standing gets it up
         private void setOrder(NpcOrderKind kind, Health target, Vector3 position, float range) {
+            if (isLying && kind != NpcOrderKind.Idle) {
+                GetUp();
+            }
             bool same = kind == order && target == orderTarget && range == orderRange
                 && (kind != NpcOrderKind.MoveTo || horizontalDistance(position, orderPosition) < RepathDistance);
             if (order == NpcOrderKind.Attack && (kind != NpcOrderKind.Attack || target != orderTarget)) {
@@ -312,9 +368,13 @@ namespace Brickcraft.Npcs
             if (now >= nextThink) {
                 nextThink = now + ThinkInterval;
                 Brain.Think(now);
-                act(now);
+                if (!isLying) {
+                    act(now);
+                }
             }
-            move(Time.deltaTime);
+            if (!isLying) {
+                move(Time.deltaTime);
+            }
             if (NavGrid.DebugDraw && path != null) {
                 for (int i = 1; i < path.Count; i++) {
                     Debug.DrawLine(path.PointAt(i - 1) + Vector3.up * 0.1f, path.PointAt(i) + Vector3.up * 0.1f, path.result == NavResult.Found ? Color.yellow : Color.red);
@@ -553,7 +613,12 @@ namespace Brickcraft.Npcs
                 return;
             }
             nextWander = now + Random.Range(2f, 6f);
-            if (Random.value < 0.5f) {
+            Vector3 towardHome = HomeOffset(wanderHome);
+            if (wanderRange > 0 && towardHome.magnitude > wanderRange) {
+                // too far from home: back towards it
+                heading = towardHome.normalized;
+                facing = heading;
+            } else if (Random.value < 0.5f) {
                 Vector2 direction = Random.insideUnitCircle.normalized;
                 heading = new Vector3(direction.x, 0, direction.y);
                 facing = heading;
@@ -704,6 +769,17 @@ namespace Brickcraft.Npcs
 
         // -------- server: moving --------
 
+        public Vector3 HomePosition {
+            get { return Bricks.BrickGrid.CellToWorld(Home, new Vector3(0.5f, 0, 0.5f)); }
+        }
+
+        /// <summary>From it to that cell, sideways.</summary>
+        public Vector3 HomeOffset(Vector3Int cell) {
+            Vector3 offset = Bricks.BrickGrid.CellToWorld(cell, new Vector3(0.5f, 0, 0.5f)) - transform.position;
+            offset.y = 0;
+            return offset;
+        }
+
         // walks where it heads, stepping up what's low enough and falling down what isn't under it
         private void move(float deltaTime) {
             Vector3 position = transform.position;
@@ -741,7 +817,7 @@ namespace Brickcraft.Npcs
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(facing), TurnSpeed * deltaTime);
             }
 
-            string wanted = Velocity.sqrMagnitude > 0.01f ? Walk : Idle;
+            string wanted = isLying ? Sleep : Velocity.sqrMagnitude > 0.01f ? Walk : Idle;
             if (loop != wanted) {
                 loop = wanted;
             }
@@ -765,6 +841,21 @@ namespace Brickcraft.Npcs
             play(animation);
         }
 
+        // lying without a sleep animation: on its back, its head away from where it faces (the bed's
+        // SleepPoint faces its feet), its back on what it lies on
+        private void onLyingChanged(bool wasLying, bool lying) {
+            showLying();
+        }
+
+        private void showLying() {
+            if (model == null) {
+                return;
+            }
+            bool lieDown = isLying && !model.Has(NpcDatabase.AnimationOf(Info, Sleep));
+            model.transform.localRotation = lieDown ? Quaternion.Euler(-90, 0, 0) : Quaternion.identity;
+            model.transform.localPosition = lieDown ? Vector3.up * (-model.hitbox.min.z * Info.scale) : Vector3.zero;
+        }
+
         private void onLoopChanged(string oldLoop, string newLoop) {
             if (oneShotUntil < 0) {
                 play(newLoop);
@@ -777,11 +868,14 @@ namespace Brickcraft.Npcs
                 return;
             }
             string state = NpcDatabase.AnimationOf(Info, animation);
+            if (!model.Has(state) && animation == Sleep) {
+                state = NpcDatabase.AnimationOf(Info, Idle); // lying down, idle
+            }
             if (!model.Has(state)) {
                 return;
             }
             model.Play(state, 0.1f);
-            bool isLoop = animation == Idle || animation == Walk;
+            bool isLoop = animation == Idle || animation == Walk || animation == Sleep;
             oneShotUntil = isLoop ? -1 : animation == Death ? float.MaxValue : Time.time + model.DurationOf(state);
         }
 

@@ -42,3 +42,6 @@ ehthumbs.db
 db1.box
 db1.box.swp
 Build.zip
+
+# server settings (may hold a password)
+/server.json

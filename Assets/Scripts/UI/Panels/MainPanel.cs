@@ -5,6 +5,8 @@ using UnityEngine.UI;
 public class MainPanel : MonoBehaviour
 {
     public InputField addressInput;
+    /// <summary>The server's password, if it has one (never saved).</summary>
+    public InputField passwordInput;
     public InputField nameInput;
     public Text messageText;
     public Text versionText;
@@ -81,7 +83,7 @@ public class MainPanel : MonoBehaviour
 
     // "-host" or "-join <address>" start a multiplayer game right away, handy to test with several instances
     // "-test" starts the test scene, which has no button
-    // "-name <name>" picks the player name
+    // "-name <name>" picks the player name, "-password <password>" the server's password to join with
     private void Start () {
         if (hasReadCommandLine) {
             return;
@@ -93,6 +95,8 @@ public class MainPanel : MonoBehaviour
         for (int i = 0; i < args.Length - 1; i++) {
             if (args[i] == "-name") {
                 nameInput.text = args[i + 1];
+            } else if (args[i] == "-password" && passwordInput != null) {
+                passwordInput.text = args[i + 1];
             }
         }
         for (int i = 0; i < args.Length; i++) {
@@ -150,6 +154,7 @@ public class MainPanel : MonoBehaviour
             return;
         }
         string address = addressInput != null && !string.IsNullOrWhiteSpace(addressInput.text) ? addressInput.text.Trim() : "localhost";
+        BrickcraftAuthenticator.Password = passwordInput != null ? passwordInput.text : "";
 
         Menu.Instance.showPanel("LoadingPanel");
         BrickcraftNetworkManager.GetOrCreate().Join(address);

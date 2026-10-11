@@ -114,6 +114,9 @@ namespace Brickcraft.Network
             base.OnStartServer();
             startFailure = null;
             LuaUi.StartServer();
+            // the players it takes, a few more connections so the next ones hear it's full
+            ServerConfig config = ServerConfig.Load();
+            maxConnections = config.maxPlayers + 4;
             long newSeed = seed != 0 ? seed : Random.Range(1, int.MaxValue);
             // only the generated world is saved, the test scene starts from scratch every time
             bool isSaved = isWorldScene(onlineScene);
@@ -194,8 +197,7 @@ namespace Brickcraft.Network
             while (NetworkServer.active && WorldNetwork.Storage != null) {
                 yield return wait;
 
-                // without it the world is still saved when regions unload and when the server stops
-                if (WorldNetwork.Storage != null && GameSettings.AutoSave) {
+                if (WorldNetwork.Storage != null) {
                     Npcs.NpcSystem.ServerSave();
                     WorldNetwork.Storage.SaveInBackground();
                 }

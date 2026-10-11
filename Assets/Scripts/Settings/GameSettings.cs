@@ -10,7 +10,7 @@ namespace Brickcraft
     public static class GameSettings
     {
         public const string LanguageSetting = "language";
-        public const string AutoSaveSetting = "autoSave";
+        public const string RenderDistanceSetting = "renderDistance";
         public const string ShowCoordinatesSetting = "showCoordinates";
         public const string CrosshairSetting = "crosshair";
         public const string TutorialHintsSetting = "tutorialHints";
@@ -29,10 +29,14 @@ namespace Brickcraft
             set { setString(LanguageSetting, value); }
         }
 
-        /// <summary>The host saves the world every now and then, not only when it stops.</summary>
-        public static bool AutoSave {
-            get { return getBool(AutoSaveSetting, true); }
-            set { setBool(AutoSaveSetting, value); }
+        public const int MinRenderDistance = 6;
+        public const int MaxRenderDistance = 96;
+        public const int DefaultRenderDistance = 16;
+
+        /// <summary>How far the world is drawn around the player, in chunks (the server sends that far, see WorldNetwork).</summary>
+        public static int RenderDistance {
+            get { return Mathf.Clamp(getInt(RenderDistanceSetting, DefaultRenderDistance), MinRenderDistance, MaxRenderDistance); }
+            set { setInt(RenderDistanceSetting, Mathf.Clamp(value, MinRenderDistance, MaxRenderDistance)); }
         }
 
         public static bool ShowCoordinates {

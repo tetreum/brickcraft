@@ -55,6 +55,13 @@ namespace Brickcraft.Network
         private class ClientInterest
         {
             public readonly HashSet<Vector2Int> sentChunks = new HashSet<Vector2Int>();
+            // how far its player draws the world, in chunks
+            public int viewDistance = GameSettings.DefaultRenderDistance;
+
+            // the chunks it gets: those it draws, and a ring more for their borders
+            public int LoadRadius {
+                get { return viewDistance + 1; }
+            }
 
             // where the player will appear: the world spawn, or where it left last time
             public Vector2Int spawnChunk;
@@ -66,9 +73,6 @@ namespace Brickcraft.Network
         private static readonly HashSet<Vector2Int> serverChunks = new HashSet<Vector2Int>();
         private static float nextServerUpdate;
 
-        private static int loadRadius {
-            get { return WorldBehaviour.Instance.ViewDistance + 1; }
-        }
 
         /// <param name="spawn">absolute position players spawn at</param>
         public static void StartServer(WorldStorage storage, long unsavedSeed, Vector3 spawn) {
@@ -80,6 +84,7 @@ namespace Brickcraft.Network
             serverChunks.Clear();
 
             NetworkServer.RegisterHandler<JoinWorldMessage>(onJoinWorld);
+            NetworkServer.RegisterHandler<ViewDistanceMessage>(onViewDistance);
 
             spawnChunk = WorldBehaviour.ChunkAt(FloatingOrigin.ToLocal(spawn));
 
@@ -262,11 +267,12 @@ namespace Brickcraft.Network
             HashSet<Vector2Int> kept = new HashSet<Vector2Int>();
             Dictionary<NetworkConnectionToClient, Vector2Int> centers = new Dictionary<NetworkConnectionToClient, Vector2Int>();
 
-            foreach (NetworkConnectionToClient conn in interests.Keys) {
-                Vector2Int center = conn.identity != null ? WorldBehaviour.ChunkAt(conn.identity.transform.position) : interests[conn].spawnChunk;
+            foreach (KeyValuePair<NetworkConnectionToClient, ClientInterest> interest in interests) {
+                NetworkConnectionToClient conn = interest.Key;
+                Vector2Int center = conn.identity != null ? WorldBehaviour.ChunkAt(conn.identity.transform.position) : interest.Value.spawnChunk;
                 centers[conn] = center;
-                addArea(wanted, center, loadRadius);
-                addArea(kept, center, loadRadius + UnloadMargin);
+                addArea(wanted, center, interest.Value.LoadRadius);
+                addArea(kept, center, interest.Value.LoadRadius + UnloadMargin);
             }
 
             foreach (Vector2Int coords in wanted) {
@@ -306,7 +312,7 @@ namespace Brickcraft.Network
             // forget what's too far
             List<Vector2Int> forgotten = new List<Vector2Int>();
             foreach (Vector2Int coords in interest.sentChunks) {
-                if (distance(coords, center) > loadRadius + UnloadMargin) {
+                if (distance(coords, center) > interest.LoadRadius + UnloadMargin) {
                     forgotten.Add(coords);
                 }
             }
@@ -317,6 +323,7 @@ namespace Brickcraft.Network
 
             // send what's missing, nearest first
             List<Vector2Int> missing = new List<Vector2Int>();
+            int loadRadius = interest.LoadRadius;
             for (int x = -loadRadius; x <= loadRadius; x++) {
                 for (int z = -loadRadius; z <= loadRadius; z++) {
                     Vector2Int coords = new Vector2Int(center.x + x, center.y + z);
@@ -351,12 +358,29 @@ namespace Brickcraft.Network
             }
         }
 
+        // the furthest a client gets the world: the server's maximum, the game's for the host's own player
+        private static int maxViewDistanceOf(NetworkConnectionToClient conn) {
+            return conn is LocalConnectionToClient ? GameSettings.MaxRenderDistance : ServerConfig.Current.maxRenderDistance;
+        }
+
+        // what clients ask for, within what's allowed (an old client asking for nothing gets the default)
+        private static int allowedViewDistance(NetworkConnectionToClient conn, int asked) {
+            int wanted = asked <= 0 ? GameSettings.DefaultRenderDistance : asked;
+            return Mathf.Clamp(wanted, GameSettings.MinRenderDistance, maxViewDistanceOf(conn));
+        }
+
+        private static void onViewDistance(NetworkConnectionToClient conn, ViewDistanceMessage message) {
+            if (interests.TryGetValue(conn, out ClientInterest interest)) {
+                interest.viewDistance = allowedViewDistance(conn, message.viewDistance);
+            }
+        }
+
         private static void onJoinWorld(NetworkConnectionToClient conn, JoinWorldMessage message) {
             if (!conn.isReady) {
                 NetworkServer.SetClientReady(conn);
             }
             // returning players stream in around where they left
-            ClientInterest interest = new ClientInterest() { spawnChunk = spawnChunk };
+            ClientInterest interest = new ClientInterest() { spawnChunk = spawnChunk, viewDistance = allowedViewDistance(conn, message.viewDistance) };
             if (conn.authenticationData is ConnectedPlayer player && BrickcraftNetworkManager.HasSavedPosition(player.record)) {
                 PlayerRecord record = player.record;
                 interest.spawnChunk = WorldBehaviour.ChunkAt(FloatingOrigin.ToLocal(record.LastX.Value, record.LastY.Value, record.LastZ.Value));
@@ -367,7 +391,8 @@ namespace Brickcraft.Network
                 seed = Seed,
                 difficulty = (byte)Difficulty,
                 spawnChunk = interest.spawnChunk,
-                viewDistance = WorldBehaviour.Instance != null ? WorldBehaviour.Instance.ViewDistance : 0,
+                viewDistance = interest.viewDistance,
+                maxViewDistance = maxViewDistanceOf(conn),
             });
 
             // scenes without a streamed world (the test scene) just send their bricks
@@ -418,6 +443,7 @@ namespace Brickcraft.Network
 
         public static void StartClient() {
             hasRequestedWorld = false;
+            ServerMaxViewDistance = 0;
             hasWorldInfo = false;
             isSpawnAreaReady = false;
             clientChanges = new WorldChanges();
@@ -429,16 +455,33 @@ namespace Brickcraft.Network
             NetworkClient.RegisterHandler<BrickPlacedMessage>(onBrickPlaced);
             NetworkClient.RegisterHandler<BrickRemovedMessage>(onBrickRemoved);
             NetworkClient.RegisterHandler<BrickStateMessage>(onBrickState);
+            Events.EventManager.SettingChanged.Subscribe(onSettingChanged);
         }
 
         public static void StopClient() {
             hasWorldInfo = false;
             isSpawnAreaReady = false;
+            Events.EventManager.SettingChanged.Unsubscribe(onSettingChanged);
 
             if (WorldBehaviour.Instance != null && !NetworkServer.active) {
                 WorldBehaviour.Instance.ChunkGenerated -= onClientChunkGenerated;
                 WorldBehaviour.Instance.ChunkUnloaded -= onClientChunkUnloaded;
             }
+        }
+
+        /// <summary>The furthest the server sends us the world, in chunks (0 until we're in one).</summary>
+        public static int ServerMaxViewDistance { get; private set; }
+
+        // the player draws the world further or nearer: right away (within what the server allows), and the
+        // server sends that far
+        private static void onSettingChanged(Events.SettingChangedEvent e) {
+            if (e.setting != GameSettings.RenderDistanceSetting || !hasWorldInfo) {
+                return;
+            }
+            if (WorldBehaviour.Instance != null) {
+                WorldBehaviour.Instance.ViewDistance = Mathf.Min(GameSettings.RenderDistance, ServerMaxViewDistance);
+            }
+            NetworkClient.Send(new ViewDistanceMessage() { viewDistance = GameSettings.RenderDistance });
         }
 
         /// <summary>Asks the server for the world, once the game scene is loaded.</summary>
@@ -451,13 +494,14 @@ namespace Brickcraft.Network
             if (!NetworkClient.ready) {
                 NetworkClient.Ready();
             }
-            NetworkClient.Send(new JoinWorldMessage());
+            NetworkClient.Send(new JoinWorldMessage() { viewDistance = GameSettings.RenderDistance });
         }
 
         /// <summary>How far joining the game is, from 0 to 1, and what it's doing, for the loading screen.</summary>
         public static float GetLoadingProgress(out string status) {
+            string server = BrickcraftAuthenticator.ServerName;
             if (isSpawnAreaReady) {
-                status = "Joining...";
+                status = server.Length > 0 ? "Joining " + server + "..." : "Joining...";
                 return 1f;
             }
             if (!NetworkClient.isConnected) {
@@ -465,7 +509,7 @@ namespace Brickcraft.Network
                 return 0f;
             }
             if (NetworkManager.loadingSceneAsync != null) {
-                status = "Loading world...";
+                status = server.Length > 0 ? "Loading " + server + "..." : "Loading world...";
                 return 0.05f + 0.2f * NetworkManager.loadingSceneAsync.progress;
             }
             WorldBehaviour world = WorldBehaviour.Instance;
@@ -519,15 +563,16 @@ namespace Brickcraft.Network
         private static void onWorldInfo(WorldInfoMessage message) {
             spawn = message.spawnChunk;
             hasWorldInfo = true;
+            ServerMaxViewDistance = message.maxViewDistance > 0 ? message.maxViewDistance : message.viewDistance;
             Difficulty = (Difficulty)message.difficulty;
 
             WorldBehaviour world = WorldBehaviour.Instance;
             if (world == null) {
                 return; // scenes without a generated world
             }
+            world.ViewDistance = message.viewDistance;
             // the host's world was set up by the server
             if (!NetworkServer.active) {
-                world.ViewDistance = message.viewDistance;
                 world.Initialize(message.seed, clientChanges);
                 world.ChunkGenerated += onClientChunkGenerated;
                 world.ChunkUnloaded += onClientChunkUnloaded;

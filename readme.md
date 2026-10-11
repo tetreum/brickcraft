@@ -19,10 +19,11 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 The Settings button of the main menu and the ESC menu opens the player's preferences (`GameSettings`, kept in PlayerPrefs). Changes apply right away and raise `EventManager.SettingChanged`.
 
 - Language: only English for now.
-- Auto Save: the host saves the world every 30 seconds. Off, it's still saved when regions unload and when the server stops.
 - Show Coordinates: the player's block coordinates, top left.
 - Crosshair
 - Tutorial Hints: stored, there are no hints yet.
+
+The Graphics tab has the screen's resolution (those of the screen, and the window's size if it isn't one of them) and display mode (fullscreen, borderless window or windowed), which Unity remembers between runs, and the render distance: how far the world is drawn, from 6 to 96 chunks, 16 by default. The client tells the server when joining and whenever it changes, and the server sends it the chunks that far, up to its `maxRenderDistance` (see Multiplayer); the camera's far plane follows it.
 
 The Controls tab lists every action with its key: clicking one waits for the next key or mouse button (Escape cancels), and Reset to defaults brings the default keys back.
 
@@ -36,11 +37,29 @@ Multiplayer uses [Mirror](https://mirror-networking.gitbook.io/docs), patched in
 
 - **Singleplayer** lists the saved worlds, to play or delete them, or creates a new one with its name, seed (a number, any text, or empty for a random one), difficulty (Peaceful, Normal or Hard, kept with the world: NPCs don't hurt players in Peaceful worlds, and hurt them half as much again in Hard ones) and PvP (on by default: whether players can hurt each other, kept with the world and changed by admins with `/pvp`). The world runs on a host that doesn't listen for connections, so nobody else can join.
 - **Host game** runs a host other players can join (UDP port 7777 by default, see the KcpTransport in `Resources/NetworkManager`).
-- **Join game** connects to the address typed next to the button (`localhost` if empty).
+- **Join game** connects to the address typed next to the button (`localhost` if empty), with the server's password in the box beside it if it has one (it's sent hashed, and never saved).
+
+Servers are configured in `server.json`, next to the game (next to `Mods/`: the project's folder in the editor, next to `[Game]_Data` in builds), read every time one starts and written with the defaults the first time (`Network.ServerConfig`; it's in `.gitignore`):
+
+```json
+{
+  "name": "Brickcraft server",
+  "maxPlayers": 16,
+  "password": "",
+  "maxRenderDistance": 32
+}
+```
+
+- `name`: what players see: the title of their player list, and the loading screen while they join.
+- `maxPlayers`: players at once, the host's own player included; the next ones are told the server is full.
+- `password`: what players need to join, none if empty.
+- `maxRenderDistance`: the furthest players get the world, in chunks (6 to 96). Each draws as far as their own setting within it: asking for 40 on a server allowing 32 gets 32 (their settings say so).
+
+The password and the render distance limit don't apply to the host's own player.
 
 The server owns the world. Clients generate the terrain from the server's seed and only receive what changed since (dug or placed blocks, bricks). Players ask the server to dig and place, and it checks the request before applying it.
 
-The world has no edges, it's streamed around the players: the server keeps the chunks around every player loaded (`ViewDistance` on the World object, 8 chunks by default, plus a ring for their borders) and unloads the rest. Each client gets the chunks around its own player, nearest first, and live changes only for the chunks it has. Players spawn as soon as the chunks around the spawn are ready, and are held in place if they ever get to ground that isn't loaded yet.
+The world has no edges, it's streamed around the players: the server keeps the chunks around every player loaded (as far as that player's render distance, plus a ring for their borders) and unloads the rest. Each client gets the chunks around its own player, nearest first, and live changes only for the chunks it has. Players spawn as soon as the chunks around the spawn are ready, and are held in place if they ever get to ground that isn't loaded yet.
 
 To stay precise however far players go, the game uses a floating origin: game logic works in integer cells, blocks and chunks, Unity positions are relative to a chunk near the local player (subtracted while still integers), and when the player gets about 400 units away the origin moves and the scene shifts with it. Each peer has its own origin, so player positions are sent as absolute coordinates.
 
@@ -95,7 +114,7 @@ The server keeps a SQLite database (`players.db`, via [unity-sqlite-net](https:/
 - `inventory_items`: each player's inventory. Inventories only change on the server and are synced to their owner; new players get the `starterItems` of the NetworkManager.
 - `pets`: the pets following each player while they're away (kind, health, attack mode), saved when they leave and with every autosave.
 
-To test with several instances, a build can be started with `-name <name>` and `-host` or `-join <address>`. `-test` starts the test scene, which has no button in the menu, and `-profileLoad` logs how long loading the world takes, step by step (`WorldLoadProfiler`). Playing a game scene straight from the editor starts a singleplayer game.
+To test with several instances, a build can be started with `-name <name>` and `-host` or `-join <address>` (and `-password <password>`). `-test` starts the test scene, which has no button in the menu, and `-profileLoad` logs how long loading the world takes, step by step (`WorldLoadProfiler`). Playing a game scene straight from the editor starts a singleplayer game.
 
 ## Code structure
 

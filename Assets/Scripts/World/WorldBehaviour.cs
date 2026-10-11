@@ -29,8 +29,8 @@ namespace Brickcraft.World
 		/// <summary>For translucent blocks (water), see BlockDefinition.isTranslucent.</summary>
 		public static Material TranslucentBlockMaterial;
 
-		[Tooltip("Chunks this far from the camera (in chunks) are drawn")]
-		public int ViewDistance = 8;
+		[Tooltip("Chunks this far from the camera (in chunks) are drawn (the player's GameSettings.RenderDistance, see WorldNetwork)")]
+		public int ViewDistance = GameSettings.DefaultRenderDistance;
 
 		[Tooltip("Chunks this far from the camera (in chunks) are drawn with studs, the rest with simple boxes")]
 		public int DetailRadius = 4;
@@ -216,6 +216,11 @@ namespace Brickcraft.World
 
 			if (Player.Instance != null)
 				FloatingOrigin.Recenter(Player.Instance.transform.position);
+
+			// the camera sees as far as chunks are drawn
+			Camera view = Camera.main;
+			if (view != null)
+				view.farClipPlane = Mathf.Max(1000f, (ViewDistance + 2) * 16 * Server.brickWidth);
 
 			Vector2Int center = Player.Instance != null ? ChunkAt(Player.Instance.transform.position) : SpawnChunk;
 

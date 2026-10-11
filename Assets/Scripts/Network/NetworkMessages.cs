@@ -4,7 +4,17 @@ using UnityEngine;
 namespace Brickcraft.Network
 {
     /// <summary>Client to server: the client loaded the game scene and wants the world.</summary>
-    public struct JoinWorldMessage : NetworkMessage { }
+    public struct JoinWorldMessage : NetworkMessage
+    {
+        /// <summary>How far the player draws the world, in chunks (GameSettings.RenderDistance).</summary>
+        public int viewDistance;
+    }
+
+    /// <summary>Client to server: the player changed how far they draw the world, in chunks.</summary>
+    public struct ViewDistanceMessage : NetworkMessage
+    {
+        public int viewDistance;
+    }
 
     /// <summary>Server to client: how to generate the world and where players spawn.</summary>
     public struct WorldInfoMessage : NetworkMessage
@@ -13,8 +23,10 @@ namespace Brickcraft.Network
         public byte difficulty;
         public Vector2Int spawnChunk;
 
-        /// <summary>Chunks drawn around the player, the server sends one more ring for their borders.</summary>
+        /// <summary>Chunks drawn around the player (what it asked for, within what the server allows), the server sends one more ring for their borders.</summary>
         public int viewDistance;
+        /// <summary>The furthest the server sends the world to this player, in chunks (ServerConfig.maxRenderDistance).</summary>
+        public int maxViewDistance;
     }
 
     /// <summary>

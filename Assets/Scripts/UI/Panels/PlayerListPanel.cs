@@ -17,6 +17,8 @@ namespace Brickcraft.UI
     public class PlayerListPanel : MonoBehaviour
     {
         public GameObject window;
+        /// <summary>The server's name (Players in singleplayer).</summary>
+        public Text title;
         public Text count;
         /// <summary>A row, copied for each player.</summary>
         public PlayerListRow rowTemplate;
@@ -117,7 +119,11 @@ namespace Brickcraft.UI
                 }
             }
 
-            count.text = players.Count + " online";
+            string server = BrickcraftAuthenticator.ServerName;
+            if (title != null) {
+                title.text = server.Length > 0 ? server : "Players";
+            }
+            count.text = BrickcraftAuthenticator.MaxPlayers > 1 ? players.Count + " / " + BrickcraftAuthenticator.MaxPlayers + " online" : players.Count + " online";
             adminHint.SetActive(admin);
 
             VerticalLayoutGroup layout = rowTemplate.transform.parent.GetComponent<VerticalLayoutGroup>();

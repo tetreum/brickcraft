@@ -7,7 +7,7 @@
     "attackSpeed": 1,
     "durability": 200,
     "ammo": "arrow",
-    "range": 30,
+    "range": 60,
     "held": {
         "grip": [0, 0, 0],
         "rotation": [0, 180, 0],

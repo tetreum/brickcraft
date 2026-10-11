@@ -57,12 +57,23 @@ namespace Brickcraft
         public const float HandAttackSpeed = 2.5f;
         /// <summary>Hits a second while holding it.</summary>
         public float attackSpeed = HandAttackSpeed;
-        /// <summary>How far a hit reaches with nothing in hand, in meters.</summary>
+        /// <summary>How far a hit reaches, in meters (ranged weapons shoot instead, see range).</summary>
         public const float HandReach = 5;
-        /// <summary>How far a hit reaches while holding it: more than a hand's for ranged weapons (a bow).</summary>
-        public float reach = HandReach;
         /// <summary>Ranged weapons: the item each shot uses up (a bow's arrows), null for others.</summary>
         public string ammo;
+        /// <summary>Ranged weapons: how far a shot flies at most (aimed 45 degrees up), in meters.</summary>
+        public float range;
+
+        public const float DefaultDrawTime = 1;
+        /// <summary>Ranged weapons: seconds the attack button is held to draw it fully (see Player): less, the shot is weaker.</summary>
+        public float drawTime = DefaultDrawTime;
+        /// <summary>The weakest a shot can be, as a part of a full draw's power.</summary>
+        public const float MinShotPower = 0.15f;
+
+        /// <summary>Ranged weapons: how fast fully drawn shots leave it to fly as far as its range, meters per second.</summary>
+        public float ShotSpeed {
+            get { return Mathf.Sqrt(range * Network.Projectile.Gravity); }
+        }
 
         /// <summary>Armor: where it's worn, None for other items.</summary>
         public ArmorSlot armorSlot;

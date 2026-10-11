@@ -24,6 +24,8 @@ namespace Brickcraft.Combat
         public GameObject attacker;
         /// <summary>Its name, for the chat and the death screen.</summary>
         public string attackerName;
+        /// <summary>Which way the hit goes (a shot's flight), zero if it comes straight from the attacker.</summary>
+        public Vector3 direction;
     }
 
     /// <summary>
@@ -63,6 +65,17 @@ namespace Brickcraft.Combat
         public event Action<int, int> HealthChanged;
 
         private double invulnerableUntil;
+
+        /// <summary>Everything with health that's enabled (players and NPCs), for who looks for them (shots...).</summary>
+        public static readonly System.Collections.Generic.List<Health> All = new System.Collections.Generic.List<Health>();
+
+        private void OnEnable() {
+            All.Add(this);
+        }
+
+        private void OnDisable() {
+            All.Remove(this);
+        }
 
         /// <summary>Hurts it, false if it couldn't be (dead, just hit, or something stopped it).</summary>
         [Server]

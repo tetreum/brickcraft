@@ -231,7 +231,8 @@ namespace Brickcraft
                     return false;
                 }
                 item.ammo = info.ammo; // resolved once every item is known, see resolveAmmo
-                item.reach = Math.Max(Item.HandReach, info.range ?? DefaultRange);
+                item.range = Math.Max(1, info.range ?? DefaultRange);
+                item.drawTime = Math.Max(0.05f, info.drawTime ?? Item.DefaultDrawTime);
             }
             if (item.type == Item.Type.Armor) {
                 Item.ArmorSlot slot;
@@ -263,7 +264,7 @@ namespace Brickcraft
         }
 
         /// <summary>How far ranged weapons shoot when their info.json doesn't say.</summary>
-        public const float DefaultRange = 30;
+        public const float DefaultRange = 60;
 
         // ammo can name items loaded after the weapon's
         private static void resolveAmmo() {
@@ -276,7 +277,6 @@ namespace Brickcraft
                 if (!Server.items.ContainsKey(item.ammo)) {
                     Debug.LogError("Item " + item.id + " shoots \"" + item.ammo + "\", which doesn't exist");
                     item.ammo = null;
-                    item.reach = Item.HandReach;
                 }
             }
         }

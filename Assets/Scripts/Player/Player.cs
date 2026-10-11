@@ -77,6 +77,17 @@ namespace Brickcraft
         // the selected slot the server was told about (what the others see in its hand)
         private int sentSlot = int.MinValue;
 
+        // when it started drawing its ranged weapon (holding the dig button), -1 if it isn't
+        private float drawStart = -1;
+
+        /// <summary>How drawn its ranged weapon is, 0 (not drawing) to 1 (fully), see Item.drawTime.</summary>
+        public float DrawPower {
+            get {
+                Item weapon = SelectedItem != null ? SelectedItem.item : null;
+                return drawStart < 0 || weapon == null || !weapon.IsRanged ? 0 : Mathf.Clamp01((Time.time - drawStart) / weapon.drawTime);
+            }
+        }
+
         /// <summary>It holds its shield up: it can't attack meanwhile.</summary>
         public bool IsBlocking {
             get { return isBlocking; }
@@ -168,12 +179,15 @@ namespace Brickcraft
                 stopDigging();
                 clickedDoor = null;
                 wasDigHeld = false;
+                drawStart = -1;
             } else {
-                bool isDigHeld = GameInput.GetButton(GameInput.Dig);
+                // with a ranged weapon (and its ammo) the dig button draws it instead
+                bool isDrawing = updateDrawing();
+                bool isDigHeld = !isDrawing && GameInput.GetButton(GameInput.Dig);
                 bool isClickingDoor = clickDoors(isDigHeld);
 
                 // the server checks it can be hit (PvP for players...)
-                if (GameInput.GetButtonDown(GameInput.Dig) && Time.time >= nextAttack) {
+                if (!isDrawing && GameInput.GetButtonDown(GameInput.Dig) && Time.time >= nextAttack) {
                     attack();
                 }
 
@@ -337,20 +351,39 @@ namespace Brickcraft
             }
         }
 
-        // a hit with what's in hand (see Item's attack stats): what's looked at, or with a ranged weapon (a bow,
-        // with its ammo) whatever with health is in its sight. Weapons swing even at nothing.
+        // a ranged weapon (a bow) with its ammo in hand: holding the dig button draws it, letting go shoots where
+        // it looks, as strong as it was drawn (see DrawPower). False (and no drawing) for anything else.
+        bool updateDrawing () {
+            Item weapon = SelectedItem != null ? SelectedItem.item : null;
+            if (weapon == null || !weapon.IsRanged || isBlocking
+                    || Brickcraft.Inventory.Count(inventory.items, weapon.ammo, Brickcraft.Inventory.AnyColor, 0) == 0) {
+                drawStart = -1;
+                return false;
+            }
+            if (drawStart < 0) {
+                if (GameInput.GetButtonDown(GameInput.Dig) && Time.time >= nextAttack) {
+                    drawStart = Time.time;
+                    network.CmdDraw();
+                }
+            } else if (!GameInput.GetButton(GameInput.Dig)) {
+                float power = DrawPower;
+                drawStart = -1;
+                nextAttack = Time.time + 1 / weapon.attackSpeed;
+                if (network.heldItems != null) {
+                    network.heldItems.Swing();
+                }
+                network.CmdShoot(SelectedSlot, Camera.main.transform.forward, power);
+            }
+            return true;
+        }
+
+        // a hit with what's in hand (see Item's attack stats) at what's looked at. Weapons swing even at nothing.
         void attack () {
             if (isBlocking) {
                 return;
             }
             Item weapon = SelectedItem != null ? SelectedItem.item : null;
             Health target = lookedHealth;
-            if (weapon != null && weapon.IsRanged) {
-                if (Brickcraft.Inventory.Count(inventory.items, weapon.ammo, Brickcraft.Inventory.AnyColor, 0) == 0) {
-                    return;
-                }
-                target = target ?? rangedTarget(weapon.reach);
-            }
             if (target == null && (weapon == null || weapon.type != Item.Type.Weapon)) {
                 return;
             }
@@ -375,16 +408,6 @@ namespace Brickcraft
                 isBlocking = block;
                 network.CmdBlock(block);
             }
-        }
-
-        // what has health in the middle of the screen, up to that far (nothing if something else is in the way)
-        Health rangedTarget (float range) {
-            Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0));
-            if (!Physics.Raycast(ray, out RaycastHit hit, range, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)) {
-                return null;
-            }
-            Health found = hit.collider.GetComponentInParent<Health>();
-            return found != null && found != health && !found.isDead ? found : null;
         }
 
         void dig () {

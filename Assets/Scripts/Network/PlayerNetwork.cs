@@ -91,19 +91,24 @@ namespace Brickcraft.Network
         // a hit it takes: blocked by its shield (which wears), or eased by what it wears
         [Server]
         private int reduceDamage(DamageInfo damage) {
-            if (blocking && damage.kind != DamageInfo.Kind.Script && isInFront(damage.attacker)) {
+            if (blocking && damage.kind != DamageInfo.Kind.Script && comesFromFront(damage)) {
                 inventory.ServerWear(Inventory.EquipmentSlot(Item.ArmorSlot.Offhand));
                 return 0;
             }
             return inventory.ServerAbsorb(damage);
         }
 
-        // whether that is in front of the player, where its shield covers
-        private bool isInFront(GameObject attacker) {
-            if (attacker == null) {
+        // whether the hit comes from in front of the player, where its shield covers: the way a shot flies, or
+        // where its attacker is
+        private bool comesFromFront(DamageInfo damage) {
+            Vector3 toward;
+            if (damage.direction != Vector3.zero) {
+                toward = -damage.direction;
+            } else if (damage.attacker != null) {
+                toward = damage.attacker.transform.position - transform.position;
+            } else {
                 return false;
             }
-            Vector3 toward = attacker.transform.position - transform.position;
             toward.y = 0;
             return toward.sqrMagnitude < 0.0001f || Vector3.Angle(transform.forward, toward) <= BlockAngle;
         }
@@ -260,8 +265,8 @@ namespace Brickcraft.Network
 
         /// <summary>
         /// Hits something that has health (a player when PvP is on, see WorldNetwork.Pvp) with what's in the
-        /// inventory slot: its damage, as often as its attack speed allows, from as far as it reaches (see Item).
-        /// Ranged weapons (a bow) use up one of their ammo each shot. Weapons that wear get worn.
+        /// inventory slot: its damage, as often as its attack speed allows (see Item), within reach. Weapons that
+        /// wear get worn by what they hurt. Ranged weapons shoot instead (CmdShoot).
         /// </summary>
         [Command]
         public void CmdAttack(NetworkIdentity target, int slot) {
@@ -270,18 +275,13 @@ namespace Brickcraft.Network
             }
             InventoryItem? held = inventory.ServerGetSlot(slot);
             Item weapon = held.HasValue && Server.items.TryGetValue(held.Value.itemId, out Item item) ? item : null;
-            float reach = weapon != null ? weapon.reach : Item.HandReach;
             float attackSpeed = weapon != null ? weapon.attackSpeed : Item.HandAttackSpeed;
 
             Health victim = target.GetComponent<Health>();
             PlayerNetwork victimPlayer = target.GetComponent<PlayerNetwork>();
-            if (victim == null || victim.isDead || Vector3.Distance(transform.position, target.transform.position) > reach + AttackReachMargin
-                || (victimPlayer != null && !WorldNetwork.Pvp) || !canHitPet(target)) {
+            if (victim == null || victim.isDead || (weapon != null && weapon.IsRanged)
+                || Vector3.Distance(transform.position, target.transform.position) > Item.HandReach + AttackReachMargin || !ServerCanHit(target)) {
                 return;
-            }
-            bool ranged = weapon != null && weapon.IsRanged;
-            if (ranged && !inventory.ServerRemove(weapon.ammo, Inventory.AnyColor, 1)) {
-                return; // nothing to shoot
             }
             nextAttackTime = NetworkTime.time + AttackSpeedMargin / attackSpeed;
             Npcs.NpcPerception.MakeNoise(transform.position, FightNoise, health, Npcs.Noise.Fight);
@@ -289,12 +289,11 @@ namespace Brickcraft.Network
 
             bool hurt = victim.ServerDamage(new DamageInfo() {
                 amount = weapon != null ? weapon.damage : Item.HandDamage,
-                kind = ranged ? DamageInfo.Kind.Ranged : DamageInfo.Kind.Melee,
+                kind = DamageInfo.Kind.Melee,
                 attacker = gameObject,
                 attackerName = playerName,
             });
-            // a shot wears a bow whether it hurts or not, a sword wears on what it hurts
-            if (ranged || hurt) {
+            if (hurt) {
                 inventory.ServerWear(slot);
             }
 
@@ -308,6 +307,69 @@ namespace Brickcraft.Network
                     npc.ServerKnockback(push);
                 }
             }
+        }
+
+        // server: when it started drawing its ranged weapon (CmdDraw), -1 if it isn't
+        private double drawStartedAt = -1;
+        // the draw it says it did can be this much longer than what the server saw (commands arrive unevenly)
+        private const double DrawLeeway = 0.15;
+
+        /// <summary>It starts drawing its ranged weapon (holding the attack button): the longer, the stronger the shot (CmdShoot).</summary>
+        [Command]
+        public void CmdDraw() {
+            drawStartedAt = NetworkTime.time;
+        }
+
+        /// <summary>
+        /// Shoots the ranged weapon in the inventory slot (a bow) that way (where its camera looks), drawn that much
+        /// (0 to 1, at most as long as it was drawn since CmdDraw): one of its ammo flies off (see Projectile), the
+        /// faster and the harder it hits the more drawn, as often as its attack speed allows. Each shot wears the weapon.
+        /// </summary>
+        [Command]
+        public void CmdShoot(int slot, Vector3 direction, float power) {
+            double drawn = drawStartedAt >= 0 ? NetworkTime.time - drawStartedAt + DrawLeeway : 0;
+            drawStartedAt = -1;
+            if (health.isDead || blocking || NetworkTime.time < nextAttackTime || direction.sqrMagnitude < 0.0001f) {
+                return;
+            }
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            if (!held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item weapon) || !weapon.IsRanged) {
+                return;
+            }
+            // the first stack of its ammo, whose colour the shot keeps
+            int ammo = -1;
+            for (int i = 0; i < inventory.items.Count && ammo == -1; i++) {
+                if (inventory.items[i].itemId == weapon.ammo && !Inventory.IsEquipmentSlot(inventory.items[i].slot)) {
+                    ammo = i;
+                }
+            }
+            if (ammo == -1) {
+                return; // nothing to shoot
+            }
+            InventoryItem shot = inventory.items[ammo];
+            if (!inventory.ServerRemoveFromSlot(shot.slot, 1)) {
+                return;
+            }
+            nextAttackTime = NetworkTime.time + AttackSpeedMargin / weapon.attackSpeed;
+            direction.Normalize();
+            power = Mathf.Clamp(Mathf.Min(power, (float)(drawn / weapon.drawTime)), Item.MinShotPower, 1);
+            Vector3 eye = transform.position + Vector3.up * EyeHeight;
+            Projectile.ServerShoot(this, shot.itemId, shot.color, eye + direction * ShotStart, direction * (weapon.ShotSpeed * power),
+                Mathf.Max(1, Mathf.RoundToInt(weapon.damage * power)), ShotKnockback * power);
+            Npcs.NpcPerception.MakeNoise(transform.position, FightNoise, health, Npcs.Noise.Fight);
+            RpcSwing();
+            inventory.ServerWear(slot);
+        }
+
+        // where shots leave from: its eyes (the camera's height), a bit ahead
+        private const float EyeHeight = 0.74f;
+        private const float ShotStart = 0.6f;
+        private const float ShotKnockback = 3f;
+
+        /// <summary>Server: whether this player can hurt that: players only with PvP, nobody their own pets (others' with PvP).</summary>
+        [Server]
+        public bool ServerCanHit(NetworkIdentity target) {
+            return target != null && (target.GetComponent<PlayerNetwork>() == null || WorldNetwork.Pvp) && canHitPet(target);
         }
 
         // the others see it swing (its own client already did)

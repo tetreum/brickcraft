@@ -30,6 +30,9 @@ namespace Brickcraft
         private const float SwingDuration = 0.25f;
         private const float SwingAngle = 70;
         private const float KickBack = 0.12f;
+        // a fully drawn bow: how far it comes back toward the camera, and how much it shakes
+        private const float DrawBack = 0.12f;
+        private const float DrawShake = 0.004f;
         // how fast a shield goes up and down, in parts of the way a second
         private const float RaiseSpeed = 8;
 
@@ -184,6 +187,11 @@ namespace Brickcraft
             Vector3 kick = ranged ? Vector3.back * swing * KickBack : Vector3.zero;
 
             if (firstPerson) {
+                // drawing: the bow comes up the middle and closer, shaking a bit at full draw
+                float drawn = Player.Instance != null ? Mathf.SmoothStep(0, 1, Player.Instance.DrawPower) : 0;
+                if (drawn > 0) {
+                    kick += new Vector3(-0.18f, 0.1f, -DrawBack) * drawn + Random.insideUnitSphere * (drawn >= 1 ? DrawShake : 0);
+                }
                 right.localPosition = RightHandView + kick;
                 right.localRotation = swingTurn;
                 left.localPosition = Vector3.Lerp(LeftHandView, BlockingView, smooth);

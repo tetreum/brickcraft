@@ -18,10 +18,12 @@ namespace Brickcraft
         public int? damage;
         /// <summary>Weapons: hits a second (Item.HandAttackSpeed, a bare hand's, if missing).</summary>
         public float? attackSpeed;
-        /// <summary>Ranged weapons (with ammo): how far they shoot, in meters (30 if missing).</summary>
+        /// <summary>Ranged weapons (with ammo): how far a shot flies at most (aimed 45 degrees up), in meters (60 if missing).</summary>
         public float? range;
         /// <summary>Weapons that shoot (a bow): the item id each shot uses up (its arrows).</summary>
         public string ammo;
+        /// <summary>Weapons that shoot: seconds the attack button is held to draw them fully (1 if missing); shots drawn less fly slower and hurt less.</summary>
+        public float? drawTime;
         /// <summary>Armor: where it's worn: head, chest, legs, feet or offhand (the left hand, shields).</summary>
         public string slot;
         /// <summary>Armor: armor points, each takes 4% of the damage (at most 80%, see Combat.Armor).</summary>

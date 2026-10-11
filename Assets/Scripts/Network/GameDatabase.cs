@@ -101,8 +101,25 @@ namespace Brickcraft.Network
         public int Health { get; set; }
     }
 
+    /// <summary>A pet that follows its player, kept while they're away (see Npcs.NpcSystem).</summary>
+    [Table("pets")]
+    public class PetRecord
+    {
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
+
+        [Indexed]
+        public int PlayerId { get; set; }
+
+        /// <summary>Its kind, see Npcs.NpcInfo.id.</summary>
+        public string Type { get; set; }
+        public int Health { get; set; }
+        /// <summary>Its attack mode, see Npcs.NpcBrain.PetAttack.</summary>
+        public int Attacks { get; set; }
+    }
+
     /// <summary>
-    /// The server's SQLite database: players, their sessions and their inventories.
+    /// The server's SQLite database: players, their sessions, their inventories and their pets.
     /// Lives in the save folder (players.db) and is only opened by the server. World changes are
     /// stored apart, in binary region files (see World.WorldStorage).
     /// </summary>
@@ -123,6 +140,7 @@ namespace Brickcraft.Network
             connection.CreateTable<PlayerRecord>();
             connection.CreateTable<PlayerSessionRecord>();
             connection.CreateTable<InventoryItemRecord>();
+            connection.CreateTable<PetRecord>();
 
             // columns added to existing databases start empty
             connection.Execute("UPDATE players SET Role = ? WHERE Role IS NULL", PlayerRoles.User);
@@ -262,6 +280,24 @@ namespace Brickcraft.Network
                 });
             }
             return items;
+        }
+
+        // -------- pets --------
+
+        public List<PetRecord> LoadPets(int playerId) {
+            return connection.Table<PetRecord>().Where(p => p.PlayerId == playerId).ToList();
+        }
+
+        /// <summary>Replaces the pets kept for a player.</summary>
+        public void SavePets(int playerId, IEnumerable<PetRecord> pets) {
+            connection.RunInTransaction(() => {
+                connection.Execute("DELETE FROM pets WHERE PlayerId = ?", playerId);
+                foreach (PetRecord pet in pets) {
+                    pet.Id = 0;
+                    pet.PlayerId = playerId;
+                    connection.Insert(pet);
+                }
+            });
         }
 
         /// <summary>Replaces the stored inventory of a player, it's at most a few dozen rows.</summary>

@@ -37,10 +37,30 @@ namespace Brickcraft.World
         public Guid attachedTo;
     }
 
+    /// <summary>An NPC left in a chunk, as stored in a save (see Npcs.NpcSystem; never sent to clients).</summary>
+    public struct SavedNpc
+    {
+        /// <summary>Its kind, see Npcs.NpcInfo.id.</summary>
+        public string type;
+        /// <summary>Where it stood, absolute (see FloatingOrigin).</summary>
+        public double x, y, z;
+        /// <summary>Which way it faced, degrees around Y.</summary>
+        public float yaw;
+        public int health;
+        /// <summary>Its owner's players.db id if it's a pet (one told to stay: following pets are saved with their owner), 0 otherwise.</summary>
+        public int owner;
+        public string ownerName;
+        /// <summary>A pet's attack mode, see Npcs.NpcBrain.PetAttack.</summary>
+        public byte attacks;
+        /// <summary>Its pack (see Npcs.NpcGroups), Guid.Empty if it has none.</summary>
+        public Guid pack;
+    }
+
     /// <summary>
     /// What players changed in a chunk since it was generated: blocks (by their index inside the
     /// chunk, see <see cref="BlockIndex"/>) and bricks (whose origin cell is in the chunk).
-    /// Placed blocks also know who placed them, dug ones (air) don't.
+    /// Placed blocks also know who placed them, dug ones (air) don't. The server also keeps there the NPCs
+    /// that were in the chunk when it was last saved.
     /// </summary>
     public class ChunkChanges
     {
@@ -50,9 +70,10 @@ namespace Brickcraft.World
         /// <summary>Colours of the blocks placed with one (drawn with it instead of their texture), by block index.</summary>
         public readonly Dictionary<ushort, int> colors = new Dictionary<ushort, int>();
         public readonly Dictionary<Guid, SavedBrick> bricks = new Dictionary<Guid, SavedBrick>();
+        public List<SavedNpc> npcs = new List<SavedNpc>();
 
         public bool IsEmpty {
-            get { return blocks.Count == 0 && bricks.Count == 0; }
+            get { return blocks.Count == 0 && bricks.Count == 0 && npcs.Count == 0; }
         }
 
         public static ushort BlockIndex(int x, int y, int z) {
@@ -169,6 +190,29 @@ namespace Brickcraft.World
                 foreach (KeyValuePair<Guid, SavedBrick> brick in loaded.bricks) {
                     changes.bricks[brick.Key] = brick.Value;
                 }
+                if (loaded.npcs.Count > 0) {
+                    changes.npcs = new List<SavedNpc>(loaded.npcs);
+                }
+            }
+        }
+
+        /// <summary>The NPCs saved in a chunk.</summary>
+        public List<SavedNpc> GetNpcs(Vector2Int coords) {
+            lock (sync) {
+                return chunks.TryGetValue(coords, out ChunkChanges changes) ? new List<SavedNpc>(changes.npcs) : new List<SavedNpc>();
+            }
+        }
+
+        /// <summary>The NPCs that are in a chunk now, saved with it.</summary>
+        public void SetNpcs(Vector2Int coords, List<SavedNpc> npcs) {
+            lock (sync) {
+                chunks.TryGetValue(coords, out ChunkChanges changes);
+                if (npcs.Count == 0 && (changes == null || changes.npcs.Count == 0)) {
+                    return;
+                }
+                changes = changes ?? getOrCreate(coords);
+                changes.npcs = new List<SavedNpc>(npcs);
+                dirtyChunks.Add(coords);
             }
         }
 
@@ -261,7 +305,10 @@ namespace Brickcraft.World
     ///   varint block count, then per block: varint index delta (sorted), varint position of its name in that list,
     ///     zigzag varint colour (-1 for none, see BrickColorPalette), placer
     ///   varint brick count, then per brick: 16 bytes id, string item (length prefixed UTF-8 slug), zigzag varint colour,
-    ///     zigzag varint x y z, u8 rotation, placer
+    ///     zigzag varint x y z, u8 rotation, placer, zigzag varint state, u8 attached flag (then 16 bytes id of what it's attached to)
+    ///   varint NPC count (always 0 in what's sent to clients), then per NPC: string type, double x y z (absolute),
+    ///     float yaw, varint health, varint owner (then, when not 0, string owner name and u8 attack mode),
+    ///     u8 pack flag (then 16 bytes pack id)
     /// where placer is a varint player id (0 when no player placed it) followed, when not 0, by varint unix seconds.
     /// Blocks are saved by name, the numbers chunks use are only valid in the game that gave them (see
     /// BlockDatabase).
@@ -269,14 +316,14 @@ namespace Brickcraft.World
     public static class ChunkChangesSerializer
     {
         // change it when the format changes, records of other versions are rejected
-        public const byte Version = 6;
+        public const byte Version = 7;
 
         // pages keep network messages small, even for heavily modified chunks
         private const int BlocksPerPage = 8192;
         private const int BricksPerPage = 512;
 
         public static byte[] Serialize(ChunkChanges changes) {
-            return serialize(new List<KeyValuePair<ushort, byte>>(changes.blocks), changes, new List<SavedBrick>(changes.bricks.Values));
+            return serialize(new List<KeyValuePair<ushort, byte>>(changes.blocks), changes, new List<SavedBrick>(changes.bricks.Values), changes.npcs);
         }
 
         public static List<byte[]> SerializePages(ChunkChanges changes) {
@@ -288,7 +335,8 @@ namespace Brickcraft.World
                 pages.Add(serialize(
                     blocks.GetRange(Math.Min(b, blocks.Count), Math.Max(0, Math.Min(BlocksPerPage, blocks.Count - b))),
                     changes,
-                    bricks.GetRange(Math.Min(k, bricks.Count), Math.Max(0, Math.Min(BricksPerPage, bricks.Count - k)))
+                    bricks.GetRange(Math.Min(k, bricks.Count), Math.Max(0, Math.Min(BricksPerPage, bricks.Count - k))),
+                    new List<SavedNpc>() // NPCs are network objects of their own, clients don't get them here
                 ));
             }
             return pages;
@@ -349,11 +397,30 @@ namespace Brickcraft.World
                     }
                     changes.bricks[brick.id] = brick;
                 }
+
+                int npcCount = (int)readVarUInt(reader);
+                for (int i = 0; i < npcCount; i++) {
+                    SavedNpc npc = new SavedNpc() {
+                        type = reader.ReadString(),
+                        x = reader.ReadDouble(),
+                        y = reader.ReadDouble(),
+                        z = reader.ReadDouble(),
+                        yaw = reader.ReadSingle(),
+                        health = (int)readVarUInt(reader),
+                        owner = (int)readVarUInt(reader),
+                    };
+                    if (npc.owner != 0) {
+                        npc.ownerName = reader.ReadString();
+                        npc.attacks = reader.ReadByte();
+                    }
+                    npc.pack = reader.ReadByte() != 0 ? new Guid(reader.ReadBytes(16)) : Guid.Empty;
+                    changes.npcs.Add(npc);
+                }
             }
             return changes;
         }
 
-        private static byte[] serialize(List<KeyValuePair<ushort, byte>> blocks, ChunkChanges changes, List<SavedBrick> bricks) {
+        private static byte[] serialize(List<KeyValuePair<ushort, byte>> blocks, ChunkChanges changes, List<SavedBrick> bricks, List<SavedNpc> npcs) {
             blocks.Sort((a, b) => a.Key.CompareTo(b.Key));
 
             using (MemoryStream output = new MemoryStream()) {
@@ -400,6 +467,25 @@ namespace Brickcraft.World
                         writer.Write((byte)(brick.attachedTo != Guid.Empty ? 1 : 0));
                         if (brick.attachedTo != Guid.Empty) {
                             writer.Write(brick.attachedTo.ToByteArray());
+                        }
+                    }
+
+                    writeVarUInt(writer, (uint)npcs.Count);
+                    foreach (SavedNpc npc in npcs) {
+                        writer.Write(npc.type);
+                        writer.Write(npc.x);
+                        writer.Write(npc.y);
+                        writer.Write(npc.z);
+                        writer.Write(npc.yaw);
+                        writeVarUInt(writer, (uint)Math.Max(0, npc.health));
+                        writeVarUInt(writer, (uint)npc.owner);
+                        if (npc.owner != 0) {
+                            writer.Write(npc.ownerName ?? "");
+                            writer.Write(npc.attacks);
+                        }
+                        writer.Write((byte)(npc.pack != Guid.Empty ? 1 : 0));
+                        if (npc.pack != Guid.Empty) {
+                            writer.Write(npc.pack.ToByteArray());
                         }
                     }
                 }

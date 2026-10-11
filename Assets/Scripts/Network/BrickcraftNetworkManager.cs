@@ -165,6 +165,7 @@ namespace Brickcraft.Network
 
         // the host's player objects are destroyed before the server stops, so save them first
         public override void OnStopHost() {
+            Npcs.NpcSystem.ServerSave(true);
             foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {
                 endSession(conn, false);
             }
@@ -172,6 +173,7 @@ namespace Brickcraft.Network
         }
 
         public override void OnStopServer() {
+            Npcs.NpcSystem.ServerSave(true);
             foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {
                 endSession(conn, false);
             }
@@ -194,6 +196,7 @@ namespace Brickcraft.Network
 
                 // without it the world is still saved when regions unload and when the server stops
                 if (WorldNetwork.Storage != null && GameSettings.AutoSave) {
+                    Npcs.NpcSystem.ServerSave();
                     WorldNetwork.Storage.SaveInBackground();
                 }
                 // so a crash doesn't send players back much

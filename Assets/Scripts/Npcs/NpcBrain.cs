@@ -21,7 +21,8 @@ namespace Brickcraft.Npcs
     ///
     /// Pets (tamed with NpcInfo.tameWith) follow their owner (or stay), catching up when left behind, and
     /// attack what their attack mode says: those who hurt their owner or whom their owner hits, hostile NPCs
-    /// too, or players too (with PvP). They leave when their owner does (saving them comes with the saves).
+    /// too, or players too (with PvP). Those following leave when their owner does and come back with them
+    /// (see NpcSystem); those staying stay, standing still while their owner is away.
     ///
     /// Mods' NPCs can have a script (npcs/[npc]/script.lua, see Scripting.ModScripts): onThink(npc, senses)
     /// returning false keeps this brain out of it (the script gives the orders); onSpawn, onDamaged,
@@ -495,12 +496,9 @@ namespace Brickcraft.Npcs
 
         // right behind its owner, on the ground there (if there's ground)
         private void catchUp(Health owner) {
-            Vector3 back = -owner.transform.forward;
-            back.y = 0;
-            Vector3 spot = owner.transform.position + (back.sqrMagnitude > 0 ? back.normalized : Vector3.back) * 1.5f;
-            // not into the void (an owner falling, or flying over nothing)
-            if (Physics.Raycast(spot + Vector3.up * 2, Vector3.down, out RaycastHit ground, 6, Physics.DefaultRaycastLayers & ~(1 << (int)Game.Layers.Water), QueryTriggerInteraction.Ignore)) {
-                npc.ServerTeleport(ground.point);
+            // not into the void (an owner falling, or flying over nothing), nor into them or a wall
+            if (NpcSystem.SpotNear(owner.transform, npc.Radius, npc.Height, out Vector3 spot)) {
+                npc.ServerTeleport(spot);
             }
         }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Brickcraft.Combat;
 using UnityEngine;
@@ -34,6 +35,8 @@ namespace Brickcraft.Npcs
         /// <summary>A group of NPCs, its first living one leading.</summary>
         public class Pack
         {
+            /// <summary>Who it is in saves (members are saved with their chunks, and come back together).</summary>
+            public Guid id = Guid.NewGuid();
             public readonly List<Npc> members = new List<Npc>();
             /// <summary>Which way the wedge points: where the leader last walked (it doesn't swing while it turns on the spot).</summary>
             public Vector3 heading = Vector3.forward;
@@ -146,6 +149,23 @@ namespace Brickcraft.Npcs
                 pack = new Pack();
                 pack.members.Add(packmate);
                 packs[packmate] = pack;
+            }
+            pack.members.Add(npc);
+            packs[npc] = pack;
+        }
+
+        /// <summary>Puts it in the pack with that id (back from a save), a new one if none of its members is around.</summary>
+        public static void Join(Npc npc, Guid packId) {
+            Leave(npc);
+            Pack pack = null;
+            foreach (Pack existing in packs.Values) {
+                if (existing.id == packId) {
+                    pack = existing;
+                    break;
+                }
+            }
+            if (pack == null) {
+                pack = new Pack() { id = packId };
             }
             pack.members.Add(npc);
             packs[npc] = pack;

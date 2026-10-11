@@ -65,6 +65,23 @@ namespace Brickcraft.Npcs
         public DropInfo[] drops;
         /// <summary>The model's animations for idle, walk, attack and death, if they're named otherwise.</summary>
         public Dictionary<string, string> animations;
+        /// <summary>Where it appears by itself around players (see NpcSpawner), null if it doesn't.</summary>
+        public SpawnInfo spawn;
+    }
+
+    /// <summary>Where and how an NPC appears by itself, see NpcSpawner.</summary>
+    public class SpawnInfo
+    {
+        /// <summary>The blocks it appears on (their ids, like "grass" or "my_mod:moss"); any solid one if empty.</summary>
+        public string[] on;
+        /// <summary>How likely it is next to the others that could appear on the same place.</summary>
+        public float weight = 1;
+        /// <summary>How many appear together (they're a pack), at least and at most.</summary>
+        public int minGroup = 1;
+        public int maxGroup = 1;
+        /// <summary>Between which heights, in blocks (the sea is at 64).</summary>
+        public int minHeight = 0;
+        public int maxHeight = 255;
     }
 
     public class AggroRule

@@ -52,7 +52,7 @@ In the NPC's `script.lua`.
 
 ### onSpawn(npc)
 
-It appeared in the world.
+It appeared in the world: spawned, or back from the save (its chunk was loaded again, or its owner came back).
 
 ### onThink(npc, senses)
 

@@ -24,6 +24,7 @@ namespace Brickcraft.Network
     ///   /pvp [on|off]               whether players can hurt each other, saved with the world
     ///   /spawnnpc NPC [count]       puts NPCs in front of you
     ///   /removenpcs                 takes every NPC out of the world
+    ///   /navdebug                   draws where NPCs can walk and their paths in the editor's scene view
     ///   /role NICK|ID [role]        shows or changes a player's role (user, admin)
     ///   /additem ITEM[@COLOR] [count] [NICK|ID]   gives items to a player (yourself by default), online or not
     /// NICK|ID is a player name (any case) or, if no name matches, a player id.
@@ -104,6 +105,10 @@ namespace Brickcraft.Network
                 case "removenpcs":
                     reply(sender, "Removed " + Npcs.NpcSystem.ServerRemoveAll() + " NPCs");
                     break;
+                case "navdebug":
+                    Npcs.Navigation.NavGrid.DebugDraw = !Npcs.Navigation.NavGrid.DebugDraw;
+                    reply(sender, "NPC navigation is " + (Npcs.Navigation.NavGrid.DebugDraw ? "drawn in the scene view" : "not drawn anymore"));
+                    break;
                 case "unban":
                     if (target == null) {
                         reply(sender, "Usage: /unban NICK|ID");
@@ -112,7 +117,7 @@ namespace Brickcraft.Network
                     }
                     break;
                 default:
-                    reply(sender, "Unknown command. Commands: /players, /kick NICK|ID [reason], /ban NICK|ID [reason], /unban NICK|ID, /tp NICK|ID, /pvp [on|off], /spawnnpc NPC [count], /removenpcs, /role NICK|ID [role], /additem ITEM[@COLOR] [count] [NICK|ID]");
+                    reply(sender, "Unknown command. Commands: /players, /kick NICK|ID [reason], /ban NICK|ID [reason], /unban NICK|ID, /tp NICK|ID, /pvp [on|off], /spawnnpc NPC [count], /removenpcs, /navdebug, /role NICK|ID [role], /additem ITEM[@COLOR] [count] [NICK|ID]");
                     break;
             }
         }

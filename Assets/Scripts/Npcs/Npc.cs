@@ -1,5 +1,6 @@
 using Brickcraft.Combat;
 using Brickcraft.Network;
+using Brickcraft.Npcs.Navigation;
 using Mirror;
 using UnityEngine;
 
@@ -10,10 +11,11 @@ namespace Brickcraft.Npcs
     /// NpcSystem): it picks a target, walks, attacks and dies; everybody sees its model (see NpcModel) play its
     /// animations: idle or walk all the time, attack and death when they happen.
     ///
-    /// For now it walks straight to where it goes, stepping up low obstacles (the navigation grid comes next),
-    /// and keeps out of fluids (water, lava): it doesn't step onto them or down into them.
-    /// When it doesn't get anywhere chasing (a wall, a cliff) it tries going around it, sideways for a moment;
-    /// after a few tries it gives up on that target for a while, unless it's hurt by it again.
+    /// It chases along paths of the navigation grid (see Navigation.NavGrid), asked for again as its target
+    /// moves; where there's no grid it walks straight. Moving, it steps up what's low enough and keeps out of
+    /// fluids (water, lava). When it doesn't get anywhere (something the grid doesn't know of in the way: an
+    /// NPC, a player) it asks for a new path or goes sideways for a moment; when the best path can't take it
+    /// closer it gives up on that target for a while, unless it's hurt by it again.
     /// Its capsule is what it bumps into things with and what players hit (see Combat.Health).
     /// </summary>
     [RequireComponent(typeof(Health), typeof(CapsuleCollider))]
@@ -70,14 +72,25 @@ namespace Brickcraft.Npcs
         // not getting anywhere: checked every ProgressInterval, then it goes sideways for a moment (a detour)
         private const float ProgressInterval = 1.5f;
         private const float MinProgress = 0.3f;
-        private const int MaxDetours = 3;
+        private const int MaxStrikes = 3;
+        // a new path when the target moved this far from where the last one went, or this often
+        private const float RepathDistance = 1.5f;
+        private const float RepathInterval = 2;
+        // a waypoint is reached this close
+        private const float WaypointReach = 0.25f;
         private const float GiveUpTime = 10;
         private double progressCheckAt;
         private Vector3 progressPosition;
         private Vector3 progressTargetPosition;
         // the closest it got to the target since the target last moved: detours that only seem to get closer don't count
         private float bestDistance;
-        private int detours;
+        private int strikes;          // checks in a row it didn't get anywhere
+        private NavAgent agent;
+        private NavPath path;
+        private int pathIndex;
+        private bool isPathPending;
+        private double nextRepath;
+        private Vector3 pathGoal;
         private double detourUntil;
         private Vector3 detourHeading;
         private Health ignored;
@@ -148,6 +161,7 @@ namespace Brickcraft.Npcs
             body.center = hitbox.center * Info.scale;
             body.height = hitbox.size.y * Info.scale;
             body.radius = Mathf.Min(Mathf.Max(hitbox.size.x, hitbox.size.z) * Info.scale / 2, body.height / 2);
+            agent = NavGrid.AgentFor(Info, body.radius, body.height);
             play(loop);
         }
 
@@ -184,6 +198,11 @@ namespace Brickcraft.Npcs
                 think(now);
             }
             move(Time.deltaTime);
+            if (NavGrid.DebugDraw && path != null) {
+                for (int i = 1; i < path.Count; i++) {
+                    Debug.DrawLine(path.PointAt(i - 1) + Vector3.up * 0.1f, path.PointAt(i) + Vector3.up * 0.1f, path.result == NavResult.Found ? Color.yellow : Color.red);
+                }
+            }
         }
 
         private void think(double now) {
@@ -210,14 +229,55 @@ namespace Brickcraft.Npcs
                 facing = heading;
                 return;
             }
+            if (!isPathPending && (path == null || now >= nextRepath || horizontalDistance(target.transform.position, pathGoal) > RepathDistance)) {
+                requestPath(now);
+            }
             if (now >= progressCheckAt) {
                 checkProgress(now, to);
                 if (target == null || now < detourUntil) {
                     return; // gave up, or going around
                 }
             }
-            heading = to.normalized;
-            facing = to;
+            followPath(to);
+        }
+
+        private void requestPath(double now) {
+            isPathPending = true;
+            nextRepath = now + RepathInterval;
+            pathGoal = target.transform.position;
+            NavGrid.RequestPath(agent, transform.position, pathGoal, Info.attack.range + body.radius, result => {
+                isPathPending = false;
+                if (this == null || health.isDead) {
+                    return;
+                }
+                path = result.result == NavResult.Failed ? null : result;
+                pathIndex = 1;
+            });
+        }
+
+        // towards the next waypoint; straight at the target without a path; still at the end of one that
+        // can't get closer
+        private void followPath(Vector3 toTarget) {
+            facing = toTarget;
+            if (path == null) {
+                heading = toTarget.normalized;
+                return;
+            }
+            while (pathIndex < path.Count && horizontalDistance(transform.position, path.PointAt(pathIndex)) < WaypointReach) {
+                pathIndex++;
+            }
+            if (pathIndex < path.Count) {
+                Vector3 to = path.PointAt(pathIndex) - transform.position;
+                to.y = 0;
+                heading = to.normalized;
+                facing = to;
+            } else {
+                heading = path.result == NavResult.Partial ? Vector3.zero : toTarget.normalized;
+            }
+        }
+
+        private bool isFollowingPath {
+            get { return path != null && pathIndex < path.Count; }
         }
 
         // from its center to the center of who it can hit
@@ -238,35 +298,49 @@ namespace Brickcraft.Npcs
             progressPosition = transform.position;
             progressTargetPosition = target != null ? target.transform.position : Vector3.zero;
             bestDistance = target != null ? horizontalDistance(transform.position, target.transform.position) : 0;
-            detours = 0;
+            strikes = 0;
             detourUntil = 0;
+            path = null;
         }
 
-        // stuck: it hardly moved, or it got no closer than it ever did (while the target stood still)
+        // stuck: following a path, it hardly moved (something the grid doesn't know of is in the way); at the end
+        // of a path that can't get closer, it can't get there; without a path, it got no closer than it ever did
         private void checkProgress(double now, Vector3 to) {
             float moved = horizontalDistance(transform.position, progressPosition);
             float distance = to.magnitude;
             if (horizontalDistance(target.transform.position, progressTargetPosition) >= 1) {
                 bestDistance = float.MaxValue; // it went somewhere else: a fresh start
-                detours = 0;
+                strikes = 0;
             }
-            bool closer = distance < bestDistance - MinProgress;
-            bool stuck = moved < Info.speed * ProgressInterval * 0.25f || !closer;
+            bool blocked = moved < Info.speed * ProgressInterval * 0.25f;
+            bool stuck = isFollowingPath ? blocked
+                : path != null ? path.result == NavResult.Partial
+                : blocked || distance >= bestDistance - MinProgress;
 
             progressCheckAt = now + ProgressInterval;
             progressPosition = transform.position;
             progressTargetPosition = target.transform.position;
             bestDistance = Mathf.Min(bestDistance, distance);
             if (!stuck) {
-                detours = 0;
+                strikes = 0;
                 return;
             }
-            if (++detours > MaxDetours || !startDetour(now, to)) {
+            strikes++;
+            bool tried = strikes <= MaxStrikes;
+            if (tried && isFollowingPath && strikes % 2 == 1) {
+                nextRepath = 0; // a new path, around what's in the way now
+            } else if (tried && (path == null || isFollowingPath)) {
+                tried = startDetour(now, to);
+            } else if (tried) {
+                nextRepath = 0; // the target may be somewhere else by then
+            }
+            if (!tried) {
                 // can't get there: somebody else, or wandering, for a while
                 ignored = target;
                 ignoredUntil = now + GiveUpTime;
                 target = null;
-                detours = 0;
+                strikes = 0;
+                path = null;
                 heading = Vector3.zero;
             }
         }

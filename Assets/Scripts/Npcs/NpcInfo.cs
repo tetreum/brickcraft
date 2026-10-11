@@ -29,6 +29,8 @@ namespace Brickcraft.Npcs
         /// ("water", "amphibious") and flying ("air") come with the navigation grid; until then they walk.
         /// </summary>
         public string moves = Ground;
+        /// <summary>How far down it walks off an edge (paths don't drop further).</summary>
+        public float maxDrop = 3;
 
         public const string Ground = "ground";
         /// <summary>

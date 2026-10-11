@@ -41,6 +41,7 @@ namespace Brickcraft.Npcs
         public static void StartServer() {
             npcs.Clear();
             activeChunks.Clear();
+            Navigation.NavGrid.Start();
             subscribedWorld = World.WorldBehaviour.Instance;
             if (subscribedWorld != null) {
                 subscribedWorld.ChunkUnloaded += onChunkUnloaded;
@@ -48,6 +49,7 @@ namespace Brickcraft.Npcs
         }
 
         public static void StopServer() {
+            Navigation.NavGrid.Stop();
             if (subscribedWorld != null) {
                 subscribedWorld.ChunkUnloaded -= onChunkUnloaded;
                 subscribedWorld = null;
@@ -82,6 +84,7 @@ namespace Brickcraft.Npcs
         }
 
         public static void ServerUpdate() {
+            Navigation.NavGrid.Update();
             if (Time.unscaledTime < nextRefresh) {
                 return;
             }

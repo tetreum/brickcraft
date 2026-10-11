@@ -126,6 +126,7 @@ namespace Brickcraft.Network
                 return false;
             }
             serverChanges.SetBlock(block, type, placer, color);
+            Npcs.Navigation.NavGrid.MarkBlockDirty(block);
             Placer sent = placer ?? default(Placer);
             sendToChunk(WorldChanges.ChunkOfBlock(block), new BlockChangedMessage() {
                 block = block,
@@ -142,6 +143,7 @@ namespace Brickcraft.Network
             Brick brick = Server.Instance.spawnBrick(item, color, placement);
             serverChanges.AddBrick(toSaved(brick, placer));
             sendPlaced(brick, placer);
+            Npcs.Navigation.NavGrid.MarkDirty(brick);
             return brick;
         }
 
@@ -153,6 +155,7 @@ namespace Brickcraft.Network
             Brick brick = Server.Instance.spawnBrick(item, color, holder.placement, null, 0, holder.id);
             serverChanges.AddBrick(toSaved(brick, placer));
             sendPlaced(brick, placer);
+            Npcs.Navigation.NavGrid.MarkDirty(holder);
             return brick;
         }
 
@@ -193,10 +196,12 @@ namespace Brickcraft.Network
             Vector3Int from = brick.placement.origin;
             Brick attached = Server.attachmentOf(brick);
             Placer attachedPlacer = attached != null ? ServerPlacerOf(attached) : default(Placer);
+            Npcs.Navigation.NavGrid.MarkDirty(brick); // where it was
 
             if (!Server.Instance.moveBrick(brick, to)) {
                 return false;
             }
+            Npcs.Navigation.NavGrid.MarkDirty(brick); // and where it is
             serverChanges.RemoveBrick(new Guid(brick.id), from);
             sendToChunk(WorldChanges.ChunkOfBrick(from), new BrickRemovedMessage() { id = brick.id, origin = from });
             serverChanges.AddBrick(toSaved(brick, placer));
@@ -219,6 +224,7 @@ namespace Brickcraft.Network
             }
             Placer placer = ServerPlacerOf(brick);
             Server.Instance.setBrickState(brick, state);
+            Npcs.Navigation.NavGrid.MarkDirty(brick, true); // a door swinging
             serverChanges.AddBrick(toSaved(brick, placer));
             sendToChunk(WorldChanges.ChunkOfBrick(brick.placement.origin), new BrickStateMessage() {
                 id = brick.id,
@@ -234,6 +240,7 @@ namespace Brickcraft.Network
             if (attached != null) {
                 removed.AddRange(ServerRemoveBrick(attached));
             }
+            Npcs.Navigation.NavGrid.MarkDirty(brick);
             Server.Instance.removeBrick(brick);
             serverChanges.RemoveBrick(new Guid(brick.id), brick.placement.origin);
             sendToChunk(WorldChanges.ChunkOfBrick(brick.placement.origin), new BrickRemovedMessage() { id = brick.id, origin = brick.placement.origin });

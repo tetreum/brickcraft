@@ -60,6 +60,7 @@ Admins can type commands in the chat:
 - `/pvp [on|off]`: shows or changes whether players can hurt each other, saved with the world.
 - `/spawnnpc NPC [count]`: puts `count` (1 by default, 20 at most) NPCs of that kind (like `golem`) a few meters in front of you.
 - `/removenpcs`: takes every NPC out of the world.
+- `/navdebug`: draws where NPCs can walk and their paths in the editor's scene view.
 - `/role NICK|ID [role]`: shows a player's role, or changes it (`user` or `admin`). Admins can't change their own.
 - `/additem ITEM[@COLOR] [count] [NICK|ID]`: gives `count` (1 by default) of the item with id `ITEM` (like `dirt_2x4`) to a player, yourself by default. `@COLOR` gives it in a colour it can have, by colour id or name (`plate_2x2_yellow@4`, `brick_2x2@trans-clear`), its default one otherwise. Offline players get them in their saved inventory. `/additem ITEM NICK` works too, but a number after the item is always the count, so give a player by id with `/additem ITEM count ID`.
 
@@ -236,6 +237,7 @@ NPCs are creatures the server runs (`Npcs.Npc`): they wander, go for players, at
     "speed": 1.6,
     "stepHeight": 0.5,
     "moves": "ground",
+    "maxDrop": 3,
     "behaviour": "aggressive",
     "sightRange": 16,
     "attack": { "damage": 5, "range": 0.9, "cooldown": 1.8, "hitTime": 1.2, "knockback": 8 },
@@ -244,14 +246,14 @@ NPCs are creatures the server runs (`Npcs.Npc`): they wander, go for players, at
 }
 ```
 
-- Distances are meters (a block is 0.8 wide and 0.48 high, a player 1.8 tall). `speed` is in meters per second, `stepHeight` how high it steps up without jumping.
+- Distances are meters (a block is 0.8 wide and 0.48 high, a player 1.8 tall). `speed` is in meters per second, `stepHeight` how high it steps up without jumping, `maxDrop` how far down it walks off an edge.
 - `moves`: `ground` (the default) walks and keeps out of fluids (blocks with `fluid`, and water bricks): it doesn't step onto them nor walk off an edge into them. `water`, `amphibious` and `air` (swimming and flying) come with the navigation grid; until then they walk like `ground` ones.
 - `behaviour`: `neutral` (the default) wanders and fights back whoever hurts it, until it loses them (15 seconds, or too far); `aggressive` also goes for the nearest player within `sightRange` (not in Peaceful worlds).
 - `attack`: `range` from its side, `cooldown` seconds between attacks, `hitTime` seconds into the attack animation when the hit lands (if the target is still in reach), `knockback` how hard it pushes.
 - `drops`: items (and their `chance`, 0 to 1) whoever kills it gets in their inventory.
 - `animations`: the model's names for its idle, walk, attack and death animations, if they're named otherwise.
 
-For now NPCs walk straight to where they go, stepping up what's low enough (the navigation grid comes next). They only move and think in chunks within 4 chunks of a player (`Npcs.NpcSystem.ActiveRadius`), go away with the chunks the server unloads, and players only get the NPCs of the chunks they have (`Network.ChunkInterestManagement`).
+NPCs chase along paths of the navigation grid (`Npcs.Navigation.NavGrid`), on the server: the brick grid's cells (studs sideways, plates up) seen as columns, each with its spans, where there's solid ground with room above. Solid is the terrain's blocks (fluids and replaceable blocks aren't) and the cells bricks fill: their placement, or for bricks with other colliders (a door frame's opening, a door, open or closed) the cells their colliders touch. Tiles are chunks, built around NPCs on worker threads (Burst jobs) and built again when blocks, bricks or doors change there; paths (A* in a job) step up and drop down as far as the NPC can, with room for its whole body (its capsule's width and height), and are straightened. A path is asked for again as the target moves; one that can't get there takes the NPC as close as it can, and if that's no closer it gives up on the target for a while. Something the grid doesn't know of in the way (an NPC, a player) makes it ask for a new path or go sideways for a moment. `/navdebug` draws the floors around NPCs and their paths in the editor's scene view. They only move and think in chunks within 4 chunks of a player (`Npcs.NpcSystem.ActiveRadius`), go away with the chunks the server unloads, and players only get the NPCs of the chunks they have (`Network.ChunkInterestManagement`).
 
 `model` is a prefab of `Assets/Resources/NpcModels` (`Npcs.NpcModel`), made from an animated glTF model with `Brickcraft > Import NPC model (glTF)...` (like `Assets/Models/NPCs/Golem/Golem.gltf`, exported from [Blockbench](https://www.blockbench.net/)): its nodes, textures (unfiltered, for pixel art), an AnimationClip per animation and an Animator controller with a state for each, saved next to the glTF. A node named `hitbox` isn't drawn: it's where the NPC can be hit and what it bumps into (all its meshes otherwise). Parts no animation moves are merged into one mesh per moving part. Models move their nodes (no skinned meshes). Mods can't bring their own models yet.
 

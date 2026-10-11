@@ -30,7 +30,8 @@ namespace Brickcraft.Npcs
     /// where there's no grid it walks straight. Moving, it steps up what's low enough and keeps out of fluids.
     /// When it doesn't get anywhere (something the grid doesn't know of in the way: an NPC, a player) it asks for
     /// a new path or goes sideways for a moment; when the best path can't take it closer, it can't get there
-    /// (IsUnreachable) and stops.
+    /// (IsUnreachable) and stops. On its way it dodges other NPCs and players (NpcSteering), and attacking it
+    /// takes its place around its target, waiting its turn if too many are at it already (NpcGroups).
     /// </summary>
     [RequireComponent(typeof(Health), typeof(CapsuleCollider))]
     public class Npc : NetworkBehaviour
@@ -77,6 +78,10 @@ namespace Brickcraft.Npcs
         private float orderRange;
 
         private Vector3 heading;      // where it walks, a horizontal unit vector or zero
+        private Vector3 steering;     // the velocity NpcSteering found, used while it's fresh
+        private float steeringAt = -1;
+        private const float SteeringFreshness = 0.3f;
+        private bool slotFailed;      // its place around its target can't be reached: it goes straight for them
         private Vector3 facing;       // where it looks
         private float verticalSpeed;
         private Vector3 knockback;
@@ -132,6 +137,7 @@ namespace Brickcraft.Npcs
 
         public override void OnStopServer() {
             NpcSystem.Unregister(this);
+            NpcGroups.Forget(this);
         }
 
         public override void OnStartClient() {
@@ -198,6 +204,20 @@ namespace Brickcraft.Npcs
             get { return Brain != null ? Brain.Owner != 0 : ownerName.Length > 0; }
         }
 
+        /// <summary>Server: how fast it moved last, sideways.</summary>
+        public Vector3 Velocity { get; private set; }
+
+        /// <summary>Server: how fast it wants to move, sideways (where it heads at its speed).</summary>
+        public Vector3 PreferredVelocity {
+            get { return heading * Info.speed; }
+        }
+
+        /// <summary>Server: a velocity that dodges who's around, see NpcSteering.</summary>
+        public void SetSteering(Vector3 velocity) {
+            steering = velocity;
+            steeringAt = Time.time;
+        }
+
         private void Update() {
             if (Info == null) {
                 return;
@@ -256,6 +276,10 @@ namespace Brickcraft.Npcs
         private void setOrder(NpcOrderKind kind, Health target, Vector3 position, float range) {
             bool same = kind == order && target == orderTarget && range == orderRange
                 && (kind != NpcOrderKind.MoveTo || horizontalDistance(position, orderPosition) < RepathDistance);
+            if (order == NpcOrderKind.Attack && (kind != NpcOrderKind.Attack || target != orderTarget)) {
+                NpcGroups.ReleaseSlot(this, orderTarget);
+                slotFailed = false;
+            }
             order = kind;
             orderTarget = target;
             orderPosition = position;
@@ -327,15 +351,8 @@ namespace Brickcraft.Npcs
                 case NpcOrderKind.Attack:
                     if (orderTarget == null) {
                         stand();
-                    } else if (IsInReach(orderTarget)) {
-                        Vector3 to = orderTarget.transform.position - transform.position;
-                        to.y = 0;
-                        facing = to;
-                        heading = Vector3.zero;
-                        resetProgress(now);
-                        tryAttack(now);
                     } else {
-                        goTo(now, orderTarget.transform.position, Info.attack.range + body.radius);
+                        attack(now);
                     }
                     break;
                 default:
@@ -346,6 +363,34 @@ namespace Brickcraft.Npcs
 
         private void stand() {
             heading = Vector3.zero;
+        }
+
+        // from its place around the target, when it's its turn; otherwise to its place, facing them
+        private void attack(double now) {
+            Vector3 slot = NpcGroups.AttackSlot(this, orderTarget, out bool mayAttack);
+            Vector3 toTarget = orderTarget.transform.position - transform.position;
+            toTarget.y = 0;
+            if (mayAttack && IsInReach(orderTarget)) {
+                facing = toTarget;
+                heading = Vector3.zero;
+                resetProgress(now);
+                tryAttack(now);
+                return;
+            }
+            if (slotFailed) {
+                goTo(now, orderTarget.transform.position, Info.attack.range + body.radius);
+            } else {
+                goTo(now, slot, 0.25f);
+                if (IsUnreachable) {
+                    // its place is somewhere it can't go (in a wall...): straight for them then
+                    slotFailed = true;
+                    IsUnreachable = false;
+                    resetProgress(now);
+                }
+            }
+            if (toTarget.magnitude < 5 && heading == Vector3.zero) {
+                facing = toTarget; // waiting its turn, it watches them
+            }
         }
 
         // along a path to a (maybe moving) destination, stopping within range of it
@@ -664,7 +709,12 @@ namespace Brickcraft.Npcs
         // walks where it heads, stepping up what's low enough and falling down what isn't under it
         private void move(float deltaTime) {
             Vector3 position = transform.position;
-            Vector3 step = (heading * Info.speed + knockback) * deltaTime;
+            // dodging who's around while it goes somewhere (standing, it holds its place)
+            Vector3 walk = heading * Info.speed;
+            if (heading != Vector3.zero && Time.time - steeringAt < SteeringFreshness) {
+                walk = Vector3.ClampMagnitude(steering, Info.speed);
+            }
+            Vector3 step = (walk + knockback) * deltaTime;
             knockback = Vector3.MoveTowards(knockback, Vector3.zero, KnockbackDrag * deltaTime);
 
             body.enabled = false; // its own capsule isn't in the way
@@ -674,6 +724,7 @@ namespace Brickcraft.Npcs
                 bumped = true;
             }
             Vector3 next = position + step;
+            Velocity = deltaTime > 0 ? new Vector3(step.x, 0, step.z) / deltaTime : Vector3.zero;
 
             verticalSpeed -= Gravity * deltaTime;
             float rise = verticalSpeed * deltaTime;
@@ -692,7 +743,7 @@ namespace Brickcraft.Npcs
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(facing), TurnSpeed * deltaTime);
             }
 
-            string wanted = heading.sqrMagnitude > 0 ? Walk : Idle;
+            string wanted = Velocity.sqrMagnitude > 0.01f ? Walk : Idle;
             if (loop != wanted) {
                 loop = wanted;
             }

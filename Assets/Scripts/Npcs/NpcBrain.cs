@@ -16,7 +16,8 @@ namespace Brickcraft.Npcs
     /// Wild NPCs go for whoever matches one of their aggro rules (NpcInfo.aggro, or their behaviour's), the
     /// nearest of them; one they lose from sight they look for where it last was, and after their memory
     /// runs out they give up (onTargetLost). One they can't get to they leave alone for a while. Passive
-    /// ones run from who hurts them; with nobody to go for they wander.
+    /// ones run from who hurts them; with nobody to go for they wander, or follow their pack's leader (see
+    /// NpcGroups: a pack goes for whoever one of them goes for).
     ///
     /// Pets (tamed with NpcInfo.tameWith) follow their owner (or stay), catching up when left behind, and
     /// attack what their attack mode says: those who hurt their owner or whom their owner hits, hostile NPCs
@@ -223,7 +224,11 @@ namespace Brickcraft.Npcs
                 ignored = null;
             }
             markTargets(now);
+            Health previous = target;
             chooseTarget(now);
+            if (target != null && target != previous) {
+                NpcGroups.Alert(npc, target);
+            }
 
             if (target != null) {
                 chase(now);
@@ -235,7 +240,21 @@ namespace Brickcraft.Npcs
                 npc.OrderMoveTo(npc.transform.position + away.normalized * FleeDistance, 1);
                 return;
             }
+            NpcGroups.Pack pack = NpcGroups.PackOf(npc);
+            Npc leader = pack != null ? pack.Leader : null;
+            if (leader != null && leader != npc) {
+                npc.OrderMoveTo(NpcGroups.FormationPlace(npc, pack), 0.8f);
+                return;
+            }
             npc.OrderWander();
+        }
+
+        /// <summary>A packmate goes for someone: it does too, if it would go for them.</summary>
+        public void Alert(Health someone) {
+            if (Owner == 0 && someone != null && !someone.isDead && isTargetable(someone)) {
+                remember(someone, NetworkTime.time).isTarget = true;
+                npc.ThinkSoon();
+            }
         }
 
         // who matches one of its aggro rules becomes something to go for

@@ -42,6 +42,8 @@ What it does next. Its own brain gives it orders too, a few times a second: to b
 | `npc:damage(amount)` | Hurts it, by nobody. Returns `false` if it couldn't be hurt (dead, hurt less than half a second ago, or its `onDamaged` said no). |
 | `npc:heal(amount)` | Gives it health back, up to its maximum. |
 | `npc:tame(player)` | Makes it the player's pet. |
+| `npc:joinPack(other)` | Puts it in the other NPC's pack: with nothing to do it follows the pack's leader (its first living member) in a wedge, and when one of them goes for someone the others within 20 meters do too. |
+| `npc:leavePack()` | Takes it out of its pack. |
 | `npc:remove()` | Takes it out of the world; nobody gets its drops. Returns `false` if it was gone already. |
 
 ## Events

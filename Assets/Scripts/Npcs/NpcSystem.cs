@@ -64,6 +64,8 @@ namespace Brickcraft.Npcs
             activeChunks.Clear();
             Navigation.NavGrid.Start();
             NpcPerception.Clear();
+            NpcSteering.Clear();
+            NpcGroups.Clear();
             hits.Clear();
             lastPositions.Clear();
             Health.ServerAnyDamaged += onAnyDamaged;
@@ -76,6 +78,8 @@ namespace Brickcraft.Npcs
         public static void StopServer() {
             Navigation.NavGrid.Stop();
             NpcPerception.Clear();
+            NpcSteering.Clear();
+            NpcGroups.Clear();
             Health.ServerAnyDamaged -= onAnyDamaged;
             hits.Clear();
             lastPositions.Clear();
@@ -115,6 +119,7 @@ namespace Brickcraft.Npcs
         public static void ServerUpdate() {
             Navigation.NavGrid.Update();
             NpcPerception.Update();
+            NpcSteering.Update();
             if (Time.unscaledTime < nextRefresh) {
                 return;
             }

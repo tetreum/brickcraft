@@ -98,6 +98,18 @@ namespace Brickcraft.Scripting
             npcOrDie().Health.ServerHeal(amount);
         }
 
+        /// <summary>Puts it in the other NPC's pack: it follows the leader, and they go for whoever one of them goes for.</summary>
+        public void joinPack(NpcHandle other) {
+            if (other == null || other.npc == null) {
+                throw new ScriptRuntimeException("joinPack needs an NPC that's still there");
+            }
+            NpcGroups.Join(npcOrDie(), other.npc);
+        }
+
+        public void leavePack() {
+            NpcGroups.Leave(npcOrDie());
+        }
+
         /// <summary>Makes it a player's pet.</summary>
         public void tame(PlayerHandle player) {
             ConnectedPlayer connected = player != null && player.connection != null ? player.connection.authenticationData as ConnectedPlayer : null;

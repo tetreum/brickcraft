@@ -22,7 +22,7 @@ namespace Brickcraft.Network
     ///   /unban NICK|ID
     ///   /tp NICK|ID                 takes you to an online player
     ///   /pvp [on|off]               whether players can hurt each other, saved with the world
-    ///   /spawnnpc NPC [count]       puts NPCs in front of you
+    ///   /spawnnpc NPC [count]       puts NPCs in front of you (several are a pack)
     ///   /removenpcs                 takes every NPC out of the world
     ///   /navdebug                   draws where NPCs can walk and their paths in the editor's scene view
     ///   /role NICK|ID [role]        shows or changes a player's role (user, admin)
@@ -221,10 +221,18 @@ namespace Brickcraft.Network
             forward = forward.sqrMagnitude > 0 ? forward.normalized : Vector3.forward;
             Vector3 right = Vector3.Cross(Vector3.up, forward);
             int spawned = 0;
+            Npcs.Npc first = null;
             for (int i = 0; i < count; i++) {
                 Vector3 position = player.position + forward * 4 + right * ((i - (count - 1) / 2f) * 2) + Vector3.up;
-                if (Npcs.NpcSystem.ServerSpawn(info, position, Quaternion.LookRotation(-forward).eulerAngles.y) != null) {
+                Npcs.Npc npc = Npcs.NpcSystem.ServerSpawn(info, position, Quaternion.LookRotation(-forward).eulerAngles.y);
+                if (npc != null) {
                     spawned++;
+                    // spawned together, they're a pack
+                    if (first == null) {
+                        first = npc;
+                    } else {
+                        Npcs.NpcGroups.Join(npc, first);
+                    }
                 }
             }
             reply(sender, "Spawned " + spawned + " " + info.name + (spawned < count ? " (there are too many NPCs for more)" : ""));

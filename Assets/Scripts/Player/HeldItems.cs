@@ -168,7 +168,8 @@ namespace Brickcraft
         }
 
         private void LateUpdate() {
-            bool visible = !health.isDead && (firstPerson || rightHand != null);
+            // the parts lister takes the camera away from the player (see PartsListerView)
+            bool visible = !health.isDead && (firstPerson ? !PartsListerView.IsOpen : rightHand != null);
             right.gameObject.SetActive(visible);
             left.gameObject.SetActive(visible);
             if (!visible) {

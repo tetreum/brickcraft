@@ -111,7 +111,7 @@ public static class BrickIconRenderer
         }
         // weapons and the like are long and thin: tilted, they fill the icon better
         string type = (string)info["type"] ?? "brick";
-        Quaternion tilt = type == "brick" || type == "armor" ? Quaternion.identity : Quaternion.Euler(0, 0, -45);
+        Quaternion tilt = type == "weapon" || type == "material" ? Quaternion.Euler(0, 0, -45) : Quaternion.identity;
         string model = BrickModels.Resolve((string)info["brickModel"] ?? "3003", modOf(folder));
         if (onlyModel != null && model != onlyModel) {
             return false;

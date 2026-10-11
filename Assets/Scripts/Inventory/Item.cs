@@ -18,6 +18,8 @@ namespace Brickcraft
             Food = 4,
             /// <summary>Does nothing on its own: crafting ingredients, ammo (arrows).</summary>
             Material = 5,
+            /// <summary>Used on something with the place button instead of placed (the parts lister, see its tags).</summary>
+            Tool = 6,
         }
 
         /// <summary>Where an armor item is worn, see Inventory's equipment slots.</summary>
@@ -123,6 +125,12 @@ namespace Brickcraft
         public HashSet<string> tags = new HashSet<string>();
 
         public const string BedTag = "bed";
+        /// <summary>Tools: used on a brick of the player's, it lists the LEGO parts of its creation (see Network.PartsLister).</summary>
+        public const string PartsListerTag = "partslister";
+
+        public bool IsPartsLister {
+            get { return type == Type.Tool && tags.Contains(PartsListerTag); }
+        }
         /// <summary>Placed, it keeps items (see Network.BrickStorage).</summary>
         public const string StorageTag = "storage";
         public const int DefaultStorageSlots = 27;

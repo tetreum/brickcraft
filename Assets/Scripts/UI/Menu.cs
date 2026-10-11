@@ -29,6 +29,8 @@ public class Menu : MonoBehaviour {
 
 		InventoryPanel.Instance = getPanel("InventoryPanel").GetComponent<InventoryPanel>();
 		Brickcraft.Network.ClientStorage.Changed += onStorageChanged;
+		PartsListerView.Opened += PartsListerPanel.Show;
+		PartsListerView.Closed += PartsListerPanel.Hide;
     }
 
 	// a storage brick the server opened for us: its panel, over the others
@@ -42,6 +44,8 @@ public class Menu : MonoBehaviour {
 		EventManager.LocalPlayerStarted.Unsubscribe(onLocalPlayerStarted);
 		EventManager.WorldLoadingStarted.Unsubscribe(onWorldLoadingStarted);
 		Brickcraft.Network.ClientStorage.Changed -= onStorageChanged;
+		PartsListerView.Opened -= PartsListerPanel.Show;
+		PartsListerView.Closed -= PartsListerPanel.Hide;
 	}
 
 	private void onLocalPlayerStarted(LocalPlayerStartedEvent e) {
@@ -55,6 +59,13 @@ public class Menu : MonoBehaviour {
 	// the panels' shortcuts, while playing
 	private void Update() {
 		if (Player.Instance == null || GameInput.IsTyping || SettingsPanel.IsOpen || SettingsPanel.WasClosedThisFrame) {
+			return;
+		}
+		// looking with the parts lister: Escape cancels it, the inventory stays closed
+		if (PartsListerView.IsOpen) {
+			if (GameInput.GetButtonDown(GameInput.Menu)) {
+				PartsListerView.Current.Cancel();
+			}
 			return;
 		}
 		// a storage panel open: the inventory key and Escape close it

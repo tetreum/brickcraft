@@ -10,7 +10,7 @@ namespace Brickcraft
         public string id;
         /// <summary>What players see.</summary>
         public string name;
-        /// <summary>brick, armor, weapon, food or material.</summary>
+        /// <summary>brick, armor, weapon, food, material or tool.</summary>
         public string type = "brick";
         /// <summary>How many fit in one inventory slot.</summary>
         public int maxStack = Item.DefaultMaxStack;

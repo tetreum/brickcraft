@@ -144,7 +144,7 @@ namespace Brickcraft
             }
             Item.Type type;
             if (!Enum.TryParse(info.type, true, out type) || !Enum.IsDefined(typeof(Item.Type), type)) {
-                Debug.LogError("Item file " + file + " has the type \"" + info.type + "\", types are brick, armor, weapon, food and material");
+                Debug.LogError("Item file " + file + " has the type \"" + info.type + "\", types are brick, armor, weapon, food, material and tool");
                 return;
             }
             int layer = 0;

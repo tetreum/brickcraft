@@ -26,6 +26,8 @@ namespace Brickcraft
             PlayerList = 9,
             Dead = 10,
             Sleeping = 11,
+            /// <summary>Looking at its creation with the parts lister (see PartsListerView).</summary>
+            PartsLister = 12,
         }
 
         /// <summary>It's sleeping in a bed (see Network.PlayerSleep): it can't move nor open its inventory, but it can chat.</summary>
@@ -135,7 +137,10 @@ namespace Brickcraft
             network = GetComponent<PlayerNetwork>();
             inventory = GetComponent<PlayerInventory>();
             health = GetComponent<Health>();
+            partsLister = GetComponent<PartsLister>();
         }
+
+        private PartsLister partsLister;
 
         // every player in the game has this component, but only the local one is controlled from here
         public void onStartLocalPlayer() {
@@ -203,6 +208,15 @@ namespace Brickcraft
                     dig();
                 } else {
                     stopDigging();
+                }
+
+                // a parts lister is used on a brick (or block) of the player's: the server checks it is
+                if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Place) && SelectedItem != null && SelectedItem.item.IsPartsLister) {
+                    if (lookedBrick != null) {
+                        partsLister.CmdStartOnBrick(SelectedSlot, lookedBrick.id);
+                    } else if (lookedBlock.HasValue) {
+                        partsLister.CmdStartOnBlock(SelectedSlot, lookedBlock.Value);
+                    }
                 }
 
                 // throwing what's in hand: one, or the whole stack with Ctrl
@@ -417,7 +431,7 @@ namespace Brickcraft
             if (!isFrozen && !GameInput.IsTyping && GameInput.GetButton(GameInput.Place)) {
                 UserItem held = SelectedItem;
                 getInventoryBySlot().TryGetValue(Brickcraft.Inventory.EquipmentSlot(Item.ArmorSlot.Offhand), out UserItem offhand);
-                block = offhand != null && offhand.item.IsShield && (held == null || held.item.type != Item.Type.Brick);
+                block = offhand != null && offhand.item.IsShield && (held == null || (held.item.type != Item.Type.Brick && held.item.type != Item.Type.Tool));
             }
             if (block != isBlocking) {
                 isBlocking = block;

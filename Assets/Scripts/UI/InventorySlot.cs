@@ -212,7 +212,22 @@ namespace Brickcraft.UI
             quantity.gameObject.SetActive(show);
             if (!show) {
                 ItemColorSwatch.Set(rawImage, null, 0);
+                ItemDurabilityBar.Set(rawImage, null, 0);
             }
+        }
+
+        /// <summary>Shows a stack (item null for none): its icon, colour, how many (not for items that don't stack) and how worn.</summary>
+        public void show (Item item, int color, int count, int health) {
+            if (item == null) {
+                setVisible(false);
+                return;
+            }
+            setVisible(true);
+            RawImage icon = GetComponent<RawImage>();
+            icon.texture = item.icon;
+            ItemColorSwatch.Set(icon, item, color);
+            ItemDurabilityBar.Set(icon, item, health);
+            quantity.text = item.maxStack == 1 && count == 1 ? "" : count.ToString();
         }
     }
 }

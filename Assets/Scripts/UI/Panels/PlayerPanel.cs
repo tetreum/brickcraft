@@ -114,14 +114,8 @@ namespace Brickcraft.UI
                 slot = fastInventorySlots[i];
                 slotId = int.Parse(slot.originalParent == null ? slot.transform.parent.name : slot.originalParent.name);
 
-                if (!inventory.ContainsKey(slotId)) {
-                    slot.setVisible(false);
-                    continue;
-                }
-                slot.setVisible(true);
-                slot.GetComponent<RawImage>().texture = inventory[slotId].item.icon;
-                ItemColorSwatch.Set(slot.GetComponent<RawImage>(), inventory[slotId].item, inventory[slotId].color);
-                slot.quantity.text = inventory[slotId].quantity.ToString();
+                inventory.TryGetValue(slotId, out UserItem stack);
+                slot.show(stack != null ? stack.item : null, stack != null ? stack.color : 0, stack != null ? stack.quantity : 0, stack != null ? stack.health : 0);
             }
         }
 

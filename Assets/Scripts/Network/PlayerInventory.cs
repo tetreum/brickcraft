@@ -17,6 +17,9 @@ namespace Brickcraft.Network
         // server only: the database row of the player this inventory belongs to
         private int playerId;
 
+        /// <summary>Server: what it holds changed (anything moved, came or went).</summary>
+        public event System.Action ServerChanged;
+
         public override void OnStartClient() {
             items.Callback += onItemsChanged;
         }
@@ -31,7 +34,58 @@ namespace Brickcraft.Network
         public void ServerLoad(int playerId, List<InventoryItem> stored) {
             this.playerId = playerId;
             items.Clear();
-            items.AddRange(stored);
+            foreach (InventoryItem stack in stored) {
+                InventoryItem valid = stack;
+                valid.health = Inventory.ValidHealth(stack.itemId, stack.health);
+                items.Add(valid);
+            }
+            ServerChanged?.Invoke();
+        }
+
+        /// <summary>The armor points of what it wears (see Combat.Armor).</summary>
+        [Server]
+        public int ServerArmor() {
+            int points = 0;
+            foreach (InventoryItem stack in items) {
+                if (Inventory.IsEquipmentSlot(stack.slot) && Server.items.TryGetValue(stack.itemId, out Item item)) {
+                    points += item.armor;
+                }
+            }
+            return points;
+        }
+
+        /// <summary>A hit it takes (see Health.ServerReduceDamage): what it wears takes some of it, and wears.</summary>
+        [Server]
+        public int ServerAbsorb(Combat.DamageInfo damage) {
+            int points = ServerArmor();
+            if (points == 0 || damage.kind == Combat.DamageInfo.Kind.Script) {
+                return damage.amount;
+            }
+            for (int slot = Inventory.FirstEquipmentSlot; slot <= Inventory.LastEquipmentSlot; slot++) {
+                ServerWear(slot);
+            }
+            return Combat.Armor.Reduce(damage.amount, points);
+        }
+
+        /// <summary>
+        /// One use of what's in the slot (a hit given with a weapon, taken with armor): items that wear (see
+        /// Item.durability) get worn, and break (are gone, its owner is told) once worn out.
+        /// </summary>
+        [Server]
+        public void ServerWear(int slot) {
+            int index = Inventory.FindSlot(items, slot);
+            if (index == -1 || !Server.items.TryGetValue(items[index].itemId, out Item item) || !item.Wears) {
+                return;
+            }
+            InventoryItem stack = items[index];
+            stack.health++;
+            if (stack.health >= item.durability) {
+                items.RemoveAt(index);
+                connectionToClient?.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "Your " + item.name + " broke" });
+            } else {
+                items[index] = stack;
+            }
+            save();
         }
 
         [Server]
@@ -84,6 +138,7 @@ namespace Brickcraft.Network
         [Server]
         private void save() {
             BrickcraftNetworkManager.Instance.Database.SaveInventory(playerId, items);
+            ServerChanged?.Invoke();
 
             // the host's own client shares these items, refresh its UI too
             if (isLocalPlayer) {
@@ -180,7 +235,7 @@ namespace Brickcraft.Network
                 Inventory.Remove(items, ingredient.itemId, Inventory.AnyColor, ingredient.quantity);
             }
             // in the item's default colour
-            Inventory.Add(items, recipe.itemId, Server.items[recipe.itemId].color, recipe.quantity, 100, targetSlot);
+            Inventory.Add(items, recipe.itemId, Server.items[recipe.itemId].color, recipe.quantity, 0, targetSlot);
             save();
         }
 

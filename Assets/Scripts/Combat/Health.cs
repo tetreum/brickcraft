@@ -12,8 +12,10 @@ namespace Brickcraft.Combat
         {
             /// <summary>A hit: a player's click, an NPC's attack.</summary>
             Melee = 1,
-            /// <summary>A mod's script.</summary>
+            /// <summary>A mod's script (armor doesn't help).</summary>
             Script = 2,
+            /// <summary>A shot: a player's bow.</summary>
+            Ranged = 3,
         }
 
         public int amount;
@@ -47,6 +49,8 @@ namespace Brickcraft.Combat
 
         /// <summary>Server: asked before every hit, false keeps it from happening (a mod's onPlayerDamaged...).</summary>
         public Func<DamageInfo, bool> ServerAllowDamage;
+        /// <summary>Server: how much of a hit it takes, after ServerAllowDamage (a player's armor or shield, see Network.PlayerNetwork); 0 blocks it.</summary>
+        public Func<DamageInfo, int> ServerReduceDamage;
         /// <summary>Server: it was hurt (and is still alive, or just died).</summary>
         public event Action<DamageInfo> ServerDamaged;
         /// <summary>Server: it died of that hit.</summary>
@@ -70,6 +74,12 @@ namespace Brickcraft.Combat
                 return false;
             }
             invulnerableUntil = NetworkTime.time + invulnerableTime;
+            if (ServerReduceDamage != null) {
+                damage.amount = ServerReduceDamage(damage);
+                if (damage.amount <= 0) {
+                    return false; // blocked
+                }
+            }
             health = Mathf.Max(0, health - damage.amount);
             ServerDamaged?.Invoke(damage);
             ServerAnyDamaged?.Invoke(this, damage);

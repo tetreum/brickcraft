@@ -34,6 +34,18 @@ namespace Brickcraft.Network
         [SyncVar(hook = nameof(onSleepingChanged))] public string sleepingIn = "";
         [SyncVar] public int pingMs;
 
+        // what everybody sees it hold (see HeldItems): the item in its hand (its selected hotbar slot's) and
+        // colour, what it wears in its left hand, and whether it's blocking with it (CmdBlock); empty for nothing
+        [SyncVar(hook = nameof(onHeldChanged))] public string heldItem = "";
+        [SyncVar(hook = nameof(onHeldColorChanged))] public int heldColor;
+        [SyncVar(hook = nameof(onHeldChanged))] public string offhandItem = "";
+        [SyncVar] public bool blocking;
+
+        // server: the slot whose item is in its hand, see CmdSelectSlot
+        private int selectedSlot = Inventory.FirstFastSlot;
+        // hits from within this angle of where it looks are blocked by its shield (90: anything in front)
+        private const float BlockAngle = 90;
+
         private const float PingUpdateInterval = 2f;
         private float nextPingUpdate;
 
@@ -48,9 +60,12 @@ namespace Brickcraft.Network
         private PlayerInventory inventory;
         private Health health;
 
-        // a hit at most this often, from at most this far (a bit more than the player's reach, see Player)
-        private const double AttackCooldown = 0.4;
+        // NPCs are used from at most this far (a bit more than the player's reach, see Player)
         private const float MaxAttackReach = 6f;
+        // hits go a bit farther than what's in hand reaches, and a bit faster than its attack speed: the client's
+        // clicks and positions arrive late, and not evenly
+        private const float AttackReachMargin = 1f;
+        private const double AttackSpeedMargin = 0.9;
         // how a hit pushes who it hits: away, and a little up
         private const float KnockbackSpeed = 6f;
         private const float KnockbackUp = 3f;
@@ -63,8 +78,68 @@ namespace Brickcraft.Network
 
         public override void OnStartServer() {
             health.ServerAllowDamage = allowDamage;
+            health.ServerReduceDamage = reduceDamage;
             health.ServerDied += onServerDied;
+            inventory.ServerChanged += refreshHeld;
+            refreshHeld();
         }
+
+        public override void OnStopServer() {
+            inventory.ServerChanged -= refreshHeld;
+        }
+
+        // a hit it takes: blocked by its shield (which wears), or eased by what it wears
+        [Server]
+        private int reduceDamage(DamageInfo damage) {
+            if (blocking && damage.kind != DamageInfo.Kind.Script && isInFront(damage.attacker)) {
+                inventory.ServerWear(Inventory.EquipmentSlot(Item.ArmorSlot.Offhand));
+                return 0;
+            }
+            return inventory.ServerAbsorb(damage);
+        }
+
+        // whether that is in front of the player, where its shield covers
+        private bool isInFront(GameObject attacker) {
+            if (attacker == null) {
+                return false;
+            }
+            Vector3 toward = attacker.transform.position - transform.position;
+            toward.y = 0;
+            return toward.sqrMagnitude < 0.0001f || Vector3.Angle(transform.forward, toward) <= BlockAngle;
+        }
+
+        // what it holds, for everybody, after its inventory or selected slot changed; without a shield it can't block
+        [Server]
+        private void refreshHeld() {
+            InventoryItem? held = inventory.ServerGetSlot(selectedSlot);
+            InventoryItem? offhand = inventory.ServerGetSlot(Inventory.EquipmentSlot(Item.ArmorSlot.Offhand));
+            heldItem = held.HasValue ? held.Value.itemId : "";
+            heldColor = held.HasValue ? held.Value.color : 0;
+            offhandItem = offhand.HasValue ? offhand.Value.itemId : "";
+            if (blocking && !canBlock()) {
+                blocking = false;
+            }
+        }
+
+        // alive, awake, with a shield in its left hand
+        [Server]
+        private bool canBlock() {
+            return !health.isDead && string.IsNullOrEmpty(sleepingIn)
+                && Server.items.TryGetValue(offhandItem, out Item shield) && shield.IsShield;
+        }
+
+        private void onHeldChanged(string oldItem, string newItem) {
+            if (heldItems != null) {
+                heldItems.Refresh();
+            }
+        }
+
+        private void onHeldColorChanged(int oldColor, int newColor) {
+            onHeldChanged(null, null);
+        }
+
+        /// <summary>Client: the held items of this player, see HeldItems.</summary>
+        public HeldItems heldItems { get; private set; }
 
         // mods can keep a player from being hurt
         [Server]
@@ -74,6 +149,7 @@ namespace Brickcraft.Network
 
         [Server]
         private void onServerDied(DamageInfo damage) {
+            blocking = false;
             ChatEvents.Send(new ChatEventMessage() { type = ChatEventType.Died, player = playerName, by = damage.attackerName });
             ModScripts.ModEvent("onPlayerDied", PlayerHandle.For(connectionToClient), attackerHandle(damage));
         }
@@ -106,6 +182,7 @@ namespace Brickcraft.Network
         public override void OnStartClient() {
             if (!isLocalPlayer) {
                 setupRemotePlayer();
+                heldItems = HeldItems.ForBody(this);
             }
         }
 
@@ -121,6 +198,7 @@ namespace Brickcraft.Network
             Physics.SyncTransforms();
 
             GetComponent<Player>().onStartLocalPlayer();
+            heldItems = HeldItems.FirstPerson(this, GetComponentInChildren<Camera>());
         }
 
         [Server]
@@ -181,31 +259,44 @@ namespace Brickcraft.Network
         // -------- client to server --------
 
         /// <summary>
-        /// Hits something that has health (a player when PvP is on, see WorldNetwork.Pvp) with what's
-        /// in the inventory slot (its damage, see Item.damage).
+        /// Hits something that has health (a player when PvP is on, see WorldNetwork.Pvp) with what's in the
+        /// inventory slot: its damage, as often as its attack speed allows, from as far as it reaches (see Item).
+        /// Ranged weapons (a bow) use up one of their ammo each shot. Weapons that wear get worn.
         /// </summary>
         [Command]
         public void CmdAttack(NetworkIdentity target, int slot) {
-            if (health.isDead || target == null || target == netIdentity || NetworkTime.time < nextAttackTime) {
+            if (health.isDead || blocking || target == null || target == netIdentity || NetworkTime.time < nextAttackTime) {
                 return;
             }
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            Item weapon = held.HasValue && Server.items.TryGetValue(held.Value.itemId, out Item item) ? item : null;
+            float reach = weapon != null ? weapon.reach : Item.HandReach;
+            float attackSpeed = weapon != null ? weapon.attackSpeed : Item.HandAttackSpeed;
+
             Health victim = target.GetComponent<Health>();
             PlayerNetwork victimPlayer = target.GetComponent<PlayerNetwork>();
-            if (victim == null || victim.isDead || Vector3.Distance(transform.position, target.transform.position) > MaxAttackReach
+            if (victim == null || victim.isDead || Vector3.Distance(transform.position, target.transform.position) > reach + AttackReachMargin
                 || (victimPlayer != null && !WorldNetwork.Pvp) || !canHitPet(target)) {
                 return;
             }
-            nextAttackTime = NetworkTime.time + AttackCooldown;
+            bool ranged = weapon != null && weapon.IsRanged;
+            if (ranged && !inventory.ServerRemove(weapon.ammo, Inventory.AnyColor, 1)) {
+                return; // nothing to shoot
+            }
+            nextAttackTime = NetworkTime.time + AttackSpeedMargin / attackSpeed;
             Npcs.NpcPerception.MakeNoise(transform.position, FightNoise, health, Npcs.Noise.Fight);
+            RpcSwing();
 
-            InventoryItem? held = inventory.ServerGetSlot(slot);
-            int damage = held.HasValue && Server.items.TryGetValue(held.Value.itemId, out Item item) ? item.damage : Item.HandDamage;
             bool hurt = victim.ServerDamage(new DamageInfo() {
-                amount = damage,
-                kind = DamageInfo.Kind.Melee,
+                amount = weapon != null ? weapon.damage : Item.HandDamage,
+                kind = ranged ? DamageInfo.Kind.Ranged : DamageInfo.Kind.Melee,
                 attacker = gameObject,
                 attackerName = playerName,
             });
+            // a shot wears a bow whether it hurts or not, a sword wears on what it hurts
+            if (ranged || hurt) {
+                inventory.ServerWear(slot);
+            }
 
             if (hurt) {
                 Vector3 away = target.transform.position - transform.position;
@@ -217,6 +308,30 @@ namespace Brickcraft.Network
                     npc.ServerKnockback(push);
                 }
             }
+        }
+
+        // the others see it swing (its own client already did)
+        [ClientRpc(includeOwner = false)]
+        private void RpcSwing() {
+            if (heldItems != null) {
+                heldItems.Swing();
+            }
+        }
+
+        /// <summary>The hotbar slot whose item is in its hand (what the others see it hold), -1 for none.</summary>
+        [Command]
+        public void CmdSelectSlot(int slot) {
+            selectedSlot = slot;
+            refreshHeld();
+        }
+
+        /// <summary>
+        /// Raises its shield (the one worn in its left hand) or lowers it. Raised, hits from the front do nothing
+        /// but wear the shield (it breaks once worn out), and it can't attack.
+        /// </summary>
+        [Command]
+        public void CmdBlock(bool raise) {
+            blocking = raise && canBlock();
         }
 
         // nobody hits their own pets, and others' only with PvP (pets are their owner's)

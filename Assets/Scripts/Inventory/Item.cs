@@ -11,9 +11,25 @@ namespace Brickcraft
         public enum Type
         {
             Brick = 1,
-            Helmet = 2,
+            /// <summary>Worn in one of the equipment slots (see armorSlot), it takes some of the damage.</summary>
+            Armor = 2,
+            /// <summary>Hits harder or faster from the hotbar, or from afar with ammo (a bow).</summary>
             Weapon = 3,
             Food = 4,
+            /// <summary>Does nothing on its own: crafting ingredients, ammo (arrows).</summary>
+            Material = 5,
+        }
+
+        /// <summary>Where an armor item is worn, see Inventory's equipment slots.</summary>
+        public enum ArmorSlot
+        {
+            None = 0,
+            Head = 1,
+            Chest = 2,
+            Legs = 3,
+            Feet = 4,
+            /// <summary>The left hand: shields.</summary>
+            Offhand = 5,
         }
         /// <summary>Its slug, see Slugs.</summary>
         public string id;
@@ -36,6 +52,55 @@ namespace Brickcraft
         public const int HandDamage = 1;
         /// <summary>Health a hit while holding it takes.</summary>
         public int damage = HandDamage;
+
+        /// <summary>Hits a second with nothing in hand.</summary>
+        public const float HandAttackSpeed = 2.5f;
+        /// <summary>Hits a second while holding it.</summary>
+        public float attackSpeed = HandAttackSpeed;
+        /// <summary>How far a hit reaches with nothing in hand, in meters.</summary>
+        public const float HandReach = 5;
+        /// <summary>How far a hit reaches while holding it: more than a hand's for ranged weapons (a bow).</summary>
+        public float reach = HandReach;
+        /// <summary>Ranged weapons: the item each shot uses up (a bow's arrows), null for others.</summary>
+        public string ammo;
+
+        /// <summary>Armor: where it's worn, None for other items.</summary>
+        public ArmorSlot armorSlot;
+        /// <summary>Armor: its armor points; each one takes 4% of the damage (see Combat.Armor).</summary>
+        public int armor;
+        /// <summary>
+        /// Weapons and armor: how many uses it lasts (hits given, or taken while worn) before breaking, 0 for
+        /// forever. How worn a stack is goes in its InventoryItem.health (uses taken).
+        /// </summary>
+        public int durability;
+
+        /// <summary>
+        /// Weapons and shields: how a player holds its model (see HeldItems), in the hand's space (+Z where the
+        /// player looks, +Y up): the point of the model in the hand, how it's turned, and its size (0: it's fitted).
+        /// </summary>
+        public Vector3 heldGrip;
+        public Quaternion heldRotation = Quaternion.identity;
+        public float heldScale;
+        /// <summary>Whether its info.json says how it's held (heldGrip...), otherwise it's held by its middle.</summary>
+        public bool hasHeld;
+
+        /// <summary>Players hold it in their hand (right for weapons, left for shields), see HeldItems.</summary>
+        public bool IsHeld {
+            get { return type == Type.Weapon || armorSlot == ArmorSlot.Offhand; }
+        }
+
+        /// <summary>Worn in the left hand it blocks hits (see Network.PlayerNetwork.CmdBlock).</summary>
+        public bool IsShield {
+            get { return armorSlot == ArmorSlot.Offhand; }
+        }
+
+        public bool IsRanged {
+            get { return !string.IsNullOrEmpty(ammo); }
+        }
+
+        public bool Wears {
+            get { return durability > 0; }
+        }
 
         /// <summary>Its colour when it isn't given one (see BrickColorPalette), BrickColor.None if it has none.</summary>
         public int color = BrickColor.None;

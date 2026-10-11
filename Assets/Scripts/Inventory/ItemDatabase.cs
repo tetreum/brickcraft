@@ -73,6 +73,7 @@ namespace Brickcraft
 
             BlockDatabase.FinishLoading();
             resolveDrops();
+            resolveAmmo();
             loadRecipes();
             Npcs.NpcDatabase.Load(mods); // their drops are items
         }
@@ -143,7 +144,7 @@ namespace Brickcraft
             }
             Item.Type type;
             if (!Enum.TryParse(info.type, true, out type) || !Enum.IsDefined(typeof(Item.Type), type)) {
-                Debug.LogError("Item file " + file + " has the type \"" + info.type + "\", types are brick, helmet, weapon and food");
+                Debug.LogError("Item file " + file + " has the type \"" + info.type + "\", types are brick, armor, weapon, food and material");
                 return;
             }
             int layer = 0;
@@ -165,10 +166,6 @@ namespace Brickcraft
                 Debug.LogError("Item file " + file + " has the color " + info.color.Value + ", which isn't in the palette (Resources/BrickColorPalette)");
                 return;
             }
-            if ((info.color.HasValue || info.colors != null) && type != Item.Type.Brick) {
-                Debug.LogError("Item file " + file + " has a color, only bricks can");
-                return;
-            }
 
             string iconPath = iconFor(folder);
             Item item = new Item() {
@@ -186,6 +183,9 @@ namespace Brickcraft
                 color = info.color ?? BrickColor.None,
             };
             if (!loadColors(item, info.colors, file)) {
+                return;
+            }
+            if (!loadStats(item, info, file, mod)) {
                 return;
             }
             item.storageSlots = Math.Max(1, Math.Min(info.storageSlots, Item.MaxStorageSlots));
@@ -213,6 +213,72 @@ namespace Brickcraft
             Server.items[id] = item;
             infos[id] = info;
             modOf[id] = mod;
+        }
+
+        // weapons' and armor's: how they hit, where they're worn, how long they last
+        private static bool loadStats(Item item, ItemInfo info, string file, ModInfo mod) {
+            item.durability = Math.Max(0, info.durability);
+            if (info.attackSpeed.HasValue) {
+                if (info.attackSpeed.Value <= 0) {
+                    Debug.LogError("Item file " + file + " has the attackSpeed " + info.attackSpeed.Value + ", hits a second should be more than 0");
+                    return false;
+                }
+                item.attackSpeed = info.attackSpeed.Value;
+            }
+            if (!string.IsNullOrEmpty(info.ammo)) {
+                if (item.type != Item.Type.Weapon) {
+                    Debug.LogError("Item file " + file + " has ammo, only weapons can");
+                    return false;
+                }
+                item.ammo = info.ammo; // resolved once every item is known, see resolveAmmo
+                item.reach = Math.Max(Item.HandReach, info.range ?? DefaultRange);
+            }
+            if (item.type == Item.Type.Armor) {
+                Item.ArmorSlot slot;
+                if (string.IsNullOrEmpty(info.slot) || !Enum.TryParse(info.slot, true, out slot) || slot == Item.ArmorSlot.None || !Enum.IsDefined(typeof(Item.ArmorSlot), slot)) {
+                    Debug.LogError("Item file " + file + " is armor with the slot \"" + info.slot + "\", slots are head, chest, legs, feet and offhand");
+                    return false;
+                }
+                item.armorSlot = slot;
+                item.armor = Math.Max(0, info.armor);
+            } else if (!string.IsNullOrEmpty(info.slot) || info.armor != 0) {
+                Debug.LogError("Item file " + file + " has a slot or armor, only armor can");
+                return false;
+            }
+            if (info.held != null) {
+                if ((info.held.grip != null && info.held.grip.Length != 3) || (info.held.rotation != null && info.held.rotation.Length != 3) || info.held.scale <= 0) {
+                    Debug.LogError("Item file " + file + " has an invalid held: grip and rotation are [x, y, z], scale more than 0");
+                    return false;
+                }
+                item.hasHeld = true;
+                item.heldGrip = info.held.grip != null ? new Vector3(info.held.grip[0], info.held.grip[1], info.held.grip[2]) : Vector3.zero;
+                item.heldRotation = info.held.rotation != null ? Quaternion.Euler(info.held.rotation[0], info.held.rotation[1], info.held.rotation[2]) : Quaternion.identity;
+                item.heldScale = info.held.scale;
+            }
+            // each one wears on its own: they don't stack
+            if (item.type == Item.Type.Armor || item.durability > 0) {
+                item.maxStack = 1;
+            }
+            return true;
+        }
+
+        /// <summary>How far ranged weapons shoot when their info.json doesn't say.</summary>
+        public const float DefaultRange = 30;
+
+        // ammo can name items loaded after the weapon's
+        private static void resolveAmmo() {
+            foreach (KeyValuePair<string, ModInfo> entry in modOf) {
+                Item item = Server.items[entry.Key];
+                if (!item.IsRanged) {
+                    continue;
+                }
+                item.ammo = resolve(item.ammo, entry.Value);
+                if (!Server.items.ContainsKey(item.ammo)) {
+                    Debug.LogError("Item " + item.id + " shoots \"" + item.ammo + "\", which doesn't exist");
+                    item.ammo = null;
+                    item.reach = Item.HandReach;
+                }
+            }
         }
 
         // "colors": "all", or a list of colour ids

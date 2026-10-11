@@ -4,10 +4,19 @@ using UnityEngine.UI;
 
 namespace Brickcraft.UI
 {
+    /// <summary>
+    /// The player's inventory (slots 1 to 27, the hotbar has the rest), what it wears (its equipment slots, see
+    /// Inventory.EquipmentSlot: armor is dragged in and out of them) and crafting.
+    /// </summary>
     public class InventoryPanel : MonoBehaviour
     {
         public static InventoryPanel Instance;
         public InventorySlot[] inventorySlots;
+        /// <summary>What's worn: head, chest, legs, feet and left hand (their cells are named after their slots, 37 to 41).</summary>
+        public InventorySlot[] equipmentSlots;
+
+        // the name of an equipment cell's caption (Head...), shown while it's empty
+        public const string EquipmentLabel = "Label";
         public CraftingSlot[] craftingSlots;
         public CraftingOutputSlot craftingOutputSlot;
 
@@ -95,21 +104,17 @@ namespace Brickcraft.UI
 
         public void reload () {
             Dictionary<int, UserItem> inventory = Player.Instance.getInventoryBySlot();
-            InventorySlot slot;
-            int slotId;
 
             for (int i = 0; i < inventorySlots.Length; i++) {
-                slotId = (i + 1);
-                slot = inventorySlots[i];
-            
-                if (!inventory.ContainsKey(slotId)) {
-                    slot.setVisible(false);
-                    continue;
+                show(inventorySlots[i], inventory, i + 1);
+            }
+            for (int i = 0; i < equipmentSlots.Length; i++) {
+                bool worn = show(equipmentSlots[i], inventory, Inventory.FirstEquipmentSlot + i);
+                Transform cell = equipmentSlots[i].originalParent != null ? equipmentSlots[i].originalParent : equipmentSlots[i].transform.parent;
+                Transform label = cell.Find(EquipmentLabel);
+                if (label != null) {
+                    label.gameObject.SetActive(!worn);
                 }
-                slot.setVisible(true);
-                slot.GetComponent<RawImage>().texture = inventory[slotId].item.icon;
-                ItemColorSwatch.Set(slot.GetComponent<RawImage>(), inventory[slotId].item, inventory[slotId].color);
-                slot.quantity.text = inventory[slotId].quantity.ToString();
             }
 
             foreach (CraftingSlot craftingSlot in craftingSlots) {
@@ -132,6 +137,17 @@ namespace Brickcraft.UI
                     showPossibleCrafting();
                 }
             }
+        }
+
+        // the stack in that slot, false if there's none
+        private static bool show(InventorySlot slot, Dictionary<int, UserItem> inventory, int slotId) {
+            UserItem stack;
+            if (!inventory.TryGetValue(slotId, out stack)) {
+                slot.setVisible(false);
+                return false;
+            }
+            slot.show(stack.item, stack.color, stack.quantity, stack.health);
+            return true;
         }
 
         void resetCraftingSlots() {

@@ -206,10 +206,14 @@ Items/marble/
 
 - `id` identifies the item, in saves too: a slug (see Block and item ids below). The folder's name if missing.
 - `name`: what players see. Required.
-- `type`: `brick` (the default), `helmet`, `weapon` or `food`. Only bricks can be placed.
-- `damage`: how much health a hit takes while holding it, 1 (a bare hand's) by default.
+- `type`: `brick` (the default), `armor`, `weapon`, `food` or `material` (does nothing on its own: ingredients, arrows). Only bricks can be placed.
+- `damage`: how much health a hit takes while holding it, 1 (a bare hand's) by default. `attackSpeed`: hits a second while holding it, 2.5 (a bare hand's) by default. Weapons hit from the hotbar with a left click, like a bare hand.
+- `ammo` and `range`: weapons that shoot (the bow): the item each shot uses up (`"arrow"`) and how far they reach, 30 meters by default. They hit whatever has health in the middle of the screen.
+- `slot` and `armor`: armor: where it's worn, `head`, `chest`, `legs`, `feet` or `offhand` (the left hand, shields), and its armor points. Players drag armor into their equipment slots, beside crafting in the inventory; each point worn takes 4% of a hit (at most 80%, a hit always takes 1). Holding the place button (right click) with a shield worn (`offhand`) raises it, unless a brick is in hand: hits from the front do nothing but wear it, and the player can't attack meanwhile.
+- `held`: weapons and shields: how players hold their model (weapons in the right hand, shields in the left), `{ "grip": [x, y, z], "rotation": [x, y, z], "scale": 0.5 }`: the point of the model in the hand, how it's turned (degrees; the hand looks along +Z, +Y up) and its size. Without it, it's held by its middle, fitted to 0.8 meters.
+- `durability`: weapons and armor: how many uses they last (hits given, shots, or hits taken while worn) before breaking, forever if missing. A bar on the icon shows what's left. Armor and items that wear don't stack.
 - `maxStack`: how many fit in one inventory slot, 64 by default. Dragging a stack onto the same item merges them as far as that allows.
-- `brickModel`: the brick it places: a part number of the game's models (`"3003"`, see How can i add a new model) or a model of the mod (see Mods).
+- `brickModel`: the brick it places (other items: how it looks, dropped and in its icon): a part number of the game's models (`"3003"`, see How can i add a new model) or a model of the mod (see Mods).
 - `color`: its colour, a colour id of the palette (like `4` for Red, see How can i add a new brick material). `colors`: other colours it can have, `"all"` or a list of ids; only its default one if missing. Each inventory stack is of one colour, recipes take ingredients of any colour and make the default one. Blocks placed in another colour are drawn in it, see-through for transparent colours; blocks without textures (like `brick_2x2`) use their default colour. Items without an icon nor textures get a square of their colour.
 - `material`: a special material instead of its colour's, from Canvas -> Game -> BrickMaterials (only `"Water"` for now). `layer` sets the Unity layer of placed bricks, like `"Water"`.
 - `block`: for bricks that are also a world block (it's named like the item, and placing the brick exactly over a world block places the block):

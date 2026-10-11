@@ -63,8 +63,8 @@ namespace Brickcraft.UI
                 int slot = i + 1;
                 storageSlots[i].transform.parent.gameObject.SetActive(slot <= ClientStorage.Slots);
                 InventoryItem? stack = ClientStorage.InSlot(slot);
-                show(storageSlots[i], stack.HasValue && Server.items.TryGetValue(stack.Value.itemId, out Item item) ? item : null,
-                    stack.HasValue ? stack.Value.color : 0, stack.HasValue ? stack.Value.quantity : 0);
+                storageSlots[i].show(stack.HasValue && Server.items.TryGetValue(stack.Value.itemId, out Item item) ? item : null,
+                    stack.HasValue ? stack.Value.color : 0, stack.HasValue ? stack.Value.quantity : 0, stack.HasValue ? stack.Value.health : 0);
             }
             if (Player.Instance == null) {
                 return;
@@ -72,20 +72,8 @@ namespace Brickcraft.UI
             var inventory = Player.Instance.getInventoryBySlot();
             for (int i = 0; i < inventorySlots.Length; i++) {
                 bool has = inventory.TryGetValue(i + 1, out UserItem stack);
-                show(inventorySlots[i], has ? stack.item : null, has ? stack.color : 0, has ? stack.quantity : 0);
+                inventorySlots[i].show(has ? stack.item : null, has ? stack.color : 0, has ? stack.quantity : 0, has ? stack.health : 0);
             }
-        }
-
-        private static void show(InventorySlot slot, Item item, int color, int quantity) {
-            if (item == null) {
-                slot.setVisible(false);
-                return;
-            }
-            slot.setVisible(true);
-            RawImage icon = slot.GetComponent<RawImage>();
-            icon.texture = item.icon;
-            ItemColorSwatch.Set(icon, item, color);
-            slot.quantity.text = quantity.ToString();
         }
     }
 }

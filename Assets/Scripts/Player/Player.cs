@@ -69,9 +69,18 @@ namespace Brickcraft
         private Vector3Int? lookedBlock;
         private Health lookedHealth;
 
-        // clicking something with health hits it, at most this often (the server checks it too)
-        private const float AttackCooldown = 0.4f;
+        // clicking something with health hits it, as often as what's in hand allows (the server checks it too)
         private float nextAttack;
+
+        // the shield is raised (the place button held, see updateBlocking), and what the server was told
+        private bool isBlocking;
+        // the selected slot the server was told about (what the others see in its hand)
+        private int sentSlot = int.MinValue;
+
+        /// <summary>It holds its shield up: it can't attack meanwhile.</summary>
+        public bool IsBlocking {
+            get { return isBlocking; }
+        }
         private Health health;
 
         // what the player is digging
@@ -148,6 +157,11 @@ namespace Brickcraft
             }
             waitForGround();
             frontRaycast();
+            if (SelectedSlot != sentSlot) {
+                sentSlot = SelectedSlot;
+                network.CmdSelectSlot(SelectedSlot);
+            }
+            updateBlocking();
 
             if (isFrozen) {
                 brickPlacer.hide();
@@ -159,9 +173,8 @@ namespace Brickcraft
                 bool isClickingDoor = clickDoors(isDigHeld);
 
                 // the server checks it can be hit (PvP for players...)
-                if (lookedHealth != null && GameInput.GetButtonDown(GameInput.Dig) && Time.time >= nextAttack) {
-                    nextAttack = Time.time + AttackCooldown;
-                    network.CmdAttack(lookedHealth.netIdentity, SelectedSlot);
+                if (GameInput.GetButtonDown(GameInput.Dig) && Time.time >= nextAttack) {
+                    attack();
                 }
 
                 // the placing preview would hide what's being dug
@@ -322,6 +335,56 @@ namespace Brickcraft
                 Vector3Int cell = BrickGrid.WorldToCell(latestHit.point - latestHit.normal * 0.01f);
                 lookedBlock = BrickGrid.CellToBlock(cell);
             }
+        }
+
+        // a hit with what's in hand (see Item's attack stats): what's looked at, or with a ranged weapon (a bow,
+        // with its ammo) whatever with health is in its sight. Weapons swing even at nothing.
+        void attack () {
+            if (isBlocking) {
+                return;
+            }
+            Item weapon = SelectedItem != null ? SelectedItem.item : null;
+            Health target = lookedHealth;
+            if (weapon != null && weapon.IsRanged) {
+                if (Brickcraft.Inventory.Count(inventory.items, weapon.ammo, Brickcraft.Inventory.AnyColor, 0) == 0) {
+                    return;
+                }
+                target = target ?? rangedTarget(weapon.reach);
+            }
+            if (target == null && (weapon == null || weapon.type != Item.Type.Weapon)) {
+                return;
+            }
+            nextAttack = Time.time + 1 / (weapon != null ? weapon.attackSpeed : Item.HandAttackSpeed);
+            if (network.heldItems != null && weapon != null && weapon.type == Item.Type.Weapon) {
+                network.heldItems.Swing();
+            }
+            if (target != null) {
+                network.CmdAttack(target.netIdentity, SelectedSlot);
+            }
+        }
+
+        // the place button held with a shield worn raises it, unless what's in hand is a brick (the button places it)
+        void updateBlocking () {
+            bool block = false;
+            if (!isFrozen && !GameInput.IsTyping && GameInput.GetButton(GameInput.Place)) {
+                UserItem held = SelectedItem;
+                getInventoryBySlot().TryGetValue(Brickcraft.Inventory.EquipmentSlot(Item.ArmorSlot.Offhand), out UserItem offhand);
+                block = offhand != null && offhand.item.IsShield && (held == null || held.item.type != Item.Type.Brick);
+            }
+            if (block != isBlocking) {
+                isBlocking = block;
+                network.CmdBlock(block);
+            }
+        }
+
+        // what has health in the middle of the screen, up to that far (nothing if something else is in the way)
+        Health rangedTarget (float range) {
+            Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0));
+            if (!Physics.Raycast(ray, out RaycastHit hit, range, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)) {
+                return null;
+            }
+            Health found = hit.collider.GetComponentInParent<Health>();
+            return found != null && found != health && !found.isDead ? found : null;
         }
 
         void dig () {

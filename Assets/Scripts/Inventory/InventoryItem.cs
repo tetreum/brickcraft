@@ -10,6 +10,7 @@ namespace Brickcraft
         /// <summary>Its colour (see BrickColorPalette), only stacks of the same colour merge.</summary>
         public int color;
         public int quantity;
+        /// <summary>How worn it is: uses taken out of its item's durability (0 new, and always for items that don't wear).</summary>
         public int health;
     }
 
@@ -19,11 +20,50 @@ namespace Brickcraft
     /// can be in several stacks, each holding up to its Item.maxStack. Stacks are of one item, colour
     /// and health. Other containers (a chest's slots, see Network.BrickStorage) follow the same rules with
     /// their own number of slots (slots), filled from the first one.
+    ///
+    /// Past a player's slots come its equipment slots (what it wears, see Item.ArmorSlot): only stacks moved there
+    /// by hand go in them, of armor for that slot. Adding, counting and removing items leave them alone.
     /// </summary>
     public static class Inventory
     {
         public const int SlotCount = 36;
         public const int FirstFastSlot = 28;
+
+        /// <summary>The first equipment slot (the head's), then chest, legs, feet and the left hand's (see EquipmentSlot).</summary>
+        public const int FirstEquipmentSlot = SlotCount + 1;
+        public const int LastEquipmentSlot = SlotCount + 5;
+
+        /// <summary>The player's slot where armor for that part is worn.</summary>
+        public static int EquipmentSlot(Item.ArmorSlot armorSlot) {
+            return SlotCount + (int)armorSlot;
+        }
+
+        public static bool IsEquipmentSlot(int slot) {
+            return slot >= FirstEquipmentSlot && slot <= LastEquipmentSlot;
+        }
+
+        /// <summary>Whether that item can be in that slot of a player's inventory: equipment slots only take armor worn there.</summary>
+        public static bool Fits(string itemId, int slot) {
+            if (!IsEquipmentSlot(slot)) {
+                return true;
+            }
+            return Server.items.TryGetValue(itemId, out Item item) && item.type == Item.Type.Armor && EquipmentSlot(item.armorSlot) == slot;
+        }
+
+        // the last slot stacks can be moved to: a player's go on to its equipment
+        private static int lastSlot(int slots) {
+            return slots == SlotCount ? LastEquipmentSlot : slots;
+        }
+
+        // whether the stack can be in that slot (the container's, or a player's equipment)
+        private static bool fits(InventoryItem stack, int slot, int slots) {
+            return slots != SlotCount || Fits(stack.itemId, slot);
+        }
+
+        /// <summary>A stack's health for that item: items that don't wear are never worn (old saves had 100 for crafted ones).</summary>
+        public static int ValidHealth(string itemId, int health) {
+            return Server.items.TryGetValue(itemId, out Item item) && item.Wears ? System.Math.Max(0, health) : 0;
+        }
 
         /// <summary>Counting or removing: any colour of the item (recipes don't care about colours).</summary>
         public const int AnyColor = int.MinValue;
@@ -55,11 +95,11 @@ namespace Brickcraft
             return isSame(stack, other.itemId, other.color, other.health);
         }
 
-        /// <summary>How many there are, in all their stacks.</summary>
+        /// <summary>How many there are, in all their stacks (not what's worn).</summary>
         public static int Count(IList<InventoryItem> items, string itemId, int color, int health) {
             int count = 0;
             foreach (InventoryItem stack in items) {
-                if (isSame(stack, itemId, color, health)) {
+                if (isSame(stack, itemId, color, health) && !IsEquipmentSlot(stack.slot)) {
                     count += stack.quantity;
                 }
             }
@@ -75,7 +115,7 @@ namespace Brickcraft
             int max = MaxStack(itemId);
             int room = 0;
             foreach (InventoryItem stack in items) {
-                if (isSame(stack, itemId, color, health) && stack.quantity < max) {
+                if (isSame(stack, itemId, color, health) && stack.quantity < max && stack.slot <= slots) {
                     room += max - stack.quantity;
                 }
             }
@@ -93,6 +133,7 @@ namespace Brickcraft
         /// </summary>
         public static bool Add(IList<InventoryItem> items, string itemId, int color, int quantity, int health = 0, int slot = 0, int slots = SlotCount) {
             int max = MaxStack(itemId);
+            health = ValidHealth(itemId, health);
 
             if (slot != 0) {
                 int stack = FindSlot(items, slot);
@@ -117,7 +158,7 @@ namespace Brickcraft
             }
             for (int i = 0; i < items.Count && quantity > 0; i++) {
                 InventoryItem stack = items[i];
-                if (isSame(stack, itemId, color, health) && stack.quantity < max) {
+                if (isSame(stack, itemId, color, health) && stack.quantity < max && stack.slot <= slots) {
                     int added = System.Math.Min(max - stack.quantity, quantity);
                     stack.quantity += added;
                     items[i] = stack;
@@ -140,7 +181,7 @@ namespace Brickcraft
             while (quantity > 0) {
                 int smallest = -1;
                 for (int i = 0; i < items.Count; i++) {
-                    if (isSame(items[i], itemId, color, health) && (smallest == -1 || items[i].quantity < items[smallest].quantity)) {
+                    if (isSame(items[i], itemId, color, health) && !IsEquipmentSlot(items[i].slot) && (smallest == -1 || items[i].quantity < items[smallest].quantity)) {
                         smallest = i;
                     }
                 }
@@ -202,11 +243,11 @@ namespace Brickcraft
         /// empty or hold the same item with room for it. False if it couldn't.
         /// </summary>
         public static bool MoveOne(IList<InventoryItem> items, int from, int to, int slots = SlotCount) {
-            if (from == to || to < 1 || to > slots) {
+            if (from == to || to < 1 || to > lastSlot(slots)) {
                 return false;
             }
             int source = FindSlot(items, from);
-            if (source == -1) {
+            if (source == -1 || !fits(items[source], to, slots)) {
                 return false;
             }
             InventoryItem moved = items[source];
@@ -226,13 +267,17 @@ namespace Brickcraft
             return true;
         }
 
-        /// <summary>Moves a stack to another slot, swapping it with whatever is there.</summary>
+        /// <summary>Moves a stack to another slot, swapping it with whatever is there (if each fits where it goes).</summary>
         public static bool Swap(IList<InventoryItem> items, int slotA, int slotB, int slots = SlotCount) {
-            if (slotA < 1 || slotA > slots || slotB < 1 || slotB > slots || slotA == slotB) {
+            int last = lastSlot(slots);
+            if (slotA < 1 || slotA > last || slotB < 1 || slotB > last || slotA == slotB) {
                 return false;
             }
             int a = FindSlot(items, slotA);
             int b = FindSlot(items, slotB);
+            if ((a != -1 && !fits(items[a], slotB, slots)) || (b != -1 && !fits(items[b], slotA, slots))) {
+                return false;
+            }
 
             if (a != -1) {
                 InventoryItem item = items[a];

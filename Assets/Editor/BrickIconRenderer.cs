@@ -97,7 +97,7 @@ public static class BrickIconRenderer
         return Brickcraft.Mods.ModDatabase.Find(Path.GetFileName(Path.GetDirectoryName(items)));
     }
 
-    // the icon of the item in the folder, if it's a brick (of that model, if given) with a prefab
+    // the icon of the item in the folder, if it has a model (that one, if given) with a prefab
     private static bool generate(string folder, string onlyModel) {
         string infoFile = Path.Combine(folder, ItemDatabase.InfoFile);
         if (!File.Exists(infoFile)) {
@@ -109,9 +109,9 @@ public static class BrickIconRenderer
         } catch (System.Exception) {
             return false;
         }
-        if ((string)info["type"] != null && (string)info["type"] != "brick") {
-            return false;
-        }
+        // weapons and the like are long and thin: tilted, they fill the icon better
+        string type = (string)info["type"] ?? "brick";
+        Quaternion tilt = type == "brick" || type == "armor" ? Quaternion.identity : Quaternion.Euler(0, 0, -45);
         string model = BrickModels.Resolve((string)info["brickModel"] ?? "3003", modOf(folder));
         if (onlyModel != null && model != onlyModel) {
             return false;
@@ -122,7 +122,7 @@ public static class BrickIconRenderer
         }
         GameObject prefab = brickModel.prefab;
         Material material = colorMaterial((int?)info["color"]);
-        Texture2D icon = Render(prefab, material);
+        Texture2D icon = Render(prefab, material, tilt);
         File.WriteAllBytes(Path.Combine(folder, ItemDatabase.IconFile), icon.EncodeToPNG());
         Object.DestroyImmediate(icon);
         return true;
@@ -145,7 +145,7 @@ public static class BrickIconRenderer
     }
 
     /// <summary>An icon of the prefab (with that material, or its own if null), transparent around it.</summary>
-    public static Texture2D Render(GameObject prefab, Material material) {
+    public static Texture2D Render(GameObject prefab, Material material, Quaternion tilt = default(Quaternion)) {
         Scene scene = EditorSceneManager.NewPreviewScene();
         int size = IconSize * Supersampling;
         RenderTexture target = new RenderTexture(size, size, 24, RenderTextureFormat.ARGB32);
@@ -161,6 +161,9 @@ public static class BrickIconRenderer
                 SceneManager.MoveGameObjectToScene(brick, scene);
             }
             brick.transform.position = Vector3.zero;
+            if (tilt != default(Quaternion)) {
+                brick.transform.rotation = tilt * brick.transform.rotation;
+            }
             BrickModels.ApplyColor(brick, material);
             // what the game applies at runtime (Awake doesn't run in the editor)
             foreach (BrickNormalMap normalMap in brick.GetComponentsInChildren<BrickNormalMap>()) {

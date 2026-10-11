@@ -26,6 +26,10 @@ namespace Brickcraft
         [SerializeField] private AudioClip[] m_FootstepSounds;    // an array of footstep sounds that will be randomly selected from.
         [SerializeField] private AudioClip m_JumpSound;           // the sound played when character leaves the ground.
         [SerializeField] private AudioClip m_LandSound;           // the sound played when character touches back on ground.
+        // what the player walks up without jumping: a brick or a block (0.478), not two
+        [SerializeField] private float m_StepHeight = 0.5f;
+        // how fast the camera catches up after stepping up, meters per second
+        [SerializeField] private float m_StepSmoothing = 3f;
         private float originalWalkSpeed;
         private float originalRunSpeed;
 
@@ -52,6 +56,9 @@ namespace Brickcraft
         private float m_KnockbackUp;
         private const float KnockbackDrag = 12f;
 
+        // stepping up moves the player at once: the camera starts where it was and follows (negative, going to 0)
+        private float m_StepCameraOffset;
+
         private void Awake() {
             originalWalkSpeed = m_WalkSpeed;
             originalRunSpeed = m_RunSpeed;
@@ -63,6 +70,7 @@ namespace Brickcraft
         private void Start()
         {
             m_CharacterController = GetComponent<CharacterController>();
+            m_CharacterController.stepOffset = m_StepHeight;
             m_Camera = Camera.main;
             m_OriginalCameraPosition = m_Camera.transform.localPosition;
             m_FovKick.Setup(m_Camera);
@@ -217,7 +225,15 @@ namespace Brickcraft
                     m_Jumping = true;
                 }
             }
+            bool wasGrounded = m_CharacterController.isGrounded;
+            float heightBefore = transform.position.y;
             m_CollisionFlags = m_CharacterController.Move((m_MoveDir + m_Knockback)*Time.fixedDeltaTime);
+            // walked up a step (the controller lifted it, see m_StepHeight): the camera eases up instead of jumping
+            float rise = transform.position.y - heightBefore;
+            if (wasGrounded && !m_Jumping && rise > 0.1f) {
+                m_StepCameraOffset = Mathf.Max(m_StepCameraOffset - rise, -m_StepHeight);
+            }
+            m_StepCameraOffset = Mathf.MoveTowards(m_StepCameraOffset, 0, m_StepSmoothing * Time.fixedDeltaTime);
             m_Knockback = Vector3.MoveTowards(m_Knockback, Vector3.zero, KnockbackDrag*Time.fixedDeltaTime);
 
             ProgressStepCycle(speed);
@@ -275,6 +291,9 @@ namespace Brickcraft
             Vector3 newCameraPosition;
             if (!m_UseHeadBob)
             {
+                newCameraPosition = m_OriginalCameraPosition;
+                newCameraPosition.y += m_StepCameraOffset;
+                m_Camera.transform.localPosition = newCameraPosition;
                 return;
             }
             if (m_CharacterController.velocity.magnitude > 0 && m_CharacterController.isGrounded)
@@ -290,6 +309,7 @@ namespace Brickcraft
                 newCameraPosition = m_Camera.transform.localPosition;
                 newCameraPosition.y = m_OriginalCameraPosition.y - m_JumpBob.Offset();
             }
+            newCameraPosition.y += m_StepCameraOffset;
             m_Camera.transform.localPosition = newCameraPosition;
         }
 

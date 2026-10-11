@@ -22,6 +22,8 @@ namespace Brickcraft.Network
     ///   /unban NICK|ID
     ///   /tp NICK|ID                 takes you to an online player
     ///   /pvp [on|off]               whether players can hurt each other, saved with the world
+    ///   /time [day|noon|night|midnight|HH:MM]   shows the game's time, or moves it on to that hour
+    ///   /daylength [minutes]        shows or changes how long a day lasts, saved with the world
     ///   /spawnnpc NPC [count]       puts NPCs in front of you (several are a pack)
     ///   /removenpcs                 takes every NPC out of the world
     ///   /navdebug                   draws where NPCs can walk and their paths in the editor's scene view
@@ -95,6 +97,12 @@ namespace Brickcraft.Network
                 case "pvp":
                     pvp(sender, admin, target);
                     break;
+                case "time":
+                    time(sender, admin, target);
+                    break;
+                case "daylength":
+                    dayLength(sender, admin, target);
+                    break;
                 case "spawnnpc":
                     if (target == null) {
                         reply(sender, "Usage: /spawnnpc NPC [count]");
@@ -117,7 +125,7 @@ namespace Brickcraft.Network
                     }
                     break;
                 default:
-                    reply(sender, "Unknown command. Commands: /players, /kick NICK|ID [reason], /ban NICK|ID [reason], /unban NICK|ID, /tp NICK|ID, /pvp [on|off], /spawnnpc NPC [count], /removenpcs, /navdebug, /role NICK|ID [role], /additem ITEM[@COLOR] [count] [NICK|ID]");
+                    reply(sender, "Unknown command. Commands: /players, /kick NICK|ID [reason], /ban NICK|ID [reason], /unban NICK|ID, /tp NICK|ID, /pvp [on|off], /time [day|noon|night|midnight|HH:MM], /daylength [minutes], /spawnnpc NPC [count], /removenpcs, /navdebug, /role NICK|ID [role], /additem ITEM[@COLOR] [count] [NICK|ID]");
                     break;
             }
         }
@@ -251,6 +259,48 @@ namespace Brickcraft.Network
             WorldNetwork.Pvp = value == "on";
             Debug.Log(admin.record.Name + " turned PvP " + value);
             NetworkServer.SendToReady(new ChatMessage() { sender = ServerName, text = admin.record.Name + " turned PvP " + value });
+        }
+
+        // time only goes forward: to the next time it's that hour
+        private static void time(NetworkConnectionToClient sender, ConnectedPlayer admin, string value) {
+            if (string.IsNullOrEmpty(value)) {
+                reply(sender, "It's " + World.WorldTime.Describe() + (World.WorldTime.IsPaused ? " (paused)" : ""));
+                return;
+            }
+            float hours;
+            switch (value.ToLowerInvariant()) {
+                case "day": hours = 7; break;
+                case "noon": hours = 12; break;
+                case "night": hours = 20; break;
+                case "midnight": hours = 0; break;
+                default:
+                    string[] parts = value.Split(':');
+                    if (parts.Length != 2 || !int.TryParse(parts[0], out int h) || !int.TryParse(parts[1], out int m) || h < 0 || h > 23 || m < 0 || m > 59) {
+                        reply(sender, "Usage: /time [day|noon|night|midnight|HH:MM]");
+                        return;
+                    }
+                    hours = h + m / 60f;
+                    break;
+            }
+            WorldNetwork.ServerSetTime(World.WorldTime.NextTimeAt(hours));
+            Debug.Log(admin.record.Name + " set the time to " + World.WorldTime.Describe());
+            NetworkServer.SendToReady(new ChatMessage() { sender = ServerName, text = admin.record.Name + " set the time to " + World.WorldTime.Describe() });
+        }
+
+        private static void dayLength(NetworkConnectionToClient sender, ConnectedPlayer admin, string value) {
+            if (string.IsNullOrEmpty(value)) {
+                reply(sender, "A day lasts " + (World.WorldTime.DayLength / 60f).ToString("0.#") + " minutes");
+                return;
+            }
+            if (!float.TryParse(value.Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float minutes)
+                    || minutes < 1 || minutes > 24 * 60) {
+                reply(sender, "Usage: /daylength [minutes], from 1 to 1440");
+                return;
+            }
+            WorldNetwork.ServerSetDayLength(minutes * 60);
+            string text = admin.record.Name + " made days last " + minutes.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + " minutes";
+            Debug.Log(text);
+            NetworkServer.SendToReady(new ChatMessage() { sender = ServerName, text = text });
         }
 
         private static void teleport(NetworkConnectionToClient sender, ConnectedPlayer admin, string target) {

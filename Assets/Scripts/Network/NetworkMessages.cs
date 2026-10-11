@@ -10,6 +10,14 @@ namespace Brickcraft.Network
         public int viewDistance;
     }
 
+    /// <summary>Server to client: the game's time (see World.WorldTime), when joining, every few seconds and when it changes.</summary>
+    public struct TimeMessage : NetworkMessage
+    {
+        public double time;
+        public float dayLength;
+        public bool isPaused;
+    }
+
     /// <summary>Client to server: the player changed how far they draw the world, in chunks.</summary>
     public struct ViewDistanceMessage : NetworkMessage
     {

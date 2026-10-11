@@ -35,7 +35,7 @@ Its icons and rounded shapes are white sprites tinted in Unity, drawn by `python
 
 Multiplayer uses [Mirror](https://mirror-networking.gitbook.io/docs), patched in one place (search for "Brickcraft patch" in `Assets/Mirror`, and apply it again after upgrading Mirror): `NetworkIdentity._connectionToClient` is `[NonSerialized]`, otherwise reloading scripts with the player prefab loaded throws "get_time is not allowed to be called during serialization". Every game is networked:
 
-- **Singleplayer** lists the saved worlds, to play or delete them, or creates a new one with its name, seed (a number, any text, or empty for a random one), difficulty (Peaceful, Normal or Hard, kept with the world: NPCs don't hurt players in Peaceful worlds, and hurt them half as much again in Hard ones) and PvP (on by default: whether players can hurt each other, kept with the world and changed by admins with `/pvp`). The world runs on a host that doesn't listen for connections, so nobody else can join.
+- **Singleplayer** lists the saved worlds, to play or delete them, or creates a new one with its name, seed (a number, any text, or empty for a random one), difficulty (Peaceful, Normal or Hard, kept with the world: NPCs don't hurt players in Peaceful worlds, and hurt them half as much again in Hard ones) PvP (on by default: whether players can hurt each other, kept with the world and changed by admins with `/pvp`) and day length (10, 20, 30 or 60 minutes, 20 by default; admins change it with `/daylength`). The world runs on a host that doesn't listen for connections, so nobody else can join.
 - **Host game** runs a host other players can join (UDP port 7777 by default, see the KcpTransport in `Resources/NetworkManager`).
 - **Join game** connects to the address typed next to the button (`localhost` if empty), with the server's password in the box beside it if it has one (it's sent hashed, and never saved).
 
@@ -63,6 +63,8 @@ The world has no edges, it's streamed around the players: the server keeps the c
 
 To stay precise however far players go, the game uses a floating origin: game logic works in integer cells, blocks and chunks, Unity positions are relative to a chunk near the local player (subtracted while still integers), and when the player gets about 400 units away the origin moves and the scene shifts with it. Each peer has its own origin, so player positions are sent as absolute coordinates.
 
+Worlds have days and nights (`World.WorldTime`): the game's time is days since the world began, its fraction the time of day (the sun rises at 6 and sets at 18), and a day lasts the world's day length in real time. The server runs it and saves it with the world, so it goes on where it was; it tells clients when they join and every few seconds, and they run it on their side in between. In singleplayer it waits while the game menu (Escape) is open; in multiplayer it goes on as long as the server runs. The sky follows it (`World.DayNightCycle`): the scene's Sun light goes round (the physically based sky makes dawns, dusks and nights out of where it is, and ambient light follows the sky), a moon (a copy of the Sun light, dimmer and bluish, its face `Resources/World/moon_disc.png`) goes opposite, and the stars (the sky's space emission, `Textures/World/stars.png`) turn with them.
+
 Players have health (`Combat.Health`, 20 by default, decided by the server; NPCs will have it too). Left clicking something with health hits it for the damage of the item in hand (`damage` in its info.json, 1 for a bare hand), at most every 0.4 seconds and from close by, and pushes it back; players can only be hit with PvP on. After a hit there's half a second nothing can hurt it again. The health bar above the bottom bar shows it. A dead player can't move or act: a popup says who killed it, and closing it respawns it at the spawn with all its health and its inventory (`PlayerNetwork.CmdRespawn`). Health isn't saved: players join with all of it.
 
 Besides player messages, the chat shows events: players joining, leaving, being kicked, banned or killed. The server sends a `ChatEventMessage` saying what happened (type, player, who did it, reason) and each client words it (`ChatEvents.Describe`); to add an event, add a `ChatEventType`, its sentence in `Describe`, and send it with `ChatEvents.Send`.
@@ -77,6 +79,8 @@ Admins can type commands in the chat:
 - `/unban NICK|ID`
 - `/tp NICK|ID`: takes you to an online player.
 - `/pvp [on|off]`: shows or changes whether players can hurt each other, saved with the world.
+- `/time [day|noon|night|midnight|HH:MM]`: shows the game's time, or moves it on to the next time it's that hour (day is 7:00, night 20:00).
+- `/daylength [minutes]`: shows or changes how long a day lasts (1 to 1440 minutes), saved with the world.
 - `/spawnnpc NPC [count]`: puts `count` (1 by default, 20 at most) NPCs of that kind (like `golem`) a few meters in front of you; several are a pack.
 - `/removenpcs`: takes every NPC out of the world.
 - `/navdebug`: draws where NPCs can walk and their paths in the editor's scene view.
@@ -97,7 +101,7 @@ Players are identified by the name typed in the menu plus their machine id (`Sys
 
 Every world is saved in its own folder, `<persistentDataPath>/saves/<save name>/`, named after the world (`SavedWorlds`). Hosting a game uses the `saveName` of the NetworkManager, `world` by default:
 
-- `world.dat`: the world's name, seed, difficulty and generator version, when it was created and last played, which game versions created it and played it last, and its mods (see Mods).
+- `world.dat`: the world's name, seed, difficulty and generator version, when it was created and last played, which game versions created it and played it last, its mods (see Mods), PvP, its day length and the game's time (written with every autosave).
 - `regions/r.<x>.<z>.bcr`: what players changed (blocks and bricks), in region files of 32x32 chunks. The terrain itself is never saved, it's generated again from the seed and the changes are applied on top, so a save only grows with what players do, not with the size of the world. Each chunk record is compressed and can be rewritten alone; new versions are written before the old ones are released, so a crash can't leave half a chunk. Regions nobody changed have no file. Placed blocks and bricks also store who placed them (their id in `players.db`) and when (unix seconds); dug blocks don't. Bricks store their colour, and blocks placed in a colour other than their item's default one store it too (they're drawn with it instead of their textures). The NPCs in a chunk are saved in its record too (never sent to clients).
 
 Saves have a format number (`WorldStorage.FormatVersion`, written in `world.dat`) that covers all their files. Older saves are upgraded when they're played: each step is a migration in `Assets/Scripts/World/Persistence/Migrations` (`Migration3To4` upgrades format 3 to 4) and they're chained, so a save several formats old goes through each one. The save is backed up first in `<persistentDataPath>/backups/<save>-format<N>-<date>/` and put back if a migration fails. Migrations read and write the formats they convert between with their own code, so they keep working as the game changes. Saves of a newer game, older than `SaveMigrations.OldestSupported` or with no migration path stay in the list with why they can't be played. When a save's format changes (world.dat, chunk records, players.db), bump `FormatVersion` and add a migration from the previous one.
@@ -365,3 +369,5 @@ Brick colours are limited to a palette, Rebrickable's colour list: `Resources/Br
 - World chunk system - Smjert - https://github.com/chraft/chunk-light-tester/
 - Test monster - iJUNE - https://sketchfab.com/3d-models/free-dummy-monster-246678f908b548feb0f4cccaeef78756#download
 - Color list - https://rebrickable.com/downloads/
+- "The Moon" (https://skfb.ly/6s9oz) by SebastianSosnowski is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+- "Sun" (https://skfb.ly/oVpEI) by Cybertron B-127 is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).

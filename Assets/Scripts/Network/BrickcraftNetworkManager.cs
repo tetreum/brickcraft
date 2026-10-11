@@ -199,6 +199,7 @@ namespace Brickcraft.Network
 
                 if (WorldNetwork.Storage != null) {
                     Npcs.NpcSystem.ServerSave();
+                    WorldNetwork.SaveTime();
                     WorldNetwork.Storage.SaveInBackground();
                 }
                 // so a crash doesn't send players back much

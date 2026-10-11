@@ -93,6 +93,8 @@ namespace Brickcraft.World
 
 		void Start () {
 			Events.EventManager.WorldLoadingStarted.Raise(new Events.WorldLoadingStartedEvent());
+			if (GetComponent<DayNightCycle>() == null)
+				gameObject.AddComponent<DayNightCycle>();
 		}
 
 		/// <summary>Sets up the world, chunks are then loaded with <see cref="RequestChunk"/>.</summary>

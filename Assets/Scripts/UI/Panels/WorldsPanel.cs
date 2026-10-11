@@ -38,6 +38,10 @@ namespace Brickcraft.UI
         public SegmentedControl difficulty;
         /// <summary>Players can hurt each other, see WorldStorage.Pvp.</summary>
         public Toggle pvp;
+        /// <summary>How long a day lasts, one of DayLengths (see World.WorldTime).</summary>
+        public SegmentedControl dayLength;
+        /// <summary>The day lengths to choose from, in minutes, in the order of dayLength's segments.</summary>
+        public int[] dayLengths = { 10, 20, 30, 60 };
         public Button backButton;
         public Button createButton;
         /// <summary>What's wrong with the form.</summary>
@@ -227,6 +231,7 @@ namespace Brickcraft.UI
             seedInput.text = "";
             difficulty.Select((int)Difficulty.Normal);
             pvp.isOn = true;
+            dayLength.Select(System.Array.IndexOf(dayLengths, (int)(World.WorldTime.DefaultDayLength / 60)));
             error.text = "";
             refreshMods();
         }
@@ -277,7 +282,8 @@ namespace Brickcraft.UI
                         mods.Add(mod.Key);
                     }
                 }
-                saveName = SavedWorlds.Create(name, SavedWorlds.ParseSeed(seedInput.text), (Difficulty)Mathf.Max(0, difficulty.Selected), pvp.isOn, mods);
+                float minutes = dayLength.Selected >= 0 ? dayLengths[dayLength.Selected] : World.WorldTime.DefaultDayLength / 60;
+                saveName = SavedWorlds.Create(name, SavedWorlds.ParseSeed(seedInput.text), (Difficulty)Mathf.Max(0, difficulty.Selected), pvp.isOn, mods, minutes * 60);
             } catch (Exception e) {
                 error.text = "Couldn't create the world: " + e.Message;
                 return;

@@ -95,6 +95,11 @@ namespace Brickcraft.Network
                 world.ChunkGenerated += onServerChunkGenerated;
                 world.ChunkUnloaded += onServerChunkUnloaded;
             }
+            // the game's time goes on from where it was saved (the test scene starts at noon)
+            WorldTime.Time = storage != null ? storage.GameTime : 0.5;
+            WorldTime.DayLength = storage != null ? storage.DayLength : WorldTime.DefaultDayLength;
+            WorldTime.IsPaused = false;
+            nextTimeBroadcast = 0;
             Npcs.NpcSystem.StartServer();
         }
 
@@ -105,6 +110,7 @@ namespace Brickcraft.Network
 
         public static void StopServer() {
             Npcs.NpcSystem.StopServer();
+            SaveTime();
             if (WorldBehaviour.Instance != null) {
                 WorldBehaviour.Instance.ChunkGenerated -= onServerChunkGenerated;
                 WorldBehaviour.Instance.ChunkUnloaded -= onServerChunkUnloaded;
@@ -254,9 +260,75 @@ namespace Brickcraft.Network
             return removed;
         }
 
+        // -------- time --------
+
+        private const float TimeBroadcastInterval = 5;
+        private static float nextTimeBroadcast;
+
+        /// <summary>Puts the game's time in the save (written with the next save).</summary>
+        public static void SaveTime() {
+            if (Storage != null) {
+                Storage.GameTime = WorldTime.Time;
+            }
+        }
+
+        /// <summary>Changes the game's time (days since the world began) and tells the clients.</summary>
+        public static void ServerSetTime(double time) {
+            WorldTime.Time = Math.Max(0, time);
+            SaveTime();
+            broadcastTime();
+        }
+
+        /// <summary>Changes how long a day lasts (real seconds), saves it and tells the clients.</summary>
+        public static void ServerSetDayLength(float seconds) {
+            WorldTime.DayLength = seconds;
+            if (Storage != null) {
+                Storage.SetDayLength(seconds);
+            }
+            broadcastTime();
+        }
+
+        // it goes on while the server runs, but in singleplayer it waits while the game menu is open
+        private static void updateTime() {
+            bool paused = !BrickcraftNetworkManager.Instance.AllowsRemotePlayers && WorldTime.IsGameMenuOpen;
+            if (paused != WorldTime.IsPaused) {
+                WorldTime.IsPaused = paused;
+                nextTimeBroadcast = 0;
+            }
+            WorldTime.Advance(Time.deltaTime);
+            if (Time.unscaledTime >= nextTimeBroadcast) {
+                broadcastTime();
+            }
+        }
+
+        private static TimeMessage timeMessage() {
+            return new TimeMessage() { time = WorldTime.Time, dayLength = WorldTime.DayLength, isPaused = WorldTime.IsPaused };
+        }
+
+        // the host's own client shares the server's time
+        private static void broadcastTime() {
+            nextTimeBroadcast = Time.unscaledTime + TimeBroadcastInterval;
+            TimeMessage message = timeMessage();
+            foreach (NetworkConnectionToClient conn in interests.Keys) {
+                if (!(conn is LocalConnectionToClient)) {
+                    conn.Send(message);
+                }
+            }
+        }
+
+        private static void onTime(TimeMessage message) {
+            if (NetworkServer.active) {
+                return;
+            }
+            WorldTime.Time = message.time;
+            WorldTime.DayLength = message.dayLength;
+            WorldTime.IsPaused = message.isPaused;
+        }
+
         /// <summary>Loads and unloads chunks around the players and streams them to the clients.</summary>
         public static void ServerUpdate() {
             WorldBehaviour world = WorldBehaviour.Instance;
+            updateTime();
 
             if (world == null || !world.Seed.HasValue || Time.unscaledTime < nextServerUpdate) {
                 return;
@@ -387,6 +459,9 @@ namespace Brickcraft.Network
             }
             interests[conn] = interest;
 
+            if (!(conn is LocalConnectionToClient)) {
+                conn.Send(timeMessage());
+            }
             conn.Send(new WorldInfoMessage() {
                 seed = Seed,
                 difficulty = (byte)Difficulty,
@@ -455,6 +530,7 @@ namespace Brickcraft.Network
             NetworkClient.RegisterHandler<BrickPlacedMessage>(onBrickPlaced);
             NetworkClient.RegisterHandler<BrickRemovedMessage>(onBrickRemoved);
             NetworkClient.RegisterHandler<BrickStateMessage>(onBrickState);
+            NetworkClient.RegisterHandler<TimeMessage>(onTime);
             Events.EventManager.SettingChanged.Subscribe(onSettingChanged);
         }
 
@@ -535,6 +611,10 @@ namespace Brickcraft.Network
 
         /// <summary>Spawns the player once the area around the spawn can be walked on.</summary>
         public static void ClientUpdate() {
+            // between the server's times, a client runs it on its side
+            if (!NetworkServer.active) {
+                WorldTime.Advance(Time.deltaTime);
+            }
             if (!hasWorldInfo || isSpawnAreaReady) {
                 return;
             }

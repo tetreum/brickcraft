@@ -10,7 +10,8 @@ namespace Brickcraft.World
     /// A saved world on disk, owned by the server:
     ///   world.dat                 header: format version, seed, generator version, timestamps,
     ///                             game versions that created and last saved it, name, difficulty,
-    ///                             mods (id and version last played with)
+    ///                             mods (id and version last played with), PvP, how long a day lasts
+    ///                             and the game's time (see WorldTime)
     ///   regions/r.[x].[z].bcr     changes of each chunk, see <see cref="RegionFile"/>
     ///
     /// The terrain itself is never stored, it's generated again from the seed. Saves only contain
@@ -44,7 +45,7 @@ namespace Brickcraft.World
         /// a migration from the previous one: older saves are upgraded when they're played (see
         /// Migrations.SaveMigrations).
         /// </summary>
-        public const ushort FormatVersion = 7;
+        public const ushort FormatVersion = 8;
 
         public string Folder { get; private set; }
         /// <summary>The format it's saved in, see FormatVersion.</summary>
@@ -67,6 +68,10 @@ namespace Brickcraft.World
         public List<WorldMod> Mods { get; private set; } = new List<WorldMod>();
         /// <summary>Players can hurt each other, chosen when it was created (admins change it with /pvp).</summary>
         public bool Pvp { get; private set; } = true;
+        /// <summary>Real seconds a day lasts (admins change it with /daylength), see WorldTime.</summary>
+        public float DayLength { get; private set; } = WorldTime.DefaultDayLength;
+        /// <summary>The game's time when it was last saved, in days since the world began (see WorldTime).</summary>
+        public double GameTime { get; set; } = WorldTime.NewWorldTime;
 
         /// <summary>The ids of its mods.</summary>
         public List<string> ModIds {
@@ -126,13 +131,15 @@ namespace Brickcraft.World
         }
 
         /// <summary>Creates a new world in the folder (nothing is generated until it's played).</summary>
-        public static void Create(string folder, string name, long seed, Difficulty difficulty, bool pvp, List<WorldMod> mods = null) {
+        public static void Create(string folder, string name, long seed, Difficulty difficulty, bool pvp, List<WorldMod> mods = null, float dayLength = WorldTime.DefaultDayLength) {
             WorldStorage storage = new WorldStorage() {
                 Folder = folder,
                 Name = name,
                 Seed = seed,
                 Difficulty = difficulty,
                 Pvp = pvp,
+                DayLength = dayLength > 0 ? dayLength : WorldTime.DefaultDayLength,
+                GameTime = WorldTime.NewWorldTime,
                 Mods = mods ?? new List<WorldMod>(),
                 CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 CreatedWithVersion = GameVersion.Current,
@@ -145,7 +152,19 @@ namespace Brickcraft.World
         /// <summary>Changes whether players can hurt each other, and saves it.</summary>
         public void SetPvp(bool pvp) {
             Pvp = pvp;
-            enqueueWrite(new List<KeyValuePair<Vector2Int, byte[]>>(), null); // writes the header
+            saveHeader();
+        }
+
+        /// <summary>Changes how long a day lasts (real seconds), and saves it.</summary>
+        public void SetDayLength(float seconds) {
+            DayLength = seconds;
+            saveHeader();
+        }
+
+        private void saveHeader() {
+            lock (sync) {
+                ioQueue = ioQueue.ContinueWith(_ => writeHeaderSafely(), TaskScheduler.Default);
+            }
         }
 
         /// <summary>
@@ -252,16 +271,19 @@ namespace Brickcraft.World
 
         // -------- saving --------
 
-        /// <summary>Writes the chunks changed since the last save, on a background thread.</summary>
+        /// <summary>Writes the chunks changed since the last save and the header (the game's time), on a background thread.</summary>
         public void SaveInBackground() {
             if (Changes.HasUnsavedChanges) {
                 enqueueWrite(Changes.TakeDirtyChunks(), null);
+            } else {
+                saveHeader();
             }
         }
 
         /// <summary>Writes everything that's left and waits for it, for when the server stops.</summary>
         public void SaveNow() {
             enqueueWrite(Changes.TakeDirtyChunks(), null);
+            saveHeader();
             Task last;
             lock (sync) {
                 last = ioQueue;
@@ -320,6 +342,14 @@ namespace Brickcraft.World
                 writeHeader();
             } catch (Exception e) {
                 UnityEngine.Debug.LogError("Couldn't save the world: " + e);
+            }
+        }
+
+        private void writeHeaderSafely() {
+            try {
+                writeHeader();
+            } catch (Exception e) {
+                UnityEngine.Debug.LogError("Couldn't save the world's " + HeaderFile + ": " + e);
             }
         }
 
@@ -389,6 +419,11 @@ namespace Brickcraft.World
                     Mods.Add(new WorldMod() { id = reader.ReadString(), version = reader.ReadString() });
                 }
                 Pvp = reader.ReadBoolean();
+                DayLength = reader.ReadSingle();
+                GameTime = reader.ReadDouble();
+                if (!(DayLength > 0)) {
+                    DayLength = WorldTime.DefaultDayLength;
+                }
 
                 if (generator != GeneratorVersion) {
                     UnityEngine.Debug.LogWarning("The world was created with another version of the generator, saved changes may not line up with the terrain");
@@ -439,6 +474,8 @@ namespace Brickcraft.World
                     writer.Write(active != null ? active.version : mod.version ?? "");
                 }
                 writer.Write(Pvp);
+                writer.Write(DayLength);
+                writer.Write(GameTime);
             }
 
             if (File.Exists(path)) {

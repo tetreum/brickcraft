@@ -57,6 +57,20 @@ namespace Brickcraft.Bricks
             /// own, by name: a palette colour id, like 47 for a Trans-Clear window. The others are the brick's.
             /// </summary>
             public Dictionary<string, int> parts;
+            /// <summary>
+            /// Spots the game looks for on it, by name (a bed's "SleepPoint", see Npcs.NpcBeds): empty children of
+            /// the brick, where they say (in the game's units, from its pivot) and facing where they say.
+            /// </summary>
+            public Dictionary<string, ModelPoint> points;
+        }
+
+        /// <summary>A spot of a model (see ModelInfo.points).</summary>
+        public class ModelPoint
+        {
+            /// <summary>x, y, z in the game's units, from the model's pivot.</summary>
+            public float[] position;
+            /// <summary>Degrees it's turned around Y: 0 faces +Z.</summary>
+            public float rotation;
         }
 
         // ids of the file models, and their folders
@@ -419,6 +433,16 @@ namespace Brickcraft.Bricks
                 BoxCollider collider = brick.AddComponent<BoxCollider>();
                 collider.center = new Vector3(0, height / 2, 0);
                 collider.size = new Vector3(width * Server.studSize, height, depth * Server.studSize);
+            }
+
+            if (info.points != null) {
+                foreach (KeyValuePair<string, ModelPoint> point in info.points) {
+                    float[] at = point.Value != null ? point.Value.position : null;
+                    Transform child = new GameObject(point.Key).transform;
+                    child.SetParent(brick.transform, false);
+                    child.localPosition = at != null && at.Length == 3 ? new Vector3(at[0], at[1], at[2]) : Vector3.zero;
+                    child.localRotation = Quaternion.Euler(0, point.Value != null ? point.Value.rotation : 0, 0);
+                }
             }
             return brick;
         }

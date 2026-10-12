@@ -3,6 +3,6 @@
     "type": "brick",
     "brickModel": "bed",
     "color": 1,
-    "colors": "all",
-    "tags": ["bed"]
+    "tags": ["bed"],
+    "ldr": true
 }

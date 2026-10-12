@@ -1,0 +1,16 @@
+{
+  "width": 4,
+  "depth": 8,
+  "plates": 7,
+  "collider": "mesh",
+  "keepPivot": true,
+  "parts": {
+    "c1": 1,
+    "c15": 15,
+    "c158": 158,
+    "c297": 297
+  },
+  "points": {
+    "SleepPoint": { "position": [0, 0.24, 1.1], "rotation": 0 }
+  }
+}

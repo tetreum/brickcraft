@@ -10,7 +10,7 @@ namespace Brickcraft.Bricks
     /// right against that face and centered on the crosshair. By default it snaps to the world
     /// block grid (so 2x2 bricks line up with the terrain) along the axes where its size is a whole
     /// number of blocks, and to studs along the others (so a 1x1 fits on any stud); holding Shift
-    /// allows any stud.
+    /// allows any stud. On a placed brick it always snaps to studs, so it fits on any of them.
     /// Mouse wheel or R rotates it.
     ///
     /// Attachments (doors, see BrickAttachment) go in the slot of the brick looked at instead (a door frame,
@@ -110,7 +110,8 @@ namespace Brickcraft.Bricks
             Vector3 gridPoint = BrickGrid.WorldToLocalGrid(hit.point);
             Vector3Int originCell = FloatingOrigin.Cell;
             Vector3Int adjacent = BrickGrid.WorldToCell(hit.point + (Vector3)normal * SurfaceOffset);
-            bool snapToBlocks = !GameInput.GetButton(GameInput.FreePlacement);
+            // on a brick it goes on any of its studs: the block grid is the terrain's
+            bool snapToBlocks = !GameInput.GetButton(GameInput.FreePlacement) && Server.findBrick(hit.collider) == null;
             Vector3Int origin = Vector3Int.zero;
 
             for (int axis = 0; axis < 3; axis++) {

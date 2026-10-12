@@ -37,6 +37,9 @@ namespace Brickcraft.Bricks
         // the ways rays go (those facing out of each face)
         private const int Directions = 48;
         private const int RaysPerBatch = 400000;
+        // how far apart rays start on faces none got out from at first, in the game's units (an LDraw unit)
+        private const float SampleSpacing = 0.02f;
+        private const int MaxSampleSteps = 120;
         private const float OnPlane = 0.02f; // in cells
 
         private class Triangle
@@ -182,8 +185,79 @@ namespace Brickcraft.Bricks
             return filled.TryGetValue(Vector3Int.FloorToInt(cells), out int other) && other != part;
         }
 
-        // studs under another part, and faces against a part that fills that side
+        // a face on a side of its part's cells, facing out of them: what can cover a neighbour's face there
+        private struct SideFace
+        {
+            public int part;
+            public Vector2 a, b, c; // on the side's plane, in cells
+        }
+
+        // the two axes along a side across that axis
+        private static Vector2 onPlane(Vector3 cells, int axis) {
+            return axis == 0 ? new Vector2(cells.y, cells.z) : axis == 1 ? new Vector2(cells.x, cells.z) : new Vector2(cells.x, cells.y);
+        }
+
+        private static string sideKey(int axis, int side, int plane) {
+            return axis + "/" + side + "/" + plane;
+        }
+
+        // the faces on the sides of their parts' cells, by side (axis, way it faces, plane)
+        private static Dictionary<string, List<SideFace>> sideFaces(List<CreationPart> parts, List<Triangle> triangles) {
+            Dictionary<string, List<SideFace>> sides = new Dictionary<string, List<SideFace>>();
+            foreach (Triangle t in triangles) {
+                CreationPart part = parts[t.part];
+                if (t.transparent || part.cellsMax.x <= part.cellsMin.x) {
+                    continue;
+                }
+                Vector3 a = toCells(t.a), b = toCells(t.b), c = toCells(t.c);
+                Vector3 normal = t.Normal;
+                for (int axis = 0; axis < 3; axis++) {
+                    for (int side = -1; side <= 1; side += 2) {
+                        int plane = side > 0 ? part.cellsMax[axis] : part.cellsMin[axis];
+                        if (Mathf.Abs(a[axis] - plane) > OnPlane || Mathf.Abs(b[axis] - plane) > OnPlane || Mathf.Abs(c[axis] - plane) > OnPlane
+                                || normal[axis] * side < 0.7f) {
+                            continue;
+                        }
+                        string key = sideKey(axis, side, plane);
+                        if (!sides.TryGetValue(key, out List<SideFace> list)) {
+                            sides[key] = list = new List<SideFace>();
+                        }
+                        list.Add(new SideFace() { part = t.part, a = onPlane(a, axis), b = onPlane(b, axis), c = onPlane(c, axis) });
+                    }
+                }
+            }
+            return sides;
+        }
+
+        // a point of a side is against a face of another part, on that side facing the other way
+        private static bool againstOther(List<SideFace> faces, Vector2 point, int part) {
+            if (faces == null) {
+                return false;
+            }
+            foreach (SideFace face in faces) {
+                if (face.part != part && contains(face, point)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static bool contains(SideFace face, Vector2 p) {
+            const float Margin = 0.001f;
+            float d1 = cross(face.a, face.b, p), d2 = cross(face.b, face.c, p), d3 = cross(face.c, face.a, p);
+            bool negative = d1 < -Margin || d2 < -Margin || d3 < -Margin;
+            bool positive = d1 > Margin || d2 > Margin || d3 > Margin;
+            return !(negative && positive);
+        }
+
+        private static float cross(Vector2 a, Vector2 b, Vector2 p) {
+            return (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+        }
+
+        // studs under another part, and faces against faces of another part (not just its cells: a curved slope
+        // doesn't fill them)
         private static void byGrid(List<CreationPart> parts, List<Triangle> triangles, Dictionary<Vector3Int, int> filled) {
+            Dictionary<string, List<SideFace>> sides = sideFaces(parts, triangles);
             foreach (Triangle t in triangles) {
                 CreationPart part = parts[t.part];
                 if (part.cellsMax.x <= part.cellsMin.x) {
@@ -205,16 +279,15 @@ namespace Brickcraft.Bricks
                 Vector3 normal = t.Normal;
                 for (int axis = 0; axis < 3 && !t.hidden; axis++) {
                     for (int side = -1; side <= 1; side += 2) {
-                        float plane = side > 0 ? part.cellsMax[axis] : part.cellsMin[axis];
+                        int plane = side > 0 ? part.cellsMax[axis] : part.cellsMin[axis];
                         if (Mathf.Abs(a[axis] - plane) > OnPlane || Mathf.Abs(b[axis] - plane) > OnPlane || Mathf.Abs(c[axis] - plane) > OnPlane
                                 || normal[axis] * side < 0.7f) {
                             continue;
                         }
+                        sides.TryGetValue(sideKey(axis, -side, plane), out List<SideFace> facing);
                         bool covered = true;
                         foreach (Vector3 corner in new[] { middle, Vector3.Lerp(a, middle, 0.2f), Vector3.Lerp(b, middle, 0.2f), Vector3.Lerp(c, middle, 0.2f) }) {
-                            Vector3 across = corner;
-                            across[axis] = plane + side * 0.5f;
-                            if (!filledByOther(filled, across, t.part)) {
+                            if (!againstOther(facing, onPlane(corner, axis), t.part)) {
                                 covered = false;
                                 break;
                             }
@@ -249,7 +322,7 @@ namespace Brickcraft.Bricks
         }
 
         // the faces still standing that no ray gets out from are hidden: rays from their middle first, then from
-        // nearer each corner, only for those none got out from yet
+        // nearer each corner, then from all over them, only for those none got out from yet
         private static IEnumerator byRays(List<Triangle> triangles) {
             List<Triangle> blocking = triangles.FindAll(t => !t.hidden && !t.transparent);
             List<Triangle> looked = triangles.FindAll(t => !t.hidden && !t.transparent);
@@ -280,7 +353,9 @@ namespace Brickcraft.Bricks
             QueryParameters query = new QueryParameters(Physics.DefaultRaycastLayers, false, QueryTriggerInteraction.Ignore, true);
 
             try {
-                for (int sample = 0; sample < 4; sample++) {
+                // the middle and near the corners first, then all over what's left: a face can show only through a
+                // slit (a tile's groove)
+                for (int pass = 0; pass < 5; pass++) {
                     List<RaycastCommand> commands = new List<RaycastCommand>();
                     List<Triangle> owners = new List<Triangle>();
                     foreach (Triangle t in looked) {
@@ -288,34 +363,28 @@ namespace Brickcraft.Bricks
                             continue;
                         }
                         Vector3 normal = t.Normal;
-                        Vector3 from = sample == 0 ? t.Middle : Vector3.Lerp(sample == 1 ? t.a : sample == 2 ? t.b : t.c, t.Middle, 0.25f);
-                        from += normal * RayStart;
-                        foreach (Vector3 way in Ways) {
-                            if (Vector3.Dot(way, normal) > 0.1f) {
-                                commands.Add(new RaycastCommand(physics, from, way, query, reach));
-                                owners.Add(t);
+                        foreach (Vector3 point in samples(t, pass)) {
+                            Vector3 from = point + normal * RayStart;
+                            foreach (Vector3 way in Ways) {
+                                if (Vector3.Dot(way, normal) > 0.1f) {
+                                    commands.Add(new RaycastCommand(physics, from, way, query, reach));
+                                    owners.Add(t);
+                                }
                             }
                         }
+                        if (commands.Count < RaysPerBatch) {
+                            continue;
+                        }
+                        IEnumerator run = cast(commands, owners);
+                        while (run.MoveNext()) {
+                            yield return run.Current;
+                        }
+                        commands.Clear();
+                        owners.Clear();
                     }
-                    for (int start = 0; start < commands.Count; start += RaysPerBatch) {
-                        int count = Mathf.Min(RaysPerBatch, commands.Count - start);
-                        NativeArray<RaycastCommand> batch = new NativeArray<RaycastCommand>(count, Allocator.Persistent);
-                        NativeArray<RaycastHit> hits = new NativeArray<RaycastHit>(count, Allocator.Persistent);
-                        for (int i = 0; i < count; i++) {
-                            batch[i] = commands[start + i];
-                        }
-                        Unity.Jobs.JobHandle job = RaycastCommand.ScheduleBatch(batch, hits, 256, 1);
-                        while (!job.IsCompleted) {
-                            yield return null;
-                        }
-                        job.Complete();
-                        for (int i = 0; i < count; i++) {
-                            if (hits[i].colliderInstanceID == 0) {
-                                owners[start + i].seen = true; // a ray got out
-                            }
-                        }
-                        batch.Dispose();
-                        hits.Dispose();
+                    IEnumerator rest = cast(commands, owners);
+                    while (rest.MoveNext()) {
+                        yield return rest.Current;
                     }
                 }
             } finally {
@@ -326,6 +395,49 @@ namespace Brickcraft.Bricks
                 if (!t.seen) {
                     t.hidden = true;
                 }
+            }
+        }
+
+        // where rays go from on a face: its middle, then nearer each corner, then a grid all over it
+        private static IEnumerable<Vector3> samples(Triangle t, int pass) {
+            if (pass == 0) {
+                yield return t.Middle;
+            } else if (pass < 4) {
+                yield return Vector3.Lerp(pass == 1 ? t.a : pass == 2 ? t.b : t.c, t.Middle, 0.25f);
+            } else {
+                float longest = Mathf.Max((t.b - t.a).magnitude, (t.c - t.b).magnitude, (t.a - t.c).magnitude);
+                int steps = Mathf.Clamp(Mathf.CeilToInt(longest / SampleSpacing), 1, MaxSampleSteps);
+                for (int i = 0; i <= steps; i++) {
+                    for (int j = 0; i + j <= steps; j++) {
+                        // a bit inside the face: its edges are against its neighbours
+                        float u = (i + 0.1f) / (steps + 0.3f), v = (j + 0.1f) / (steps + 0.3f);
+                        yield return t.a + (t.b - t.a) * u + (t.c - t.a) * v;
+                    }
+                }
+            }
+        }
+
+        // casts the rays; the faces one got out from are seen
+        private static IEnumerator cast(List<RaycastCommand> commands, List<Triangle> owners) {
+            if (commands.Count == 0) {
+                yield break;
+            }
+            NativeArray<RaycastCommand> batch = new NativeArray<RaycastCommand>(commands.ToArray(), Allocator.Persistent);
+            NativeArray<RaycastHit> hits = new NativeArray<RaycastHit>(commands.Count, Allocator.Persistent);
+            try {
+                Unity.Jobs.JobHandle job = RaycastCommand.ScheduleBatch(batch, hits, 256, 1);
+                while (!job.IsCompleted) {
+                    yield return null;
+                }
+                job.Complete();
+                for (int i = 0; i < commands.Count; i++) {
+                    if (hits[i].colliderInstanceID == 0) {
+                        owners[i].seen = true; // a ray got out
+                    }
+                }
+            } finally {
+                batch.Dispose();
+                hits.Dispose();
             }
         }
 

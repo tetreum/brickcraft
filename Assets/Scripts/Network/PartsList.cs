@@ -34,7 +34,8 @@ namespace Brickcraft.Network
 
     /// <summary>
     /// The server's side of the parts lister (see PartsLister): a player's creation around one of its bricks, and
-    /// the real LEGO parts it placed in a box. Its parts are the bricks and world blocks it placed (2x2 bricks put
+    /// the real LEGO parts it placed in a box (those it placed, or what items of several are made of, see
+    /// LDrawContraption). Its parts are the bricks and world blocks it placed (2x2 bricks put
     /// over a block become one, part 3003), never generated terrain nor other players' bricks.
     /// </summary>
     public static class PartsList
@@ -207,15 +208,13 @@ namespace Brickcraft.Network
                 if (!inside(middle, min, max)) {
                     continue;
                 }
-                if (WorldNetwork.ServerPlacerOf(brick).playerId == playerId && isListed(brick.item)) {
-                    placements.Add(LDrawWriter.Place(brick.item.LDrawPart, brick.color, brick.placement.Position, brick.placement.Rotation,
-                        LDrawWriter.OriginOf(brick.placement.model, brick.item.LDrawPart, brick.item.ldrawShape), corner));
+                if (WorldNetwork.ServerPlacerOf(brick).playerId == playerId) {
+                    place(placements, brick.item, brick.color, brick.placement.Position, brick.placement.Rotation, brick.placement.model, corner);
                 }
                 Brick attached = Server.attachmentOf(brick);
-                if (attached != null && attached.gameObject != null && WorldNetwork.ServerPlacerOf(attached).playerId == playerId && isListed(attached.item)) {
+                if (attached != null && attached.gameObject != null && WorldNetwork.ServerPlacerOf(attached).playerId == playerId) {
                     Transform at = attached.gameObject.transform;
-                    placements.Add(LDrawWriter.Place(attached.item.LDrawPart, attached.color, at.position, at.rotation,
-                        LDrawWriter.OriginOf(attached.model, attached.item.LDrawPart, attached.item.ldrawShape), corner));
+                    place(placements, attached.item, attached.color, at.position, at.rotation, attached.model, corner);
                 }
             }
 
@@ -304,6 +303,37 @@ namespace Brickcraft.Network
             return item != null && IsRealPart(item.brickModelId) && IsRealPart(item.LDrawPart);
         }
 
+        // a brick in the LDraw model: its part, or the parts it's made of (see LDrawContraption)
+        private static void place(List<LDrawPlacement> placements, Item item, int color, Vector3 position, Quaternion rotation, BrickModel model, Vector3 corner) {
+            if (isListed(item)) {
+                placements.Add(LDrawWriter.Place(item.LDrawPart, color, position, rotation, LDrawWriter.OriginOf(model, item.LDrawPart, item.ldrawShape), corner));
+                return;
+            }
+            List<LDrawContraption.Part> parts = item != null && !IsRealPart(item.brickModelId) ? LDrawContraption.PartsOf(item) : null;
+            if (parts == null) {
+                return;
+            }
+            // its file's origin is the brick's pivot
+            LDrawPlacement pivot = LDrawWriter.Place("", color, position, rotation, Vector3.zero, corner);
+            Matrix4x4 at = new LDrawContraption.Part() { position = pivot.position, row0 = pivot.row0, row1 = pivot.row1, row2 = pivot.row2 }.Matrix;
+            foreach (LDrawContraption.Part part in parts) {
+                Matrix4x4 m = at * part.Matrix;
+                placements.Add(new LDrawPlacement() {
+                    part = part.part, color = paletteColor(part.color, color),
+                    position = m.GetColumn(3), row0 = m.GetRow(0), row1 = m.GetRow(1), row2 = m.GetRow(2),
+                });
+            }
+        }
+
+        // a contraption's part's colour in the palette: 16 is the brick's
+        private static int paletteColor(int ldrawColor, int brickColor) {
+            if (ldrawColor == LDrawModelBuilder.MainColor) {
+                return brickColor;
+            }
+            BrickColor color = BrickColorPalette.FromLDraw(ldrawColor);
+            return color != null ? color.id : BrickColor.None;
+        }
+
         private static bool inside(Vector3 point, Vector3Int min, Vector3Int max) {
             return point.x >= min.x && point.y >= min.y && point.z >= min.z && point.x < max.x && point.y < max.y && point.z < max.z;
         }
@@ -313,16 +343,51 @@ namespace Brickcraft.Network
             return !string.IsNullOrEmpty(brickModel) && char.IsDigit(brickModel[0]);
         }
 
+        // a brick in the list: its part, or the parts it's made of (an item with "ldr": true, see LDrawContraption)
         private static void add(Dictionary<string, PartsListRow> rows, Item item, int color) {
-            if (item == null || !IsRealPart(item.brickModelId)) {
+            if (item == null) {
                 return;
             }
-            string key = item.brickModelId + "/" + color;
+            if (IsRealPart(item.brickModelId)) {
+                add(rows, item.brickModelId, color, item.name, item.BricklinkPart);
+                return;
+            }
+            List<LDrawContraption.Part> parts = LDrawContraption.PartsOf(item);
+            if (parts == null) {
+                return;
+            }
+            foreach (LDrawContraption.Part part in parts) {
+                if (!IsRealPart(part.part)) {
+                    continue;
+                }
+                // named like the game's item of that part, or LDraw's
+                Item partItem = itemOfPart(part.part);
+                LDrawPart catalog = LDrawLibrary.CatalogPart(part.part);
+                string name = partItem != null ? partItem.name : catalog != null ? catalog.name : part.part;
+                add(rows, part.part, paletteColor(part.color, color), name, partItem != null ? partItem.BricklinkPart : part.part);
+            }
+        }
+
+        // the game's item of an LDraw part: its catalogue item, or one of the game's made of it (the door 7102)
+        private static Item itemOfPart(string part) {
+            if (Server.items.TryGetValue(ItemDatabase.LDrawItemPrefix + part, out Item item)) {
+                return item;
+            }
+            foreach (Item other in Server.items.Values) {
+                if (IsRealPart(other.brickModelId) && other.LDrawPart == part) {
+                    return other;
+                }
+            }
+            return null;
+        }
+
+        private static void add(Dictionary<string, PartsListRow> rows, string brickModel, int color, string name, string bricklinkPart) {
+            string key = brickModel + "/" + color;
             if (rows.TryGetValue(key, out PartsListRow row)) {
                 row.count++;
                 rows[key] = row;
             } else {
-                rows[key] = new PartsListRow() { brickModel = item.brickModelId, color = color, name = item.name, bricklinkPart = item.BricklinkPart, count = 1 };
+                rows[key] = new PartsListRow() { brickModel = brickModel, color = color, name = name, bricklinkPart = bricklinkPart, count = 1 };
             }
         }
     }

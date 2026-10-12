@@ -253,6 +253,11 @@ namespace Brickcraft
             item.bricklinkId = string.IsNullOrWhiteSpace(info.bricklinkId) ? null : info.bricklinkId.Trim();
             item.ldrawId = string.IsNullOrWhiteSpace(info.ldrawId) ? null : info.ldrawId.Trim().ToLowerInvariant();
             item.ldrawShape = string.IsNullOrWhiteSpace(info.ldrawShape) ? null : info.ldrawShape.Trim().ToLowerInvariant();
+            item.ldr = info.ldr;
+            if (item.ldr && !File.Exists(Path.Combine(item.folder, Bricks.LDraw.LDrawContraption.FileName))) {
+                Debug.LogError("Item file " + file + " has \"ldr\": true but its folder has no " + Bricks.LDraw.LDrawContraption.FileName);
+                item.ldr = false;
+            }
             if (info.attackSpeed.HasValue) {
                 if (info.attackSpeed.Value <= 0) {
                     Debug.LogError("Item file " + file + " has the attackSpeed " + info.attackSpeed.Value + ", hits a second should be more than 0");

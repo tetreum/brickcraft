@@ -22,7 +22,8 @@ namespace Brickcraft.Bricks
     ///   [id]/index.json                    the mod
     ///   [id]/models/[id]/model.obj         the shape, a material ("usemtl c[colour]") for each colour
     ///   [id]/models/[id]/model.json        its size, colours, and an exact collider (it can be walked into)
-    ///   [id]/items/[id]/info.json, icon.png
+    ///   [id]/items/[id]/info.json, icon.png, model.ldr: its real LEGO parts ("ldr": true, see LDraw.LDrawContraption),
+    ///                                      so parts lists count them when it's placed
     ///
     /// What can't be seen goes in two passes. By the grid, for bricks: studs under another part, and faces against
     /// another part that fills that side. Then by rays: from points of each face that's left, rays go out every
@@ -65,7 +66,7 @@ namespace Brickcraft.Bricks
         }
 
         /// <summary>Makes the creation's mod in that folder (it takes a few frames), then tells what it did.</summary>
-        public static IEnumerator Make(List<CreationPart> parts, string name, string author, string folder, Action<string> done) {
+        public static IEnumerator Make(List<CreationPart> parts, List<LDraw.LDrawPlacement> ldraw, string name, string author, string folder, Action<string> done) {
             List<Triangle> triangles = new List<Triangle>();
             Vector3Int cellsMin = new Vector3Int(int.MaxValue, int.MaxValue, int.MaxValue), cellsMax = new Vector3Int(int.MinValue, int.MinValue, int.MinValue);
             Dictionary<Vector3Int, int> filled = new Dictionary<Vector3Int, int>();
@@ -92,7 +93,7 @@ namespace Brickcraft.Bricks
             string id = IdFor(name);
             string message;
             try {
-                message = write(kept, parts, cellsMin, cellsMax, id, name, author, folder);
+                message = write(kept, parts, ldraw, cellsMin, cellsMax, id, name, author, folder);
             } catch (Exception e) {
                 done("The creation's model couldn't be saved: " + e.Message);
                 yield break;
@@ -330,7 +331,7 @@ namespace Brickcraft.Bricks
 
         // -------- the files --------
 
-        private static string write(List<Triangle> kept, List<CreationPart> parts, Vector3Int cellsMin, Vector3Int cellsMax,
+        private static string write(List<Triangle> kept, List<CreationPart> parts, List<LDraw.LDrawPlacement> ldraw, Vector3Int cellsMin, Vector3Int cellsMax,
                 string id, string name, string author, string folder) {
             // its pivot: the middle of its footprint, at its bottom (what it fills of the grid)
             Vector3 pivot;
@@ -406,9 +407,22 @@ namespace Brickcraft.Bricks
                 width = size.x, depth = size.z, plates = size.y,
                 collider = "mesh", keepPivot = true, parts = partColors,
             }, Formatting.Indented));
-            File.WriteAllText(Path.Combine(itemFolder, "info.json"), JsonConvert.SerializeObject(new {
-                name = name, type = "brick", brickModel = id, maxStack = 1,
-            }, Formatting.Indented));
+            // its real parts, from its pivot (the parts list's LDraw model is from the box's corner, in LDU, Y down)
+            Vector3 pivotLDU = new Vector3(Mathf.Round(pivot.x / BrickGrid.CellSize.x * 20 * 2) / 2, -Mathf.Round(pivot.y / BrickGrid.CellSize.y) * 8,
+                Mathf.Round(pivot.z / BrickGrid.CellSize.z * 20 * 2) / 2);
+            List<LDraw.LDrawPlacement> fromPivot = new List<LDraw.LDrawPlacement>();
+            foreach (LDraw.LDrawPlacement placed in ldraw) {
+                LDraw.LDrawPlacement moved = placed;
+                moved.position -= pivotLDU;
+                fromPivot.Add(moved);
+            }
+            bool hasParts = fromPivot.Count > 0;
+            if (hasParts) {
+                LDraw.LDrawWriter.Write(Path.Combine(itemFolder, LDraw.LDrawContraption.FileName), name, fromPivot);
+            }
+            File.WriteAllText(Path.Combine(itemFolder, "info.json"), hasParts
+                ? JsonConvert.SerializeObject(new { name = name, type = "brick", brickModel = id, maxStack = 1, ldr = true }, Formatting.Indented)
+                : JsonConvert.SerializeObject(new { name = name, type = "brick", brickModel = id, maxStack = 1 }, Formatting.Indented));
             File.WriteAllText(Path.Combine(mod, "index.json"), JsonConvert.SerializeObject(new {
                 name = name, author = author, version = "1.0", description = "A creation saved with the Parts Lister",
             }, Formatting.Indented));

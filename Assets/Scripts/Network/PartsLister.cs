@@ -227,7 +227,7 @@ namespace Brickcraft.Network
             // the creation as a model of its own, a mod ready to copy (it takes a moment: hidden faces are looked for)
             if (creation.Count > 0) {
                 chat("Making the creation's model...");
-                StartCoroutine(Bricks.CreationModel.Make(creation, pendingName, GetComponent<PlayerNetwork>().playerName, Path.Combine(folder, "mod"), result => chat(result)));
+                StartCoroutine(Bricks.CreationModel.Make(creation, placements, pendingName, GetComponent<PlayerNetwork>().playerName, Path.Combine(folder, "mod"), result => chat(result)));
             }
         }
 

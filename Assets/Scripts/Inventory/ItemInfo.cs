@@ -36,6 +36,11 @@ namespace Brickcraft
         public string ldrawId;
         /// <summary>An LDraw part of the library shaped like its own (same size and origin), for LDraw models when the library hasn't its part.</summary>
         public string ldrawShape;
+        /// <summary>
+        /// Its folder has a model.ldr with the real LEGO parts it's made of (its model isn't one: a creation saved as a
+        /// mod...): parts lists count those (see Bricks.LDraw.LDrawContraption).
+        /// </summary>
+        public bool ldr;
         /// <summary>Weapons and shields: how players hold them, held by their middle and fitted to 0.8 meters if missing.</summary>
         public HeldInfo held;
         /// <summary>Its model (what's placed, dropped, and shown in its icon), a part number like "3003" or one of the mod's models (see Bricks.BrickModels).</summary>

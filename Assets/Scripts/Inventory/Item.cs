@@ -117,6 +117,8 @@ namespace Brickcraft
         /// the library hasn't its part (like 60623 for the door 7102), null for none.
         /// </summary>
         public string ldrawShape;
+        /// <summary>Made of the real LEGO parts of the model.ldr in its folder (its info.json's "ldr": true), see Bricks.LDraw.LDrawContraption.</summary>
+        public bool ldr;
 
         /// <summary>LDraw's part number of its model (LDraw models, see LDraw.LDrawWriter): its ldrawId, or its model's id without "uv".</summary>
         public string LDrawPart {

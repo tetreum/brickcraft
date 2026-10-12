@@ -23,7 +23,6 @@ namespace Brickcraft.World
 
 		public static ChunkRenderer chunkRenderer = new ChunkRenderer();
 		public MeshRenderer renderer;
-		public Bounds bounds;
 
 		public bool IsEmpty {
 			get {return solidBlocks == 0; }
@@ -91,28 +90,6 @@ namespace Brickcraft.World
 		public byte GetSkylight(int bx, int by, int bz)
 		{
 			return (byte)_Skylight.getNibble(by << 8 | bz << 4 | bx);
-		}
-		// bounds relative to the slice, it moves when the floating origin does
-		public void CreateBoundsBox(Transform transform) {
-			Vector3 size = new Vector3(16 * Server.brickWidth, Chunk.SliceHeight * Server.brickHeight, 16 * Server.brickWidth);
-			Vector3 center = new Vector3(size.x / 2 - Server.brickWidth / 2, size.y / 2, size.z / 2 - Server.brickWidth / 2);
-
-			bounds = new Bounds(center, size + Vector3.one * Server.brickWidth);
-		}
-
-		public void FrustrumCulling() {
-			if (!Camera.main) {
-				return;
-			}
-			Bounds worldBounds = new Bounds(bounds.center + renderer.transform.position, bounds.size);
-			var visible = Vector3.Distance(worldBounds.center, Camera.main.transform.position) <= (10 * Chunk.SliceHeight);
-
-            if (visible) {
-				Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
-				visible = GeometryUtility.TestPlanesAABB(planes, worldBounds);
-			}
-
-			renderer.enabled = visible;
 		}
 	}
 }

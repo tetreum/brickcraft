@@ -226,18 +226,9 @@ namespace Brickcraft.World
 
 			Vector2Int center = Player.Instance != null ? ChunkAt(Player.Instance.transform.position) : SpawnChunk;
 
+			// Unity culls the slices out of the camera's view; the ones past the view distance have no mesh
 			foreach (Chunk chunk in chunks.Values) {
-				if (!chunk.HasMesh)
-					continue;
-
-				foreach (ChunkSlice slice in chunk.Slices) {
-					if (slice.IsEmpty || slice.renderer == null) {
-						continue;
-					}
-					slice.FrustrumCulling();
-				}
-
-				if (!chunk.HasColliders && chunk.IsMeshReady)
+				if (chunk.HasMesh && !chunk.HasColliders && chunk.IsMeshReady)
 					chunk.HasColliders = true;
 			}
 
@@ -401,6 +392,8 @@ namespace Brickcraft.World
 			mesh.SetSubMesh(0, new SubMeshDescriptor(0, chunkEntry.TranslucentStart), FastMeshUpdate);
 			mesh.SetSubMesh(1, new SubMeshDescriptor(chunkEntry.TranslucentStart, indexCount - chunkEntry.TranslucentStart), FastMeshUpdate);
 			mesh.bounds = SliceBounds;
+			// only the GPU needs it: slices are meshed again from their blocks, and collide with the mesh below
+			mesh.UploadMeshData(true);
 
 			filter.sharedMesh = mesh;
 

@@ -137,7 +137,6 @@ namespace Brickcraft.World
 			newObject.transform.localPosition = new Vector3(0, i * Chunk.SliceHeight * Server.brickHeight, 0);
 
 			slice.renderer = meshRenderer;
-			slice.CreateBoundsBox(newObject.transform);
 
 			return newObject;
 		}

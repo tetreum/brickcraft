@@ -63,6 +63,7 @@ namespace Brickcraft.Bricks.LDraw
         public static void Reload() {
             catalog = null;
             byId = null;
+            LDrawGlass.ClearCache();
             files.Clear();
             if (zip != null) {
                 zip.Dispose();

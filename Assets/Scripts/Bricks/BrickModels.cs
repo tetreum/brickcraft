@@ -324,9 +324,12 @@ namespace Brickcraft.Bricks
                 if (mesh == null || mesh.vertexCount == 0) {
                     throw new InvalidDataException("it has no shape");
                 }
-                Vector3 origin = place(mesh, 1); // where its LDraw origin (0, 0, 0) went
+                LDraw.LDrawPart catalogPart = LDraw.LDrawLibrary.CatalogPart(id);
+                // glass is attached by its LDraw origin, where its frame's slot is (see LDraw.LDrawGlass)
+                string attachesTo = LDraw.LDrawGlass.GlassFits(catalogPart);
+                Vector3 origin = attachesTo != null ? Vector3.zero : place(mesh, 1); // where its LDraw origin (0, 0, 0) went
                 loaded.Add(mesh);
-                ModelInfo info = new ModelInfo() { parts = new Dictionary<string, int>() };
+                ModelInfo info = new ModelInfo() { parts = new Dictionary<string, int>(), collider = attachesTo != null ? "mesh" : "box" };
                 foreach (string part in materialNames) {
                     if (part != LDraw.LDrawModelBuilder.MainPart && int.TryParse(part.Substring(1), out int ldrawColor)) {
                         BrickColor color = BrickColorPalette.FromLDraw(ldrawColor);
@@ -340,13 +343,33 @@ namespace Brickcraft.Bricks
                 int depth = Mathf.Max(1, Mathf.RoundToInt(bounds.size.z / Server.studSize));
                 int plates = Mathf.Max(1, Mathf.FloorToInt(bounds.size.y / Server.plateHeight + 0.15f));
                 GameObject template = makeTemplate(id, mesh, info, materialNames, width, depth, plates);
-                BrickModel model = create(id, template, width, depth, plates);
+                BrickModel model;
+                if (attachesTo != null) {
+                    model = create(id, template, 1, 1, 1);
+                    model.attachesTo = attachesTo;
+                } else {
+                    model = create(id, template, width, depth, plates);
+                    string takes = LDraw.LDrawGlass.FrameFits(catalogPart);
+                    if (takes != null) {
+                        addSlot(template, origin, takes);
+                    }
+                }
                 model.ldrawOrigin = origin;
                 return model;
             } catch (Exception e) {
                 Debug.LogError("Can't read the LDraw part " + id + ": " + e.Message);
                 return null;
             }
+        }
+
+        // a slot for an attachment (see BrickSlot), its point there in the model
+        private static void addSlot(GameObject template, Vector3 at, string fits) {
+            Transform point = new GameObject("Slot").transform;
+            point.SetParent(template.transform, false);
+            point.localPosition = at;
+            BrickSlot slot = template.AddComponent<BrickSlot>();
+            slot.point = point;
+            slot.fits = fits;
         }
 
         // scaled to the game's units and moved so its pivot is at the center of its footprint, on its bottom; returns

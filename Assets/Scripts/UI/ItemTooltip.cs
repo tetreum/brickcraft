@@ -7,19 +7,42 @@ namespace Brickcraft.UI
     /// <summary>
     /// The name of the item under the pointer in an inventory, storage or crafting slot (see InventorySlot), with
     /// what weapons and armor do and how worn they are. It follows the pointer; made the first time it's needed.
+    /// When the pointer stays still on it a moment, it shows the item big (a render of its model in the stack's
+    /// colour, its icon if it has none) until the pointer moves.
     /// </summary>
     public class ItemTooltip : MonoBehaviour
     {
         private static ItemTooltip instance;
         private static readonly Vector2 Offset = new Vector2(18, -18);
 
+        // the big view: after how long still, how big (canvas units, and the render's pixels), how still
+        private const float PreviewDelay = 0.6f;
+        private const float PreviewSize = 200;
+        private const int PreviewPixels = 256;
+        private const float StillPixels = 3;
+        // renders kept (by item and colour), the oldest dropped past that
+        private const int MaxPreviews = 32;
+        private static readonly Dictionary<string, Texture2D> previews = new Dictionary<string, Texture2D>();
+        private static readonly Queue<string> previewOrder = new Queue<string>();
+        // models are copied here to be coloured and rendered: inactive, nothing of them runs
+        private static GameObject previewHolder;
+
         private Text title;
         private Text details;
+        private RawImage preview;
         private RectTransform rect;
         private Canvas canvas;
 
-        /// <summary>Shows that item's tooltip (health: how worn its stack is, see InventoryItem.health).</summary>
-        public static void Show(Item item, int health) {
+        private Item shownItem;
+        private int shownColor;
+        private Vector2 stillAt;
+        private float stillSince;
+
+        /// <summary>
+        /// Shows that item's tooltip (health: how worn its stack is, see InventoryItem.health; color: its stack's,
+        /// the item's own if none).
+        /// </summary>
+        public static void Show(Item item, int health, int color = Bricks.BrickColor.None) {
             if (item == null) {
                 Hide();
                 return;
@@ -35,6 +58,11 @@ namespace Brickcraft.UI
             instance.details.text = about;
             instance.details.gameObject.SetActive(about.Length > 0);
             instance.transform.SetAsLastSibling();
+            if (!instance.gameObject.activeSelf || instance.shownItem != item || instance.shownColor != color) {
+                instance.shownItem = item;
+                instance.shownColor = color;
+                instance.restartStill();
+            }
             instance.gameObject.SetActive(true);
             instance.follow();
         }
@@ -63,7 +91,64 @@ namespace Brickcraft.UI
         }
 
         private void LateUpdate() {
+            Vector2 pointer = Input.mousePosition;
+            if ((pointer - stillAt).sqrMagnitude > StillPixels * StillPixels) {
+                restartStill();
+            } else if (!preview.gameObject.activeSelf && Time.unscaledTime - stillSince >= PreviewDelay && shownItem != null) {
+                preview.texture = previewOf(shownItem, shownColor);
+                preview.gameObject.SetActive(preview.texture != null);
+            }
             follow();
+        }
+
+        // the pointer moved (or another item): the big view waits for it to stay still again
+        private void restartStill() {
+            stillAt = Input.mousePosition;
+            stillSince = Time.unscaledTime;
+            preview.gameObject.SetActive(false);
+        }
+
+        // the item big: its model rendered in that colour, or its icon
+        private static Texture previewOf(Item item, int color) {
+            if (item.brickModel == null || item.brickModel.prefab == null) {
+                return item.icon;
+            }
+            int shown = color != Bricks.BrickColor.None ? color : item.color;
+            string key = item.id + "/" + shown;
+            if (previews.TryGetValue(key, out Texture2D cached) && cached != null) {
+                return cached;
+            }
+            Texture2D rendered = null;
+            GameObject copy = null;
+            try {
+                if (previewHolder == null) {
+                    previewHolder = new GameObject("ItemPreviews");
+                    previewHolder.SetActive(false);
+                    DontDestroyOnLoad(previewHolder);
+                }
+                copy = Instantiate(item.brickModel.prefab, previewHolder.transform);
+                Bricks.BrickModels.ApplyColor(copy, item.MaterialFor(shown));
+                rendered = Bricks.ModelIconRenderer.Render(copy, PreviewPixels);
+            } catch (System.Exception e) {
+                Debug.LogWarning("Can't render the preview of " + item.id + ": " + e.Message);
+            } finally {
+                if (copy != null) {
+                    DestroyImmediate(copy);
+                }
+            }
+            if (rendered == null) {
+                return item.icon;
+            }
+            previews[key] = rendered;
+            previewOrder.Enqueue(key);
+            while (previewOrder.Count > MaxPreviews) {
+                string oldest = previewOrder.Dequeue();
+                if (previews.TryGetValue(oldest, out Texture2D dropped)) {
+                    previews.Remove(oldest);
+                    Destroy(dropped);
+                }
+            }
+            return rendered;
         }
 
         // beside the pointer, kept on screen
@@ -108,10 +193,22 @@ namespace Brickcraft.UI
             ItemTooltip tooltip = panel.AddComponent<ItemTooltip>();
             tooltip.rect = rect;
             tooltip.canvas = root.GetComponentInParent<Canvas>();
+            tooltip.preview = bigView(panel.transform);
             tooltip.title = label(panel.transform, "Title", font, 18, FontStyle.Bold, Color.white);
             tooltip.details = label(panel.transform, "Details", font, 14, FontStyle.Normal, new Color(0.7f, 0.76f, 0.84f));
             panel.SetActive(false);
             return tooltip;
+        }
+
+        private static RawImage bigView(Transform parent) {
+            GameObject go = new GameObject("Preview", typeof(RectTransform), typeof(RawImage), typeof(LayoutElement));
+            go.transform.SetParent(parent, false);
+            LayoutElement size = go.GetComponent<LayoutElement>();
+            size.preferredWidth = size.preferredHeight = PreviewSize;
+            RawImage image = go.GetComponent<RawImage>();
+            image.raycastTarget = false;
+            go.SetActive(false);
+            return image;
         }
 
         private static Text label(Transform parent, string name, Font font, int size, FontStyle style, Color color) {

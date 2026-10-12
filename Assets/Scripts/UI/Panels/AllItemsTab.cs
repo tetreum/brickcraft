@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Brickcraft.Bricks;
 using Brickcraft.Network;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Brickcraft.UI
@@ -11,7 +12,8 @@ namespace Brickcraft.UI
     /// The ALL tab of the inventory, for admins: every item of the game, searchable by name or id,
     /// a page at a time. Clicking one adds it to the inventory (the server checks the player is an admin).
     /// The colour picker next to the search chooses the colour they're given in: then only items that
-    /// can have it are listed. Without one, each item comes in its default colour.
+    /// can have it are listed. Without one, each item comes in its default colour. Hovering one shows its
+    /// tooltip, and its big view in that colour (see ItemTooltip).
     /// </summary>
     public class AllItemsTab : MonoBehaviour
     {
@@ -56,6 +58,13 @@ namespace Brickcraft.UI
                 };
                 entry.name.supportRichText = false; // names come from mods
                 copy.GetComponent<Button>().onClick.AddListener(() => take(entry));
+                EventTrigger hover = copy.AddComponent<EventTrigger>();
+                addTrigger(hover, EventTriggerType.PointerEnter, () => {
+                    if (entry.item != null) {
+                        ItemTooltip.Show(entry.item, 0, colorOf(entry.item));
+                    }
+                });
+                addTrigger(hover, EventTriggerType.PointerExit, ItemTooltip.Hide);
                 entries.Add(entry);
             }
 
@@ -71,8 +80,18 @@ namespace Brickcraft.UI
             nextPage.onClick.AddListener(() => showPage(page + 1));
         }
 
+        private static void addTrigger(EventTrigger trigger, EventTriggerType type, Action action) {
+            EventTrigger.Entry entry = new EventTrigger.Entry() { eventID = type };
+            entry.callback.AddListener(data => action());
+            trigger.triggers.Add(entry);
+        }
+
         private void OnEnable() {
             refresh();
+        }
+
+        private void OnDisable() {
+            ItemTooltip.Hide();
         }
 
         private void refresh() {
@@ -100,6 +119,8 @@ namespace Brickcraft.UI
         private void showPage(int newPage) {
             int pages = Math.Max(1, (matches.Count + PageSize - 1) / PageSize);
             page = Mathf.Clamp(newPage, 0, pages - 1);
+            // the entry under the pointer may show another item now
+            ItemTooltip.Hide();
 
             for (int i = 0; i < entries.Count; i++) {
                 int index = page * PageSize + i;

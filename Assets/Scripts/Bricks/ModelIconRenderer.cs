@@ -26,25 +26,25 @@ namespace Brickcraft.Bricks
         private const int VolumeLayer = 31;
 
         /// <summary>
-        /// Renders an icon of a model (with its own materials) at runtime, in a scene made for it and gone after.
-        /// The model is copied: it's left as it was.
+        /// Renders an icon of a model (with its own materials) at runtime, in a scene made for it and gone after,
+        /// that many pixels square. The model is copied: it's left as it was.
         /// </summary>
-        public static Texture2D Render(GameObject model) {
+        public static Texture2D Render(GameObject model, int iconSize = IconSize) {
             Scene scene = SceneManager.CreateScene("Icon " + model.GetInstanceID(), new CreateSceneParameters(LocalPhysicsMode.Physics3D));
             try {
                 GameObject copy = Object.Instantiate(model);
                 copy.SetActive(true);
                 SceneManager.MoveGameObjectToScene(copy, scene);
                 copy.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-                return RenderInScene(scene, copy);
+                return RenderInScene(scene, copy, iconSize);
             } finally {
                 SceneManager.UnloadSceneAsync(scene);
             }
         }
 
         /// <summary>Renders an icon of a brick already alone in a scene (an editor preview scene, or one of Render's).</summary>
-        public static Texture2D RenderInScene(Scene scene, GameObject brick) {
-            int size = IconSize * Supersampling;
+        public static Texture2D RenderInScene(Scene scene, GameObject brick, int iconSize = IconSize) {
+            int size = iconSize * Supersampling;
             RenderTexture target = new RenderTexture(size, size, 24, RenderTextureFormat.ARGB32);
             VolumeProfile profile = ScriptableObject.CreateInstance<VolumeProfile>();
             try {
@@ -132,7 +132,7 @@ namespace Brickcraft.Bricks
                 }
                 // it isn't drawn again (a scene of the game's goes away a frame later)
                 Object.DestroyImmediate(cameraObject);
-                return combine(overBlack, overWhite, size);
+                return combine(overBlack, overWhite, iconSize);
             } finally {
                 target.Release();
                 Object.DestroyImmediate(target);
@@ -157,7 +157,8 @@ namespace Brickcraft.Bricks
         }
 
         // alpha is how little the background changes a pixel; its colour, the one over black undone of the black
-        private static Texture2D combine(Color32[] overBlack, Color32[] overWhite, int size) {
+        private static Texture2D combine(Color32[] overBlack, Color32[] overWhite, int iconSize) {
+            int size = iconSize * Supersampling;
             Color[] full = new Color[overBlack.Length];
             for (int i = 0; i < full.Length; i++) {
                 Color black = overBlack[i], white = overWhite[i];
@@ -167,10 +168,10 @@ namespace Brickcraft.Bricks
             }
 
             // scaled down: each icon pixel is the average of its square, weighted by alpha
-            Texture2D icon = new Texture2D(IconSize, IconSize, TextureFormat.RGBA32, false);
-            Color[] pixels = new Color[IconSize * IconSize];
-            for (int y = 0; y < IconSize; y++) {
-                for (int x = 0; x < IconSize; x++) {
+            Texture2D icon = new Texture2D(iconSize, iconSize, TextureFormat.RGBA32, false);
+            Color[] pixels = new Color[iconSize * iconSize];
+            for (int y = 0; y < iconSize; y++) {
+                for (int x = 0; x < iconSize; x++) {
                     Color sum = Color.clear;
                     float alphaSum = 0;
                     for (int sy = 0; sy < Supersampling; sy++) {
@@ -181,7 +182,7 @@ namespace Brickcraft.Bricks
                         }
                     }
                     float alpha = alphaSum / (Supersampling * Supersampling);
-                    pixels[y * IconSize + x] = alphaSum > 0 ? new Color(sum.r / alphaSum, sum.g / alphaSum, sum.b / alphaSum, alpha) : Color.clear;
+                    pixels[y * iconSize + x] = alphaSum > 0 ? new Color(sum.r / alphaSum, sum.g / alphaSum, sum.b / alphaSum, alpha) : Color.clear;
                 }
             }
             icon.SetPixels(pixels);

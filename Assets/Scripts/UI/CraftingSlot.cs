@@ -33,7 +33,7 @@ namespace Brickcraft.UI
         // the ingredient's tooltip (see ItemTooltip)
         public void OnPointerEnter(PointerEventData eventData) {
             if (!isDragging && !eventData.dragging && currentItem != null && Server.items.ContainsKey(currentItem.id)) {
-                ItemTooltip.Show(currentItem.item, currentItem.health);
+                ItemTooltip.Show(currentItem.item, currentItem.health, currentItem.color);
             }
         }
 

@@ -195,21 +195,24 @@ namespace Brickcraft.UI
             return false;
         }
 
-        // the stack's item and health in that slot, null if it's empty
-        private static Item itemIn(int slot, bool storage, out int health) {
+        // the stack's item, health and colour in that slot, null if it's empty
+        private static Item itemIn(int slot, bool storage, out int health, out int color) {
             health = 0;
+            color = Bricks.BrickColor.None;
             if (storage) {
                 InventoryItem? stack = Network.ClientStorage.InSlot(slot);
                 if (!stack.HasValue || !Server.items.TryGetValue(stack.Value.itemId, out Item kept)) {
                     return null;
                 }
                 health = stack.Value.health;
+                color = stack.Value.color;
                 return kept;
             }
             if (Player.Instance == null || !Player.Instance.getInventoryBySlot().TryGetValue(slot, out UserItem item)) {
                 return null;
             }
             health = item.health;
+            color = item.color;
             return item.item;
         }
 
@@ -218,9 +221,9 @@ namespace Brickcraft.UI
             if (isDragging || eventData.dragging || !int.TryParse(cell.name, out int slot)) {
                 return;
             }
-            Item item = itemIn(slot, SlotGroup.IsStorage(cell), out int health);
+            Item item = itemIn(slot, SlotGroup.IsStorage(cell), out int health, out int color);
             if (item != null) {
-                ItemTooltip.Show(item, health);
+                ItemTooltip.Show(item, health, color);
             } else {
                 ItemTooltip.Hide();
             }

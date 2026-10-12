@@ -153,6 +153,15 @@ namespace Brickcraft
         public int color = BrickColor.None;
         /// <summary>It can have any colour of the palette.</summary>
         public bool anyColor;
+        /// <summary>Only transparent colours suit it (glass): others fall back to its default one.</summary>
+        public bool transparentOnly;
+        /// <summary>The colour its icon was rendered in, if not its default one (the LDraw catalogue's, see IconColor).</summary>
+        public int iconColor = BrickColor.None;
+
+        /// <summary>The colour its icon shows (see UI.ItemIconTint).</summary>
+        public int IconColor {
+            get { return iconColor != BrickColor.None ? iconColor : color; }
+        }
         /// <summary>Other colours it can have, besides its default one.</summary>
         public HashSet<int> colors = new HashSet<int>();
         /// <summary>What it is to the game besides its type, from its info.json (lowercase), like "bed".</summary>
@@ -212,7 +221,8 @@ namespace Brickcraft
             if (colorId == color) {
                 return true;
             }
-            if (colorId == BrickColor.None || BrickColorPalette.Get(colorId) == null) {
+            BrickColor brickColor = colorId == BrickColor.None ? null : BrickColorPalette.Get(colorId);
+            if (brickColor == null || (transparentOnly && !brickColor.isTransparent)) {
                 return false;
             }
             return anyColor || colors.Contains(colorId);

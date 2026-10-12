@@ -107,6 +107,11 @@ namespace Brickcraft
         public const string LDrawItemPrefix = "part_";
         /// <summary>Their colour until another is picked (they can have any).</summary>
         public const int LDrawItemColor = 71;
+        /// <summary>The colour of glass parts of the catalogue (Trans-Light Blue), which only can be transparent.</summary>
+        public const int LDrawGlassColor = 41;
+        // the catalogue's glass: "Glass for Window 1x2x3"..., and windscreens with integral glass (not frames "for Glass")
+        private static readonly System.Text.RegularExpressions.Regex GlassPart = new System.Text.RegularExpressions.Regex(
+            @"^Glass\b|^Windscreen\b.*\bGlass\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
         // a brick item for every part of the LDraw catalogue (any colour, named like LDraw does), unless one has its id
         private static void loadLDrawCatalog() {
@@ -116,14 +121,17 @@ namespace Brickcraft
                     continue;
                 }
                 string partId = part.id;
+                bool glass = part.name != null && GlassPart.IsMatch(part.name);
                 Item item = new Item() {
                     id = id,
                     name = part.name,
                     type = Item.Type.Brick,
                     folder = Bricks.LDraw.LDrawLibrary.Root,
                     brickModelId = partId,
-                    color = LDrawItemColor,
+                    color = glass ? LDrawGlassColor : LDrawItemColor,
                     anyColor = true,
+                    transparentOnly = glass,
+                    iconColor = LDrawItemColor, // the catalogue's icons, see LDrawLibrary.LoadIcon
                     iconLoader = () => Bricks.LDraw.LDrawLibrary.LoadIcon(partId),
                 };
                 item.tags.Add("ldraw");
@@ -321,7 +329,7 @@ namespace Brickcraft
             }
         }
 
-        // "colors": "all", or a list of colour ids
+        // "colors": "all", "transparent" (any of them, for glass), or a list of colour ids
         private static bool loadColors(Item item, JToken colors, string file) {
             if (colors == null || colors.Type == JTokenType.Null) {
                 return true;
@@ -330,12 +338,17 @@ namespace Brickcraft
                 Debug.LogError("Item file " + file + " has colors but no default color");
                 return false;
             }
+            if (colors.Type == JTokenType.String && (string)colors == "transparent") {
+                item.anyColor = true;
+                item.transparentOnly = true;
+                return true;
+            }
             if (colors.Type == JTokenType.String && (string)colors == "all") {
                 item.anyColor = true;
                 return true;
             }
             if (colors.Type != JTokenType.Array) {
-                Debug.LogError("Item file " + file + " has invalid colors, they're \"all\" or a list of colour ids");
+                Debug.LogError("Item file " + file + " has invalid colors, they're \"all\", \"transparent\" or a list of colour ids");
                 return false;
             }
             foreach (JToken color in colors) {

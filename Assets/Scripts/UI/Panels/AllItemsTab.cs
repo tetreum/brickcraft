@@ -12,7 +12,8 @@ namespace Brickcraft.UI
     /// The ALL tab of the inventory, for admins: every item of the game, searchable by name or id,
     /// a page at a time. Clicking one adds it to the inventory (the server checks the player is an admin).
     /// The colour picker next to the search chooses the colour they're given in: then only items that
-    /// can have it are listed. Without one, each item comes in its default colour. Hovering one shows its
+    /// can have it are listed (glass too, in its default colour if it's a solid one). Without one, each item comes
+    /// in its default colour. Hovering one shows its
     /// tooltip, and its big view in that colour (see ItemTooltip).
     /// </summary>
     public class AllItemsTab : MonoBehaviour
@@ -99,7 +100,7 @@ namespace Brickcraft.UI
             matches.Clear();
 
             foreach (Item item in Server.items.Values) {
-                if (isMatch(item, query) && (color == BrickColor.None || item.AllowsColor(color))) {
+                if (isMatch(item, query) && (color == BrickColor.None || item.AllowsColor(color) || item.transparentOnly)) {
                     matches.Add(item);
                 }
             }
@@ -152,7 +153,7 @@ namespace Brickcraft.UI
         }
 
         private int colorOf(Item item) {
-            return color == BrickColor.None ? item.color : color;
+            return color == BrickColor.None ? item.color : item.ValidColor(color);
         }
     }
 }

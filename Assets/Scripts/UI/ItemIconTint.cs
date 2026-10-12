@@ -21,7 +21,7 @@ namespace Brickcraft.UI
 
         /// <summary>Tints the icon to the colour of the item's stack, or shows it as it is (item null, or in its own colour).</summary>
         public static void Set(Graphic icon, Item item, int color) {
-            BrickColor rendered = item != null && item.IsColorable && color != item.color ? BrickColorPalette.Get(item.color) : null;
+            BrickColor rendered = item != null && item.IsColorable && color != item.IconColor ? BrickColorPalette.Get(item.IconColor) : null;
             BrickColor shown = rendered != null ? BrickColorPalette.Get(color) : null;
             ItemIconTint tint = icon.GetComponent<ItemIconTint>();
 

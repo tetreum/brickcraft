@@ -19,6 +19,19 @@ namespace Brickcraft.Network
         public int count;
     }
 
+    /// <summary>A part of a creation where it is (see CreationModel): its item, colour, and place from the box's corner.</summary>
+    public struct CreationPart
+    {
+        public string itemId;
+        public int color;
+        /// <summary>Its pivot from the box's corner, in the game's units, and its rotation.</summary>
+        public Vector3 position;
+        public Quaternion rotation;
+        /// <summary>The cells it fills from the box's corner (max exclusive); none for attachments (doors...), which hang.</summary>
+        public Vector3Int cellsMin;
+        public Vector3Int cellsMax;
+    }
+
     /// <summary>
     /// The server's side of the parts lister (see PartsLister): a player's creation around one of its bricks, and
     /// the real LEGO parts it placed in a box. Its parts are the bricks and world blocks it placed (2x2 bricks put
@@ -230,6 +243,60 @@ namespace Brickcraft.Network
                 }
             }
             return placements;
+        }
+
+        /// <summary>
+        /// Every part the player placed in the box (whatever it is, real LEGO part or not), where it is: what its
+        /// creation's model is made of (see CreationModel). Blocks are their 2x2 brick.
+        /// </summary>
+        public static List<CreationPart> CreationParts(int playerId, Vector3Int min, Vector3Int max) {
+            List<CreationPart> parts = new List<CreationPart>();
+            Vector3 corner = BrickGrid.CellToWorld(min);
+            foreach (Brick brick in BrickGrid.BricksNear(min, max)) {
+                Vector3 middle = (Vector3)brick.placement.origin + (Vector3)brick.placement.Size * 0.5f;
+                if (!inside(middle, min, max)) {
+                    continue;
+                }
+                if (WorldNetwork.ServerPlacerOf(brick).playerId == playerId && brick.item != null) {
+                    parts.Add(new CreationPart() {
+                        itemId = brick.itemId, color = brick.color,
+                        position = brick.placement.Position - corner, rotation = brick.placement.Rotation,
+                        cellsMin = brick.placement.origin - min, cellsMax = brick.placement.origin + brick.placement.Size - min,
+                    });
+                }
+                Brick attached = Server.attachmentOf(brick);
+                if (attached != null && attached.gameObject != null && WorldNetwork.ServerPlacerOf(attached).playerId == playerId && attached.item != null) {
+                    Transform at = attached.gameObject.transform;
+                    parts.Add(new CreationPart() { itemId = attached.itemId, color = attached.color, position = at.position - corner, rotation = at.rotation });
+                }
+            }
+            Vector3Int firstBlock = BrickGrid.CellToBlock(min);
+            Vector3Int lastBlock = BrickGrid.CellToBlock(max - Vector3Int.one);
+            Vector3 blockMiddle = new Vector3(BrickGrid.StudsPerBlock, BrickGrid.PlatesPerBlock, BrickGrid.StudsPerBlock) * 0.5f;
+            Vector3Int blockSize = new Vector3Int(BrickGrid.StudsPerBlock, BrickGrid.PlatesPerBlock, BrickGrid.StudsPerBlock);
+            for (int x = firstBlock.x; x <= lastBlock.x; x++) {
+                for (int y = firstBlock.y; y <= lastBlock.y; y++) {
+                    for (int z = firstBlock.z; z <= lastBlock.z; z++) {
+                        Vector3Int block = new Vector3Int(x, y, z);
+                        Vector3Int cell = BrickGrid.BlockToCell(block);
+                        if (!inside((Vector3)cell + blockMiddle, min, max) || !IsPlacedBlock(playerId, block)) {
+                            continue;
+                        }
+                        BlockDefinition definition = BlockDatabase.Get(WorldBehaviour.Instance.GetBlockType(block));
+                        if (string.IsNullOrEmpty(definition.itemId) || !Server.items.TryGetValue(definition.itemId, out Item item)) {
+                            continue;
+                        }
+                        int color = WorldBehaviour.Instance.GetBlockColor(x, y, z);
+                        Vector3 pivot = BrickGrid.CellToWorld(cell, new Vector3(BrickGrid.StudsPerBlock / 2f, 0, BrickGrid.StudsPerBlock / 2f));
+                        parts.Add(new CreationPart() {
+                            itemId = item.id, color = color == BrickColor.None ? item.color : color,
+                            position = pivot - corner, rotation = Quaternion.identity,
+                            cellsMin = cell - min, cellsMax = cell + blockSize - min,
+                        });
+                    }
+                }
+            }
+            return parts;
         }
 
         // a real LEGO part (see IsRealPart), by its LDraw number

@@ -135,6 +135,11 @@ namespace Brickcraft.Network
             for (int i = 0; i < placements.Count; i += PlacementsPerMessage) {
                 TargetPlacements(placements.GetRange(i, Mathf.Min(PlacementsPerMessage, placements.Count - i)).ToArray());
             }
+            // and what the creation's model is made of
+            List<CreationPart> parts = PartsList.CreationParts(playerId, min, max);
+            for (int i = 0; i < parts.Count; i += PlacementsPerMessage) {
+                TargetCreationParts(parts.GetRange(i, Mathf.Min(PlacementsPerMessage, parts.Count - i)).ToArray());
+            }
             TargetList(PartsList.Count(playerId, min, max).ToArray());
         }
 
@@ -173,11 +178,21 @@ namespace Brickcraft.Network
             placementsReceived.AddRange(placements);
         }
 
+        // client: the creation's parts received so far, its model made with the list
+        private readonly List<CreationPart> partsReceived = new List<CreationPart>();
+
+        [TargetRpc]
+        private void TargetCreationParts(CreationPart[] parts) {
+            partsReceived.AddRange(parts);
+        }
+
         // the parts: written as a CSV file, whose path is told and copied
         [TargetRpc]
         private void TargetList(PartsListRow[] rows) {
             List<LDrawPlacement> placements = new List<LDrawPlacement>(placementsReceived);
             placementsReceived.Clear();
+            List<CreationPart> creation = new List<CreationPart>(partsReceived);
+            partsReceived.Clear();
             if (PartsListerView.Current != null) {
                 PartsListerView.Current.Close();
             }
@@ -208,6 +223,12 @@ namespace Brickcraft.Network
                 + (colorless > 0 ? " (" + colorless + " of its lines have a colour BrickLink doesn't have: they're in any colour)" : "")
                 + "; " + file + ".ldr: the LDraw model"
                 + (ldrawColorless > 0 ? " (" + ldrawColorless + " parts have a colour LDraw doesn't have: they're uncoloured)" : ""));
+
+            // the creation as a model of its own, a mod ready to copy (it takes a moment: hidden faces are looked for)
+            if (creation.Count > 0) {
+                chat("Making the creation's model...");
+                StartCoroutine(Bricks.CreationModel.Make(creation, pendingName, GetComponent<PlayerNetwork>().playerName, Path.Combine(folder, "mod"), result => chat(result)));
+            }
         }
 
         // -------- client --------
@@ -219,6 +240,7 @@ namespace Brickcraft.Network
         public void Save(Vector3Int min, Vector3Int max, string name) {
             pendingName = name;
             placementsReceived.Clear();
+            partsReceived.Clear();
             CmdSave(min, max);
         }
 

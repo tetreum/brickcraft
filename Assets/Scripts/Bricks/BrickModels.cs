@@ -48,6 +48,11 @@ namespace Brickcraft.Bricks
             /// <summary>"box" (a box of its size, the default) or "mesh" (its shape, for slopes, arches...).</summary>
             public string collider = "box";
             /// <summary>
+            /// Its origin is already its pivot (the middle of its footprint, on its bottom): it isn't moved to the middle
+            /// of its shape, which what sticks out of it (a door's hinges) would put off the grid. Creations' models have it.
+            /// </summary>
+            public bool keepPivot;
+            /// <summary>
             /// Parts (materials of the model: "usemtl" in OBJ, materials in glTF) that keep a colour of their
             /// own, by name: a palette colour id, like 47 for a Trans-Clear window. The others are the brick's.
             /// </summary>
@@ -273,7 +278,11 @@ namespace Brickcraft.Bricks
                 if (mesh.vertexCount == 0) {
                     throw new InvalidDataException("it has no shape");
                 }
-                place(mesh, info.scale > 0 ? info.scale : 1);
+                if (info.keepPivot) {
+                    scaleOnly(mesh, info.scale > 0 ? info.scale : 1);
+                } else {
+                    place(mesh, info.scale > 0 ? info.scale : 1);
+                }
                 loaded.Add(mesh);
 
                 // its size, from its shape: studs on top are less than a plate high, so plates are rounded down
@@ -338,6 +347,18 @@ namespace Brickcraft.Bricks
             mesh.vertices = vertices;
             mesh.RecalculateBounds();
             return offset * scale;
+        }
+
+        private static void scaleOnly(Mesh mesh, float scale) {
+            if (scale == 1) {
+                return;
+            }
+            Vector3[] vertices = mesh.vertices;
+            for (int i = 0; i < vertices.Length; i++) {
+                vertices[i] *= scale;
+            }
+            mesh.vertices = vertices;
+            mesh.RecalculateBounds();
         }
 
         // linear (it holds directions, not colours): HDRP reads x from red and y from green

@@ -272,6 +272,10 @@ namespace Brickcraft.Network
             if (attached != null) {
                 removed.AddRange(ServerRemoveBrick(attached));
             }
+            // whoever slept in it loses their spawn point
+            if (Npcs.NpcBeds.IsBed(brick)) {
+                PlayerSleep.BedRemoved(brick);
+            }
             Npcs.Navigation.NavGrid.MarkDirty(brick);
             Server.Instance.removeBrick(brick);
             serverChanges.RemoveBrick(new Guid(brick.id), brick.placement.origin);

@@ -20,6 +20,9 @@ namespace Brickcraft.Network
     /// them. When at least half the players are asleep, after SkipDelay seconds the night is skipped: the
     /// time goes to 06:00 and everyone wakes up. Being hurt, the bed going away, morning or asking to stop
     /// (PlayerNetwork.CmdStopSleeping) wakes a player. Clients get SleepStatusMessage when the counts change.
+    ///
+    /// The bed a player sleeps in becomes its spawn point: it comes back beside it when it dies (see
+    /// PlayerNetwork.CmdRespawn), until it sleeps in another or the bed goes away (BedRemoved).
     /// </summary>
     public static class PlayerSleep
     {
@@ -85,6 +88,52 @@ namespace Brickcraft.Network
             Transform point = Npcs.NpcBeds.SleepPointOf(bed);
             player.sleepingIn = bed.id;
             player.ServerLieDown(point.position, point.rotation);
+            setSpawn(player, bed);
+        }
+
+        // where it stands up beside the bed is where it comes back
+        private static void setSpawn(PlayerNetwork player, Brick bed) {
+            if (!(player.connectionToClient.authenticationData is ConnectedPlayer connected) || bed.gameObject == null
+                    || !Npcs.NpcSystem.SpotNear(bed.gameObject.transform, 0.35f, 1.8f, out Vector3 spot)) {
+                return;
+            }
+            bool isNew = connected.record.SpawnBed != bed.id;
+            FloatingOrigin.ToAbsolute(spot + Vector3.up * 0.9f, out double x, out double y, out double z); // the player's position is its middle
+            BrickcraftNetworkManager.Instance.Database.SetSpawnBed(connected.record, bed.id, x, y, z);
+            if (isNew) {
+                player.connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "Spawn point set: you'll come back to this bed" });
+            }
+        }
+
+        /// <summary>A bed went away (broken, moved, a script): whoever had their spawn point there loses it.</summary>
+        public static void BedRemoved(Brick bed) {
+            BrickcraftNetworkManager.Instance.Database.ClearSpawnBed(bed.id);
+            // the players in the game have their record in memory (written back whole): theirs too
+            foreach (PlayerNetwork player in players()) {
+                ConnectedPlayer connected = (ConnectedPlayer)player.connectionToClient.authenticationData;
+                if (connected.record.SpawnBed == bed.id) {
+                    connected.record.SpawnBed = null;
+                    connected.record.SpawnX = connected.record.SpawnY = connected.record.SpawnZ = null;
+                    player.connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "Your bed is gone: you lost your spawn point" });
+                }
+            }
+        }
+
+        /// <summary>Where the player comes back when it dies: beside its bed (local position), false for the world's spawn.</summary>
+        public static bool SpawnPoint(PlayerNetwork player, out Vector3 position) {
+            position = Vector3.zero;
+            if (!(player.connectionToClient.authenticationData is ConnectedPlayer connected) || !connected.record.HasSpawnBed) {
+                return false;
+            }
+            PlayerRecord record = connected.record;
+            Vector3 spot = FloatingOrigin.ToLocal(record.SpawnX.Value, record.SpawnY.Value, record.SpawnZ.Value);
+            // its bed's part of the world is there and the bed isn't: it went away some other way
+            if (WorldBehaviour.Instance != null && WorldBehaviour.Instance.IsWalkable(WorldBehaviour.ChunkAt(spot)) && !Server.bricks.ContainsKey(record.SpawnBed)) {
+                BrickcraftNetworkManager.Instance.Database.ClearSpawnBed(record);
+                return false;
+            }
+            position = spot;
+            return true;
         }
 
         /// <summary>Gets the player up, beside its bed.</summary>

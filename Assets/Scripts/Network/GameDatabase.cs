@@ -59,6 +59,17 @@ namespace Brickcraft.Network
         public bool HasLastPosition {
             get { return LastX.HasValue && LastY.HasValue && LastZ.HasValue; }
         }
+
+        /// <summary>The bed it last slept in (a brick id), where it comes back when it dies; null for the world's spawn.</summary>
+        public string SpawnBed { get; set; }
+        // where it stands up there, beside the bed (absolute coordinates)
+        public double? SpawnX { get; set; }
+        public double? SpawnY { get; set; }
+        public double? SpawnZ { get; set; }
+
+        public bool HasSpawnBed {
+            get { return !string.IsNullOrEmpty(SpawnBed) && SpawnX.HasValue && SpawnY.HasValue && SpawnZ.HasValue; }
+        }
     }
 
     [Table("player_sessions")]
@@ -207,6 +218,26 @@ namespace Brickcraft.Network
             player.LastY = y;
             player.LastZ = z;
             player.LastYaw = yaw;
+            connection.Update(player);
+        }
+
+        /// <summary>Its spawn point is now beside that bed (absolute coordinates), see PlayerSleep.</summary>
+        public void SetSpawnBed(PlayerRecord player, string bedId, double x, double y, double z) {
+            player.SpawnBed = bedId;
+            player.SpawnX = x;
+            player.SpawnY = y;
+            player.SpawnZ = z;
+            connection.Update(player);
+        }
+
+        /// <summary>The bed is gone: whoever had their spawn point there loses it (the world's spawn again).</summary>
+        public void ClearSpawnBed(string bedId) {
+            connection.Execute("UPDATE players SET SpawnBed = NULL, SpawnX = NULL, SpawnY = NULL, SpawnZ = NULL WHERE SpawnBed = ?", bedId);
+        }
+
+        public void ClearSpawnBed(PlayerRecord player) {
+            player.SpawnBed = null;
+            player.SpawnX = player.SpawnY = player.SpawnZ = null;
             connection.Update(player);
         }
 

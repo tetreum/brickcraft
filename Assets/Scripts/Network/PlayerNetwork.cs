@@ -528,13 +528,13 @@ namespace Brickcraft.Network
             EventManager.PetMenuRequested.Raise(new PetMenuRequestedEvent() { npcId = npcId, name = name, following = following, attacks = attacks });
         }
 
-        /// <summary>A dead player comes back at the spawn, with all its health and air (and its inventory).</summary>
+        /// <summary>A dead player comes back beside the bed it last slept in, or at the world's spawn, with all its health and air (and its inventory).</summary>
         [Command]
         public void CmdRespawn() {
             if (!health.isDead) {
                 return;
             }
-            ServerTeleport(BrickcraftNetworkManager.Instance.ServerSpawnPosition(out _));
+            ServerTeleport(PlayerSleep.SpawnPoint(this, out Vector3 bed) ? bed : BrickcraftNetworkManager.Instance.ServerSpawnPosition(out _));
             health.ServerRevive();
             airLeft = MaxAir;
         }

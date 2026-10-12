@@ -39,7 +39,10 @@ namespace Brickcraft.World
 		public volatile bool IsMeshJobDone;
 		public int PendingSliceUploads;
 
-		/// <summary>Set once the first mesh is fully uploaded, stays while it's only being remeshed.</summary>
+		/// <summary>Its meshes are made with colliders: something that collides is near (see WorldBehaviour.ColliderRadius).</summary>
+		public bool WithColliders;
+
+		/// <summary>Set once a mesh with colliders is fully uploaded, stays while it's only being remeshed with them.</summary>
 		public bool HasColliders;
 
 		/// <summary>The current mesh job and all its slices are uploaded.</summary>
@@ -104,6 +107,7 @@ namespace Brickcraft.World
 			ChunkObject = null;
 			HasMesh = false;
 			HasColliders = false;
+			WithColliders = false;
 			IsMeshJobDone = false;
 		}
 	

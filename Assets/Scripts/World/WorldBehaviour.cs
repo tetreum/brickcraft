@@ -35,6 +35,16 @@ namespace Brickcraft.World
 		[Tooltip("Chunks this far from the camera (in chunks) are drawn with studs, the rest with simple boxes")]
 		public int DetailRadius = 4;
 
+		[Tooltip("Chunks this far from a player (in chunks) have colliders: NPCs move around players (see NpcSystem.ActiveRadius)")]
+		public int PlayerColliderRadius = Npcs.NpcSystem.ActiveRadius + 1;
+
+		// and this far from the rest that collides: NPCs, dropped items, shots
+		private const int ColliderRadius = 1;
+		private const float ColliderRefreshInterval = 0.25f;
+		// chunks that get colliders (see Chunk.WithColliders)
+		private readonly HashSet<Vector2Int> colliderChunks = new HashSet<Vector2Int>();
+		private float nextColliderRefresh;
+
 		private const int MeshJobsStartedPerFrame = 16;
 		private const float UploadBudgetMs = 4f;
 		private const float LoadingUploadBudgetMs = 40f;
@@ -228,9 +238,11 @@ namespace Brickcraft.World
 
 			// Unity culls the slices out of the camera's view; the ones past the view distance have no mesh
 			foreach (Chunk chunk in chunks.Values) {
-				if (chunk.HasMesh && !chunk.HasColliders && chunk.IsMeshReady)
+				if (chunk.HasMesh && !chunk.HasColliders && chunk.WithColliders && !chunk.IsRemeshing && chunk.IsMeshReady)
 					chunk.HasColliders = true;
 			}
+
+			refreshColliderChunks(center);
 
 			updateMeshes(center);
 			uploadSliceMeshes();
@@ -248,10 +260,11 @@ namespace Brickcraft.World
 				int distance = Math.Max(Math.Abs(chunk.X - center.x), Math.Abs(chunk.Z - center.y));
 
 				if (chunk.HasMesh) {
+					bool colliders = colliderChunks.Contains(new Vector2Int(chunk.X, chunk.Z));
 					if (distance > ViewDistance + 1) {
 						chunk.DestroyMesh();
-					} else if (chunk.IsMeshJobDone && !chunk.IsRemeshing && chunk.IsDetailed != (distance <= DetailRadius)) {
-						remesh(chunk, distance <= DetailRadius);
+					} else if (chunk.IsMeshJobDone && !chunk.IsRemeshing && (chunk.IsDetailed != (distance <= DetailRadius) || chunk.WithColliders != colliders)) {
+						remesh(chunk, distance <= DetailRadius, colliders);
 					}
 				} else if (distance <= ViewDistance && hasGeneratedNeighbours(chunk)) {
 					meshCandidates.Add(chunk);
@@ -267,17 +280,19 @@ namespace Brickcraft.World
 			for (int i = 0; i < meshCandidates.Count && i < MeshJobsStartedPerFrame; i++) {
 				Chunk chunk = meshCandidates[i];
 				bool detailed = Math.Max(Math.Abs(chunk.X - center.x), Math.Abs(chunk.Z - center.y)) <= DetailRadius;
+				bool withColliders = colliderChunks.Contains(new Vector2Int(chunk.X, chunk.Z));
 
 				chunk.InitGameObject();
 				chunk.InitRenderableSlices();
 				chunk.HasMesh = true;
 				chunk.IsDetailed = detailed;
+				chunk.WithColliders = withColliders;
 				chunk.IsMeshJobDone = false;
 
 				ThreadPool.QueueUserWorkItem(_ => {
 					long start = WorldLoadProfiler.Now();
 					try {
-						new ChunkRenderer().RenderChunk(chunk, detailed);
+						new ChunkRenderer().RenderChunk(chunk, detailed, withColliders);
 					} finally {
 						WorldLoadProfiler.AddChunkMeshing(start);
 						chunk.IsMeshJobDone = true;
@@ -293,18 +308,53 @@ namespace Brickcraft.World
 				&& IsGenerated(new Vector2Int(chunk.X, chunk.Z + 1)) && IsGenerated(new Vector2Int(chunk.X, chunk.Z - 1));
 		}
 
-		private void remesh(Chunk chunk, bool detailed)
+		private void remesh(Chunk chunk, bool detailed, bool colliders)
 		{
 			chunk.IsDetailed = detailed;
+			chunk.WithColliders = colliders;
+			if (!colliders)
+				chunk.HasColliders = false;
 			chunk.IsRemeshing = true;
 
 			ThreadPool.QueueUserWorkItem(_ => {
 				try {
-					new ChunkRenderer().RenderChunk(chunk, detailed);
+					new ChunkRenderer().RenderChunk(chunk, detailed, colliders);
 				} finally {
 					chunk.IsRemeshing = false;
 				}
 			});
+		}
+
+		// the chunks around players (or the spawn, before the local one is there), NPCs, drops and shots
+		private void refreshColliderChunks(Vector2Int center)
+		{
+			if (Time.unscaledTime < nextColliderRefresh)
+				return;
+			nextColliderRefresh = Time.unscaledTime + ColliderRefreshInterval;
+
+			colliderChunks.Clear();
+			addColliderChunks(center, PlayerColliderRadius);
+			foreach (Combat.Health health in Combat.Health.All) {
+				if (health != null)
+					addColliderChunks(ChunkAt(health.transform.position), health.GetComponent<Network.PlayerNetwork>() != null ? PlayerColliderRadius : ColliderRadius);
+			}
+			foreach (Network.DroppedItem drop in Network.DroppedItems.All) {
+				if (drop != null)
+					addColliderChunks(ChunkAt(drop.transform.position), ColliderRadius);
+			}
+			foreach (Network.Projectile shot in Network.Projectile.All) {
+				if (shot != null)
+					addColliderChunks(ChunkAt(shot.transform.position), ColliderRadius);
+			}
+		}
+
+		private void addColliderChunks(Vector2Int around, int radius)
+		{
+			for (int x = -radius; x <= radius; x++) {
+				for (int z = -radius; z <= radius; z++) {
+					colliderChunks.Add(new Vector2Int(around.x + x, around.y + z));
+				}
+			}
 		}
 
 		/// <summary>Height to stand on at the given position: right above its highest block.</summary>
@@ -512,7 +562,7 @@ namespace Brickcraft.World
 				return;
 
 			chunk.GetOrCreateSliceObject(sliceIndex);
-			BuildChunkSliceMesh(sliceRenderer.RenderSlice(chunk, sliceIndex, chunk.IsDetailed, chunk.Version));
+			BuildChunkSliceMesh(sliceRenderer.RenderSlice(chunk, sliceIndex, chunk.IsDetailed, chunk.WithColliders, chunk.Version));
 		}
 
 		/// <summary>A generated chunk, null if it isn't loaded (yet).</summary>

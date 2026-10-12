@@ -37,6 +37,12 @@ namespace Brickcraft.World
 
         private readonly FaceMap[] sides;
 
+        /// <summary>
+        /// It's the block's box, each side a flat square across it: the faces of neighbouring blocks like it can be
+        /// merged (see ChunkRenderer).
+        /// </summary>
+        public bool IsBox { get; private set; }
+
         public FaceMap GetSide(BlockSide side) {
             return sides[(int)side];
         }
@@ -64,6 +70,38 @@ namespace Brickcraft.World
             for (int i = 0; i < SideCount; i++) {
                 sides[i] = extract(vertices, normals, sideTriangles[i]);
             }
+            IsBox = isBox();
+        }
+
+        // each side is 2 triangles on its plane, covering it (their area is the side's)
+        private bool isBox() {
+            float halfWidth = Server.brickWidth / 2;
+            // models are a little off the grid (the default collider is 1 mm bigger)
+            const float Tolerance = 0.005f;
+            for (int i = 0; i < SideCount; i++) {
+                FaceMap side = sides[i];
+                if (side.triangles.Length != 6) {
+                    return false;
+                }
+                Vector3Int direction = SideDirections[i];
+                int axis = direction.x != 0 ? 0 : direction.y != 0 ? 1 : 2;
+                float plane = axis == 1 ? (direction.y > 0 ? Server.brickHeight : 0) : (direction[axis] > 0 ? halfWidth : -halfWidth);
+                foreach (Vector3 vertex in side.vertices) {
+                    if (Mathf.Abs(vertex[axis] - plane) > Tolerance) {
+                        return false;
+                    }
+                }
+                float area = 0;
+                for (int t = 0; t < 6; t += 3) {
+                    area += Vector3.Cross(side.vertices[side.triangles[t + 1]] - side.vertices[side.triangles[t]],
+                        side.vertices[side.triangles[t + 2]] - side.vertices[side.triangles[t]]).magnitude / 2;
+                }
+                float full = axis == 1 ? Server.brickWidth * Server.brickWidth : Server.brickWidth * Server.brickHeight;
+                if (Mathf.Abs(area - full) > full * 0.03f) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public static BlockShape FromObj(string path) {

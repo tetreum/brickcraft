@@ -132,6 +132,17 @@ namespace Brickcraft.Network
             model = pivot.transform;
         }
 
+        /// <summary>The shots in the scene (flying or stuck), on each side.</summary>
+        public static readonly System.Collections.Generic.List<Projectile> All = new System.Collections.Generic.List<Projectile>();
+
+        private void OnEnable() {
+            All.Add(this);
+        }
+
+        private void OnDisable() {
+            All.Remove(this);
+        }
+
         private void Update() {
             if (isServer) {
                 serverUpdate();

@@ -244,6 +244,13 @@ namespace Brickcraft
 
         private void FixedUpdate()
         {
+            // where the ground has no colliders yet (just teleported, respawned...) it would fall through it: the
+            // player freezes until it has (see Player.waitForGround), but physics can step before that
+            if (World.WorldBehaviour.Instance != null && !World.WorldBehaviour.Instance.IsWalkable(World.WorldBehaviour.ChunkAt(transform.position)))
+            {
+                m_MoveDir = Vector3.zero;
+                return;
+            }
             float speed;
             GetInput(out speed);
             updateDepth();

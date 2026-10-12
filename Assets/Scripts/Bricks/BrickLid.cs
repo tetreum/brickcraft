@@ -5,7 +5,7 @@ namespace Brickcraft.Bricks
     /// <summary>
     /// A lid of a brick model, like a chest's: its hinge turns it open (Brick.state 1) or closed (0) around
     /// its local X axis. Unlike a door it isn't clicked open: it's open while someone looks inside the brick
-    /// it's on (see Network.BrickStorage).
+    /// it's on (see Network.BrickStorage). Opening and closing it sounds where it is.
     /// </summary>
     public class BrickLid : MonoBehaviour, IBrickState
     {
@@ -23,7 +23,11 @@ namespace Brickcraft.Bricks
         private float targetAngle;
 
         public void ShowState(int state, bool animate) {
-            targetAngle = state == Open ? openAngle : 0;
+            float target = state == Open ? openAngle : 0;
+            if (animate && target != targetAngle && SoundManager.Instance != null) {
+                SoundManager.Instance.playAt(state == Open ? SoundManager.EFFECT_OPEN_CHEST : SoundManager.EFFECT_CLOSE_CHEST, hinge.position);
+            }
+            targetAngle = target;
             if (!animate) {
                 angle = targetAngle;
                 apply();

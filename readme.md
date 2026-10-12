@@ -407,3 +407,5 @@ Brick colours are limited to a palette, Rebrickable's colour list: `Resources/Br
 - "The Moon" (https://skfb.ly/6s9oz) by SebastianSosnowski is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 - "Sun" (https://skfb.ly/oVpEI) by Cybertron B-127 is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 - Closing Glass Door by Kraftaggregat -- https://freesound.org/s/736558/ -- License: Creative Commons 0
+- Chest open (Fantasy UI SFX Free) by heyheytheree -- https://freesound.org/s/872674/ -- License: Attribution 4.0
+- Close chest sound effect by designerschoice -- https://freesound.org/s/806793/ -- License: Attribution 4.0

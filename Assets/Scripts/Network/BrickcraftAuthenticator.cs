@@ -42,8 +42,9 @@ namespace Brickcraft.Network
     }
 
     /// <summary>
-    /// Identifies players by name + machine id (see <see cref="PlayerIdentity"/>). A new name is
-    /// registered to the machine that first uses it; afterwards only that machine can play with it.
+    /// Identifies players by their machine id (see <see cref="PlayerIdentity"/>): a machine plays as the same
+    /// player whatever its name, joining with another name renames it. A name belongs to the machine that has it,
+    /// no other can take it.
     /// Players also need the game's version and the world's mods (see ModDatabase.CheckPlayerMods),
     /// which they load once accepted, the server's password if it has one, and room in it (see
     /// ServerConfig: neither applies to the host's own player).
@@ -94,7 +95,9 @@ namespace Brickcraft.Network
 
             if (error == null) {
                 string machineIdHash = PlayerIdentity.HashMachineId(request.machineId);
-                player = database.FindPlayer(request.name);
+                PlayerRecord named = database.FindPlayer(request.name);
+                // the machine's player, whatever its name; the name's if it's another machine's
+                player = named != null && named.TokenHash != machineIdHash ? named : database.FindPlayerByMachine(machineIdHash);
 
                 // admins are never locked out by the ban of someone using the same machine
                 bool isAdmin = player != null && player.IsAdmin && player.TokenHash == machineIdHash;
@@ -110,6 +113,13 @@ namespace Brickcraft.Network
                     error = "The name " + player.Name + " belongs to someone else";
                 } else if (isOnline(player.Id)) {
                     error = player.Name + " is already playing";
+                } else if (player.Name != request.name) {
+                    // another player of this machine (from an older save) had the name: it gets another
+                    if (named != null && named.Id != player.Id) {
+                        database.RenamePlayer(named, PlayerIdentity.FreeName(named.Name + "_" + named.Id, database));
+                    }
+                    Debug.Log(player.Name + " is now " + request.name);
+                    database.RenamePlayer(player, request.name);
                 }
             }
 

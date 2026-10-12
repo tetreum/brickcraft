@@ -76,6 +76,16 @@ namespace Brickcraft.Network
             return null;
         }
 
+        /// <summary>A valid name like that one no player of the save has (cut to fit, numbered if taken).</summary>
+        public static string FreeName(string name, GameDatabase database) {
+            string free = name.Length > MaxNameLength ? name.Substring(0, MaxNameLength) : name;
+            for (int i = 2; database.FindPlayer(free) != null; i++) {
+                string suffix = "_" + i;
+                free = (name.Length + suffix.Length > MaxNameLength ? name.Substring(0, MaxNameLength - suffix.Length) : name) + suffix;
+            }
+            return free;
+        }
+
         public static string HashMachineId(string machineId) {
             using (SHA256 sha = SHA256.Create()) {
                 return toHex(sha.ComputeHash(Encoding.UTF8.GetBytes(machineId ?? "")));

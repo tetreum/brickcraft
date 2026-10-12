@@ -172,6 +172,21 @@ namespace Brickcraft.Network
             return connection.Table<PlayerRecord>().Where(p => p.NameKey == key).FirstOrDefault();
         }
 
+        /// <summary>
+        /// The player of a machine: the one that joined most, saves from before players were their machine kept a
+        /// player for each name it used.
+        /// </summary>
+        public PlayerRecord FindPlayerByMachine(string machineIdHash) {
+            return connection.Table<PlayerRecord>().Where(p => p.TokenHash == machineIdHash).OrderByDescending(p => p.TimesJoined).FirstOrDefault();
+        }
+
+        /// <summary>Gives a player another name (free: no other player has it).</summary>
+        public void RenamePlayer(PlayerRecord player, string name) {
+            player.NameKey = name.ToLowerInvariant();
+            player.Name = name;
+            connection.Update(player);
+        }
+
         public PlayerRecord CreatePlayer(string name, string machineIdHash) {
             long now = Now();
             PlayerRecord player = new PlayerRecord() {

@@ -24,6 +24,9 @@ public class SoundManager : MonoBehaviour {
 	public const string EFFECT_STRING_BOW = "StringBow";
 	public const string EFFECT_SHOOT_BOW = "ShootBow";
 	public const string EFFECT_BOW_IMPACT = "BowImpact";
+	/// <summary>A door (see Bricks.BrickDoor) opening and closing.</summary>
+	public const string EFFECT_OPEN_DOOR = "OpenDoor";
+	public const string EFFECT_CLOSE_DOOR = "CloseDoor";
 	/// <summary>Bare hand hits, one picked at random each time (see Punch).</summary>
 	public static readonly string[] EFFECT_PUNCHES = { "Punch", "Punch2" };
 

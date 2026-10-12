@@ -13,6 +13,8 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity.
 ## How can i help?
 
 - Character model: It's poorly made, needs a rework to also have clothes and hair separated so clothing system can be added in the future. Since minifigures are patented, the model is an advanced iteration that has things like knees.
+- Animal models: Rigged & animated brick made animal models are needed to fill the world with some life.
+- Improve post processing visuals: Current visuals are clearly not toon.
 
 ## Settings
 
@@ -404,3 +406,4 @@ Brick colours are limited to a palette, Rebrickable's colour list: `Resources/Br
 - Color list - https://rebrickable.com/downloads/
 - "The Moon" (https://skfb.ly/6s9oz) by SebastianSosnowski is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 - "Sun" (https://skfb.ly/oVpEI) by Cybertron B-127 is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+- Closing Glass Door by Kraftaggregat -- https://freesound.org/s/736558/ -- License: Creative Commons 0

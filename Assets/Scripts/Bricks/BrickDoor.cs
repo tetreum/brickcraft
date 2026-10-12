@@ -5,7 +5,7 @@ namespace Brickcraft.Bricks
     /// <summary>
     /// A door of a brick model: its hinge turns it open (Brick.state 1) or closed (0). Left clicking a
     /// brick with one toggles it (see Player and PlayerNetwork.CmdToggleDoor), holding the click breaks it.
-    /// Its collider turns with it, so an open door lets players through.
+    /// Its collider turns with it, so an open door lets players through. Opening and closing it sounds where it is.
     /// </summary>
     public class BrickDoor : MonoBehaviour, IBrickState
     {
@@ -23,7 +23,11 @@ namespace Brickcraft.Bricks
         private float targetAngle;
 
         public void ShowState(int state, bool animate) {
-            targetAngle = state == Open ? openAngle : 0;
+            float target = state == Open ? openAngle : 0;
+            if (animate && target != targetAngle && SoundManager.Instance != null) {
+                SoundManager.Instance.playAt(state == Open ? SoundManager.EFFECT_OPEN_DOOR : SoundManager.EFFECT_CLOSE_DOOR, hinge.position);
+            }
+            targetAngle = target;
             if (!animate) {
                 angle = targetAngle;
                 apply();

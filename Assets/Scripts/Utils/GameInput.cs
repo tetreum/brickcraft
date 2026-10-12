@@ -8,10 +8,10 @@ using UnityEngine.UI;
 namespace Brickcraft
 {
     /// <summary>
-    /// The game's controls. Each action is a button of the Input Manager (Edit → Project Settings →
-    /// Input Manager), so modders can rebind them, with a default key if the project doesn't define it.
-    /// Players can remap them in the settings: their key is kept in PlayerPrefs and replaces the
-    /// Input Manager's for that action.
+    /// The game's controls: each action has default keys (see Bindings), and players can remap them in the
+    /// settings (their key is kept in PlayerPrefs and replaces the defaults). The keys are read directly, not
+    /// through the Input Manager: a button it doesn't define throws in the editor but fails quietly in builds.
+    /// Only the movement uses its axes, for their smoothing.
     /// </summary>
     public static class GameInput
     {
@@ -39,7 +39,7 @@ namespace Brickcraft
 
         public sealed class Binding
         {
-            /// <summary>Its Input Manager button.</summary>
+            /// <summary>Its name, what the game asks for (see GameInput.GetButton).</summary>
             public string button;
             public string label;
             /// <summary>To group them in the settings.</summary>
@@ -63,9 +63,6 @@ namespace Brickcraft
 
         /// <summary>Every action players can remap, in the order the settings show them.</summary>
         public static readonly Binding[] Bindings = createBindings();
-
-        // buttons the project doesn't define, so asking for them doesn't throw every frame
-        private static readonly HashSet<string> missing = new HashSet<string>();
 
         private static bool isTyping;
         private static int stoppedTypingFrame = -1;
@@ -130,13 +127,6 @@ namespace Brickcraft
             if (key.HasValue) {
                 return Input.GetKeyDown(key.Value);
             }
-            if (!missing.Contains(button)) {
-                try {
-                    return Input.GetButtonDown(button);
-                } catch (ArgumentException) {
-                    warnMissing(button);
-                }
-            }
             Binding binding = bindingsByButton[button];
             return Input.GetKeyDown(binding.defaultKey) || (binding.defaultAltKey != KeyCode.None && Input.GetKeyDown(binding.defaultAltKey));
         }
@@ -146,13 +136,6 @@ namespace Brickcraft
             KeyCode? key = GetPlayerKey(button);
             if (key.HasValue) {
                 return Input.GetKey(key.Value);
-            }
-            if (!missing.Contains(button)) {
-                try {
-                    return Input.GetButton(button);
-                } catch (ArgumentException) {
-                    warnMissing(button);
-                }
             }
             Binding binding = bindingsByButton[button];
             return Input.GetKey(binding.defaultKey) || (binding.defaultAltKey != KeyCode.None && Input.GetKey(binding.defaultAltKey));
@@ -251,11 +234,6 @@ namespace Brickcraft
                 spaced.Append(name[i]);
             }
             return spaced.ToString();
-        }
-
-        private static void warnMissing(string button) {
-            missing.Add(button);
-            Debug.LogWarning("The Input Manager has no \"" + button + "\" button, using its default key");
         }
     }
 }

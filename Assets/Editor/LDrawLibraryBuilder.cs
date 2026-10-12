@@ -139,6 +139,15 @@ public static class LDrawLibraryBuilder
         return "LDraw icons: " + made + " rendered, " + failed + " parts without a model, " + left + " left";
     }
 
+    /// <summary>
+    /// A part's name as the game shows it: single spaces, and sizes without them ("Brick  2 x  4" is "Brick 2x4",
+    /// "Brick 1 x 1 x 2/3" "Brick 1x1x2/3"), so they're found by their studs.
+    /// </summary>
+    public static string CompactName(string description) {
+        string name = Regex.Replace(description.Trim(), @"\s+", " ");
+        return Regex.Replace(name, @"(?<=[0-9/.])\s*x\s*(?=[0-9.])", "x");
+    }
+
     // the catalogue's entry of a part file, null if it isn't one (see the class)
     private static LDrawPart catalogPart(string file, string id) {
         if (!Slug.IsMatch(id) || Printed.IsMatch(id) || Composite.IsMatch(id)) {
@@ -177,7 +186,7 @@ public static class LDrawLibraryBuilder
                 || OtherSystems.IsMatch(description) || OtherSystems.IsMatch(category)) {
             return null;
         }
-        return new LDrawPart() { id = id, name = Regex.Replace(description, @"\s+", " "), category = category };
+        return new LDrawPart() { id = id, name = CompactName(description), category = category };
     }
 
     // a file and those it uses, found like the game finds them (see LDrawLibrary.FindFile), to copy

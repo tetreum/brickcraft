@@ -15,6 +15,7 @@ namespace Brickcraft.UI
 
         /// <summary>Shows the colour of the item on the icon, or hides it (item null, or an item of a single colour).</summary>
         public static void Set(Graphic icon, Item item, int color) {
+            ItemIconTint.Set(icon, item, color);
             BrickColor brickColor = item != null && item.IsColorable ? BrickColorPalette.Get(color) : null;
             Transform existing = icon.transform.Find(Name);
 

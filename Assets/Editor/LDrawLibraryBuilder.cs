@@ -77,6 +77,52 @@ public static class LDrawLibraryBuilder
         return "LDraw library: " + catalog.Count + " parts in the catalogue, " + copied.Count + " files in " + LDrawLibrary.ZipFile;
     }
 
+    // the terrain's block: a 2x2 brick
+    private const string TerrainBrickPart = "3003";
+
+    [MenuItem("Brickcraft/LDraw/Make the terrain block model")]
+    public static void MakeTerrainBlockFromMenu() {
+        Debug.Log(MakeTerrainBlock());
+    }
+
+    /// <summary>
+    /// Writes the terrain's block model (BlockDatabase.DefaultModelFile) from LDraw's 2x2 brick, low resolution:
+    /// game units, the pivot in the middle of its footprint on its bottom. Returns what it did.
+    /// </summary>
+    public static string MakeTerrainBlock() {
+        LDrawLibrary.Reload();
+        LDrawModelBuilder.ClearCache();
+        Mesh mesh = LDrawModelBuilder.Build(TerrainBrickPart, out _);
+        if (mesh == null) {
+            return "The LDraw library has no " + TerrainBrickPart;
+        }
+        Bounds bounds = mesh.bounds;
+        Vector3 pivot = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+        Vector3[] vertices = mesh.vertices;
+        int[] triangles = mesh.triangles;
+        System.Text.StringBuilder obj = new System.Text.StringBuilder();
+        obj.Append("# Default terrain block model (2x2 brick, LDraw's ").Append(TerrainBrickPart).Append(" in low resolution: see LDrawLibraryBuilder)\n");
+        obj.Append("# Game units, pivot at the center of the footprint on the bottom face, +Y up.\n");
+        foreach (Vector3 vertex in vertices) {
+            Vector3 v = vertex - pivot;
+            // OBJ's X goes the other way (see ObjLoader)
+            obj.Append("v ").Append(number(-v.x)).Append(' ').Append(number(v.y)).Append(' ').Append(number(v.z)).Append('\n');
+        }
+        for (int i = 0; i + 2 < triangles.Length; i += 3) {
+            // and so does its winding
+            obj.Append("f ").Append(triangles[i] + 1).Append(' ').Append(triangles[i + 2] + 1).Append(' ').Append(triangles[i + 1] + 1).Append('\n');
+        }
+        Object.DestroyImmediate(mesh);
+        string path = Path.Combine(Application.streamingAssetsPath, Brickcraft.World.BlockDatabase.DefaultModelFile);
+        File.WriteAllText(path, obj.ToString(), new System.Text.UTF8Encoding(false));
+        AssetDatabase.Refresh();
+        return "Terrain block model: " + path + ", " + triangles.Length / 3 + " triangles, " + vertices.Length + " vertices";
+    }
+
+    private static string number(float value) {
+        return value.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
     [MenuItem("Brickcraft/LDraw/Render missing catalogue icons")]
     public static void RenderIconsFromMenu() {
         Debug.Log(RenderMissingIcons(int.MaxValue));

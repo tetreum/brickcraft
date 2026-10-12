@@ -25,20 +25,43 @@ namespace Brickcraft.World
 		public int[] ColliderTriangles;
 	}
 
-	/// <summary>One interleaved vertex of the terrain mesh, uploaded as is.</summary>
+	/// <summary>
+	/// One interleaved vertex of the terrain mesh, uploaded as is (24 bytes): its normal in bytes, its uv (which
+	/// only says the texture layer, see TerrainTextures.LayerToUV) in half floats, exact for its values.
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public struct TerrainVertex
 	{
 		public Vector3 position;
-		public Vector3 normal;
+		private sbyte normalX, normalY, normalZ, normalW;
 		public Color32 color;
-		public Vector2 uv;
+		private Unity.Mathematics.half u, v;
+
+		public Vector3 normal {
+			set {
+				normalX = toSNorm8(value.x);
+				normalY = toSNorm8(value.y);
+				normalZ = toSNorm8(value.z);
+				normalW = 0;
+			}
+		}
+
+		public Vector2 uv {
+			set {
+				u = new Unity.Mathematics.half(value.x);
+				v = new Unity.Mathematics.half(value.y);
+			}
+		}
+
+		private static sbyte toSNorm8(float value) {
+			return (sbyte)Mathf.RoundToInt(Mathf.Clamp(value, -1f, 1f) * 127f);
+		}
 
 		public static readonly VertexAttributeDescriptor[] Layout = {
 			new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3),
-			new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float32, 3),
+			new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.SNorm8, 4),
 			new VertexAttributeDescriptor(VertexAttribute.Color, VertexAttributeFormat.UNorm8, 4),
-			new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2),
+			new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float16, 2),
 		};
 	}
 }

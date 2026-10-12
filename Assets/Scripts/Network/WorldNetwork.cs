@@ -71,6 +71,13 @@ namespace Brickcraft.Network
         private static Vector2Int spawnChunk;
         private static readonly Dictionary<NetworkConnectionToClient, ClientInterest> interests = new Dictionary<NetworkConnectionToClient, ClientInterest>();
         private static readonly HashSet<Vector2Int> serverChunks = new HashSet<Vector2Int>();
+        // ServerUpdate's, kept from one to the next: what the players need, and where they were for it
+        private static readonly HashSet<Vector2Int> wantedChunks = new HashSet<Vector2Int>();
+        private static readonly HashSet<Vector2Int> keptChunks = new HashSet<Vector2Int>();
+        private static readonly List<Vector2Int> unloadedChunks = new List<Vector2Int>();
+        private static readonly Dictionary<NetworkConnectionToClient, Vector2Int> interestCenters = new Dictionary<NetworkConnectionToClient, Vector2Int>();
+        private static readonly List<Vector3Int> areas = new List<Vector3Int>();
+        private static readonly List<Vector3Int> lastAreas = new List<Vector3Int>();
         private static float nextServerUpdate;
 
 
@@ -366,16 +373,53 @@ namespace Brickcraft.Network
             }
             nextServerUpdate = Time.unscaledTime + ServerUpdateInterval;
 
-            HashSet<Vector2Int> wanted = new HashSet<Vector2Int>();
-            HashSet<Vector2Int> kept = new HashSet<Vector2Int>();
-            Dictionary<NetworkConnectionToClient, Vector2Int> centers = new Dictionary<NetworkConnectionToClient, Vector2Int>();
-
+            Dictionary<NetworkConnectionToClient, Vector2Int> centers = interestCenters;
+            centers.Clear();
+            areas.Clear();
             foreach (KeyValuePair<NetworkConnectionToClient, ClientInterest> interest in interests) {
                 NetworkConnectionToClient conn = interest.Key;
                 Vector2Int center = conn.identity != null ? WorldBehaviour.ChunkAt(conn.identity.transform.position) : interest.Value.spawnChunk;
                 centers[conn] = center;
-                addArea(wanted, center, interest.Value.LoadRadius);
-                addArea(kept, center, interest.Value.LoadRadius + UnloadMargin);
+                areas.Add(new Vector3Int(center.x, center.y, interest.Value.LoadRadius));
+            }
+
+            // the same areas as last time: the same chunks
+            if (!sameAreas()) {
+                lastAreas.Clear();
+                lastAreas.AddRange(areas);
+                updateServerChunks(world);
+            }
+
+            foreach (KeyValuePair<NetworkConnectionToClient, ClientInterest> interest in interests) {
+                // the host's client shares the server's world
+                if (!(interest.Key is LocalConnectionToClient)) {
+                    streamTo(interest.Key, interest.Value, centers[interest.Key]);
+                }
+            }
+        }
+
+        private static bool sameAreas() {
+            if (areas.Count != lastAreas.Count) {
+                return false;
+            }
+            for (int i = 0; i < areas.Count; i++) {
+                if (areas[i] != lastAreas[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // the chunks the players need loaded, and those none needs any more unloaded
+        private static void updateServerChunks(WorldBehaviour world) {
+            HashSet<Vector2Int> wanted = wantedChunks;
+            HashSet<Vector2Int> kept = keptChunks;
+            wanted.Clear();
+            kept.Clear();
+            foreach (Vector3Int area in areas) {
+                Vector2Int center = new Vector2Int(area.x, area.y);
+                addArea(wanted, center, area.z);
+                addArea(kept, center, area.z + UnloadMargin);
             }
 
             foreach (Vector2Int coords in wanted) {
@@ -387,7 +431,8 @@ namespace Brickcraft.Network
                 }
             }
 
-            List<Vector2Int> unloaded = new List<Vector2Int>();
+            List<Vector2Int> unloaded = unloadedChunks;
+            unloaded.Clear();
             foreach (Vector2Int coords in serverChunks) {
                 if (!kept.Contains(coords)) {
                     unloaded.Add(coords);
@@ -398,13 +443,6 @@ namespace Brickcraft.Network
                 world.UnloadChunk(coords);
                 if (Storage != null) {
                     Storage.ReleaseChunk(coords);
-                }
-            }
-
-            foreach (KeyValuePair<NetworkConnectionToClient, ClientInterest> interest in interests) {
-                // the host's client shares the server's world
-                if (!(interest.Key is LocalConnectionToClient)) {
-                    streamTo(interest.Key, interest.Value, centers[interest.Key]);
                 }
             }
         }

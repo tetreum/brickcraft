@@ -237,7 +237,9 @@ namespace Brickcraft.World
 			Vector2Int center = Player.Instance != null ? ChunkAt(Player.Instance.transform.position) : SpawnChunk;
 
 			// Unity culls the slices out of the camera's view; the ones past the view distance have no mesh
-			foreach (Chunk chunk in chunks.Values) {
+			// (the dictionary itself is gone through: its Values are a copy)
+			foreach (KeyValuePair<Vector2Int, Chunk> pair in chunks) {
+				Chunk chunk = pair.Value;
 				if (chunk.HasMesh && !chunk.HasColliders && chunk.WithColliders && !chunk.IsRemeshing && chunk.IsMeshReady)
 					chunk.HasColliders = true;
 			}
@@ -253,7 +255,8 @@ namespace Brickcraft.World
 		{
 			meshCandidates.Clear();
 
-			foreach (Chunk chunk in chunks.Values) {
+			foreach (KeyValuePair<Vector2Int, Chunk> pair in chunks) {
+				Chunk chunk = pair.Value;
 				if (chunk.State != Chunk.ChunkState.Generated)
 					continue;
 
@@ -336,7 +339,7 @@ namespace Brickcraft.World
 			addColliderChunks(center, PlayerColliderRadius);
 			foreach (Combat.Health health in Combat.Health.All) {
 				if (health != null)
-					addColliderChunks(ChunkAt(health.transform.position), health.GetComponent<Network.PlayerNetwork>() != null ? PlayerColliderRadius : ColliderRadius);
+					addColliderChunks(ChunkAt(health.transform.position), health.TryGetComponent(out Network.PlayerNetwork _) ? PlayerColliderRadius : ColliderRadius);
 			}
 			foreach (Network.DroppedItem drop in Network.DroppedItems.All) {
 				if (drop != null)

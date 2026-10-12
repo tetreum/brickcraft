@@ -5,12 +5,11 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Brickcraft.Network;
 using Newtonsoft.Json;
-using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.SceneManagement;
 
 namespace Brickcraft.Bricks
 {
@@ -28,7 +27,8 @@ namespace Brickcraft.Bricks
     /// What can't be seen goes in two passes. By the grid, for bricks: studs under another part, and faces against
     /// another part that fills that side. Then by rays: from points of each face that's left, rays go out every
     /// way it faces; a face none of them gets out of the creation from is hidden (a brick's inside, closed by the
-    /// bricks around). Transparent parts hide nothing. Doors and lids stay as they were.
+    /// bricks around). Transparent parts hide nothing. Doors and lids stay as they were. Both passes run on other
+    /// threads, the game goes on meanwhile.
     /// </summary>
     public static class CreationModel
     {
@@ -36,10 +36,9 @@ namespace Brickcraft.Bricks
         private const float RayStart = 0.002f;
         // the ways rays go (those facing out of each face)
         private const int Directions = 48;
-        private const int RaysPerBatch = 400000;
         // how far apart rays start on faces none got out from at first, in the game's units (an LDraw unit)
         private const float SampleSpacing = 0.02f;
-        private const int MaxSampleSteps = 120;
+        private const int MaxSampleSteps = 80;
         private const float OnPlane = 0.02f; // in cells
 
         private class Triangle
@@ -85,11 +84,18 @@ namespace Brickcraft.Bricks
             }
             int before = triangles.Count;
 
-            byGrid(parts, triangles, filled);
-            yield return null;
-            IEnumerator rays = byRays(triangles);
-            while (rays.MoveNext()) {
-                yield return rays.Current;
+            // what can't be seen, on other threads: it can take a while for big creations
+            Vector3[] ways = Ways;
+            Task hiding = Task.Run(() => {
+                byGrid(parts, triangles, filled);
+                byRays(triangles, ways);
+            });
+            while (!hiding.IsCompleted) {
+                yield return null;
+            }
+            if (hiding.IsFaulted) {
+                done("The creation's model couldn't be made: " + hiding.Exception.GetBaseException().Message);
+                yield break;
             }
 
             List<Triangle> kept = triangles.FindAll(t => !t.hidden);
@@ -106,8 +112,17 @@ namespace Brickcraft.Bricks
 
         // -------- the parts' shapes --------
 
+        // a shape's data, copied out of Unity once
+        private class MeshData
+        {
+            public Vector3[] vertices;
+            public Vector3[] normals;
+            public int[][] triangles;
+        }
+
         private static void gather(List<CreationPart> parts, List<Triangle> triangles, Dictionary<Vector3Int, int> filled,
                 ref Vector3Int cellsMin, ref Vector3Int cellsMax) {
+            Dictionary<Mesh, MeshData> meshes = new Dictionary<Mesh, MeshData>();
             for (int p = 0; p < parts.Count; p++) {
                 CreationPart part = parts[p];
                 if (!Server.items.TryGetValue(part.itemId ?? "", out Item item) || item.brickModel == null || item.brickModel.prefab == null) {
@@ -130,15 +145,23 @@ namespace Brickcraft.Bricks
                         continue;
                     }
                     Matrix4x4 m = place * root.worldToLocalMatrix * filter.transform.localToWorldMatrix;
-                    Vector3[] vertices = mesh.vertices;
-                    Vector3[] normals = mesh.normals;
-                    for (int sub = 0; sub < mesh.subMeshCount; sub++) {
+                    // read once for every part of that shape: a creation has many of the same
+                    if (!meshes.TryGetValue(mesh, out MeshData data)) {
+                        data = new MeshData() { vertices = mesh.vertices, normals = mesh.normals, triangles = new int[mesh.subMeshCount][] };
+                        for (int sub = 0; sub < mesh.subMeshCount; sub++) {
+                            data.triangles[sub] = mesh.GetTriangles(sub);
+                        }
+                        meshes[mesh] = data;
+                    }
+                    Vector3[] vertices = data.vertices;
+                    Vector3[] normals = data.normals;
+                    for (int sub = 0; sub < data.triangles.Length; sub++) {
                         int subColor = filter.transform == root && own != null && sub < own.colors.Length && own.colors[sub] != BrickColor.None
                             ? own.colors[sub] : color;
                         BrickColor brickColor = BrickColorPalette.Get(subColor);
                         bool transparent = special || (brickColor != null && brickColor.isTransparent);
                         opaque &= !transparent;
-                        int[] indices = mesh.GetTriangles(sub);
+                        int[] indices = data.triangles[sub];
                         for (int i = 0; i + 2 < indices.Length; i += 3) {
                             Triangle t = new Triangle() {
                                 a = m.MultiplyPoint3x4(vertices[indices[i]]),
@@ -322,80 +345,48 @@ namespace Brickcraft.Bricks
         }
 
         // the faces still standing that no ray gets out from are hidden: rays from their middle first, then from
-        // nearer each corner, then from all over them, only for those none got out from yet
-        private static IEnumerator byRays(List<Triangle> triangles) {
-            List<Triangle> blocking = triangles.FindAll(t => !t.hidden && !t.transparent);
+        // nearer each corner, then from all over them, a face's stopping at the first that gets out. On threads of
+        // their own (see TriangleRays), all but one of the processor's and its main one: the game goes on meanwhile
+        private static void byRays(List<Triangle> triangles, Vector3[] ways) {
             List<Triangle> looked = triangles.FindAll(t => !t.hidden && !t.transparent);
             if (looked.Count == 0) {
-                yield break;
+                return;
             }
-            Mesh mesh = new Mesh();
-            mesh.indexFormat = IndexFormat.UInt32;
-            List<Vector3> vertices = new List<Vector3>(blocking.Count * 3);
-            List<int> indices = new List<int>(blocking.Count * 3);
-            Bounds bounds = new Bounds(blocking[0].a, Vector3.zero);
-            foreach (Triangle t in blocking) {
-                indices.Add(vertices.Count); vertices.Add(t.a);
-                indices.Add(vertices.Count); vertices.Add(t.b);
-                indices.Add(vertices.Count); vertices.Add(t.c);
-                bounds.Encapsulate(t.a); bounds.Encapsulate(t.b); bounds.Encapsulate(t.c);
+            Vector3[] a = new Vector3[looked.Count], b = new Vector3[looked.Count], c = new Vector3[looked.Count];
+            Bounds bounds = new Bounds(looked[0].a, Vector3.zero);
+            for (int i = 0; i < looked.Count; i++) {
+                Triangle t = looked[i];
+                a[i] = t.a;
+                b[i] = t.b;
+                c[i] = t.c;
+                bounds.Encapsulate(t.a);
+                bounds.Encapsulate(t.b);
+                bounds.Encapsulate(t.c);
             }
-            mesh.SetVertices(vertices);
-            mesh.SetTriangles(indices, 0);
+            TriangleRays rays = new TriangleRays(a, b, c);
             float reach = bounds.size.magnitude * 2 + 1;
+            ParallelOptions options = new ParallelOptions() { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount - 2) };
+            Parallel.For(0, looked.Count, options, i => {
+                if (!getsOut(looked[i], rays, ways, reach)) {
+                    looked[i].hidden = true;
+                }
+            });
+        }
 
-            Scene scene = SceneManager.CreateScene("CreationModel " + mesh.GetInstanceID(), new CreateSceneParameters(LocalPhysicsMode.Physics3D));
-            GameObject shape = new GameObject("Creation");
-            SceneManager.MoveGameObjectToScene(shape, scene);
-            shape.AddComponent<MeshCollider>().sharedMesh = mesh;
-            PhysicsScene physics = scene.GetPhysicsScene();
-            Physics.SyncTransforms();
-            QueryParameters query = new QueryParameters(Physics.DefaultRaycastLayers, false, QueryTriggerInteraction.Ignore, true);
-
-            try {
-                // the middle and near the corners first, then all over what's left: a face can show only through a
-                // slit (a tile's groove)
-                for (int pass = 0; pass < 5; pass++) {
-                    List<RaycastCommand> commands = new List<RaycastCommand>();
-                    List<Triangle> owners = new List<Triangle>();
-                    foreach (Triangle t in looked) {
-                        if (t.seen) {
-                            continue;
+        // a ray from the face gets out of the creation
+        private static bool getsOut(Triangle t, TriangleRays rays, Vector3[] ways, float reach) {
+            Vector3 normal = t.Normal;
+            for (int pass = 0; pass < 5; pass++) {
+                foreach (Vector3 point in samples(t, pass)) {
+                    Vector3 from = point + normal * RayStart;
+                    foreach (Vector3 way in ways) {
+                        if (Vector3.Dot(way, normal) > 0.1f && !rays.Hits(from, way, reach)) {
+                            return true;
                         }
-                        Vector3 normal = t.Normal;
-                        foreach (Vector3 point in samples(t, pass)) {
-                            Vector3 from = point + normal * RayStart;
-                            foreach (Vector3 way in Ways) {
-                                if (Vector3.Dot(way, normal) > 0.1f) {
-                                    commands.Add(new RaycastCommand(physics, from, way, query, reach));
-                                    owners.Add(t);
-                                }
-                            }
-                        }
-                        if (commands.Count < RaysPerBatch) {
-                            continue;
-                        }
-                        IEnumerator run = cast(commands, owners);
-                        while (run.MoveNext()) {
-                            yield return run.Current;
-                        }
-                        commands.Clear();
-                        owners.Clear();
-                    }
-                    IEnumerator rest = cast(commands, owners);
-                    while (rest.MoveNext()) {
-                        yield return rest.Current;
                     }
                 }
-            } finally {
-                SceneManager.UnloadSceneAsync(scene);
-                UnityEngine.Object.Destroy(mesh);
             }
-            foreach (Triangle t in looked) {
-                if (!t.seen) {
-                    t.hidden = true;
-                }
-            }
+            return false;
         }
 
         // where rays go from on a face: its middle, then nearer each corner, then a grid all over it
@@ -414,30 +405,6 @@ namespace Brickcraft.Bricks
                         yield return t.a + (t.b - t.a) * u + (t.c - t.a) * v;
                     }
                 }
-            }
-        }
-
-        // casts the rays; the faces one got out from are seen
-        private static IEnumerator cast(List<RaycastCommand> commands, List<Triangle> owners) {
-            if (commands.Count == 0) {
-                yield break;
-            }
-            NativeArray<RaycastCommand> batch = new NativeArray<RaycastCommand>(commands.ToArray(), Allocator.Persistent);
-            NativeArray<RaycastHit> hits = new NativeArray<RaycastHit>(commands.Count, Allocator.Persistent);
-            try {
-                Unity.Jobs.JobHandle job = RaycastCommand.ScheduleBatch(batch, hits, 256, 1);
-                while (!job.IsCompleted) {
-                    yield return null;
-                }
-                job.Complete();
-                for (int i = 0; i < commands.Count; i++) {
-                    if (hits[i].colliderInstanceID == 0) {
-                        owners[i].seen = true; // a ray got out
-                    }
-                }
-            } finally {
-                batch.Dispose();
-                hits.Dispose();
             }
         }
 

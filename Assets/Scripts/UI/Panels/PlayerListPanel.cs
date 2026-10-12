@@ -8,7 +8,7 @@ namespace Brickcraft.UI
 {
     /// <summary>
     /// List of the players in the game, in the player panel. Shown while the "PlayerList" input
-    /// (Tab if the project doesn't define it) is held.
+    /// (Tab if the project doesn't define it) is held; it closes the inventory.
     ///
     /// Admins get buttons to teleport to a player, kick or ban it (they send the chat commands, see
     /// Network.ChatCommands): right-click frees the mouse to click them while the list is shown.
@@ -55,6 +55,10 @@ namespace Brickcraft.UI
 
             if (show != window.activeSelf) {
                 if (show) {
+                    // the list replaces the inventory
+                    if (InventoryPanel.Instance != null && InventoryPanel.Instance.gameObject.activeSelf) {
+                        InventoryPanel.Instance.gameObject.SetActive(false);
+                    }
                     window.SetActive(true);
                     nextRefresh = 0;
                 } else {

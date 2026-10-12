@@ -32,6 +32,9 @@ namespace Brickcraft.UI
         private static readonly Color SelectedTab = new Color(0.18f, 0.71f, 0.13f);
         private static readonly Color UnselectedTab = new Color(1f, 1f, 1f, 0f);
 
+        // the tab shown last: it's the one shown again when the panel opens
+        private bool showingAll;
+
         private void Awake() {
             Instance = this;
             inventoryTab.onClick.AddListener(showInventory);
@@ -44,7 +47,7 @@ namespace Brickcraft.UI
 
             resetCraftingSlots();
             reload();
-            showInventory();
+            showTab(showingAll && isLocalPlayerAdmin());
             Game.unlockMouse();
             Player.Instance.freeze(Player.FreezeReason.ViewingInventory);
         }
@@ -80,6 +83,7 @@ namespace Brickcraft.UI
         }
 
         private void showTab(bool all) {
+            showingAll = all;
             foreach (GameObject view in inventoryViews) {
                 view.SetActive(!all);
             }

@@ -33,5 +33,16 @@ namespace Brickcraft
         }
 
         public float hardness = 4; //seconds with bare hands
+
+        /// <summary>LDraw parts' models: where the part's LDraw origin is in the model (see LDraw.LDrawWriter), null for others.</summary>
+        public Vector3? ldrawOrigin;
+
+        /// <summary>
+        /// Where its LDraw part's origin is, in its own space but LDraw's units (LDU, Y still up): an LDraw part's
+        /// exactly; others' the top of their middle (LDraw's bricks and plates have theirs there).
+        /// </summary>
+        public Vector3 LDrawOrigin {
+            get { return ldrawOrigin.HasValue ? ldrawOrigin.Value / Bricks.LDraw.LDrawModelBuilder.Scale : new Vector3(0, heightInPlates * 8, 0); }
+        }
     }
 }

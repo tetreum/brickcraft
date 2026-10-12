@@ -107,6 +107,38 @@ namespace Brickcraft
             get { return armorSlot == ArmorSlot.Offhand; }
         }
 
+        /// <summary>Its info.json's BrickLink part number, null to use its model's id (see BricklinkPart).</summary>
+        public string bricklinkId;
+
+        /// <summary>Its info.json's LDraw part number, null to use its model's id (see LDrawPart).</summary>
+        public string ldrawId;
+        /// <summary>
+        /// An LDraw part of the library shaped like its own (same size, same origin), to place it in LDraw models when
+        /// the library hasn't its part (like 60623 for the door 7102), null for none.
+        /// </summary>
+        public string ldrawShape;
+
+        /// <summary>LDraw's part number of its model (LDraw models, see LDraw.LDrawWriter): its ldrawId, or its model's id without "uv".</summary>
+        public string LDrawPart {
+            get { return !string.IsNullOrEmpty(ldrawId) ? ldrawId : withoutUv(brickModelId); }
+        }
+
+        private static string withoutUv(string model) {
+            model = model ?? "";
+            return model.EndsWith("uv", System.StringComparison.OrdinalIgnoreCase) ? model.Substring(0, model.Length - 2) : model;
+        }
+
+        /// <summary>BrickLink's part number of its model: its bricklinkId, or its model's id without the "uv" (UV mapped) suffix of Mecabricks models.</summary>
+        public string BricklinkPart {
+            get {
+                if (!string.IsNullOrEmpty(bricklinkId)) {
+                    return bricklinkId;
+                }
+                string model = brickModelId ?? "";
+                return model.EndsWith("uv", System.StringComparison.OrdinalIgnoreCase) ? model.Substring(0, model.Length - 2) : model;
+            }
+        }
+
         public bool IsRanged {
             get { return !string.IsNullOrEmpty(ammo); }
         }
@@ -151,8 +183,17 @@ namespace Brickcraft
         public string iconFile;
         public Texture2D iconTexture;
 
+        /// <summary>Loads its icon the first time it's shown (thousands of LDraw parts' would slow the start), null for none.</summary>
+        public System.Func<Texture2D> iconLoader;
+
         public Texture2D icon {
-            get { return iconTexture; }
+            get {
+                if (iconTexture == null && iconLoader != null) {
+                    iconTexture = iconLoader();
+                    iconLoader = null;
+                }
+                return iconTexture;
+            }
         }
         public BrickModel brickModel {
             get {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Brickcraft.Bricks;
+using Brickcraft.Bricks.LDraw;
 using Brickcraft.Combat;
 using Brickcraft.Events;
 using Mirror;
@@ -14,7 +15,9 @@ namespace Brickcraft.Network
     /// A player's parts lister (items tagged "partslister", see Item.IsPartsLister): used on a brick or block it
     /// placed, a box goes around its creation (PartsList.Creation) and it looks at it from a free camera, growing
     /// or shrinking the box's faces (see PartsListerView). Saving lists the real LEGO parts it placed in the box
-    /// (PartsList.Count), which its client writes as a CSV file: its path is told in the chat (to it only) and copied.
+    /// (PartsList.Count), which its client writes, under the name the player gives it, as a CSV file, a BrickLink
+    /// wanted list (XML) and an LDraw model (.ldr, PartsList.Placements), in a folder of their own whose path is told
+    /// in the chat (to it only) and copied.
     ///
     /// The server keeps the session: it checks the brick is the player's, that the box stays near the creation
     /// (MaxGrowth, so the camera, which stays near the box, can't go scouting) and counts the parts; it ends when
@@ -127,8 +130,15 @@ namespace Brickcraft.Network
                 TargetEnd("That box is too far from your creation");
                 return;
             }
+            // the LDraw model's parts first (in batches: big creations are bigger than a message), then the list
+            List<LDrawPlacement> placements = PartsList.Placements(playerId, min, max);
+            for (int i = 0; i < placements.Count; i += PlacementsPerMessage) {
+                TargetPlacements(placements.GetRange(i, Mathf.Min(PlacementsPerMessage, placements.Count - i)).ToArray());
+            }
             TargetList(PartsList.Count(playerId, min, max).ToArray());
         }
+
+        private const int PlacementsPerMessage = 200;
 
         [Command]
         public void CmdCancel() {
@@ -155,9 +165,19 @@ namespace Brickcraft.Network
             chat(reason);
         }
 
+        // client: the LDraw model's parts received so far (see CmdSave), written with the list
+        private readonly List<LDrawPlacement> placementsReceived = new List<LDrawPlacement>();
+
+        [TargetRpc]
+        private void TargetPlacements(LDrawPlacement[] placements) {
+            placementsReceived.AddRange(placements);
+        }
+
         // the parts: written as a CSV file, whose path is told and copied
         [TargetRpc]
         private void TargetList(PartsListRow[] rows) {
+            List<LDrawPlacement> placements = new List<LDrawPlacement>(placementsReceived);
+            placementsReceived.Clear();
             if (PartsListerView.Current != null) {
                 PartsListerView.Current.Close();
             }
@@ -166,24 +186,39 @@ namespace Brickcraft.Network
                 return;
             }
             string path;
+            int colorless;
+            int ldrawColorless;
             try {
-                path = WriteCsv(rows);
+                path = WriteCsv(rows, pendingName);
+                colorless = WriteXml(rows, Path.ChangeExtension(path, ".xml"));
+                ldrawColorless = LDrawWriter.Write(Path.ChangeExtension(path, ".ldr"), pendingName, placements);
             } catch (Exception e) {
                 chat("The parts list couldn't be saved: " + e.Message);
                 return;
             }
-            GUIUtility.systemCopyBuffer = path;
+            string folder = Path.GetDirectoryName(path);
+            GUIUtility.systemCopyBuffer = folder;
             int parts = 0;
             foreach (PartsListRow row in rows) {
                 parts += row.count;
             }
-            chat("Parts list saved (" + parts + " parts, copied to the clipboard): " + path);
+            string file = Path.GetFileNameWithoutExtension(path);
+            chat("Parts list saved (" + parts + " parts), its folder copied to the clipboard: " + folder);
+            chat(file + ".csv: the parts; " + file + ".xml: a BrickLink wanted list"
+                + (colorless > 0 ? " (" + colorless + " of its lines have a colour BrickLink doesn't have: they're in any colour)" : "")
+                + "; " + file + ".ldr: the LDraw model"
+                + (ldrawColorless > 0 ? " (" + ldrawColorless + " parts have a colour LDraw doesn't have: they're uncoloured)" : ""));
         }
 
         // -------- client --------
 
-        /// <summary>Client: the view saves the box (see PartsListerView).</summary>
-        public void Save(Vector3Int min, Vector3Int max) {
+        // client: the name the player gave the list it's waiting for
+        private string pendingName;
+
+        /// <summary>Client: the view saves the box (see PartsListerView), under that name (its files').</summary>
+        public void Save(Vector3Int min, Vector3Int max, string name) {
+            pendingName = name;
+            placementsReceived.Clear();
             CmdSave(min, max);
         }
 
@@ -196,10 +231,35 @@ namespace Brickcraft.Network
             get { return Path.GetFullPath(Path.Combine(Application.persistentDataPath, "parts_lists")); }
         }
 
-        /// <summary>Writes the parts as a CSV file (part, colour id and name, the item's name, count); returns its path.</summary>
-        public static string WriteCsv(IList<PartsListRow> rows) {
-            Directory.CreateDirectory(Folder);
-            string path = Path.Combine(Folder, "parts_list_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".csv");
+        /// <summary>A file name for a parts list: the name the player gave it without what files can't have, its date if empty.</summary>
+        public static string FileNameFor(string name) {
+            StringBuilder clean = new StringBuilder();
+            foreach (char c in (name ?? "").Trim()) {
+                clean.Append(Array.IndexOf(Path.GetInvalidFileNameChars(), c) >= 0 ? '_' : c);
+            }
+            string file = clean.ToString().Trim().TrimEnd('.');
+            if (file.Length > MaxNameLength) {
+                file = file.Substring(0, MaxNameLength);
+            }
+            return file.Length > 0 ? file : "parts_list_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+        }
+
+        /// <summary>The longest a parts list's name can be.</summary>
+        public const int MaxNameLength = 60;
+
+        /// <summary>
+        /// Writes the parts as a CSV file named after the list (part, colour id and name, the item's name, count), in
+        /// a folder of its own with that name (where its other files go), not over another list of that name
+        /// ("name (2)"...); returns its path.
+        /// </summary>
+        public static string WriteCsv(IList<PartsListRow> rows, string name) {
+            string file = FileNameFor(name);
+            string folder = Path.Combine(Folder, file);
+            for (int copy = 2; Directory.Exists(folder) || File.Exists(folder); copy++) {
+                folder = Path.Combine(Folder, file + " (" + copy + ")");
+            }
+            Directory.CreateDirectory(folder);
+            string path = Path.Combine(folder, Path.GetFileName(folder) + ".csv");
             StringBuilder csv = new StringBuilder();
             csv.AppendLine("brickModel,colorId,colorName,name,count");
             foreach (PartsListRow row in rows) {
@@ -212,6 +272,45 @@ namespace Brickcraft.Network
             }
             File.WriteAllText(path, csv.ToString(), new UTF8Encoding(false));
             return path;
+        }
+
+        /// <summary>
+        /// Writes the parts as a BrickLink wanted list (XML, to upload on BrickLink): each part's BrickLink number,
+        /// colour (BrickColor.bricklinkId) and count. Lines of colours BrickLink doesn't have go without one (any
+        /// colour); returns how many.
+        /// </summary>
+        public static int WriteXml(IList<PartsListRow> rows, string path) {
+            // BrickLink counts by its own part and colour: two of our parts can be one of its
+            Dictionary<string, int> counts = new Dictionary<string, int>();
+            List<string> order = new List<string>();
+            int colorless = 0;
+            foreach (PartsListRow row in rows) {
+                BrickColor color = BrickColorPalette.Get(row.color);
+                int bricklinkColor = color != null ? color.bricklinkId : BrickColor.None;
+                if (bricklinkColor == BrickColor.None && row.color != BrickColor.None) {
+                    colorless++;
+                }
+                string key = (string.IsNullOrEmpty(row.bricklinkPart) ? row.brickModel : row.bricklinkPart) + "\n" + bricklinkColor;
+                if (!counts.ContainsKey(key)) {
+                    order.Add(key);
+                    counts[key] = 0;
+                }
+                counts[key] += row.count;
+            }
+            StringBuilder xml = new StringBuilder();
+            xml.Append("<INVENTORY>\n");
+            foreach (string key in order) {
+                string[] parts = key.Split('\n');
+                xml.Append("<ITEM>\n<ITEMTYPE>P</ITEMTYPE>\n");
+                xml.Append("<ITEMID>").Append(System.Security.SecurityElement.Escape(parts[0])).Append("</ITEMID>\n");
+                if (parts[1] != BrickColor.None.ToString()) {
+                    xml.Append("<COLOR>").Append(parts[1]).Append("</COLOR>\n");
+                }
+                xml.Append("<MINQTY>").Append(counts[key]).Append("</MINQTY>\n</ITEM>\n");
+            }
+            xml.Append("</INVENTORY>\n");
+            File.WriteAllText(path, xml.ToString(), new UTF8Encoding(false));
+            return colorless;
         }
 
         // quoted when it has commas, quotes or line breaks

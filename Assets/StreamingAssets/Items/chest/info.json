@@ -2,6 +2,8 @@
     "name": "Chest",
     "type": "brick",
     "brickModel": "4738v4",
+    "bricklinkId": "4738a",
+    "ldrawId": "4738a",
     "color": 70,
     "colors": "all",
     "tags": ["storage"],

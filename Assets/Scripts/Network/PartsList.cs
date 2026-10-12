@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Brickcraft.Bricks;
+using Brickcraft.Bricks.LDraw;
 using Brickcraft.World;
 using UnityEngine;
 
@@ -13,6 +14,8 @@ namespace Brickcraft.Network
         public int color;
         /// <summary>What the game calls it (the first item of that part and colour found).</summary>
         public string name;
+        /// <summary>BrickLink's part number (see Item.BricklinkPart).</summary>
+        public string bricklinkPart;
         public int count;
     }
 
@@ -178,6 +181,62 @@ namespace Brickcraft.Network
             return list;
         }
 
+        /// <summary>
+        /// The same parts where they are, as an LDraw model whose origin is the box's corner (see LDrawWriter): a
+        /// line each, attachments where they hang (open doors open), blocks as their 2x2 brick.
+        /// </summary>
+        public static List<LDrawPlacement> Placements(int playerId, Vector3Int min, Vector3Int max) {
+            List<LDrawPlacement> placements = new List<LDrawPlacement>();
+            Vector3 corner = BrickGrid.CellToWorld(min);
+
+            foreach (Brick brick in BrickGrid.BricksNear(min, max)) {
+                Vector3 middle = (Vector3)brick.placement.origin + (Vector3)brick.placement.Size * 0.5f;
+                if (!inside(middle, min, max)) {
+                    continue;
+                }
+                if (WorldNetwork.ServerPlacerOf(brick).playerId == playerId && isListed(brick.item)) {
+                    placements.Add(LDrawWriter.Place(brick.item.LDrawPart, brick.color, brick.placement.Position, brick.placement.Rotation,
+                        LDrawWriter.OriginOf(brick.placement.model, brick.item.LDrawPart, brick.item.ldrawShape), corner));
+                }
+                Brick attached = Server.attachmentOf(brick);
+                if (attached != null && attached.gameObject != null && WorldNetwork.ServerPlacerOf(attached).playerId == playerId && isListed(attached.item)) {
+                    Transform at = attached.gameObject.transform;
+                    placements.Add(LDrawWriter.Place(attached.item.LDrawPart, attached.color, at.position, at.rotation,
+                        LDrawWriter.OriginOf(attached.model, attached.item.LDrawPart, attached.item.ldrawShape), corner));
+                }
+            }
+
+            Vector3Int firstBlock = BrickGrid.CellToBlock(min);
+            Vector3Int lastBlock = BrickGrid.CellToBlock(max - Vector3Int.one);
+            Vector3 blockMiddle = new Vector3(BrickGrid.StudsPerBlock, BrickGrid.PlatesPerBlock, BrickGrid.StudsPerBlock) * 0.5f;
+            Vector3 brickTop = new Vector3(0, BrickGrid.PlatesPerBlock * 8, 0); // in LDU
+            for (int x = firstBlock.x; x <= lastBlock.x; x++) {
+                for (int y = firstBlock.y; y <= lastBlock.y; y++) {
+                    for (int z = firstBlock.z; z <= lastBlock.z; z++) {
+                        Vector3Int block = new Vector3Int(x, y, z);
+                        Vector3Int cell = BrickGrid.BlockToCell(block);
+                        if (!inside((Vector3)cell + blockMiddle, min, max) || !IsPlacedBlock(playerId, block)) {
+                            continue;
+                        }
+                        BlockDefinition definition = BlockDatabase.Get(WorldBehaviour.Instance.GetBlockType(block));
+                        if (string.IsNullOrEmpty(definition.itemId) || !Server.items.TryGetValue(definition.itemId, out Item item) || !isListed(item)) {
+                            continue;
+                        }
+                        int color = WorldBehaviour.Instance.GetBlockColor(x, y, z);
+                        Vector3 pivot = BrickGrid.CellToWorld(cell, new Vector3(BrickGrid.StudsPerBlock / 2f, 0, BrickGrid.StudsPerBlock / 2f));
+                        placements.Add(LDrawWriter.Place(item.LDrawPart, color == BrickColor.None ? item.color : color, pivot, Quaternion.identity,
+                            item.brickModel != null ? LDrawWriter.OriginOf(item.brickModel, item.LDrawPart, item.ldrawShape) : brickTop, corner));
+                    }
+                }
+            }
+            return placements;
+        }
+
+        // a real LEGO part (see IsRealPart), by its LDraw number
+        private static bool isListed(Item item) {
+            return item != null && IsRealPart(item.brickModelId) && IsRealPart(item.LDrawPart);
+        }
+
         private static bool inside(Vector3 point, Vector3Int min, Vector3Int max) {
             return point.x >= min.x && point.y >= min.y && point.z >= min.z && point.x < max.x && point.y < max.y && point.z < max.z;
         }
@@ -196,7 +255,7 @@ namespace Brickcraft.Network
                 row.count++;
                 rows[key] = row;
             } else {
-                rows[key] = new PartsListRow() { brickModel = item.brickModelId, color = color, name = item.name, count = 1 };
+                rows[key] = new PartsListRow() { brickModel = item.brickModelId, color = color, name = item.name, bricklinkPart = item.BricklinkPart, count = 1 };
             }
         }
     }

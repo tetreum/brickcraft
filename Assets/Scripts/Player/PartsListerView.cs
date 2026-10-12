@@ -62,6 +62,10 @@ namespace Brickcraft
         private Vector3Int dragMin;
         private Vector3Int dragMax;
         private float dragFrom;
+        // a point of the dragged face's axis, fixed while it's dragged (the box's middle moves with the face)
+        private Vector3 dragAnchor;
+        // the pointer looking almost along the axis: where it points along it is too unsteady to follow
+        private const float MinDragAngleSine = 0.25f;
 
         /// <summary>Starts a session around that box (cells, max exclusive), the creation's.</summary>
         public static void Open(PartsLister owner, Vector3Int min, Vector3Int max) {
@@ -115,10 +119,13 @@ namespace Brickcraft
             Closed?.Invoke();
         }
 
-        /// <summary>Saves the parts list of what's in the box (the server answers with it).</summary>
-        public void Save() {
+        /// <summary>Saves the parts list of what's in the box under that name, its files' (the server answers with it).</summary>
+        public void Save(string name) {
+            if (string.IsNullOrWhiteSpace(name)) {
+                return; // a list needs a name
+            }
             if (owner != null) {
-                owner.Save(Min, Max);
+                owner.Save(Min, Max, name.Trim());
             }
             Close();
         }
@@ -233,7 +240,10 @@ namespace Brickcraft
                 if (!Input.GetMouseButton(0)) {
                     dragged = -1;
                 } else {
-                    float along = alongAxis(dragged, ray);
+                    if (!alongAxis(dragged, ray, out float along)) {
+                        hovered = dragged;
+                        return; // looking along the axis: the face stays where it is
+                    }
                     int axis = dragged / 2;
                     // along the face's outward normal: out is lower coordinates for the west, bottom and south faces
                     int steps = Mathf.RoundToInt((along - dragFrom) / BrickGrid.CellSize[axis]);
@@ -255,28 +265,31 @@ namespace Brickcraft
                 Grow(hovered, (wheel > 0 ? 1 : -1) * (fast ? FastSteps : 1));
             }
             if (Input.GetMouseButtonDown(0)) {
-                dragged = hovered;
-                dragMin = Min;
-                dragMax = Max;
-                dragFrom = alongAxis(dragged, ray);
+                dragAnchor = worldBounds.center;
+                if (alongAxis(hovered, ray, out dragFrom)) {
+                    dragged = hovered;
+                    dragMin = Min;
+                    dragMax = Max;
+                }
             }
         }
 
-        // where the pointer's ray passes closest to the line through a face's middle along its axis (meters along it)
-        private float alongAxis(int face, Ray ray) {
-            Bounds bounds = worldBounds;
+        // where the pointer's ray passes closest to the line along a face's axis through dragAnchor (meters along it,
+        // outward); false when the ray is almost parallel to it, as that point would jump around
+        private bool alongAxis(int face, Ray ray, out float along) {
             Vector3 normal = normalOf(face);
-            Vector3 point = bounds.center;
-            // the closest points of two lines: point + normal * s and ray.origin + ray.direction * t
-            Vector3 w = point - ray.origin;
+            // the closest points of two lines: dragAnchor + normal * s and ray.origin + ray.direction * t
+            Vector3 w = dragAnchor - ray.origin;
             float b = Vector3.Dot(normal, ray.direction);
             float d = Vector3.Dot(normal, w);
             float e = Vector3.Dot(ray.direction, w);
-            float denominator = 1 - b * b;
-            if (Mathf.Abs(denominator) < 0.0001f) {
-                return 0;
+            float denominator = 1 - b * b; // the sine of the angle between them, squared
+            if (denominator < MinDragAngleSine * MinDragAngleSine) {
+                along = 0;
+                return false;
             }
-            return (b * e - d) / denominator;
+            along = (b * e - d) / denominator;
+            return true;
         }
 
         private static Vector3 normalOf(int face) {

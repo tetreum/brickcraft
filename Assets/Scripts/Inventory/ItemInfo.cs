@@ -30,6 +30,12 @@ namespace Brickcraft
         public int armor;
         /// <summary>Weapons and armor: how many uses they last before breaking (hits given, or hits taken while worn), 0 for forever.</summary>
         public int durability;
+        /// <summary>BrickLink's part number of its model, when it isn't the model's id (its "uv" suffix taken off), like "4738a" for the chest.</summary>
+        public string bricklinkId;
+        /// <summary>LDraw's part number of its model (its file without ".dat"), when it isn't the model's id (its "uv" suffix taken off).</summary>
+        public string ldrawId;
+        /// <summary>An LDraw part of the library shaped like its own (same size and origin), for LDraw models when the library hasn't its part.</summary>
+        public string ldrawShape;
         /// <summary>Weapons and shields: how players hold them, held by their middle and fitted to 0.8 meters if missing.</summary>
         public HeldInfo held;
         /// <summary>Its model (what's placed, dropped, and shown in its icon), a part number like "3003" or one of the mod's models (see Bricks.BrickModels).</summary>

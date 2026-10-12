@@ -18,6 +18,10 @@ namespace Brickcraft.Bricks
         public string hex;
         public bool isTransparent;
         public Material material;
+        /// <summary>BrickLink's id of the same colour (for wanted lists, see Network.PartsLister), None if BrickLink has no such colour.</summary>
+        public int bricklinkId = None;
+        /// <summary>LDraw's code of the same colour (LDraw parts' own colours, LDraw files), None if LDraw has no such colour.</summary>
+        public int ldrawId = None;
 
         public Color32 Color32 {
             get {
@@ -66,6 +70,16 @@ namespace Brickcraft.Bricks
         public static BrickColor Get(int id) {
             BrickColor found;
             return byId.TryGetValue(id, out found) ? found : null;
+        }
+
+        /// <summary>The colour of an LDraw colour code (its ldrawId), null if the palette hasn't it.</summary>
+        public static BrickColor FromLDraw(int ldrawCode) {
+            foreach (BrickColor color in byId.Values) {
+                if (color.ldrawId == ldrawCode) {
+                    return color;
+                }
+            }
+            return null;
         }
 
         /// <summary>By id or name, ignoring case, spaces and dashes ("4", "red", "trans-clear", "TransClear").</summary>

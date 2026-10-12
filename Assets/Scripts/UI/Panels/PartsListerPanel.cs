@@ -6,7 +6,8 @@ namespace Brickcraft.UI
 {
     /// <summary>
     /// The parts lister's panel on the right (see PartsListerView): how to move around, the box's size, a − and +
-    /// for each of its faces, and the buttons that save the parts list or cancel. Made the first time it's needed.
+    /// for each of its faces, the list's name (needed: it names its files) and the buttons that save the parts list
+    /// or cancel. Made the first time it's needed.
     /// </summary>
     public class PartsListerPanel : MonoBehaviour
     {
@@ -17,6 +18,8 @@ namespace Brickcraft.UI
         private static readonly Color TextColor = new Color(0.85f, 0.89f, 0.94f);
 
         private Text size;
+        private InputField listName;
+        private Button save;
 
         public static void Show() {
             if (instance == null) {
@@ -27,6 +30,7 @@ namespace Brickcraft.UI
             }
             instance.transform.SetAsLastSibling();
             instance.gameObject.SetActive(true);
+            instance.listName.text = "";
             instance.refresh();
         }
 
@@ -50,6 +54,7 @@ namespace Brickcraft.UI
                 Vector3Int cells = view.Size;
                 size.text = cells.x + " x " + cells.z + " studs, " + cells.y + " plates high";
             }
+            save.interactable = !string.IsNullOrWhiteSpace(listName.text);
         }
 
         private static PartsListerPanel create(Transform root) {
@@ -94,11 +99,16 @@ namespace Brickcraft.UI
                 button(row.transform, font, "+", ButtonColor, 40, () => grow(which, 1));
             }
 
-            button(panel.transform, font, "Save parts list", SaveColor, 0, () => {
+            parts.listName = input(panel.transform, font, "Name of the list (required)");
+            parts.listName.characterLimit = Network.PartsLister.MaxNameLength;
+            parts.listName.onValueChanged.AddListener(value => parts.refresh());
+            GameObject saveButton = button(panel.transform, font, "Save parts list", SaveColor, 0, () => {
                 if (PartsListerView.Current != null) {
-                    PartsListerView.Current.Save();
+                    PartsListerView.Current.Save(parts.listName.text);
                 }
-            }).GetComponent<LayoutElement>().preferredHeight = 40;
+            });
+            saveButton.GetComponent<LayoutElement>().preferredHeight = 40;
+            parts.save = saveButton.GetComponent<Button>();
             button(panel.transform, font, "Cancel", ButtonColor, 0, () => {
                 if (PartsListerView.Current != null) {
                     PartsListerView.Current.Cancel();
@@ -130,11 +140,40 @@ namespace Brickcraft.UI
             return label;
         }
 
+        // a text field with its hint while empty (typing in it, the game's keys are text, see GameInput.IsTyping)
+        private static InputField input(Transform parent, Font font, string hint) {
+            GameObject go = new GameObject("Name", typeof(RectTransform), typeof(Image), typeof(InputField), typeof(LayoutElement));
+            go.transform.SetParent(parent, false);
+            go.GetComponent<Image>().color = new Color(0.04f, 0.06f, 0.09f);
+            go.GetComponent<LayoutElement>().preferredHeight = 34;
+            Text text = PartsListerPanel.text(go.transform, font, "", 16, FontStyle.Normal, Color.white);
+            text.supportRichText = false;
+            Text placeholder = PartsListerPanel.text(go.transform, font, hint, 15, FontStyle.Italic, new Color(0.55f, 0.6f, 0.68f));
+            foreach (Text label in new[] { text, placeholder }) {
+                label.alignment = TextAnchor.MiddleLeft;
+                RectTransform rect = (RectTransform)label.transform;
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = new Vector2(8, 2);
+                rect.offsetMax = new Vector2(-8, -2);
+            }
+            InputField field = go.GetComponent<InputField>();
+            field.textComponent = text;
+            field.placeholder = placeholder;
+            field.lineType = InputField.LineType.SingleLine;
+            return field;
+        }
+
         private static GameObject button(Transform parent, Font font, string label, Color color, float width, UnityAction onClick) {
             GameObject go = new GameObject(label, typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
             go.transform.SetParent(parent, false);
             go.GetComponent<Image>().color = color;
-            go.GetComponent<Button>().onClick.AddListener(onClick);
+            Button clickable = go.GetComponent<Button>();
+            clickable.onClick.AddListener(onClick);
+            // disabled (saving without a name), it shows
+            ColorBlock colors = clickable.colors;
+            colors.disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.45f);
+            clickable.colors = colors;
             if (width > 0) {
                 go.GetComponent<LayoutElement>().preferredWidth = width;
             }

@@ -12,7 +12,8 @@ namespace Brickcraft.Bricks
     ///   Mods/[mod]/models/[name]/            a mod's file model, "[mod]:[name]"
     ///   Mods/[mod]/models/*.bundle           a mod's prefabs (AssetBundles built with Unity), "[mod]:[prefab name]"
     ///   Assets/Resources/BrickModels/[id]    a custom prefab of the game (complex models)
-    ///   StreamingAssets/BrickModels/[id]/    a file model of the game (most bricks, by part number)
+    ///   StreamingAssets/BrickModels/[id]/    a file model of the game (tuned bricks, by part number)
+    ///   StreamingAssets/LDraw/parts/[id].dat an LDraw part (by part number, see LDraw.LDrawModelBuilder)
     /// A file model's folder has:
     ///   model.obj, model.glb or model.gltf   its shape (the first found)
     ///   normal.png                           optional normal map (bevels...) for its first uv set
@@ -157,6 +158,8 @@ namespace Brickcraft.Bricks
                 model = fromPrefab(id, bundled.Key.LoadAsset<GameObject>(bundled.Value));
             } else if ((model = loadPrefab(id)) == null && gameFiles.TryGetValue(id, out folder)) {
                 model = loadFile(id, folder);
+            } else if (model == null && LDraw.LDrawLibrary.HasPart(id)) {
+                model = loadLDraw(id);
             }
             cache[id] = model;
             return model;
@@ -172,7 +175,7 @@ namespace Brickcraft.Bricks
                 return model != null;
             }
             // custom prefabs are only known by loading them (Resources has no listing)
-            return modFiles.ContainsKey(id) || modPrefabs.ContainsKey(id) || gameFiles.ContainsKey(id) || Get(id) != null;
+            return modFiles.ContainsKey(id) || modPrefabs.ContainsKey(id) || gameFiles.ContainsKey(id) || LDraw.LDrawLibrary.HasPart(id) || Get(id) != null;
         }
 
         /// <summary>
@@ -291,8 +294,41 @@ namespace Brickcraft.Bricks
             }
         }
 
-        // scaled to the game's units and moved so its pivot is at the center of its footprint, on its bottom
-        private static void place(Mesh mesh, float scale) {
+        // an LDraw part: its colours of their own (glass...) stay theirs, its collider is a box of its size
+        private static BrickModel loadLDraw(string id) {
+            try {
+                Mesh mesh = LDraw.LDrawModelBuilder.Build(id, out string[] materialNames);
+                if (mesh == null || mesh.vertexCount == 0) {
+                    throw new InvalidDataException("it has no shape");
+                }
+                Vector3 origin = place(mesh, 1); // where its LDraw origin (0, 0, 0) went
+                loaded.Add(mesh);
+                ModelInfo info = new ModelInfo() { parts = new Dictionary<string, int>() };
+                foreach (string part in materialNames) {
+                    if (part != LDraw.LDrawModelBuilder.MainPart && int.TryParse(part.Substring(1), out int ldrawColor)) {
+                        BrickColor color = BrickColorPalette.FromLDraw(ldrawColor);
+                        if (color != null) {
+                            info.parts[part] = color.id;
+                        }
+                    }
+                }
+                Bounds bounds = mesh.bounds;
+                int width = Mathf.Max(1, Mathf.RoundToInt(bounds.size.x / Server.studSize));
+                int depth = Mathf.Max(1, Mathf.RoundToInt(bounds.size.z / Server.studSize));
+                int plates = Mathf.Max(1, Mathf.FloorToInt(bounds.size.y / Server.plateHeight + 0.15f));
+                GameObject template = makeTemplate(id, mesh, info, materialNames, width, depth, plates);
+                BrickModel model = create(id, template, width, depth, plates);
+                model.ldrawOrigin = origin;
+                return model;
+            } catch (Exception e) {
+                Debug.LogError("Can't read the LDraw part " + id + ": " + e.Message);
+                return null;
+            }
+        }
+
+        // scaled to the game's units and moved so its pivot is at the center of its footprint, on its bottom; returns
+        // where its old origin went
+        private static Vector3 place(Mesh mesh, float scale) {
             Vector3[] vertices = mesh.vertices;
             Bounds bounds = mesh.bounds;
             Vector3 offset = new Vector3(-bounds.center.x, -bounds.min.y, -bounds.center.z);
@@ -301,6 +337,7 @@ namespace Brickcraft.Bricks
             }
             mesh.vertices = vertices;
             mesh.RecalculateBounds();
+            return offset * scale;
         }
 
         // linear (it holds directions, not colours): HDRP reads x from red and y from green

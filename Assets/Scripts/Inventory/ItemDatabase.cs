@@ -70,6 +70,7 @@ namespace Brickcraft
                     loadFolder(mod.ItemsFolder, mod);
                 }
             }
+            loadLDrawCatalog();
 
             BlockDatabase.FinishLoading();
             resolveDrops();
@@ -100,6 +101,37 @@ namespace Brickcraft
             }
             string own = mod.id + ":" + id;
             return Server.items.ContainsKey(own) ? own : id;
+        }
+
+        /// <summary>The item of an LDraw part of the catalogue (see Bricks.LDraw.LDrawLibrary): "part_" and its part number.</summary>
+        public const string LDrawItemPrefix = "part_";
+        /// <summary>Their colour until another is picked (they can have any).</summary>
+        public const int LDrawItemColor = 71;
+
+        // a brick item for every part of the LDraw catalogue (any colour, named like LDraw does), unless one has its id
+        private static void loadLDrawCatalog() {
+            foreach (Bricks.LDraw.LDrawPart part in Bricks.LDraw.LDrawLibrary.Catalog) {
+                string id = LDrawItemPrefix + part.id;
+                if (Server.items.ContainsKey(id) || !Slugs.IsValid(id)) {
+                    continue;
+                }
+                string partId = part.id;
+                Item item = new Item() {
+                    id = id,
+                    name = part.name,
+                    type = Item.Type.Brick,
+                    folder = Bricks.LDraw.LDrawLibrary.Root,
+                    brickModelId = partId,
+                    color = LDrawItemColor,
+                    anyColor = true,
+                    iconLoader = () => Bricks.LDraw.LDrawLibrary.LoadIcon(partId),
+                };
+                item.tags.Add("ldraw");
+                if (!string.IsNullOrEmpty(part.category)) {
+                    item.tags.Add(part.category.Trim().ToLowerInvariant());
+                }
+                Server.items[id] = item;
+            }
         }
 
         // drops can name items loaded after the block's
@@ -218,6 +250,9 @@ namespace Brickcraft
         // weapons' and armor's: how they hit, where they're worn, how long they last
         private static bool loadStats(Item item, ItemInfo info, string file, ModInfo mod) {
             item.durability = Math.Max(0, info.durability);
+            item.bricklinkId = string.IsNullOrWhiteSpace(info.bricklinkId) ? null : info.bricklinkId.Trim();
+            item.ldrawId = string.IsNullOrWhiteSpace(info.ldrawId) ? null : info.ldrawId.Trim().ToLowerInvariant();
+            item.ldrawShape = string.IsNullOrWhiteSpace(info.ldrawShape) ? null : info.ldrawShape.Trim().ToLowerInvariant();
             if (info.attackSpeed.HasValue) {
                 if (info.attackSpeed.Value <= 0) {
                     Debug.LogError("Item file " + file + " has the attackSpeed " + info.attackSpeed.Value + ", hits a second should be more than 0");

@@ -12,7 +12,7 @@ using UnityEngine;
 /// <summary>
 /// Builds the game's LDraw library (StreamingAssets/LDraw) from an unpacked library.ldraw.org complete.zip: the
 /// catalogue (catalog.json: every part but subparts, primitives, aliases, moved and obsolete ones, printed parts,
-/// stickers, minifigs and other figures, and sheets of fabric, cardboard or plastic), the files they use (subparts
+/// stickers, minifigs and other figures, sheets of fabric, cardboard or plastic, and other systems: Duplo, Quatro, Primo, Modulex, Znap, Scala, Homemaker, Belville, Fabuland, Clikits, Constraction), the files they use (subparts
 /// and primitives, low resolution where LDraw has them) in library.zip, in lowercase, and LDraw's license files.
 /// Run again with a newer library to update it.
 /// </summary>
@@ -27,6 +27,8 @@ public static class LDrawLibraryBuilder
     private static readonly Regex PrintedName = new Regex(@"(?i)pattern|print|sticker");
     private static readonly Regex Composite = new Regex(@"c\d\d$");
     private static readonly Regex Slug = new Regex("^[a-z0-9_]+$");
+    // other systems than the bricks (Duplo and its toddler lines, Modulex, Znap, Scala...) and their parts ("Wheel ... Znap"): whatever their category
+    private static readonly Regex OtherSystems = new Regex(@"(?i)\b(duplo|quatro|primo|modulex|znap|scala|homemaker|belville|fabuland|clikits|constraction)\b");
 
     [MenuItem("Brickcraft/LDraw/Build library from complete.zip folder...")]
     public static void BuildFromMenu() {
@@ -39,10 +41,10 @@ public static class LDrawLibraryBuilder
     /// <summary>Builds it from that library folder (the one with parts/ and p/); returns what it did.</summary>
     public static string Build(string source) {
         string target = LDrawLibrary.Root;
-        if (Directory.Exists(target)) {
-            Directory.Delete(target, true); // what an older library had
-        }
         Directory.CreateDirectory(target);
+        LDrawLibrary.Reload(); // closes the archives
+        // what an older library had; icons stay (RenderMissingIcons drops those of parts no longer in it)
+        File.Delete(Path.Combine(target, LDrawLibrary.ZipFile));
 
         List<LDrawPart> catalog = new List<LDrawPart>();
         Dictionary<string, string> copied = new Dictionary<string, string>(); // target relative path -> source path
@@ -93,8 +95,17 @@ public static class LDrawLibraryBuilder
         int made = 0, failed = 0, left = 0;
         using (ZipArchive zip = ZipFile.Open(path, File.Exists(path) ? ZipArchiveMode.Update : ZipArchiveMode.Create)) {
             HashSet<string> done = new HashSet<string>();
-            foreach (ZipArchiveEntry entry in zip.Entries) {
-                done.Add(entry.FullName);
+            HashSet<string> wanted = new HashSet<string>();
+            foreach (LDrawPart part in LDrawLibrary.Catalog) {
+                wanted.Add(part.id + ".png");
+            }
+            // icons of parts no longer in the catalogue go
+            foreach (ZipArchiveEntry entry in new List<ZipArchiveEntry>(zip.Entries)) {
+                if (wanted.Contains(entry.FullName)) {
+                    done.Add(entry.FullName);
+                } else if (zip.Mode == ZipArchiveMode.Update) {
+                    entry.Delete();
+                }
             }
             foreach (LDrawPart part in LDrawLibrary.Catalog) {
                 if (done.Contains(part.id + ".png")) {
@@ -162,7 +173,8 @@ public static class LDrawLibraryBuilder
             string[] words = description.Split((char[])null, System.StringSplitOptions.RemoveEmptyEntries);
             category = words.Length > 0 ? words[0] : "";
         }
-        if (SkippedCategories.Contains(category) || category.StartsWith("Minifig", System.StringComparison.OrdinalIgnoreCase)) {
+        if (SkippedCategories.Contains(category) || category.StartsWith("Minifig", System.StringComparison.OrdinalIgnoreCase)
+                || OtherSystems.IsMatch(description) || OtherSystems.IsMatch(category)) {
             return null;
         }
         return new LDrawPart() { id = id, name = Regex.Replace(description, @"\s+", " "), category = category };

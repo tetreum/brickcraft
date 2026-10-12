@@ -55,11 +55,6 @@
     "category": "Technic"
   },
   {
-    "id": "10199",
-    "name": "Duplo Plate 4 x 8 with 11 Underside Studs with Supports",
-    "category": "Plate"
-  },
-  {
     "id": "10202",
     "name": "Tile 6 x 6 with Groove and Underside Studs",
     "category": "Tile"
@@ -113,11 +108,6 @@
     "id": "105645",
     "name": "Wheel 22 x 50 with Integral Smooth Racing Tyre",
     "category": "Wheel"
-  },
-  {
-    "id": "10661",
-    "name": "Duplo Plate 2 x 4 with 2 Holes with Locking Ridges",
-    "category": "Plate"
   },
   {
     "id": "10884",
@@ -218,21 +208,6 @@
     "id": "11147",
     "name": "Electric Mindstorms EV3 Cable 50 cm",
     "category": "Electric"
-  },
-  {
-    "id": "11169",
-    "name": "Duplo Brick 2 x 2 x 2 with Inside Curve",
-    "category": "Arch"
-  },
-  {
-    "id": "11170",
-    "name": "Duplo Brick 2 x 2 x 1.5 with Curved Front",
-    "category": "Brick"
-  },
-  {
-    "id": "11198",
-    "name": "Duplo Arch 2 x 4 x 2",
-    "category": "Arch"
   },
   {
     "id": "112",
@@ -348,26 +323,6 @@
     "id": "11301",
     "name": "Slope Brick Curved 2 x 8 x 2 Inverted Double",
     "category": "Slope"
-  },
-  {
-    "id": "11305",
-    "name": "Constraction Convex Blade 14L with Axle",
-    "category": "Constraction Accessory"
-  },
-  {
-    "id": "11344",
-    "name": "Duplo Slope Brick 2 x 3 x 2 with Curved Top",
-    "category": "Brick"
-  },
-  {
-    "id": "11345",
-    "name": "Duplo Door Frame 2 x 4 x 3 with Thick Top Rim",
-    "category": "Door"
-  },
-  {
-    "id": "11377",
-    "name": "Duplo Car Base 2 x 6 with Mudguards",
-    "category": "Vehicle"
   },
   {
     "id": "11399",
@@ -500,11 +455,6 @@
     "category": "Tyre"
   },
   {
-    "id": "12602",
-    "name": "Duplo Fence with 6 Posts",
-    "category": "Fence"
-  },
-  {
     "id": "12818",
     "name": "Panel 3 x 3 x 6 Corner Round Reinforced",
     "category": "Panel"
@@ -548,16 +498,6 @@
     "id": "13349",
     "name": "Wedge 4 x 4 Triple Inverted with Ribs between Studs",
     "category": "Wedge"
-  },
-  {
-    "id": "13358",
-    "name": "Duplo Brick 2 x 2 Hinge Base",
-    "category": "Brick"
-  },
-  {
-    "id": "13359",
-    "name": "Duplo Train Crossing Gate Crossbar",
-    "category": "Train"
   },
   {
     "id": "13392",
@@ -640,11 +580,6 @@
     "category": "Wing"
   },
   {
-    "id": "14222",
-    "name": "Duplo Brick 1 x 3 x 2 Round Top with Cut Away Sides",
-    "category": "Brick"
-  },
-  {
     "id": "14225",
     "name": "String Braided 31L with End Studs",
     "category": "String"
@@ -723,11 +658,6 @@
     "id": "14720",
     "name": "Technic Beam 5 x 3 H-shaped",
     "category": "Technic"
-  },
-  {
-    "id": "14721",
-    "name": "Duplo Plate 4 x 4",
-    "category": "Plate"
   },
   {
     "id": "14732",
@@ -825,11 +755,6 @@
     "category": "Roadsign"
   },
   {
-    "id": "15211",
-    "name": "Duplo Propeller 3 Blade 4 Diameter",
-    "category": "Propeller"
-  },
-  {
     "id": "15254",
     "name": "Arch 1 x 6 x 2 with Thin Top",
     "category": "Arch"
@@ -850,16 +775,6 @@
     "category": "Bar"
   },
   {
-    "id": "15314",
-    "name": "Duplo Car Base 4 x 8",
-    "category": "Vehicle"
-  },
-  {
-    "id": "15327",
-    "name": "Duplo Shower Head on Stand with 1 x 1 Base",
-    "category": "Tap"
-  },
-  {
     "id": "15332",
     "name": "Fence Spindled 1 x 4 x 2 with 4 Studs",
     "category": "Fence"
@@ -868,11 +783,6 @@
     "id": "15361",
     "name": "Technic Cylinder Half 3 x 5 x 8 with Pin Holes",
     "category": "Technic"
-  },
-  {
-    "id": "15362",
-    "name": "Claw 6.4L with Axle",
-    "category": "Constraction"
   },
   {
     "id": "15395",
@@ -913,16 +823,6 @@
     "id": "15444",
     "name": "Brick 1 x 1 x 2 with Square Hole in 1 Side",
     "category": "Brick"
-  },
-  {
-    "id": "15449",
-    "name": "Duplo Hook with Thick Bracing",
-    "category": "Crane"
-  },
-  {
-    "id": "15450",
-    "name": "Duplo Crane Base 2 x 2 with Hook Holder",
-    "category": "Crane"
   },
   {
     "id": "15455",
@@ -975,16 +875,6 @@
     "category": "Plate"
   },
   {
-    "id": "15515",
-    "name": "Duplo Plant Flower 4 x 4 x 1 with 5 Round Petals and 4 Top Studs",
-    "category": "Plant"
-  },
-  {
-    "id": "15516",
-    "name": "Duplo Furniture Table Round 4 x 4 x 1",
-    "category": "Duplo"
-  },
-  {
     "id": "15533",
     "name": "Brick 1 x 4 with Embossed Bricks",
     "category": "Brick"
@@ -1018,16 +908,6 @@
     "id": "15573",
     "name": "Plate 1 x 2 with Groove with 1 Centre Stud, without Understud",
     "category": "Plate"
-  },
-  {
-    "id": "15580",
-    "name": "Duplo Slope 2 x 3 x 2 Shingled",
-    "category": "Slope"
-  },
-  {
-    "id": "15582",
-    "name": "Duplo Door / Window Pane 1 x 4 x 3 with One Pane and Rounded Sides",
-    "category": "Door"
   },
   {
     "id": "15623",
@@ -1105,24 +985,9 @@
     "category": "Propeller"
   },
   {
-    "id": "15793",
-    "name": "Duplo Flag Wavy 2 x 5 without Slits",
-    "category": "Flag"
-  },
-  {
     "id": "16091",
     "name": "Car Steering Wheel 2L Reinforced",
     "category": "Car"
-  },
-  {
-    "id": "16195",
-    "name": "Duplo Cone 2 x 2 x 2 Square Base with Bottom Tube",
-    "category": "Cone"
-  },
-  {
-    "id": "16375",
-    "name": "Duplo Roof Spire 3 x 3 x 3",
-    "category": "Cone"
   },
   {
     "id": "16477",
@@ -1135,24 +1000,9 @@
     "category": "Arch"
   },
   {
-    "id": "16685",
-    "name": "Duplo Brick 1 x 4 x 2 with Two Cutouts",
-    "category": "Brick"
-  },
-  {
-    "id": "16686",
-    "name": "Duplo Plate 2 x 4 with Hinge",
-    "category": "Duplo"
-  },
-  {
     "id": "16770",
     "name": "Claw Wide with Clip",
     "category": "Animal"
-  },
-  {
-    "id": "1686",
-    "name": "Constraction Shell 2 x 4 x 3.333 Shoulder Pad with Bar",
-    "category": "Constraction"
   },
   {
     "id": "16965",
@@ -1245,11 +1095,6 @@
     "category": "Technic"
   },
   {
-    "id": "18396",
-    "name": "Constraction Flame 3.5 x 12 with Axle",
-    "category": "Constraction"
-  },
-  {
     "id": "18450",
     "name": "Tyre 44/ 91 x 43 R",
     "category": "Tyre"
@@ -1278,11 +1123,6 @@
     "id": "18587",
     "name": "Technic Projectile Launcher Six-Shooter Trigger",
     "category": "Technic"
-  },
-  {
-    "id": "18588",
-    "name": "Constraction Weapon Launcher Barrel",
-    "category": "Constraction Accessory"
   },
   {
     "id": "18590",
@@ -1318,11 +1158,6 @@
     "id": "18651",
     "name": "Technic Axle Pin Long with Friction with 2L Axle",
     "category": "Technic"
-  },
-  {
-    "id": "18652",
-    "name": "Duplo Arch 2 x 8 x 2",
-    "category": "Duplo"
   },
   {
     "id": "18653",
@@ -1385,21 +1220,6 @@
     "category": "Slope"
   },
   {
-    "id": "18783",
-    "name": "Duplo Brick 1 x 2 x 2 Logs Horizontal",
-    "category": "Brick"
-  },
-  {
-    "id": "18814",
-    "name": "Duplo Slope 4 x 4 x 2 Shingled",
-    "category": "Duplo"
-  },
-  {
-    "id": "18816",
-    "name": "Duplo Door 1 x 4 x 3 with Two Rounded Panes and Handle",
-    "category": "Door"
-  },
-  {
     "id": "18838",
     "name": "Arch 1 x 12 x 3 Raised with 5 Internal Ribs",
     "category": "Arch"
@@ -1408,11 +1228,6 @@
     "id": "18853",
     "name": "Plant Flower with 5 Pointed Petals with Pin",
     "category": "Plant"
-  },
-  {
-    "id": "18857",
-    "name": "Duplo Door Frame 2 x 4 x 3 with Thin Top Rim",
-    "category": "Door"
   },
   {
     "id": "18859",
@@ -1615,11 +1430,6 @@
     "category": "Electric"
   },
   {
-    "id": "19086",
-    "name": "Constraction Block 5 x 6 x 2 Forked with 3 Fingers",
-    "category": "Constraction"
-  },
-  {
     "id": "19119",
     "name": "Plant Flower Stem with Bar and 6 Stems",
     "category": "Plant"
@@ -1720,11 +1530,6 @@
     "category": "Animal"
   },
   {
-    "id": "2032",
-    "name": "Duplo Flatbed 4 x 6 x 1.75 with Corrugated Sides",
-    "category": "Duplo"
-  },
-  {
     "id": "2038",
     "name": "Signpost Ornamented Type 1",
     "category": "Roadsign"
@@ -1733,11 +1538,6 @@
     "id": "2039",
     "name": "Support 2 x 2 x 7 Lamppost with 6 Base Flutes",
     "category": "Support"
-  },
-  {
-    "id": "2040",
-    "name": "Fabuland Fence 1 x 6 x 2 Rounded",
-    "category": "Fence"
   },
   {
     "id": "20401",
@@ -1765,24 +1565,9 @@
     "category": "Staircase"
   },
   {
-    "id": "20474",
-    "name": "Constraction Limb 5 with Split Leg",
-    "category": "Constraction"
-  },
-  {
-    "id": "2048",
-    "name": "Fabuland Roof Block with Dormer",
-    "category": "Slope"
-  },
-  {
     "id": "20482",
     "name": "Tile 1 x 1 Round with Pin and Pin Hole",
     "category": "Tile"
-  },
-  {
-    "id": "2049",
-    "name": "Fabuland Window Shutter",
-    "category": "Window"
   },
   {
     "id": "20684",
@@ -1820,11 +1605,6 @@
     "category": "Boat"
   },
   {
-    "id": "2131",
-    "name": "Fabuland Refrigerator Cabinet",
-    "category": "Container"
-  },
-  {
     "id": "2142",
     "name": "Horn Stacked with Axle Holes",
     "category": "Animal"
@@ -1838,16 +1618,6 @@
     "id": "2145",
     "name": "Arch 2 x 6 x 5 Ornamented",
     "category": "Arch"
-  },
-  {
-    "id": "2156",
-    "name": "Duplo Plate 3 x 8 with Chamfered Corners",
-    "category": "Duplo"
-  },
-  {
-    "id": "21560",
-    "name": "Constraction Shell 2 x 4 x 3.333 Shoulder Pad with 2 Bars",
-    "category": "Constraction"
   },
   {
     "id": "21699",
@@ -1870,54 +1640,9 @@
     "category": "Windscreen"
   },
   {
-    "id": "21987",
-    "name": "Constraction Bar 15L with Axle Bush End",
-    "category": "Constraction"
-  },
-  {
-    "id": "21996",
-    "name": "Duplo Arm 3L with Locking Ring",
-    "category": "Crane"
-  },
-  {
-    "id": "2205",
-    "name": "Duplo Door 1 x 4 x 4 with Four Panes",
-    "category": "Door"
-  },
-  {
-    "id": "2206",
-    "name": "Duplo Window 1 x 4 x 2 with Four Panes",
-    "category": "Window"
-  },
-  {
-    "id": "2207",
-    "name": "Duplo Building 6 x 8 x 6 with Front Windows",
-    "category": "Support"
-  },
-  {
-    "id": "2208",
-    "name": "Duplo Door 1 x 4 x 6 with Six Panes",
-    "category": "Door"
-  },
-  {
-    "id": "2209",
-    "name": "Duplo Door 1 x 3 x 6 with Four Panes",
-    "category": "Door"
-  },
-  {
-    "id": "2210",
-    "name": "Duplo Building 6 x 8 x 6 with Door and Window",
-    "category": "Support"
-  },
-  {
     "id": "22119",
     "name": "Ball 52mm Diameter",
     "category": "Sphere"
-  },
-  {
-    "id": "2214",
-    "name": "Duplo Fence with 5 Posts",
-    "category": "Fence"
   },
   {
     "id": "22253",
@@ -1990,11 +1715,6 @@
     "category": "Hose"
   },
   {
-    "id": "22881",
-    "name": "Duplo Brick 2 x 2 with Front Snapping Pin",
-    "category": "Brick"
-  },
-  {
     "id": "22885",
     "name": "Brick 1 x 2 x 1.667 with Studs on 1 Side",
     "category": "Brick"
@@ -2025,21 +1745,6 @@
     "category": "Hose"
   },
   {
-    "id": "2291",
-    "name": "Duplo Brick 2 x 10",
-    "category": "Brick"
-  },
-  {
-    "id": "2294",
-    "name": "Duplo Stables Gate 1 x 4 x 6",
-    "category": "Door"
-  },
-  {
-    "id": "2296",
-    "name": "Duplo Baseplate 16 x 24 with 93 Stud Irregular Gap",
-    "category": "Baseplate"
-  },
-  {
     "id": "22961",
     "name": "Technic Axle with Perpendicular Pin Hole",
     "category": "Technic"
@@ -2048,21 +1753,6 @@
     "id": "22969a",
     "name": "Wheel 56 x 46 Technic Racing",
     "category": "Wheel"
-  },
-  {
-    "id": "2300",
-    "name": "Duplo Brick 2 x 6",
-    "category": "Brick"
-  },
-  {
-    "id": "2301b",
-    "name": "Duplo Brick 2 x 3 x 2 with Inside Curve",
-    "category": "Arch"
-  },
-  {
-    "id": "2302b",
-    "name": "Duplo Brick 2 x 3 with Curved Top",
-    "category": "Brick"
   },
   {
     "id": "2310",
@@ -2380,11 +2070,6 @@
     "category": "Plate"
   },
   {
-    "id": "24010",
-    "name": "Constraction Torso 5 x 7",
-    "category": "Constraction"
-  },
-  {
     "id": "24014",
     "name": "Technic Gear 12 Tooth Double Bevel with Axle Extension",
     "category": "Technic"
@@ -2490,11 +2175,6 @@
     "category": "Plant"
   },
   {
-    "id": "24179",
-    "name": "Duplo Cabin 4 x 4 x 3",
-    "category": "Duplo"
-  },
-  {
     "id": "2418a",
     "name": "Windscreen 6 x 6 Octagonal Canopy without Axlehole",
     "category": "Windscreen"
@@ -2508,11 +2188,6 @@
     "id": "2419",
     "name": "Plate 3 x 6 without Corners",
     "category": "Plate"
-  },
-  {
-    "id": "24190",
-    "name": "Constraction Torso 5 x 10 with Partial Gear and Connector",
-    "category": "Constraction"
   },
   {
     "id": "24196",
@@ -2683,11 +2358,6 @@
     "id": "2441",
     "name": "Car Base 7 x 4 x 0.667",
     "category": "Car"
-  },
-  {
-    "id": "24417",
-    "name": "Duplo Dog Sled",
-    "category": "Duplo"
   },
   {
     "id": "2442",
@@ -2885,11 +2555,6 @@
     "category": "Propeller"
   },
   {
-    "id": "24807",
-    "name": "Duplo Brush with Handle",
-    "category": "Duplo"
-  },
-  {
     "id": "2483",
     "name": "Windscreen 4 x 4 x 3.667 Helicopter",
     "category": "Windscreen"
@@ -2973,11 +2638,6 @@
     "id": "2498",
     "name": "Car Wash Brush",
     "category": "Car"
-  },
-  {
-    "id": "250",
-    "name": "Duplo Brick 2 x 6 x 2 Double Concave",
-    "category": "Arch"
   },
   {
     "id": "2502",
@@ -3145,24 +2805,9 @@
     "category": "Door"
   },
   {
-    "id": "25548",
-    "name": "Duplo Plate 4 x 4 with Hinge Extended on Side",
-    "category": "Duplo"
-  },
-  {
-    "id": "25549",
-    "name": "Duplo Plate 4 x 6",
-    "category": "Plate"
-  },
-  {
     "id": "2555",
     "name": "Tile 1 x 1 with Clip",
     "category": "Tile"
-  },
-  {
-    "id": "25550",
-    "name": "Duplo Brick 1 x 2 x 2 with Embossed Bricks",
-    "category": "Brick"
   },
   {
     "id": "2560",
@@ -3268,11 +2913,6 @@
     "id": "2598",
     "name": "Windscreen 10 x 10 x 4 Octagonal Canopy",
     "category": "Windscreen"
-  },
-  {
-    "id": "2601",
-    "name": "Constraction Sword 15L with Swirls and Spike with Axle",
-    "category": "Constraction Accessory"
   },
   {
     "id": "26021",
@@ -3585,16 +3225,6 @@
     "category": "Plant"
   },
   {
-    "id": "26832",
-    "name": "Duplo Brick Gear 8 Tooth 4 x 4",
-    "category": "Brick"
-  },
-  {
-    "id": "26835",
-    "name": "Duplo Brick Gear 12 Tooth 6 x 6",
-    "category": "Brick"
-  },
-  {
     "id": "2686",
     "name": "Monorail Wheel Chassis",
     "category": "Monorail"
@@ -3760,24 +3390,9 @@
     "category": "Technic"
   },
   {
-    "id": "27372",
-    "name": "Duplo Serving Tray",
-    "category": "Dish"
-  },
-  {
     "id": "2738",
     "name": "Technic Suspension Arm 2 x 6.5 Type 1",
     "category": "Technic"
-  },
-  {
-    "id": "27382",
-    "name": "Duplo Door 1 x 4 x 3 with Cutout",
-    "category": "Door"
-  },
-  {
-    "id": "27395",
-    "name": "Duplo Cabinet 2 x 4 x 5",
-    "category": "Container"
   },
   {
     "id": "2739a",
@@ -3812,11 +3427,6 @@
   {
     "id": "27507",
     "name": "Tile 4 x 4 Corner Round",
-    "category": "Tile"
-  },
-  {
-    "id": "2756",
-    "name": "Duplo Tile 2 x 2 x 1",
     "category": "Tile"
   },
   {
@@ -3938,11 +3548,6 @@
     "id": "28216",
     "name": "Technic Excavator Bucket 10 x 7",
     "category": "Technic"
-  },
-  {
-    "id": "28220",
-    "name": "Constraction Shell 0.6 x 2 x 3.5 Flat with 2 Bars",
-    "category": "Constraction"
   },
   {
     "id": "2823",
@@ -4345,16 +3950,6 @@
     "category": "Electric"
   },
   {
-    "id": "29303",
-    "name": "Duplo Slope Brick 45 4 x 2 Double",
-    "category": "Slope"
-  },
-  {
-    "id": "29304",
-    "name": "Duplo Plate 4 x 8 Round Semicircle",
-    "category": "Plate"
-  },
-  {
     "id": "2937",
     "name": "Slope Brick 55 1 x 6 x 5 with Bottom Stud Holders",
     "category": "Slope"
@@ -4488,11 +4083,6 @@
     "id": "30016",
     "name": "Panel 6 x 6 x 12 Corner Lattice",
     "category": "Panel"
-  },
-  {
-    "id": "30018",
-    "name": "Belville Bathtub 6 x 12",
-    "category": "Container"
   },
   {
     "id": "3001b",
@@ -4763,11 +4353,6 @@
     "id": "30109",
     "name": "Container Basket 2 x 4.5 x 2",
     "category": "Container"
-  },
-  {
-    "id": "3011",
-    "name": "Duplo Brick 2 x 4",
-    "category": "Brick"
   },
   {
     "id": "30110",
@@ -6160,121 +5745,6 @@
     "category": "Cylinder"
   },
   {
-    "id": "31000",
-    "name": "Duplo Primo Brick 1 x 1",
-    "category": "Brick"
-  },
-  {
-    "id": "31001",
-    "name": "Duplo Primo Brick 1 x 2",
-    "category": "Duplo"
-  },
-  {
-    "id": "31002",
-    "name": "Duplo Primo Brick 1 x 3",
-    "category": "Duplo"
-  },
-  {
-    "id": "31007",
-    "name": "Duplo Primo Brick 1 x 1 with 4 Duplo Studs",
-    "category": "Duplo"
-  },
-  {
-    "id": "31012",
-    "name": "Duplo Primo Plate 3 x 3",
-    "category": "Duplo"
-  },
-  {
-    "id": "31021",
-    "name": "Duplo Fence 1 x 6 x 2",
-    "category": "Fence"
-  },
-  {
-    "id": "31022",
-    "name": "Duplo Window 1 x 4 x 3 with Curved Top with Four Panes",
-    "category": "Window"
-  },
-  {
-    "id": "31023",
-    "name": "Duplo Door 1 x 4 x 4 with Curved Top with Four Panes",
-    "category": "Door"
-  },
-  {
-    "id": "31043",
-    "name": "Duplo Baseplate 8 x 12",
-    "category": "Baseplate"
-  },
-  {
-    "id": "31059",
-    "name": "Duplo Palm Tree Leaves with 2 x 2 Studs on Top",
-    "category": "Plant"
-  },
-  {
-    "id": "31061",
-    "name": "Duplo Brick 2 x 2 x 2 with Indented Sides and Rounded Corners",
-    "category": "Brick"
-  },
-  {
-    "id": "31074",
-    "name": "Duplo Baseplate 12 x 16 with 12 x 4 Stud Gap",
-    "category": "Baseplate"
-  },
-  {
-    "id": "31110",
-    "name": "Duplo Brick 2 x 2 x 2",
-    "category": "Brick"
-  },
-  {
-    "id": "31111",
-    "name": "Duplo Brick 2 x 4 x 2",
-    "category": "Brick"
-  },
-  {
-    "id": "31148",
-    "name": "Duplo Primo Brick 2 x 2",
-    "category": "Brick"
-  },
-  {
-    "id": "31149",
-    "name": "Duplo Primo Brick 2 x 3",
-    "category": "Brick"
-  },
-  {
-    "id": "31170",
-    "name": "Duplo Roof Sloped 33 4 x 4 with 9 Bottom Tubes with Awning Overhang",
-    "category": "Slope"
-  },
-  {
-    "id": "31171",
-    "name": "Duplo Door 1 x 4 x 4 with Flat Top with 9 Panes",
-    "category": "Door"
-  },
-  {
-    "id": "3118",
-    "name": "Duplo Plant Stem / Frond / Carrot Top",
-    "category": "Duplo"
-  },
-  {
-    "id": "31191",
-    "name": "Duplo Ball Tube Exit with Round Doorway 2 x 6 x 5",
-    "category": "Brick"
-  },
-  {
-    "id": "31195",
-    "name": "Duplo Ball Tube 45 Degrees",
-    "category": "Duplo"
-  },
-  {
-    "id": "31213b",
-    "name": "Duplo Brick 2 x 4 x 2 with Curved Top",
-    "category": "Brick"
-  },
-  {
-    "id": "31215",
-    "name": "Duplo Brick 2 x 4 with Wings",
-    "category": "Brick"
-  },
-  {
     "id": "3127a",
     "name": "Plate 1 x 2 with Crane Hook Left",
     "category": "Plate"
@@ -6290,24 +5760,9 @@
     "category": "Panel"
   },
   {
-    "id": "31301",
-    "name": "Duplo Train Compartment/Container Frame 4 x 4 x 3",
-    "category": "Duplo"
-  },
-  {
-    "id": "31303",
-    "name": "Duplo Train Tipper",
-    "category": "Duplo"
-  },
-  {
     "id": "3131",
     "name": "Panel 2 x 2 x 1 Corner Posts with Centre Stud",
     "category": "Panel"
-  },
-  {
-    "id": "31333",
-    "name": "Duplo Dish",
-    "category": "Dish"
   },
   {
     "id": "3134",
@@ -6345,16 +5800,6 @@
     "category": "Tipper"
   },
   {
-    "id": "31452",
-    "name": "Duplo Ball Tube Straight",
-    "category": "Duplo"
-  },
-  {
-    "id": "31465",
-    "name": "Duplo Plate 4 x 6 with 6 Studs on One Edge",
-    "category": "Plate"
-  },
-  {
     "id": "3148",
     "name": "Hinge Plate 2 x 5 Top with Large Hole",
     "category": "Hinge"
@@ -6385,26 +5830,6 @@
     "category": "Panel"
   },
   {
-    "id": "31622",
-    "name": "Duplo Gear 24 Tooth Crown",
-    "category": "Technic"
-  },
-  {
-    "id": "31623",
-    "name": "Duplo Axle 8 with Gear 8 Tooth",
-    "category": "Technic"
-  },
-  {
-    "id": "31624",
-    "name": "Duplo Gearbox",
-    "category": "Technic"
-  },
-  {
-    "id": "31625",
-    "name": "Duplo Worm Gear",
-    "category": "Technic"
-  },
-  {
     "id": "3167",
     "name": "Technic Beam 2 x 3 C-shaped",
     "category": "Technic"
@@ -6413,11 +5838,6 @@
     "id": "3170",
     "name": "Plate 1 x 2 with Ball Joint-8 on Both Ends",
     "category": "Plate"
-  },
-  {
-    "id": "3171",
-    "name": "Constraction Finger Angled with Clip",
-    "category": "Constraction"
   },
   {
     "id": "3172",
@@ -6488,11 +5908,6 @@
     "id": "3191",
     "name": "Door 1 x 3 x 3 Left with Vertical Handle with Grip",
     "category": "Door"
-  },
-  {
-    "id": "31925",
-    "name": "Duplo Flag Wavy 3 x 4 with Post",
-    "category": "Flag"
   },
   {
     "id": "3192a",
@@ -6850,11 +6265,6 @@
     "category": "Technic"
   },
   {
-    "id": "32174",
-    "name": "Constraction Connector 3 x 2 with Single Round Ball Socket",
-    "category": "Constraction"
-  },
-  {
     "id": "32175",
     "name": "Technic Connector Block 3 x 3 Triangular",
     "category": "Technic"
@@ -6975,134 +6385,14 @@
     "category": "Technic"
   },
   {
-    "id": "32203",
-    "name": "Znap Beam 3 Holes",
-    "category": "Znap"
-  },
-  {
-    "id": "32204",
-    "name": "Znap Beam Angle 4 Holes",
-    "category": "Znap"
-  },
-  {
-    "id": "32205",
-    "name": "Znap Beam Curved 3 Holes",
-    "category": "Znap"
-  },
-  {
-    "id": "32206",
-    "name": "Znap Beam Angle 5 Holes",
-    "category": "Znap"
-  },
-  {
-    "id": "32207",
-    "name": "Znap Connector Offset Holes",
-    "category": "Znap"
-  },
-  {
-    "id": "32208",
-    "name": "Znap Beam Angle 9 Holes",
-    "category": "Znap"
-  },
-  {
     "id": "32209",
     "name": "Technic Axle 5.5 with Stop Type 1",
     "category": "Technic"
   },
   {
-    "id": "32210",
-    "name": "Znap Beam 1 Hole",
-    "category": "Znap"
-  },
-  {
-    "id": "32211",
-    "name": "Znap Connector 3 x 3 - 4 Way",
-    "category": "Znap"
-  },
-  {
-    "id": "32212",
-    "name": "Znap Connector 1 x 3 - 2 Way Axial",
-    "category": "Znap"
-  },
-  {
-    "id": "32213",
-    "name": "Znap Grid 15 Holes",
-    "category": "Znap"
-  },
-  {
-    "id": "32214",
-    "name": "Znap Beam Angle 8 Holes",
-    "category": "Znap"
-  },
-  {
-    "id": "32216",
-    "name": "Znap Beam Curved 14 Holes",
-    "category": "Znap"
-  },
-  {
-    "id": "32218",
-    "name": "Znap Beam Curved Double 4 Holes",
-    "category": "Znap"
-  },
-  {
-    "id": "32219",
-    "name": "Wheel 14 x 30 Znap",
-    "category": "Wheel"
-  },
-  {
-    "id": "32220",
-    "name": "Wheel 16 x 68 Znap",
-    "category": "Wheel"
-  },
-  {
-    "id": "32221",
-    "name": "Znap Connector 3 x 3 - 4 Way Axial",
-    "category": "Znap"
-  },
-  {
-    "id": "32225",
-    "name": "Znap Grid 9 x 7 x 4 Motor Holder",
-    "category": "Znap"
-  },
-  {
-    "id": "32227",
-    "name": "Znap Connector 3 x 3 - 4 Way Rotating Section",
-    "category": "Znap"
-  },
-  {
-    "id": "32228",
-    "name": "Znap Connector 3 x 3 - 4 Way Core Section",
-    "category": "Znap"
-  },
-  {
-    "id": "32229",
-    "name": "Znap Beam 7 Holes",
-    "category": "Znap"
-  },
-  {
-    "id": "32230",
-    "name": "Znap Beam Curved 2 Holes",
-    "category": "Znap"
-  },
-  {
     "id": "32235",
     "name": "Technic Axle Flexible 19",
     "category": "Technic"
-  },
-  {
-    "id": "32242",
-    "name": "Znap Beam Angle 2 Holes",
-    "category": "Znap"
-  },
-  {
-    "id": "32246",
-    "name": "Znap Beam Curved 4 Holes",
-    "category": "Znap"
-  },
-  {
-    "id": "32247",
-    "name": "Wheel 41mm Znap",
-    "category": "Wheel"
   },
   {
     "id": "32249",
@@ -7345,21 +6635,6 @@
     "category": "Technic"
   },
   {
-    "id": "32475",
-    "name": "Constraction Foot 3 x 6 x 2.333 with Rounded Ball Socket",
-    "category": "Constraction"
-  },
-  {
-    "id": "32476",
-    "name": "Constraction Limb 4 x 7 Bent 45 with Ball Joint and Opposing Axleholes",
-    "category": "Constraction"
-  },
-  {
-    "id": "32482",
-    "name": "Constraction Limb 7 Bent 33",
-    "category": "Constraction"
-  },
-  {
     "id": "32489",
     "name": "Technic Connector Block 4 x 5 x 7.667",
     "category": "Technic"
@@ -7480,16 +6755,6 @@
     "category": "Technic"
   },
   {
-    "id": "32551",
-    "name": "Constraction Claw Hook with Axle",
-    "category": "Constraction"
-  },
-  {
-    "id": "32552",
-    "name": "Constraction Blade 12L Double-Edged Sword with 3 Pinholes and Axle",
-    "category": "Constraction"
-  },
-  {
     "id": "32555",
     "name": "Technic Brick 5 x 5 Corner with Holes",
     "category": "Technic"
@@ -7510,29 +6775,9 @@
     "category": "Technic"
   },
   {
-    "id": "32558",
-    "name": "Constraction Flame 2 x 12",
-    "category": "Constraction Accessory"
-  },
-  {
-    "id": "32559",
-    "name": "Constraction Weapon Axe Large with Axle",
-    "category": "Constraction"
-  },
-  {
     "id": "32576",
     "name": "Technic Connector 3 x 4.5 x 2.333 with Pin (Needs Work)",
     "category": "Technic"
-  },
-  {
-    "id": "32577",
-    "name": "Constraction Torso 5 x 3 with 3 Pins and 6 Pegholes",
-    "category": "Constraction"
-  },
-  {
-    "id": "32578",
-    "name": "Technic Bionicle Matoran Claw Arm",
-    "category": "Constraction"
   },
   {
     "id": "32580",
@@ -7620,49 +6865,14 @@
     "category": "Slope"
   },
   {
-    "id": "33008",
-    "name": "Scala Flower Pot",
-    "category": "Scala"
-  },
-  {
-    "id": "33029",
-    "name": "Scala Plate 2 x 4",
-    "category": "Scala"
-  },
-  {
     "id": "33031",
     "name": "Container Box 3.5 x 3.5 x 1.333 with Hinged Lid Closed",
     "category": "Container"
   },
   {
-    "id": "33062",
-    "name": "Scala Plate 4 x 4",
-    "category": "Scala"
-  },
-  {
     "id": "3307",
     "name": "Arch 1 x 6 x 2 with Thick Top and Reinforced Underside",
     "category": "Arch"
-  },
-  {
-    "id": "33080",
-    "name": "Scala Baseplate 22 x 44",
-    "category": "Scala"
-  },
-  {
-    "id": "33086",
-    "name": "Scala Arch 22 x 2 x 16 1/3",
-    "category": "Scala"
-  },
-  {
-    "id": "33088",
-    "name": "Scala Table Top 7 x 14 Semicircle",
-    "category": "Scala"
-  },
-  {
-    "id": "33089",
-    "name": "Scala Support 4 x 4 x 5.667",
-    "category": "Scala"
   },
   {
     "id": "3308a",
@@ -7690,11 +6900,6 @@
     "category": "Hinge"
   },
   {
-    "id": "33160",
-    "name": "Hoop Shaped Bar 7 x 7",
-    "category": "Belville"
-  },
-  {
     "id": "3317",
     "name": "Brick 1 x 2 with Digger Bucket Arm Holder",
     "category": "Brick"
@@ -7703,16 +6908,6 @@
     "id": "33176",
     "name": "Sphere 1.4 x 1.4 with Stud Attachment",
     "category": "Sphere"
-  },
-  {
-    "id": "33177",
-    "name": "Scala Baseplate 12 x 22",
-    "category": "Scala"
-  },
-  {
-    "id": "33195",
-    "name": "Scala Platform 7 x 14 x 1.333 With 8 Legs",
-    "category": "Scala"
   },
   {
     "id": "33207",
@@ -7780,16 +6975,6 @@
     "category": "Technic"
   },
   {
-    "id": "33279",
-    "name": "Scala Ski Pole 13L",
-    "category": "Scala"
-  },
-  {
-    "id": "33286",
-    "name": "Brick 1 x 1 x 2/3 Round with Scala Base",
-    "category": "Brick"
-  },
-  {
     "id": "33287",
     "name": "Cylinder 2 x 2 x 2.4 with Dome Top and Slots",
     "category": "Cylinder"
@@ -7798,11 +6983,6 @@
     "id": "33291",
     "name": "Plate 1 x 1 Round with Tabs",
     "category": "Plate"
-  },
-  {
-    "id": "33298",
-    "name": "Znap Connector 3 x 3 - 3 Way with Pin",
-    "category": "Znap"
   },
   {
     "id": "33299a",
@@ -7968,11 +7148,6 @@
     "id": "3436",
     "name": "Tipper End Sloped",
     "category": "Tipper"
-  },
-  {
-    "id": "3437",
-    "name": "Duplo Brick 2 x 2",
-    "category": "Brick"
   },
   {
     "id": "3455",
@@ -8185,16 +7360,6 @@
     "category": "Door"
   },
   {
-    "id": "35114",
-    "name": "Duplo Slope 17 3 x 2",
-    "category": "Slope"
-  },
-  {
-    "id": "35132",
-    "name": "Duplo Roof Sloped 33 4 x 4 with 5 Bottom Tubes with Awning Overhang",
-    "category": "Slope"
-  },
-  {
     "id": "35154",
     "name": "Dish 8 x 8 Inverted with Solid Studs and Squared Antistud Underside",
     "category": "Dish"
@@ -8223,11 +7388,6 @@
     "id": "35189",
     "name": "Technic Steering Wheel Hub with Brake Disc and 3 Pegholes",
     "category": "Technic"
-  },
-  {
-    "id": "3519",
-    "name": "Duplo Ladder 1 x 3 x 5 with 3 Studs on Top",
-    "category": "Duplo"
   },
   {
     "id": "35195",
@@ -8365,11 +7525,6 @@
     "category": "Tyre"
   },
   {
-    "id": "35579",
-    "name": "Duplo Airport Tower with 3 Windows",
-    "category": "Duplo"
-  },
-  {
     "id": "3563",
     "name": "Brick 1 x 2 x 0.667 with Curved Top",
     "category": "Brick"
@@ -8485,21 +7640,6 @@
     "category": "Flag"
   },
   {
-    "id": "35960",
-    "name": "Duplo Tipper Box 4 x 4 x 2",
-    "category": "Duplo"
-  },
-  {
-    "id": "35962",
-    "name": "Duplo Train Action Brick",
-    "category": "Train"
-  },
-  {
-    "id": "35967",
-    "name": "Duplo Train Buffer Stop",
-    "category": "Train"
-  },
-  {
     "id": "3597",
     "name": "Hinge Plate 2 x 4 - Female",
     "category": "Hinge"
@@ -8533,11 +7673,6 @@
     "id": "3623",
     "name": "Plate 1 x 3",
     "category": "Plate"
-  },
-  {
-    "id": "3627",
-    "name": "Constraction Lightsaber Blade 10L with Axle End",
-    "category": "Constraction Accessory"
   },
   {
     "id": "3628",
@@ -8643,11 +7778,6 @@
     "id": "3661",
     "name": "Plate 1 x 1 with Vertical Bar",
     "category": "Plate"
-  },
-  {
-    "id": "3664",
-    "name": "Duplo Brick 2 x 2 x 2 with Curved Top",
-    "category": "Brick"
   },
   {
     "id": "3665a",
@@ -9050,11 +8180,6 @@
     "category": "Bar"
   },
   {
-    "id": "3808",
-    "name": "Duplo Plate 2 x 4 x 0.333 Half Circle with 2 Studs",
-    "category": "Plate"
-  },
-  {
     "id": "3811",
     "name": "Baseplate 32 x 32",
     "category": "Baseplate"
@@ -9445,11 +8570,6 @@
     "category": "Technic"
   },
   {
-    "id": "3982",
-    "name": "Duplo Wagon Body 4 x 6 with Sloped Sides",
-    "category": "Vehicle"
-  },
-  {
     "id": "39888",
     "name": "Technic Pin Long without Friction Type 2",
     "category": "Technic"
@@ -9483,11 +8603,6 @@
     "id": "3998b",
     "name": "Tow Crane 2 x 4 x 3 Hook Reinforced",
     "category": "Crane"
-  },
-  {
-    "id": "3999",
-    "name": "Ladder Support 2 x 4 x 2.5 Fabuland",
-    "category": "Ladder"
   },
   {
     "id": "400",
@@ -9580,24 +8695,9 @@
     "category": "Train"
   },
   {
-    "id": "40339",
-    "name": "Constraction Weapon Trident with Axle 6L",
-    "category": "Constraction Accessory"
-  },
-  {
     "id": "4034",
     "name": "Glass for Train Window 1 x 4 x 3",
     "category": "Glass"
-  },
-  {
-    "id": "40340",
-    "name": "Constraction Weapon Drill with Axle 5L",
-    "category": "Constraction Accessory"
-  },
-  {
-    "id": "40341",
-    "name": "Constraction Weapon Circular Saw with Axle 6L",
-    "category": "Constraction Accessory"
   },
   {
     "id": "4035",
@@ -9665,34 +8765,9 @@
     "category": "Window"
   },
   {
-    "id": "40554",
-    "name": "Duplo Umbrella with Stop Ring",
-    "category": "Duplo"
-  },
-  {
-    "id": "40582",
-    "name": "Constraction Weapon Ice Pick with Axle 7L",
-    "category": "Constraction"
-  },
-  {
     "id": "40620",
     "name": "Exhaust Pipe with Pin",
     "category": "Exhaust"
-  },
-  {
-    "id": "40666",
-    "name": "Duplo Plate 2 x 4",
-    "category": "Duplo"
-  },
-  {
-    "id": "4066a",
-    "name": "Duplo Brick 1 x 2 x 2 Type 1",
-    "category": "Brick"
-  },
-  {
-    "id": "4066b",
-    "name": "Duplo Brick 1 x 2 x 2 Type 2",
-    "category": "Brick"
   },
   {
     "id": "40687",
@@ -9835,11 +8910,6 @@
     "category": "Arm"
   },
   {
-    "id": "4121",
-    "name": "Duplo Plate 2 x 4 x 0.333 with 4 Centre Studs",
-    "category": "Plate"
-  },
-  {
     "id": "41239",
     "name": "Technic Beam 13",
     "category": "Technic"
@@ -9950,16 +9020,6 @@
     "category": "Slope"
   },
   {
-    "id": "41659",
-    "name": "Constraction Shield 5 x 5 with Wrench",
-    "category": "Constraction Accessory"
-  },
-  {
-    "id": "41663",
-    "name": "Constraction Shield 5 x 5 with Dual Prongs",
-    "category": "Constraction Accessory"
-  },
-  {
     "id": "41665",
     "name": "Technic Beam 1 x 4 x 7 with 5 Axleholes and 2 Holes and 1 Slot",
     "category": "Technic"
@@ -9973,11 +9033,6 @@
     "id": "41667",
     "name": "Technic Arm 3 x 2 with Gear 36 Tooth Double Bevel Quarter",
     "category": "Technic"
-  },
-  {
-    "id": "41668",
-    "name": "Constraction Foot 2 x 5 x 3 with Ball Socket",
-    "category": "Constraction"
   },
   {
     "id": "41669",
@@ -10290,46 +9345,6 @@
     "category": "Plate"
   },
   {
-    "id": "4196",
-    "name": "Duplo Plate 6 x 12",
-    "category": "Plate"
-  },
-  {
-    "id": "41969",
-    "name": "Duplo Support Column 2 x 3 x 3 with 2 Top Studs",
-    "category": "Support"
-  },
-  {
-    "id": "4197",
-    "name": "Duplo Brick 2 x 6 x 2 with Raised Central 2 x 2 Section with Curved Sides",
-    "category": "Brick"
-  },
-  {
-    "id": "41970",
-    "name": "Duplo Brick 1 x 3 x 2 Round Top",
-    "category": "Duplo"
-  },
-  {
-    "id": "41978",
-    "name": "Duplo Brick 2 x 2 x 2 with Vertical Grooves",
-    "category": "Brick"
-  },
-  {
-    "id": "4198",
-    "name": "Duplo Brick 2 x 4 x 2 with Rounded Ends",
-    "category": "Brick"
-  },
-  {
-    "id": "41989",
-    "name": "Duplo Car Base 2 x 4",
-    "category": "Vehicle"
-  },
-  {
-    "id": "4199",
-    "name": "Duplo Brick 2 x 8",
-    "category": "Brick"
-  },
-  {
     "id": "420",
     "name": "Ladder 2 x 12 Bottom Section",
     "category": "Ladder"
@@ -10343,11 +9358,6 @@
     "id": "4201",
     "name": "Brick 8 x 8",
     "category": "Brick"
-  },
-  {
-    "id": "42013",
-    "name": "Belville Ice Skate",
-    "category": "Belville"
   },
   {
     "id": "4202",
@@ -10370,19 +9380,9 @@
     "category": "Slope"
   },
   {
-    "id": "42025",
-    "name": "Duplo Brick 1 x 3 x 2 Triangle",
-    "category": "Brick"
-  },
-  {
     "id": "4204",
     "name": "Brick 8 x 16",
     "category": "Brick"
-  },
-  {
-    "id": "42042a",
-    "name": "Constraction Bionicle Mask Krana Su",
-    "category": "Constraction"
   },
   {
     "id": "42060",
@@ -10393,16 +9393,6 @@
     "id": "42061",
     "name": "Wedge 12 x 3 x 1 Double Rounded Left",
     "category": "Wedge"
-  },
-  {
-    "id": "42074",
-    "name": "Constraction Hook Small with Peghole and Axle",
-    "category": "Technic"
-  },
-  {
-    "id": "42077",
-    "name": "Duplo Wand 7 Point Star",
-    "category": "Duplo"
   },
   {
     "id": "4207a",
@@ -10530,21 +9520,6 @@
     "category": "Arm"
   },
   {
-    "id": "42234",
-    "name": "Duplo Brick 1 x 2 x 2 with Scooped Sides",
-    "category": "Brick"
-  },
-  {
-    "id": "42235",
-    "name": "Duplo Vehicle Cement Mixer Bucket",
-    "category": "Vehicle"
-  },
-  {
-    "id": "42236",
-    "name": "Duplo Plate 1 x 2 with Overhang (Needs Work)",
-    "category": "Plate"
-  },
-  {
     "id": "4228",
     "name": "Slope Brick 33 5 x 6 x 2 Inverted",
     "category": "Slope"
@@ -10585,11 +9560,6 @@
     "category": "Container"
   },
   {
-    "id": "42409",
-    "name": "Snow Flake 4 x 4",
-    "category": "Belville"
-  },
-  {
     "id": "42445",
     "name": "Bar 12L with Plate 1 x 2 with Solid Studs and Hollow Stud",
     "category": "Bar"
@@ -10603,16 +9573,6 @@
     "id": "42448",
     "name": "Gate 1 x 4 x 9 Arched with Bars",
     "category": "Fence"
-  },
-  {
-    "id": "4247a",
-    "name": "Duplo Door 1 x 4 x 3 with Arched Top with Large Window",
-    "category": "Door"
-  },
-  {
-    "id": "4248",
-    "name": "Duplo Door 1 x 4 x 3 with Arched Top with Porthole",
-    "category": "Door"
   },
   {
     "id": "425",
@@ -10643,11 +9603,6 @@
     "id": "4257",
     "name": "Disc with Dimple Offset and Peg",
     "category": "Cylinder"
-  },
-  {
-    "id": "4258",
-    "name": "Duplo Brick 2 x 4 x 2 with Rounded Ends with Eyes Sockets",
-    "category": "Brick"
   },
   {
     "id": "4259",
@@ -10705,11 +9660,6 @@
     "category": "Technic"
   },
   {
-    "id": "42657",
-    "name": "Duplo Brick 1 x 2 x 2 Type 3",
-    "category": "Brick"
-  },
-  {
     "id": "4265a",
     "name": "Technic Bush 1/2 Type 1",
     "category": "Technic"
@@ -10723,11 +9673,6 @@
     "id": "4267",
     "name": "Tyre 20/ 83 x 30 Offset Tread",
     "category": "Tyre"
-  },
-  {
-    "id": "4268",
-    "name": "Duplo Baseplate 24 x 24",
-    "category": "Baseplate"
   },
   {
     "id": "42688",
@@ -10915,16 +9860,6 @@
     "category": "Hinge"
   },
   {
-    "id": "4323",
-    "name": "Fabuland Roof Slope without Top Hole",
-    "category": "Slope"
-  },
-  {
-    "id": "43363",
-    "name": "Constraction Helmet Darth Vader",
-    "category": "Constraction"
-  },
-  {
     "id": "43373",
     "name": "Brick 1 x 2 with Hoop and Axle",
     "category": "Brick"
@@ -11040,24 +9975,9 @@
     "category": "Animal"
   },
   {
-    "id": "4375",
-    "name": "Duplo Sign Post Base Short",
-    "category": "Support"
-  },
-  {
     "id": "43750",
     "name": "Animal Serpent Basilisk Tail/Neck S Curve with Black Pin",
     "category": "Animal"
-  },
-  {
-    "id": "4378a",
-    "name": "Duplo Cone 2 x 2 x 1",
-    "category": "Cone"
-  },
-  {
-    "id": "4378b",
-    "name": "Duplo Cone 2 x 2 x 1.5",
-    "category": "Cone"
   },
   {
     "id": "43802",
@@ -11115,16 +10035,6 @@
     "category": "Wing"
   },
   {
-    "id": "44032",
-    "name": "Constraction Skate",
-    "category": "Constraction Accessory"
-  },
-  {
-    "id": "44033",
-    "name": "Constraction Blade 12L Curved with 2 Pinholes and Axle",
-    "category": "Constraction Accessory"
-  },
-  {
     "id": "44041",
     "name": "Brick 8 x 16 with Reinforced Underside",
     "category": "Brick"
@@ -11158,11 +10068,6 @@
     "id": "44135",
     "name": "Technic Bionicle Rahkshi Lower Torso Section",
     "category": "Technic"
-  },
-  {
-    "id": "44136",
-    "name": "Constraction Block 2 x 7 x 3 Curved with Forked Axle Hole",
-    "category": "Constraction"
   },
   {
     "id": "44137",
@@ -11340,11 +10245,6 @@
     "category": "Container"
   },
   {
-    "id": "44524",
-    "name": "Duplo Plate 2 x 8",
-    "category": "Duplo"
-  },
-  {
     "id": "4455",
     "name": "Tyre 36/ 43 x 56 All-Terrain",
     "category": "Tyre"
@@ -11440,11 +10340,6 @@
     "category": "Exhaust"
   },
   {
-    "id": "44670",
-    "name": "Duplo Plate 2 x 8 with 4L Bar",
-    "category": "Plate"
-  },
-  {
     "id": "44674",
     "name": "Car Mudguard 3 x 4 Overhanging",
     "category": "Car"
@@ -11463,16 +10358,6 @@
     "id": "44676b",
     "name": "Flag 2 x 2 Trapezoid (Thick C-Clip)",
     "category": "Flag"
-  },
-  {
-    "id": "4468",
-    "name": "Fabuland Car Roof with Hinge",
-    "category": "Vehicle"
-  },
-  {
-    "id": "4469",
-    "name": "Fabuland Car Roof with Hinge Support",
-    "category": "Vehicle"
   },
   {
     "id": "44728",
@@ -11545,21 +10430,6 @@
     "category": "Technic"
   },
   {
-    "id": "44810",
-    "name": "Constraction Block 3 x 5 with Partial Gear 28 Tooth Double Bevel",
-    "category": "Constraction"
-  },
-  {
-    "id": "44811",
-    "name": "Constraction Weapon Kolhii Stick",
-    "category": "Constraction"
-  },
-  {
-    "id": "44817",
-    "name": "Constraction Weapon Spearhead with Fork Tip",
-    "category": "Constraction Accessory"
-  },
-  {
     "id": "44822",
     "name": "Hinge Tile 1 x 4 Locking with 2 Single Fingers on Top",
     "category": "Hinge"
@@ -11618,21 +10488,6 @@
     "id": "4492",
     "name": "Animal Horse Head",
     "category": "Animal"
-  },
-  {
-    "id": "44936",
-    "name": "Constraction Shield 5 x 5 with Wrench with Teeth",
-    "category": "Constraction Accessory"
-  },
-  {
-    "id": "44937",
-    "name": "Constraction Shield 5 x 5 with Dual Flames",
-    "category": "Constraction Accessory"
-  },
-  {
-    "id": "44938",
-    "name": "Constraction Shield 5 x 5 with Gear Tips",
-    "category": "Constraction Accessory"
   },
   {
     "id": "4495a",
@@ -11700,11 +10555,6 @@
     "category": "Technic"
   },
   {
-    "id": "45141",
-    "name": "Duplo Fuel Canister 1 x 2 x 3",
-    "category": "Duplo"
-  },
-  {
     "id": "4515",
     "name": "Slope Brick 10 6 x 8",
     "category": "Slope"
@@ -11743,16 +10593,6 @@
     "id": "4527",
     "name": "Technic Panel 3 x 13 Curved #52 Tapered Left",
     "category": "Technic"
-  },
-  {
-    "id": "45274",
-    "name": "Constraction Shield 5 x 5 with Carved Metal Blade",
-    "category": "Constraction Accessory"
-  },
-  {
-    "id": "45275",
-    "name": "Constraction Shield 5 x 5 with Circular Grinder",
-    "category": "Constraction Accessory"
   },
   {
     "id": "45301",
@@ -11815,36 +10655,6 @@
     "category": "Slope"
   },
   {
-    "id": "4543",
-    "name": "Duplo Train Cabin Roof",
-    "category": "Train"
-  },
-  {
-    "id": "4544a",
-    "name": "Duplo Train Cabin 3.2 x 3 x 3 with Wide Front Windows",
-    "category": "Duplo"
-  },
-  {
-    "id": "4544b",
-    "name": "Duplo Train Cabin 3.2 x 3 x 3 with Narrow Front Windows",
-    "category": "Duplo"
-  },
-  {
-    "id": "45473",
-    "name": "Clikits Disc",
-    "category": "Clikits"
-  },
-  {
-    "id": "45481",
-    "name": "Clikits Bead",
-    "category": "Clikits"
-  },
-  {
-    "id": "4549",
-    "name": "Duplo Train Tipper Holder 2 x 6",
-    "category": "Duplo"
-  },
-  {
     "id": "455",
     "name": "Baseplate 16 x 24 with Rounded Corners",
     "category": "Baseplate"
@@ -11875,11 +10685,6 @@
     "category": "Brick"
   },
   {
-    "id": "457",
-    "name": "Maxifig Tool Oar",
-    "category": "Homemaker"
-  },
-  {
     "id": "45705",
     "name": "Windscreen 10 x 6 x 2",
     "category": "Windscreen"
@@ -11898,11 +10703,6 @@
     "id": "45708",
     "name": "Train Buffer Beam with Plough",
     "category": "Train"
-  },
-  {
-    "id": "45749",
-    "name": "Constraction Limb 8 Straight with Wedge Sides",
-    "category": "Constraction"
   },
   {
     "id": "458",
@@ -12085,11 +10885,6 @@
     "category": "Vehicle"
   },
   {
-    "id": "46296",
-    "name": "Clikits Ring",
-    "category": "Clikits"
-  },
-  {
     "id": "46305",
     "name": "Technic Flex-System Hose 40L (800LDU)",
     "category": "Technic"
@@ -12135,24 +10930,9 @@
     "category": "Technic"
   },
   {
-    "id": "4663",
-    "name": "Duplo Hook Short with Cross Bar and String Hole",
-    "category": "Crane"
-  },
-  {
     "id": "46667",
     "name": "Plane Jet Engine Fan with 10 Blades and Technic Pin",
     "category": "Plane"
-  },
-  {
-    "id": "4672a",
-    "name": "Duplo Plate 4 x 8 with 13 Underside Studs with Supports",
-    "category": "Plate"
-  },
-  {
-    "id": "4672b",
-    "name": "Duplo Plate 4 x 8 with 11 Underside Studs without Supports",
-    "category": "Plate"
   },
   {
     "id": "46834",
@@ -12245,26 +11025,6 @@
     "category": "Brick"
   },
   {
-    "id": "47296",
-    "name": "Constraction Connector 5 x 2 with Double Round Ball Sockets",
-    "category": "Constraction"
-  },
-  {
-    "id": "47297",
-    "name": "Constraction Limb 7 Straight with Two Ball Joints",
-    "category": "Constraction"
-  },
-  {
-    "id": "47298",
-    "name": "Constraction Foot 3 x 7 x 2 with 3 Pegholes and Axle",
-    "category": "Constraction"
-  },
-  {
-    "id": "47299",
-    "name": "Constraction Shell 2 x 3 x 1.5 with Peghole",
-    "category": "Constraction"
-  },
-  {
     "id": "4730",
     "name": "Brick 2 x 2 with Pin",
     "category": "Brick"
@@ -12275,29 +11035,9 @@
     "category": "Technic"
   },
   {
-    "id": "47305",
-    "name": "Constraction Torso 5 x 7 x 4 with 2 Angled Pin Holes",
-    "category": "Constraction"
-  },
-  {
-    "id": "47306",
-    "name": "Constraction Block 1 x 7 with Partial Gear 20 Double Bevel",
-    "category": "Constraction"
-  },
-  {
-    "id": "47314",
-    "name": "Constraction Weapon Aero Slicer",
-    "category": "Constraction Accessory"
-  },
-  {
     "id": "4732",
     "name": "Bracket 8 x 2 x 1 & 1/3",
     "category": "Bracket"
-  },
-  {
-    "id": "47328",
-    "name": "Constraction Limb 7 Lower Section with 3 Transverse Pinholes",
-    "category": "Constraction"
   },
   {
     "id": "4733",
@@ -12380,11 +11120,6 @@
     "category": "Wing"
   },
   {
-    "id": "47408",
-    "name": "Duplo Cone 2 x 2 x 2 Square Base without Bottom Tube",
-    "category": "Cone"
-  },
-  {
     "id": "4741",
     "name": "Window 4 x 4 x 6 Outward Sloping",
     "category": "Window"
@@ -12460,18 +11195,8 @@
     "category": "Brick"
   },
   {
-    "id": "47474",
-    "name": "Constraction Shield Holder with Angled Axle and Stud",
-    "category": "Plate"
-  },
-  {
     "id": "4748",
     "name": "Brick 2 x 4 with Coupling, Female",
-    "category": "Brick"
-  },
-  {
-    "id": "4750",
-    "name": "Brick 13.667 x 13.667 Round Fabuland Hollowed",
     "category": "Brick"
   },
   {
@@ -12600,26 +11325,6 @@
     "category": "Wedge"
   },
   {
-    "id": "4779",
-    "name": "Fabuland Ferris Wheel Axle",
-    "category": "Plate"
-  },
-  {
-    "id": "4781",
-    "name": "Fabuland Lamppost",
-    "category": "Roadsign"
-  },
-  {
-    "id": "4782",
-    "name": "Fabuland Ferris Wheel Seat",
-    "category": "Container"
-  },
-  {
-    "id": "4783",
-    "name": "Fabuland Ferris Wheel Axle Support",
-    "category": "Brick"
-  },
-  {
     "id": "4784",
     "name": "Staircase 4 x 6 x 7.333 Enclosed Straight",
     "category": "Staircase"
@@ -12650,16 +11355,6 @@
     "category": "Brick"
   },
   {
-    "id": "4788",
-    "name": "Fabuland Paddle Wheeler Wheel",
-    "category": "Boat"
-  },
-  {
-    "id": "4789",
-    "name": "Fabuland Paddle Wheeler Wheel Holder",
-    "category": "Boat"
-  },
-  {
     "id": "4790",
     "name": "Boat Ship Wheel with Unslotted Pin",
     "category": "Boat"
@@ -12668,11 +11363,6 @@
     "id": "47905",
     "name": "Brick 1 x 1 with Studs on Two Opposite Sides",
     "category": "Brick"
-  },
-  {
-    "id": "4793",
-    "name": "Fabuland Boat 8 x 14",
-    "category": "Boat"
   },
   {
     "id": "47972",
@@ -12750,11 +11440,6 @@
     "category": "Boat"
   },
   {
-    "id": "4809",
-    "name": "Duplo Window 1 x 4 x 3 with Arched Top with 4 Panes",
-    "category": "Window"
-  },
-  {
     "id": "48092",
     "name": "Brick 4 x 4 Corner Round",
     "category": "Brick"
@@ -12763,11 +11448,6 @@
     "id": "48093",
     "name": "Electric Motor Boat Rudder",
     "category": "Electric"
-  },
-  {
-    "id": "48138",
-    "name": "Quatro Brick 2 x 2",
-    "category": "Brick"
   },
   {
     "id": "48165",
@@ -12805,11 +11485,6 @@
     "category": "Wing"
   },
   {
-    "id": "48201",
-    "name": "Quatro Brick 2 x 4",
-    "category": "Brick"
-  },
-  {
     "id": "48202",
     "name": "Technic Bumper 2 x 18",
     "category": "Technic"
@@ -12840,11 +11515,6 @@
     "category": "Technic"
   },
   {
-    "id": "48287",
-    "name": "Quatro Brick 1 x 2",
-    "category": "Brick"
-  },
-  {
     "id": "48288",
     "name": "Tile 8 x 16",
     "category": "Tile"
@@ -12858,26 +11528,6 @@
     "id": "48336",
     "name": "Plate 1 x 2 with Handle Type 2",
     "category": "Plate"
-  },
-  {
-    "id": "4841",
-    "name": "Fabuland Merry-Go-Round Roof",
-    "category": "Cone"
-  },
-  {
-    "id": "48411",
-    "name": "Quatro Brick 1 x 4",
-    "category": "Brick"
-  },
-  {
-    "id": "4842",
-    "name": "Fabuland Merry-Go-Round Turntable Base",
-    "category": "Turntable"
-  },
-  {
-    "id": "4843",
-    "name": "Fabuland Merry-Go-Round Seat Holder",
-    "category": "Hinge"
   },
   {
     "id": "4844a",
@@ -13045,64 +11695,14 @@
     "category": "Bar"
   },
   {
-    "id": "4874",
-    "name": "Fabuland Merry-Go-Round Platform",
-    "category": "Turntable"
-  },
-  {
-    "id": "4875",
-    "name": "Fabuland Merry-Go-Round Base",
-    "category": "Turntable"
-  },
-  {
-    "id": "4876",
-    "name": "Fabuland Slide",
-    "category": "Staircase"
-  },
-  {
     "id": "48812",
     "name": "Animal Wolf",
     "category": "Animal"
   },
   {
-    "id": "4882",
-    "name": "Duplo Feeding Trough 2 x 4 x 1 with Rounded Sides",
-    "category": "Container"
-  },
-  {
-    "id": "4890",
-    "name": "Duplo Cupboard 2 x 2 x 1.5",
-    "category": "Container"
-  },
-  {
-    "id": "4891",
-    "name": "Duplo Drawer 2 x 2",
-    "category": "Container"
-  },
-  {
-    "id": "4892",
-    "name": "Duplo Bathroom Sink",
-    "category": "Duplo"
-  },
-  {
-    "id": "4893",
-    "name": "Duplo Semi-oval Bath Tub",
-    "category": "Duplo"
-  },
-  {
     "id": "48933",
     "name": "Wedge 4 x 4 Triple with Stud Notches",
     "category": "Wedge"
-  },
-  {
-    "id": "4894",
-    "name": "Duplo Shower Head on Stand with 1 x 2 Base",
-    "category": "Tap"
-  },
-  {
-    "id": "4895",
-    "name": "Duplo Bed 3 x 5 x 1.667",
-    "category": "Duplo"
   },
   {
     "id": "48989",
@@ -13128,21 +11728,6 @@
     "id": "49098",
     "name": "Wheel Rim 11 x 18 Side with Tyre Widener",
     "category": "Wheel"
-  },
-  {
-    "id": "4911",
-    "name": "Duplo Toilet",
-    "category": "Duplo"
-  },
-  {
-    "id": "4912",
-    "name": "Duplo Toilet Seat",
-    "category": "Duplo"
-  },
-  {
-    "id": "4913",
-    "name": "Duplo Sign Post Tall",
-    "category": "Support"
   },
   {
     "id": "49130",
@@ -13193,16 +11778,6 @@
     "id": "49311",
     "name": "Brick 1 x 4 x 3",
     "category": "Brick"
-  },
-  {
-    "id": "49465",
-    "name": "Quatro Slope Brick Curved 2 x 2",
-    "category": "Slope"
-  },
-  {
-    "id": "49570",
-    "name": "Duplo Slope 2 x 4 x 3",
-    "category": "Slope"
   },
   {
     "id": "49577",
@@ -13355,11 +11930,6 @@
     "category": "Wedge"
   },
   {
-    "id": "50384",
-    "name": "Duplo Baseplate 12 x 16 with 6 x 16 Stud Gap",
-    "category": "Baseplate"
-  },
-  {
     "id": "50407",
     "name": "Plate 2 x 2 with Rotary Shaft and Thread",
     "category": "Plate"
@@ -13425,11 +11995,6 @@
     "category": "Boat"
   },
   {
-    "id": "50858",
-    "name": "Constraction Foot 2 x 7 Pointed with 3 Pegholes",
-    "category": "Constraction"
-  },
-  {
     "id": "50859a",
     "name": "Bike 2 Wheel Motorcycle Frame 2 x 6 x 3 with Short Pins",
     "category": "Vehicle"
@@ -13453,11 +12018,6 @@
     "id": "50862",
     "name": "Wheel 6 x 14 Spoked with Stub Axles",
     "category": "Wheel"
-  },
-  {
-    "id": "50898",
-    "name": "Constraction Connector 7 x 2 with Double Round Ball Sockets",
-    "category": "Constraction"
   },
   {
     "id": "50899",
@@ -13510,19 +12070,9 @@
     "category": "Tile"
   },
   {
-    "id": "50920",
-    "name": "Constraction Limb 8 x 3 with 3 Pinholes",
-    "category": "Constraction"
-  },
-  {
     "id": "50921",
     "name": "Technic Arm 2 x 5 with Ball Joint and Gear 12 Tooth Double Bevel",
     "category": "Technic"
-  },
-  {
-    "id": "50922",
-    "name": "Constraction Limb 5 x 6 with Ball Joint and 7 Pinholes",
-    "category": "Constraction"
   },
   {
     "id": "50923",
@@ -13685,21 +12235,6 @@
     "category": "Plane"
   },
   {
-    "id": "51260",
-    "name": "Duplo Building Wall 1 x 8 x 6 Hinge on Right with Window Opening",
-    "category": "Duplo"
-  },
-  {
-    "id": "51261",
-    "name": "Duplo Building Wall 1 x 8 x 6 Hinge on Left with Door Opening",
-    "category": "Duplo"
-  },
-  {
-    "id": "51262",
-    "name": "Duplo Plate 8 x 8",
-    "category": "Duplo"
-  },
-  {
     "id": "51266",
     "name": "Glass for Window 1 x 3 x 3",
     "category": "Glass"
@@ -13708,11 +12243,6 @@
     "id": "51270",
     "name": "Plant Pumpkin",
     "category": "Plant"
-  },
-  {
-    "id": "51288",
-    "name": "Duplo Door 1 x 4 x 4 Wooden with Handle and Rounded Top",
-    "category": "Door"
   },
   {
     "id": "51342",
@@ -13758,61 +12288,6 @@
     "id": "51595",
     "name": "Baseplate 16 x 16 Driveway",
     "category": "Baseplate"
-  },
-  {
-    "id": "51695",
-    "name": "Duplo Building Wall 1 x 8 x 6 Hinge on Left with Door Opening - Castle",
-    "category": "Duplo"
-  },
-  {
-    "id": "51697",
-    "name": "Duplo Building Wall 1 x 8 x 6 Hinge on Right with Castle Window",
-    "category": "Duplo"
-  },
-  {
-    "id": "51698",
-    "name": "Duplo Plate 3 x 4 with 1 x 4 x 2 Wall and 1 x 2 x 1 Cutout",
-    "category": "Plate"
-  },
-  {
-    "id": "51702",
-    "name": "Duplo Portcullis 1 x 7 x 6",
-    "category": "Duplo"
-  },
-  {
-    "id": "51703",
-    "name": "Duplo Flame 1 x 2 x 5",
-    "category": "Duplo"
-  },
-  {
-    "id": "51704",
-    "name": "Duplo Arch 2 x 10 x 2",
-    "category": "Arch"
-  },
-  {
-    "id": "51705",
-    "name": "Duplo Plate 8 x 8 With Trap Door Opening",
-    "category": "Duplo"
-  },
-  {
-    "id": "51706",
-    "name": "Duplo Trap Door Grate 4 x 4",
-    "category": "Duplo"
-  },
-  {
-    "id": "51708",
-    "name": "Duplo Flagpole / Antenna 1 x 9",
-    "category": "Antenna"
-  },
-  {
-    "id": "51725",
-    "name": "Duplo Flag Wavy 2 x 5 with Slits",
-    "category": "Flag"
-  },
-  {
-    "id": "51732",
-    "name": "Duplo Brick 3 x 4 x 2 with Arched Parapet",
-    "category": "Arch"
   },
   {
     "id": "51739",
@@ -14040,11 +12515,6 @@
     "category": "Baseplate"
   },
   {
-    "id": "539",
-    "name": "Tyre for Wheel 41mm Znap",
-    "category": "Tyre"
-  },
-  {
     "id": "53912",
     "name": "Flag 6 x 4 with Thick C-Clips",
     "category": "Flag"
@@ -14053,11 +12523,6 @@
     "id": "53914",
     "name": "Hinge Brick 1 x 6 Locking Double, Two Finger End with 7 Teeth",
     "category": "Hinge"
-  },
-  {
-    "id": "53916",
-    "name": "Duplo Building Wall 1 x 8 x 6 Hinge on Left with Window Opening",
-    "category": "Duplo"
   },
   {
     "id": "53923",
@@ -14163,16 +12628,6 @@
     "id": "5427",
     "name": "Technic Panel 3 x 9 x 2 Curved",
     "category": "Technic"
-  },
-  {
-    "id": "54271",
-    "name": "Constraction Weapon Ball Shooter",
-    "category": "Constraction"
-  },
-  {
-    "id": "54272",
-    "name": "Constraction Blade 16.5L with 2 Axles 3 Pinholes and Teeth",
-    "category": "Constraction"
   },
   {
     "id": "5428",
@@ -14470,11 +12925,6 @@
     "category": "Tyre"
   },
   {
-    "id": "57488",
-    "name": "Constraction Flame 2 x 12 Dual Mould with Bright Light Orange Tip",
-    "category": "Constraction Accessory"
-  },
-  {
     "id": "575",
     "name": "Technic Universal Joint 4L End with Slotted End",
     "category": "Technic"
@@ -14510,19 +12960,9 @@
     "category": "Technic"
   },
   {
-    "id": "57536",
-    "name": "Constraction Head Connector Block Eye/Brain Stalk",
-    "category": "Constraction"
-  },
-  {
     "id": "57539",
     "name": "Hose Flexible 19L",
     "category": "Hose"
-  },
-  {
-    "id": "57565",
-    "name": "Constraction Weapon Pincer 6L",
-    "category": "Constraction Accessory"
   },
   {
     "id": "57585",
@@ -14595,11 +13035,6 @@
     "category": "Train"
   },
   {
-    "id": "57888",
-    "name": "Duplo Support Column 2 x 2 x 6 Round with Open Latticed Back",
-    "category": "Duplo"
-  },
-  {
     "id": "57894",
     "name": "Window 1 x 4 x 6 Frame with Three Panes",
     "category": "Window"
@@ -14653,11 +13088,6 @@
     "id": "58176",
     "name": "Cylinder Domed 1 x 1 x 1.667 with Bar",
     "category": "Cylinder"
-  },
-  {
-    "id": "58177",
-    "name": "Technic Connector Block 3 x 3 Triangular with Axlehole",
-    "category": "Constraction Accessory"
   },
   {
     "id": "58181",
@@ -14775,11 +13205,6 @@
     "category": "Panel"
   },
   {
-    "id": "5930",
-    "name": "Duplo Baseplate 16 x 16",
-    "category": "Baseplate"
-  },
-  {
     "id": "59349",
     "name": "Panel 1 x 6 x 5",
     "category": "Panel"
@@ -14883,11 +13308,6 @@
     "id": "6017",
     "name": "Plant Flower Bell Shaped 1 x 1 x 1.333",
     "category": "Plant"
-  },
-  {
-    "id": "60176",
-    "name": "Constraction Connector 3 x 2 with Single Angled Ball Socket",
-    "category": "Constraction"
   },
   {
     "id": "60189",
@@ -15395,11 +13815,6 @@
     "category": "Baseplate"
   },
   {
-    "id": "60926",
-    "name": "Constraction Weapon Pincer 7 x 12",
-    "category": "Constraction Accessory"
-  },
-  {
     "id": "60935",
     "name": "Technic Wing 11 x 8",
     "category": "Technic"
@@ -15428,16 +13843,6 @@
     "id": "6105",
     "name": "Door 1 x 4 x 8 with 1/4 Circle Top",
     "category": "Door"
-  },
-  {
-    "id": "61053",
-    "name": "Constraction Connector 5 x 2 with Double Angled Ball Sockets and Closed Axle Holes",
-    "category": "Constraction"
-  },
-  {
-    "id": "61054",
-    "name": "Constraction Connector 7 x 2 with Double Angled Ball Sockets",
-    "category": "Constraction"
   },
   {
     "id": "6106",
@@ -15715,11 +14120,6 @@
     "category": "Brick"
   },
   {
-    "id": "61649",
-    "name": "Duplo Door Frame 2 x 4 x 3 with Completely Open Back",
-    "category": "Door"
-  },
-  {
     "id": "6165",
     "name": "Panel 12 x 1 x 12 Lattice",
     "category": "Panel"
@@ -15733,11 +14133,6 @@
     "id": "61678",
     "name": "Slope Brick Curved 4 x 1",
     "category": "Slope"
-  },
-  {
-    "id": "6169",
-    "name": "Staircase 13 x 13 x 12 Curved Open",
-    "category": "Belville"
   },
   {
     "id": "6177",
@@ -15760,11 +14155,6 @@
     "category": "Plate"
   },
   {
-    "id": "61794",
-    "name": "Constraction Sight with Crosshairs",
-    "category": "Constraction"
-  },
-  {
     "id": "61795",
     "name": "Technic Bionicle Weapon Shield Blade with Axlehole",
     "category": "Technic"
@@ -15783,11 +14173,6 @@
     "id": "61801",
     "name": "Technic Bionicle Jet Booster 5L",
     "category": "Technic"
-  },
-  {
-    "id": "6181",
-    "name": "Belville Swimming Pool",
-    "category": "Belville"
   },
   {
     "id": "61810",
@@ -15813,11 +14198,6 @@
     "id": "6187",
     "name": "Bar 1 x 4 x 2",
     "category": "Bar"
-  },
-  {
-    "id": "61896",
-    "name": "Duplo Feeding Trough 2 x 4 x 1 with Straight Sides",
-    "category": "Container"
   },
   {
     "id": "61904",
@@ -15850,11 +14230,6 @@
     "category": "Brick"
   },
   {
-    "id": "6195",
-    "name": "Belville Sink 4 x 4 Oval",
-    "category": "Belville"
-  },
-  {
     "id": "6196",
     "name": "Container Cupboard 4 x 4 x 4 Door with Handle",
     "category": "Container"
@@ -15868,16 +14243,6 @@
     "id": "6198",
     "name": "Container Drawer 4 x 4 x 2 with Raised Front",
     "category": "Container"
-  },
-  {
-    "id": "6199",
-    "name": "Belville Swing",
-    "category": "Belville"
-  },
-  {
-    "id": "6200",
-    "name": "Belville Swing Stand",
-    "category": "Belville"
   },
   {
     "id": "6205",
@@ -15990,11 +14355,6 @@
     "category": "Window"
   },
   {
-    "id": "62386",
-    "name": "Constraction Foot 3 x 6 x 2.333 with Squared Ball Socket",
-    "category": "Constraction"
-  },
-  {
     "id": "6238a",
     "name": "Windscreen 4 x 4 x 1 Type 1",
     "category": "Windscreen"
@@ -16048,11 +14408,6 @@
     "id": "62520",
     "name": "Technic Universal Joint 3L End",
     "category": "Technic"
-  },
-  {
-    "id": "6253",
-    "name": "Belville Parasol Stand",
-    "category": "Belville"
   },
   {
     "id": "62531",
@@ -16120,19 +14475,9 @@
     "category": "Technic"
   },
   {
-    "id": "6292",
-    "name": "Duplo Tyre 25/ 53 x 19",
-    "category": "Tyre"
-  },
-  {
     "id": "63082",
     "name": "Plate 2 x 2 with Socket Joint-8 Square and Axlehole",
     "category": "Plate"
-  },
-  {
-    "id": "6309",
-    "name": "Duplo Tile 2 x 2 x 0.5",
-    "category": "Duplo"
   },
   {
     "id": "631",
@@ -16165,11 +14510,6 @@
     "category": "Conveyor"
   },
   {
-    "id": "6345",
-    "name": "Duplo Windscreen 4 x 4 x 2 Curved",
-    "category": "Windscreen"
-  },
-  {
     "id": "635",
     "name": "Conveyor Belt Axle with Crank",
     "category": "Conveyor"
@@ -16180,29 +14520,9 @@
     "category": "Conveyor"
   },
   {
-    "id": "6360",
-    "name": "Duplo Door Frame 4 x 4 x 5",
-    "category": "Duplo"
-  },
-  {
-    "id": "6361",
-    "name": "Duplo Windscreen 6 x 6 x 4 Inverted",
-    "category": "Windscreen"
-  },
-  {
     "id": "637",
     "name": "Conveyor Belt Stand",
     "category": "Conveyor"
-  },
-  {
-    "id": "6377",
-    "name": "Duplo Train Track Straight 4 x 8",
-    "category": "Train"
-  },
-  {
-    "id": "6378",
-    "name": "Duplo Train Track Curved",
-    "category": "Train"
   },
   {
     "id": "63864",
@@ -16220,64 +14540,14 @@
     "category": "Technic"
   },
   {
-    "id": "63871",
-    "name": "Duplo Slope 2 x 3 x 2",
-    "category": "Slope"
-  },
-  {
-    "id": "6391",
-    "name": "Duplo Train Track Level Crossing",
-    "category": "Train"
-  },
-  {
-    "id": "6394",
-    "name": "Duplo Brick 2 x 4 x 2 with 2 x 2 Cutout on Bottom",
-    "category": "Brick"
-  },
-  {
-    "id": "6395",
-    "name": "Duplo Container 4 x 4 x 3 with Open Sides",
-    "category": "Duplo"
-  },
-  {
-    "id": "6396",
-    "name": "Duplo Container Side Panel",
-    "category": "Duplo"
-  },
-  {
     "id": "63965a",
     "name": "Bar 6L with Thick Stop",
     "category": "Bar"
   },
   {
-    "id": "6405",
-    "name": "Duplo Train Level Crossing Gate Base",
-    "category": "Train"
-  },
-  {
-    "id": "6406",
-    "name": "Duplo Train Level Crossing Gate Crossbar",
-    "category": "Train"
-  },
-  {
-    "id": "6407",
-    "name": "Duplo Train Cabin Base 3 x 4 x 1.5",
-    "category": "Duplo"
-  },
-  {
-    "id": "6408",
-    "name": "Duplo Train Cabin Roof 3 x 4 x 1.5 with 2 x 3 Studs",
-    "category": "Duplo"
-  },
-  {
     "id": "641",
     "name": "Technic Gear 14 Tooth",
     "category": "Technic"
-  },
-  {
-    "id": "6413",
-    "name": "Duplo Plate 2 x 4 x 0.5 with 4 Centre Studs",
-    "category": "Plate"
   },
   {
     "id": "64178",
@@ -16310,29 +14580,9 @@
     "category": "Technic"
   },
   {
-    "id": "6428",
-    "name": "Duplo Panel 1 x 2 x 1.667 Sloped with Embossed Gauges",
-    "category": "Duplo"
-  },
-  {
     "id": "643",
     "name": "Technic Gear 35 Large Tooth",
     "category": "Technic"
-  },
-  {
-    "id": "6431",
-    "name": "Duplo Building Wall 4 x 8 x 6 with Open Back and Door and Window Opening",
-    "category": "Brick"
-  },
-  {
-    "id": "64311",
-    "name": "Constraction Connector 7 x 2 with Double Angled Ball Sockets and Perpendicular Axle/Pin Holes",
-    "category": "Constraction"
-  },
-  {
-    "id": "6436",
-    "name": "Duplo Arch 4 x 10 x 3 with 7 x 3 Cutout",
-    "category": "Arch"
   },
   {
     "id": "64390",
@@ -16365,16 +14615,6 @@
     "category": "Technic"
   },
   {
-    "id": "6441",
-    "name": "Duplo Flatbed Wagon 2 x 8 x 1 Side Hatch",
-    "category": "Duplo"
-  },
-  {
-    "id": "6442",
-    "name": "Duplo Train Track Point Lever",
-    "category": "Brick"
-  },
-  {
     "id": "64448",
     "name": "Support 1 x 6 x 5 Girder Rectangular",
     "category": "Support"
@@ -16405,11 +14645,6 @@
     "category": "Container"
   },
   {
-    "id": "6446",
-    "name": "Duplo Crate 3 x 3",
-    "category": "Container"
-  },
-  {
     "id": "64462",
     "name": "Container Box 3 x 8 x 6.667 - Front",
     "category": "Container"
@@ -16423,11 +14658,6 @@
     "id": "64570",
     "name": "Bracket 2 x 6 - 1 x 6 Up with Rounded Corners",
     "category": "Bracket"
-  },
-  {
-    "id": "6462",
-    "name": "Duplo Support 2 x 2 x 6 with Drawer Slots on Two Sides",
-    "category": "Support"
   },
   {
     "id": "64645",
@@ -16470,11 +14700,6 @@
     "category": "Roadsign"
   },
   {
-    "id": "6471",
-    "name": "Duplo Drawer 2 x 2 x 2 with Semi-Circle Cut Out",
-    "category": "Container"
-  },
-  {
     "id": "64711",
     "name": "Wheel 20 x 64 with Spikes and 13 Pegholes",
     "category": "Wheel"
@@ -16493,16 +14718,6 @@
     "id": "64727",
     "name": "Bar 0.5L with Blade 3L",
     "category": "Bar"
-  },
-  {
-    "id": "6474",
-    "name": "Duplo Slope 2 x 2 x 1.5",
-    "category": "Slope"
-  },
-  {
-    "id": "6475",
-    "name": "Duplo Baseplate 16 x 24",
-    "category": "Baseplate"
   },
   {
     "id": "64776",
@@ -16540,11 +14755,6 @@
     "category": "Wedge"
   },
   {
-    "id": "6490",
-    "name": "Duplo Plate 8 x 16",
-    "category": "Duplo"
-  },
-  {
     "id": "64951",
     "name": "Barrel 4.5 x 4.5 with Axle Hole",
     "category": "Container"
@@ -16553,11 +14763,6 @@
     "id": "64954",
     "name": "Trailer Base 6 x 16 x 2.333",
     "category": "Trailer"
-  },
-  {
-    "id": "6497",
-    "name": "Duplo Fence 1 x 6 x 2 Picket",
-    "category": "Duplo"
   },
   {
     "id": "650",
@@ -16588,26 +14793,6 @@
     "id": "65098",
     "name": "Technic Pin 3L Double with Axlehole and Pins with Rectangular Holes",
     "category": "Technic"
-  },
-  {
-    "id": "6510",
-    "name": "Duplo Plant Flower with 5 Petals and 1 Top Stud",
-    "category": "Plant"
-  },
-  {
-    "id": "65109",
-    "name": "Duplo Tile 2 x 4 with Wood Grain Relief",
-    "category": "Tile"
-  },
-  {
-    "id": "65111",
-    "name": "Duplo Door 1 x 4 x 4 with Flat Top with Two Long Panes",
-    "category": "Door"
-  },
-  {
-    "id": "65112",
-    "name": "Duplo Sink Shallow",
-    "category": "Duplo"
   },
   {
     "id": "65128",
@@ -16645,11 +14830,6 @@
     "category": "Turntable"
   },
   {
-    "id": "65157",
-    "name": "Duplo Cake with Stud on Top",
-    "category": "Duplo"
-  },
-  {
     "id": "65196",
     "name": "Container Book Cover 16 x 12 x 2.5 with Pegholes and Studs",
     "category": "Container"
@@ -16670,59 +14850,14 @@
     "category": "Car"
   },
   {
-    "id": "6521",
-    "name": "Duplo Axle 8",
-    "category": "Technic"
-  },
-  {
-    "id": "6522",
-    "name": "Duplo Axle 6",
-    "category": "Technic"
-  },
-  {
-    "id": "6523",
-    "name": "Duplo Axle 5 with Gear 8 Tooth",
-    "category": "Technic"
-  },
-  {
-    "id": "6524",
-    "name": "Duplo Beam 7",
-    "category": "Technic"
-  },
-  {
     "id": "65249",
     "name": "Technic Axle Pin Long without Friction with 2L Axle",
-    "category": "Technic"
-  },
-  {
-    "id": "6525",
-    "name": "Duplo Beam 11",
-    "category": "Technic"
-  },
-  {
-    "id": "6526",
-    "name": "Duplo Beam 3 x 0.5 Liftarm with Axle",
-    "category": "Technic"
-  },
-  {
-    "id": "6527",
-    "name": "Duplo Wheel with 2 Belt Groves",
-    "category": "Technic"
-  },
-  {
-    "id": "6529",
-    "name": "Duplo Gear 24 Tooth",
     "category": "Technic"
   },
   {
     "id": "653",
     "name": "Hinge Brick 1 x 8 Female",
     "category": "Hinge"
-  },
-  {
-    "id": "6530",
-    "name": "Duplo Gear 40 Tooth",
-    "category": "Technic"
   },
   {
     "id": "65304",
@@ -17425,11 +15560,6 @@
     "category": "Animal"
   },
   {
-    "id": "67695",
-    "name": "Constraction Connector 3 x 2 with Single Round Ball Socket with Straight Closed Sides",
-    "category": "Constraction"
-  },
-  {
     "id": "67696",
     "name": "Brick 2 x 2 with Axlehole and Ball Socket Type 4 and Axlehole with Straight Closed Sides",
     "category": "Brick"
@@ -17445,11 +15575,6 @@
     "category": "Windscreen"
   },
   {
-    "id": "678",
-    "name": "Slope Homemaker Awning 2 x 6",
-    "category": "Slope"
-  },
-  {
     "id": "67810",
     "name": "Brick 2 x 2 x 1.333 with Curved Corner Top",
     "category": "Brick"
@@ -17458,11 +15583,6 @@
     "id": "67811",
     "name": "Car Steering Wheel 5 x 5 with Two Spokes and 2 x 2 Stud Centre with Axlehole",
     "category": "Car"
-  },
-  {
-    "id": "679",
-    "name": "Homemaker Windowsill 2 x 6 x 2.333",
-    "category": "Homemaker"
   },
   {
     "id": "67928",
@@ -17520,16 +15640,6 @@
     "category": "Bar"
   },
   {
-    "id": "6821a",
-    "name": "Scala Base 44 x 22 x 2 with 4 Holes",
-    "category": "Scala"
-  },
-  {
-    "id": "6821b",
-    "name": "Scala Base 44 x 22 x 2 with 8 Holes",
-    "category": "Scala"
-  },
-  {
     "id": "68297",
     "name": "Plate 4 x 8 without Corners",
     "category": "Plate"
@@ -17552,11 +15662,6 @@
   {
     "id": "6850",
     "name": "Baseplate 16 x 18",
-    "category": "Baseplate"
-  },
-  {
-    "id": "6851",
-    "name": "Duplo Baseplate 12 x 16",
     "category": "Baseplate"
   },
   {
@@ -17630,16 +15735,6 @@
     "category": "Tap"
   },
   {
-    "id": "6940",
-    "name": "Scala Bed 8 x 24",
-    "category": "Scala"
-  },
-  {
-    "id": "6941",
-    "name": "Scala Support 2 x 8 x 1.667",
-    "category": "Scala"
-  },
-  {
     "id": "6942",
     "name": "Dish 5 x 5",
     "category": "Dish"
@@ -17660,24 +15755,9 @@
     "category": "Technic"
   },
   {
-    "id": "6965",
-    "name": "Scala Table 7 x 7 x 1.333",
-    "category": "Scala"
-  },
-  {
-    "id": "6969",
-    "name": "Scala Towel Bar 1 x 5",
-    "category": "Scala"
-  },
-  {
     "id": "6970",
     "name": "Bracket 1 x 2 - 2 x 6",
     "category": "Bracket"
-  },
-  {
-    "id": "69716",
-    "name": "Duplo Brick 2 x 2 with Hay Bale Texture",
-    "category": "Brick"
   },
   {
     "id": "69729",
@@ -17708,11 +15788,6 @@
     "id": "69819",
     "name": "Technic Cross Block 2 x 2 Split Reinforced (Axle/Twin Pin)",
     "category": "Technic"
-  },
-  {
-    "id": "69897",
-    "name": "Duplo Door / Window 1 x 4 x 3 with Flat Top with 4 Panes Cross Bars",
-    "category": "Door"
   },
   {
     "id": "699",
@@ -17855,11 +15930,6 @@
     "category": "Ladder"
   },
   {
-    "id": "70676",
-    "name": "Duplo Slope 2 x 2 x 2",
-    "category": "Duplo"
-  },
-  {
     "id": "7068",
     "name": "Plate 2 x 2 with Rod Frame Round",
     "category": "Plate"
@@ -17867,11 +15937,6 @@
   {
     "id": "70681",
     "name": "Slope Brick Curved 1 x 3 with 1 x 2 Inverted Cutout",
-    "category": "Slope"
-  },
-  {
-    "id": "70683",
-    "name": "Duplo Brick 2 x 4 x 2 Roof with Angled Sides",
     "category": "Slope"
   },
   {
@@ -17978,16 +16043,6 @@
     "id": "7126",
     "name": "Brick 1 x 1 with Curved Top",
     "category": "Brick"
-  },
-  {
-    "id": "71294a",
-    "name": "Scala Base 44 x 44 x 2 with 4 Holes",
-    "category": "Scala"
-  },
-  {
-    "id": "71294b",
-    "name": "Scala Base 44 x 44 x 2 with 12 Holes",
-    "category": "Scala"
   },
   {
     "id": "712a",
@@ -18110,11 +16165,6 @@
     "category": "Hose"
   },
   {
-    "id": "71861",
-    "name": "Handle for Baskets and Bucket 2 x 2",
-    "category": "Belville"
-  },
-  {
     "id": "71917",
     "name": "Technic Ribbed Hose 9L",
     "category": "Hose"
@@ -18213,11 +16263,6 @@
     "id": "72132",
     "name": "Plate 2 x 6 x 0.667 with Four Studs On Side and Four Raised Reinforced",
     "category": "Plate"
-  },
-  {
-    "id": "72133",
-    "name": "Duplo Brick 2 x 4 x 2 with Rounded Ends with Ears on Sides",
-    "category": "Brick"
   },
   {
     "id": "722",
@@ -18355,11 +16400,6 @@
     "category": "Brick"
   },
   {
-    "id": "73162",
-    "name": "Duplo Brick 2 x 4 x 2 with Rounded Ends with Movable Eyes",
-    "category": "Brick"
-  },
-  {
     "id": "73230",
     "name": "Technic Brick 1 x 1 with Axlehole",
     "category": "Technic"
@@ -18383,11 +16423,6 @@
     "id": "7335",
     "name": "Technic 2-Stage Pulley 1D + 2D",
     "category": "Technic"
-  },
-  {
-    "id": "73355",
-    "name": "Duplo Train Steam Engine Boiler with Fixed Funnel",
-    "category": "Duplo"
   },
   {
     "id": "73389",
@@ -18508,11 +16543,6 @@
     "id": "74214",
     "name": "Wheel 7 x 24 with Fake Bolts and 6 Spokes with Integral Rubber Tyre",
     "category": "Wheel"
-  },
-  {
-    "id": "74261",
-    "name": "Constraction Limb 2 Extender with Rubber Black Inlay",
-    "category": "Constraction"
   },
   {
     "id": "7443",
@@ -18735,11 +16765,6 @@
     "category": "Technic"
   },
   {
-    "id": "76371",
-    "name": "Duplo Brick 1 x 2 x 2 with Bottom Tube",
-    "category": "Brick"
-  },
-  {
     "id": "76385",
     "name": "Hinge Brick 1 x 2 Locking with Single Finger On Top",
     "category": "Hinge"
@@ -18823,11 +16848,6 @@
     "id": "7688",
     "name": "Dish 4 x 3 Elliptic",
     "category": "Dish"
-  },
-  {
-    "id": "76919",
-    "name": "Constraction Blade 6L Jagged with Axle Hole",
-    "category": "Constraction Accessory"
   },
   {
     "id": "77107",
@@ -19135,11 +17155,6 @@
     "category": "Slope"
   },
   {
-    "id": "789",
-    "name": "Fabuland Roof Slope with Top Hole",
-    "category": "Slope"
-  },
-  {
     "id": "7891",
     "name": "Bracket 3 x 1 x 1.333",
     "category": "Bracket"
@@ -19148,11 +17163,6 @@
     "id": "7896",
     "name": "Car Mudguard 2 x 4 with Rounded Wheel Arches",
     "category": "Car"
-  },
-  {
-    "id": "790",
-    "name": "Fabuland Roof Chimney",
-    "category": "Brick"
   },
   {
     "id": "7904",
@@ -19700,36 +17710,6 @@
     "category": "Crane"
   },
   {
-    "id": "837",
-    "name": "Homemaker Cupboard 4 x 4 x 4",
-    "category": "Homemaker"
-  },
-  {
-    "id": "838",
-    "name": "Homemaker Cupboard Door 4 x 4",
-    "category": "Homemaker"
-  },
-  {
-    "id": "839",
-    "name": "Homemaker Washbasin Base 4 x 4 x 4",
-    "category": "Homemaker"
-  },
-  {
-    "id": "840",
-    "name": "Homemaker Washbasin Sink",
-    "category": "Homemaker"
-  },
-  {
-    "id": "841",
-    "name": "Homemaker Stove 4 x 4 x 3",
-    "category": "Homemaker"
-  },
-  {
-    "id": "842",
-    "name": "Homemaker Stove Shelf 4 x 4",
-    "category": "Homemaker"
-  },
-  {
     "id": "8442",
     "name": "Plate 2 x 2 with Cutouts",
     "category": "Plate"
@@ -19803,11 +17783,6 @@
     "id": "85546",
     "name": "Rubber Belt Round 33 / 1.6",
     "category": "Technic"
-  },
-  {
-    "id": "85582",
-    "name": "Constraction Thornax Fruit",
-    "category": "Constraction Accessory"
   },
   {
     "id": "85834",
@@ -19950,11 +17925,6 @@
     "category": "Technic"
   },
   {
-    "id": "87084",
-    "name": "Duplo Brick 2 x 3",
-    "category": "Brick"
-  },
-  {
     "id": "87086",
     "name": "Technic Panel Fairing Smooth #2 (Short)",
     "category": "Technic"
@@ -19978,11 +17948,6 @@
     "id": "873",
     "name": "Tractor Chassis End Steering Link",
     "category": "Vehicle"
-  },
-  {
-    "id": "87321",
-    "name": "Duplo Door 1 x 4 x 6 with 3 Panes and Handle",
-    "category": "Door"
   },
   {
     "id": "87375",
@@ -20138,16 +18103,6 @@
     "id": "87761",
     "name": "Technic Gear Rack 1 x 7 with Pegholes and Axleholes",
     "category": "Technic"
-  },
-  {
-    "id": "87796",
-    "name": "Constraction Limb 3 x 7 Bent 53.13",
-    "category": "Constraction"
-  },
-  {
-    "id": "87846",
-    "name": "Constraction Tail 8 x 6 Curved",
-    "category": "Constraction"
   },
   {
     "id": "87913",
@@ -20315,16 +18270,6 @@
     "category": "Glass"
   },
   {
-    "id": "89650",
-    "name": "Constraction Connector 5 x 2 with Double Angled Ball Sockets and Open Axle Holes",
-    "category": "Constraction"
-  },
-  {
-    "id": "89651",
-    "name": "Constraction Connector 7 x 2 with Double Angled Ball Sockets and Open Axle Holes",
-    "category": "Constraction"
-  },
-  {
     "id": "89678",
     "name": "Technic Pin 1/2 with Friction",
     "category": "Technic"
@@ -20343,11 +18288,6 @@
     "id": "89762",
     "name": "Windscreen 4 x 7 x 2 Round with Plate",
     "category": "Windscreen"
-  },
-  {
-    "id": "89849",
-    "name": "Duplo Door 1 x 4 x 4 with Flat Top with 4 Same Size Panes",
-    "category": "Door"
   },
   {
     "id": "90001",
@@ -20390,11 +18330,6 @@
     "category": "Brick"
   },
   {
-    "id": "90265",
-    "name": "Duplo Window 1 x 4 x 3 with Flat Top with 4 Same Size Panes",
-    "category": "Window"
-  },
-  {
     "id": "9044ap02",
     "name": "Tap 1 x 2 with Chrome Silver Spout",
     "category": "Tap"
@@ -20405,76 +18340,6 @@
     "category": "Tile"
   },
   {
-    "id": "90605",
-    "name": "Constraction Limb 9 Straight with Middle Ball Joint",
-    "category": "Constraction"
-  },
-  {
-    "id": "90607",
-    "name": "Constraction Limb 7 Straight with Middle Ball Joint",
-    "category": "Constraction"
-  },
-  {
-    "id": "90608",
-    "name": "Constraction Limb 6 Straight with Middle Ball Joint",
-    "category": "Constraction"
-  },
-  {
-    "id": "90609",
-    "name": "Constraction Limb 5 Straight with Middle Ball Joint",
-    "category": "Constraction"
-  },
-  {
-    "id": "90611",
-    "name": "Constraction Limb 4 Straight",
-    "category": "Constraction"
-  },
-  {
-    "id": "90612",
-    "name": "Constraction Limb 3",
-    "category": "Constraction"
-  },
-  {
-    "id": "90613",
-    "name": "Constraction Limb 9 Forked with Middle Ball Joint",
-    "category": "Constraction"
-  },
-  {
-    "id": "90615",
-    "name": "Constraction Limb 7 Forked with Middle Ball Joint",
-    "category": "Constraction"
-  },
-  {
-    "id": "90616",
-    "name": "Constraction Limb 6 Forked with Middle Ball Joint",
-    "category": "Constraction"
-  },
-  {
-    "id": "90617",
-    "name": "Constraction Limb 5 Forked with Middle Ball Joint",
-    "category": "Constraction"
-  },
-  {
-    "id": "90622",
-    "name": "Constraction Connector 2 x 5 with Double Ball Sockets and Middle Ball Joint",
-    "category": "Constraction"
-  },
-  {
-    "id": "90623",
-    "name": "Constraction Torso 9 x 11",
-    "category": "Constraction"
-  },
-  {
-    "id": "90625",
-    "name": "Constraction Torso 9 x 9",
-    "category": "Constraction"
-  },
-  {
-    "id": "90626",
-    "name": "Constraction Torso 7 x 9",
-    "category": "Constraction"
-  },
-  {
     "id": "90630",
     "name": "Technic Cross Block 1 x 3 (Pin/Dimple/Pin) with 2 Pins and 2 Ball Joints",
     "category": "Technic"
@@ -20483,46 +18348,6 @@
     "id": "90634",
     "name": "Technic Connector 3 x 1 with Two Pins and Three Ball Joints on Axle 5L",
     "category": "Technic"
-  },
-  {
-    "id": "90636",
-    "name": "Constraction Shell 2.5 x 3 x 8 Flat",
-    "category": "Constraction"
-  },
-  {
-    "id": "90638",
-    "name": "Constraction Shell 2.5 x 3 x 6 Flat",
-    "category": "Constraction"
-  },
-  {
-    "id": "90639",
-    "name": "Constraction Shell 2.5 x 3 x 5 Flat",
-    "category": "Constraction"
-  },
-  {
-    "id": "90640",
-    "name": "Constraction Shell 2.5 x 3 x 4 Flat",
-    "category": "Constraction"
-  },
-  {
-    "id": "90641",
-    "name": "Constraction Shell 2.5 x 3 x 3 Flat",
-    "category": "Constraction"
-  },
-  {
-    "id": "90649",
-    "name": "Constraction Shell 4 x 7 x 4.5 Shoulder",
-    "category": "Constraction"
-  },
-  {
-    "id": "90650",
-    "name": "Constraction Shell 2.5 x 4 x 6 Flat with Wings",
-    "category": "Constraction"
-  },
-  {
-    "id": "90652",
-    "name": "Constraction Shell 2.5 x 5 x 8 Chest Flat",
-    "category": "Constraction"
   },
   {
     "id": "90840",
@@ -20585,21 +18410,6 @@
     "category": "Plate"
   },
   {
-    "id": "92005",
-    "name": "Duplo Turntable Base 4 x 4",
-    "category": "Turntable"
-  },
-  {
-    "id": "92009",
-    "name": "Duplo Dish Radar",
-    "category": "Dish"
-  },
-  {
-    "id": "92011",
-    "name": "Duplo Brick 2 x 2 with Top Snapping Pin",
-    "category": "Brick"
-  },
-  {
     "id": "92013",
     "name": "Brick 2 x 2 with Ball Socket Type 3 and Axlehole",
     "category": "Brick"
@@ -20618,11 +18428,6 @@
     "id": "92092",
     "name": "Hinge Tile 2 x 4 with Ribs Locking without Rear Reinforcements, 9 Teeth",
     "category": "Hinge"
-  },
-  {
-    "id": "92094",
-    "name": "Duplo Door Frame 2 x 4 x 4",
-    "category": "Door"
   },
   {
     "id": "92099",
@@ -20905,11 +18710,6 @@
     "category": "Door"
   },
   {
-    "id": "93150",
-    "name": "Duplo Slide Straight with Two Studs at Top End",
-    "category": "Staircase"
-  },
-  {
     "id": "93168",
     "name": "Cylinder 3 x 6 x 2.667 Horizontal with Solid Studs",
     "category": "Cylinder"
@@ -20930,24 +18730,9 @@
     "category": "Wedge"
   },
   {
-    "id": "93353",
-    "name": "Duplo Support Column 2 x 2 x 4",
-    "category": "Support"
-  },
-  {
     "id": "93541",
     "name": "Wing 56 x 20 Airplane with 6 x 10 Cutout",
     "category": "Wing"
-  },
-  {
-    "id": "93571",
-    "name": "Constraction Connector 3 x 2 with Single Round Ball Socket with Straight Opened Sides",
-    "category": "Constraction"
-  },
-  {
-    "id": "93575",
-    "name": "Constraction Hand Clenched with Four Fingers and Axle Hole",
-    "category": "Constraction"
   },
   {
     "id": "93587",
@@ -21090,11 +18875,6 @@
     "category": "Boat"
   },
   {
-    "id": "95463",
-    "name": "Duplo Plate 6 x 12 with Center Ramp",
-    "category": "Duplo"
-  },
-  {
     "id": "956",
     "name": "Container 4 x 4 x 3.333 Crate",
     "category": "Container"
@@ -21200,11 +18980,6 @@
     "category": "Sphere"
   },
   {
-    "id": "98135",
-    "name": "Constraction Blade 16L with Axle",
-    "category": "Constraction Accessory"
-  },
-  {
     "id": "98136",
     "name": "Animal Cobra Threatening",
     "category": "Animal"
@@ -21213,56 +18988,6 @@
     "id": "98138",
     "name": "Tile 1 x 1 Round with Groove",
     "category": "Tile"
-  },
-  {
-    "id": "98215",
-    "name": "Duplo Muffin Cup with 2 x 2 Studs",
-    "category": "Duplo"
-  },
-  {
-    "id": "98218",
-    "name": "Duplo Plate 4 x 4 Corner Round",
-    "category": "Plate"
-  },
-  {
-    "id": "98220",
-    "name": "Duplo Brick 4 x 4 x 1 Round with Curved Top",
-    "category": "Brick"
-  },
-  {
-    "id": "98222",
-    "name": "Duplo Plate 4 x 4 Round with Snapping Ridges",
-    "category": "Plate"
-  },
-  {
-    "id": "98223b",
-    "name": "Duplo Brick 2 x 4 with Curved Top",
-    "category": "Brick"
-  },
-  {
-    "id": "98224b",
-    "name": "Duplo Brick 2 x 4 with Curved Bottom",
-    "category": "Brick"
-  },
-  {
-    "id": "98225",
-    "name": "Duplo Brick Round 2 x 2 x 2",
-    "category": "Brick"
-  },
-  {
-    "id": "98233",
-    "name": "Duplo Plate 2 x 6",
-    "category": "Plate"
-  },
-  {
-    "id": "98238",
-    "name": "Duplo Roof Spire Half 4.5 x 2 x 4",
-    "category": "Cone"
-  },
-  {
-    "id": "98252b",
-    "name": "Duplo Brick 2 x 3 with Curved Bottom",
-    "category": "Brick"
   },
   {
     "id": "98262",
@@ -21350,59 +19075,9 @@
     "category": "Animal"
   },
   {
-    "id": "98458",
-    "name": "Duplo Plate 4 x 4 with 4 x 2 Bottom Cutout",
-    "category": "Duplo"
-  },
-  {
-    "id": "98459",
-    "name": "Duplo Door 1 x 4 x 3 Wooden with Handle",
-    "category": "Door"
-  },
-  {
-    "id": "98460",
-    "name": "Duplo Fence 1 x 10 x 2 with Clip and Bar",
-    "category": "Fence"
-  },
-  {
     "id": "98549",
     "name": "Tile 2 x 2 with Bar and Stud with Stop Ring",
     "category": "Tile"
-  },
-  {
-    "id": "98562",
-    "name": "Constraction Chain Link with Peghole",
-    "category": "Constraction"
-  },
-  {
-    "id": "98564",
-    "name": "Constraction Thornax Launcher Half 1 x 7",
-    "category": "Constraction"
-  },
-  {
-    "id": "98565",
-    "name": "Constraction Connector 2 x 2 with Double Reinforced Ball Sockets",
-    "category": "Constraction"
-  },
-  {
-    "id": "98566",
-    "name": "Constraction Weapon Hexagon Shield",
-    "category": "Constraction Accessory"
-  },
-  {
-    "id": "98568",
-    "name": "Constraction Blade 11.5L with Sawtooth Back",
-    "category": "Constraction"
-  },
-  {
-    "id": "98570",
-    "name": "Constraction Shell Chest Badge \"H\" with 2 Bars",
-    "category": "Constraction"
-  },
-  {
-    "id": "98577",
-    "name": "Constraction Beam 3 with Middle Ball Joint",
-    "category": "Constraction"
   },
   {
     "id": "98578",
@@ -21413,21 +19088,6 @@
     "id": "98585",
     "name": "Technic Connector Circular with 2 Pin Holes and 3 Axle Holes",
     "category": "Technic"
-  },
-  {
-    "id": "98590",
-    "name": "Constraction Torso 5 x 6",
-    "category": "Constraction"
-  },
-  {
-    "id": "98593",
-    "name": "Constraction Shell Decoration Sonic Speaker with 2 Bars (Needs work)",
-    "category": "Constraction"
-  },
-  {
-    "id": "98604",
-    "name": "Constraction Shell 4 x 13 x 5 Breast Plate",
-    "category": "Constraction"
   },
   {
     "id": "98606",
@@ -21643,201 +19303,6 @@
     "id": "u609",
     "name": "Brick 1 x 4 x 2 Bellshaped with Headlights",
     "category": "Brick"
-  },
-  {
-    "id": "u7000",
-    "name": "Modulex Brick 1 x 1",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7001",
-    "name": "Modulex Brick 1 x 2",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7002",
-    "name": "Modulex Brick 1 x 3",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7003",
-    "name": "Modulex Brick 1 x 4",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7004",
-    "name": "Modulex Brick 1 x 5",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7005",
-    "name": "Modulex Brick 1 x 10",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7006",
-    "name": "Modulex Brick 2 x 2",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7007",
-    "name": "Modulex Brick 2 x 3",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7008",
-    "name": "Modulex Brick 2 x 4",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7009",
-    "name": "Modulex Brick 2 x 5",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7010",
-    "name": "Modulex Brick 2 x 8",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7011",
-    "name": "Modulex Brick 2 x 20",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7012",
-    "name": "Modulex Profile Brick 1 x 4",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7013",
-    "name": "Modulex Profile Brick 1 x 5",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7014",
-    "name": "Modulex Profile Brick 1 x 6",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7015",
-    "name": "Modulex Profile Brick 1 x 7",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7016",
-    "name": "Modulex Profile Brick 1 x 1 x 4",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7017",
-    "name": "Modulex Profile Brick 1 x 1 x 5",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7019",
-    "name": "Modulex Tile 1 x 2 with Bottom Stud",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7020",
-    "name": "Modulex Tile 1 x 3 with Bottom Studs",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7021",
-    "name": "Modulex Tile 1 x 4 with Bottom Studs",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7022",
-    "name": "Modulex Tile 2 x 2 with Bottom Stud",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7030",
-    "name": "Modulex Slope Brick 45 1 x 1",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7031",
-    "name": "Modulex Slope Brick 27 2 x 1",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7032",
-    "name": "Modulex Slope Brick 18 3 x 1",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7033",
-    "name": "Modulex Slope Brick 9 4 x 1",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7034",
-    "name": "Modulex Slope Brick 9 2 x 1 x 0.5",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7035",
-    "name": "Modulex Brick Angled 9 2 x 1 Double",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7036",
-    "name": "Modulex Brick Angled 9 2 x 2 Double",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7037",
-    "name": "Modulex Brick Angled 9 2 x 4 Double",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7038",
-    "name": "Modulex Brick Angled 18 2 x 1 Double",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7039",
-    "name": "Modulex Brick Angled 18 2 x 2 Double",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7040",
-    "name": "Modulex Brick Angled 18 2 x 4 Double",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7041",
-    "name": "Modulex Brick Angled 27 2 x 1 Double",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7042",
-    "name": "Modulex Brick Angled 27 2 x 2 Double",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7043",
-    "name": "Modulex Brick Angled 27 2 x 4 Double",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7044",
-    "name": "Modulex Brick Angled 45 2 x 1 Double",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7045",
-    "name": "Modulex Brick Angled 45 2 x 2 Double",
-    "category": "Modulex"
-  },
-  {
-    "id": "u7046",
-    "name": "Modulex Brick Angled 45 2 x 4 Double",
-    "category": "Modulex"
   },
   {
     "id": "u8001a",
@@ -22245,11 +19710,6 @@
     "category": "Wheel"
   },
   {
-    "id": "u9213",
-    "name": "Fabuland Tree",
-    "category": "Plant"
-  },
-  {
     "id": "u9215",
     "name": "Staircase 12 x 3 x 9 with Handrail",
     "category": "Staircase"
@@ -22273,16 +19733,6 @@
     "id": "u9284",
     "name": "Battery Mignon (AA)",
     "category": "Electric"
-  },
-  {
-    "id": "u9316",
-    "name": "Door 1 x 4.5 x 8.333 Fabuland",
-    "category": "Door"
-  },
-  {
-    "id": "u9318",
-    "name": "Door Arched 5 x 7.5 for Frame 7 x 8 Fabuland",
-    "category": "Door"
   },
   {
     "id": "u9329",
@@ -22403,10 +19853,5 @@
     "id": "u9669",
     "name": "Battery Micro (AAA)",
     "category": "Electric"
-  },
-  {
-    "id": "u977",
-    "name": "Duplo Arch 2 x 3 x 3",
-    "category": "Arch"
   }
 ]

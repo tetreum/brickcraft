@@ -96,6 +96,14 @@ namespace Brickcraft
         }
         private Health health;
 
+        // right click with nothing in hand zooms in a little (see updateZoom)
+        private const float ZoomFactor = 0.6f;
+        private const float ZoomSpeed = 4f;
+        private float zoom = 1;
+        // the camera's view without the zoom, and what the zoom made it: other code (sprinting's kick) sets it too
+        private float unzoomedFov = -1;
+        private float zoomedFov = -1;
+
         // what the player is digging
         private bool isDigging;
         private Brick diggedBrick;
@@ -423,6 +431,27 @@ namespace Brickcraft
             if (target != null) {
                 network.CmdAttack(target.netIdentity, SelectedSlot);
             }
+        }
+
+        private void LateUpdate() {
+            if (Instance == this) {
+                updateZoom();
+            }
+        }
+
+        // the place button held with nothing in hand (nor a shield to raise) zooms in, after the camera's view is set
+        private void updateZoom() {
+            Camera eye = Camera.main;
+            if (eye == null) {
+                return;
+            }
+            if (unzoomedFov < 0 || eye.fieldOfView != zoomedFov) {
+                unzoomedFov = eye.fieldOfView;
+            }
+            bool wanted = !isFrozen && !GameInput.IsTyping && !isBlocking && SelectedItem == null && GameInput.GetButton(GameInput.Place);
+            zoom = Mathf.MoveTowards(zoom, wanted ? ZoomFactor : 1, ZoomSpeed * Time.deltaTime);
+            zoomedFov = unzoomedFov * zoom;
+            eye.fieldOfView = zoomedFov;
         }
 
         // the place button held with a shield worn raises it, unless what's in hand is a brick (the button places it)

@@ -70,6 +70,8 @@ namespace Brickcraft
         public LightInfo light;
         /// <summary>Buckets: what they pick up and pour (see BucketInfo).</summary>
         public BucketInfo bucket;
+        /// <summary>Food: the health it gives back, used (the place button) and gone.</summary>
+        public int heal;
         /// <summary>Degrees its model is turned around its up axis for its icon (see BrickIconRenderer), for those seen end-on.</summary>
         public float iconTurn;
     }

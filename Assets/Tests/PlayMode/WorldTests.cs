@@ -97,6 +97,30 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator APotionHealsAndIsGone() {
+            Combat.Health health = TestGame.Player.GetComponent<Combat.Health>();
+            PlayerInventory inventory = TestGame.Player.GetComponent<PlayerInventory>();
+            PlayerNetwork network = TestGame.Player.GetComponent<PlayerNetwork>();
+            int slot = Player.FirstFastSlot + 5;
+            Assert.IsTrue(inventory.ServerAdd("hp_potion", BrickColor.None, 2, 0, slot));
+
+            network.CmdConsume(slot);
+            yield return null;
+            Assert.AreEqual(2, inventory.ServerGetSlot(slot).Value.quantity, "not used at full health");
+
+            Assert.IsTrue(health.ServerDamage(new Combat.DamageInfo() { amount = 15, kind = Combat.DamageInfo.Kind.Script }));
+            network.CmdConsume(slot);
+            yield return null;
+            Assert.AreEqual(health.maxHealth - 15 + 10, health.health);
+            Assert.AreEqual(1, inventory.ServerGetSlot(slot).Value.quantity);
+
+            network.CmdConsume(slot);
+            yield return null;
+            Assert.AreEqual(health.maxHealth, health.health, "no more than all of it");
+            Assert.IsFalse(inventory.ServerGetSlot(slot).HasValue, "the last one is gone");
+        }
+
+        [UnityTest]
         public IEnumerator WaterPouredOnAFloorSpreads() {
             BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
             BlockType water = (BlockType)BlockDatabase.IdOf("water");

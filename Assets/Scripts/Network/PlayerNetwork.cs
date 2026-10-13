@@ -809,6 +809,17 @@ namespace Brickcraft.Network
             }
         }
 
+        /// <summary>Uses the food in the slot: one is gone and the player gets its health back, if it isn't whole.</summary>
+        [Command]
+        public void CmdConsume(int slot) {
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            if (health.isDead || health.health >= health.maxHealth || !held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || !item.Heals) {
+                return;
+            }
+            health.ServerHeal(item.heal);
+            inventory.ServerRemoveFromSlot(slot, 1);
+        }
+
         /// <summary>An empty bucket in the slot picks up the liquid of that block (its block goes, the bucket is full).</summary>
         [Command]
         public void CmdFillBucket(int slot, Vector3Int block) {

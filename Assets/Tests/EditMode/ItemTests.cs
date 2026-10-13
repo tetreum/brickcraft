@@ -48,6 +48,15 @@ namespace Brickcraft.Tests
         }
 
         [Test]
+        public void PotionsHeal() {
+            Item potion = item("hp_potion");
+            Assert.IsTrue(potion.Heals);
+            Assert.AreEqual(10, potion.heal);
+            Assert.IsNotNull(potion.brickModel, "the flask, LDraw's 93549");
+            Assert.IsFalse(item("stone").Heals);
+        }
+
+        [Test]
         public void LavaHardensWithWater() {
             Fluid lava = GameData.Definition(GameData.Block("lava")).fluid;
             Fluid water = GameData.Definition(GameData.Block("water")).fluid;

@@ -221,6 +221,7 @@ Items/marble/
 - `digSpeed`: tools that dig: how many times faster than a bare hand they dig blocks and bricks (`3` for the pickaxe). Each one dug wears them (see `durability`).
 - `light`: it gives light, placed and in hand (the torch): `{ "range": 8, "intensity": 400, "color": [1, 0.72, 0.4] }`, how far it reaches (meters), how bright (lumens) and its colour (warm by default).
 - `bucket`: buckets. An empty one has `"filled"`, the item it becomes when the place button (right click) is used on its liquid; a full one has `"liquid"`, the item of the block it pours (`"water"`) against what's looked at, and `"empty"`, what it becomes after.
+- `heal`: food: the health it gives back (`10` for the HP Potion, a player has 20). Used with the place button while hurt, one is gone.
 - `iconTurn`: degrees its model is turned around its up axis for its generated icon, for models seen end-on otherwise (the pickaxe).
 - `held`: weapons, tools and shields: how players hold their model (weapons and tools in the right hand, shields in the left), `{ "grip": [x, y, z], "rotation": [x, y, z], "scale": 0.5 }`: the point of the model in the hand, how it's turned (degrees; the hand looks along +Z, +Y up) and its size. Without it, it's held by its middle, fitted to 0.8 meters.
 - `durability`: weapons, armor and digging tools: how many uses they last (hits given, shots, hits taken while worn, or blocks and bricks dug) before breaking, forever if missing. A bar on the icon shows what's left. Armor and items that wear don't stack.
@@ -422,3 +423,4 @@ Brick colours are limited to a palette, Rebrickable's colour list: `Resources/Br
 - Close chest sound effect by designerschoice -- https://freesound.org/s/806793/ -- License: Attribution 4.0
 - A bucket of water with a rag by 16G_Panska_Veinlich_Jakub -- https://freesound.org/s/498572/ -- License: Creative Commons 0
 - PloppyMix.wav by digifishmusic -- https://freesound.org/s/53763/ -- License: Attribution 4.0
+- 8-Bit Sunrise song by Brylie Christopher - https://freemusicarchive.org/music/Brylie_Christopher_Oxley/contact

@@ -233,6 +233,12 @@ namespace Brickcraft
                     ModelImporterView.RequestWindow(SelectedSlot);
                 }
 
+                // food is used up, if the player is hurt (the server checks)
+                if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Place) && SelectedItem != null && SelectedItem.item.Heals
+                        && health.health < health.maxHealth) {
+                    network.CmdConsume(SelectedSlot);
+                }
+
                 // buckets: an empty one picks up the liquid looked at, a full one pours it against what's looked at
                 if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Place) && SelectedItem != null && SelectedItem.item.bucket != null) {
                     useBucket(SelectedItem.item.bucket);

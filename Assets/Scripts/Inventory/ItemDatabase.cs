@@ -323,6 +323,13 @@ namespace Brickcraft
                 // the items they name are checked once every item is known, see checkBuckets
                 item.bucket = info.bucket;
             }
+            if (info.heal != 0) {
+                if (info.heal < 0 || item.type != Item.Type.Food) {
+                    Debug.LogError("Item file " + file + " has the heal " + info.heal + ": the health food gives back, more than 0");
+                    return false;
+                }
+                item.heal = info.heal;
+            }
             // each one wears on its own: they don't stack
             if (item.type == Item.Type.Armor || item.durability > 0) {
                 item.maxStack = 1;

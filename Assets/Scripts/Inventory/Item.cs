@@ -92,6 +92,13 @@ namespace Brickcraft
         public LightInfo light;
         /// <summary>Buckets: what they pick up and pour, null for other items (see ItemInfo.bucket).</summary>
         public BucketInfo bucket;
+        /// <summary>Food: the health it gives back when used up (see ItemInfo.heal), 0 for other items.</summary>
+        public int heal;
+
+        /// <summary>Food that heals: used (the place button), the player gets health back and one is gone.</summary>
+        public bool Heals {
+            get { return type == Type.Food && heal > 0; }
+        }
 
         /// <summary>A tool that digs faster than a hand, worn by digging.</summary>
         public bool Digs {

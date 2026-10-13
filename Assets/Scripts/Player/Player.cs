@@ -97,9 +97,7 @@ namespace Brickcraft
         private Health health;
 
         // right click with nothing in hand zooms in a little (see updateZoom)
-        private const float ZoomFactor = 0.6f;
-        private const float ZoomSpeed = 4f;
-        private float zoom = 1;
+        private readonly CameraZoom zoom = new CameraZoom();
         // the camera's view without the zoom, and what the zoom made it: other code (sprinting's kick) sets it too
         private float unzoomedFov = -1;
         private float zoomedFov = -1;
@@ -302,8 +300,7 @@ namespace Brickcraft
             wasDigHeld = isDigHeld;
 
             if (isPressed) {
-                clickedDoor = lookedBrick != null && (lookedBrick.gameObject.GetComponentInChildren<BrickDoor>() != null || isBed(lookedBrick)
-                    || BrickStorage.StorageOf(lookedBrick) != null) ? lookedBrick : null;
+                clickedDoor = lookedBrick != null && isUsable(lookedBrick) ? lookedBrick : null;
                 clickStart = Time.time;
             }
             if (clickedDoor == null) {
@@ -324,6 +321,11 @@ namespace Brickcraft
                 return false;
             }
             return isQuick;
+        }
+
+        // a click uses it: a door, a bed, a chest
+        private static bool isUsable(Brick brick) {
+            return brick.gameObject != null && (brick.gameObject.GetComponentInChildren<BrickDoor>() != null || isBed(brick) || BrickStorage.StorageOf(brick) != null);
         }
 
         private static bool isBed(Brick brick) {
@@ -487,7 +489,8 @@ namespace Brickcraft
             return null;
         }
 
-        // the place button held with nothing in hand (nor a shield to raise) zooms in, after the camera's view is set
+        // the place button held with nothing in hand (nor a shield to raise, nor anything to use looked at) zooms in,
+        // after the camera's view is set; decided when it goes down (see CameraZoom)
         private void updateZoom() {
             Camera eye = Camera.main;
             if (eye == null) {
@@ -496,9 +499,8 @@ namespace Brickcraft
             if (unzoomedFov < 0 || eye.fieldOfView != zoomedFov) {
                 unzoomedFov = eye.fieldOfView;
             }
-            bool wanted = !isFrozen && !GameInput.IsTyping && !isBlocking && SelectedItem == null && GameInput.GetButton(GameInput.Place);
-            zoom = Mathf.MoveTowards(zoom, wanted ? ZoomFactor : 1, ZoomSpeed * Time.deltaTime);
-            zoomedFov = unzoomedFov * zoom;
+            bool canZoom = !isFrozen && !GameInput.IsTyping && !isBlocking && SelectedItem == null && (lookedBrick == null || !isUsable(lookedBrick));
+            zoomedFov = unzoomedFov * zoom.Update(GameInput.GetButtonDown(GameInput.Place), GameInput.GetButton(GameInput.Place), canZoom, Time.deltaTime);
             eye.fieldOfView = zoomedFov;
         }
 

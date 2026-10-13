@@ -185,6 +185,8 @@ namespace Brickcraft
                 network.CmdSelectSlot(SelectedSlot);
             }
             updateBlocking();
+            // before what the place button does this frame (drinking the last potion empties the hand at once alone)
+            couldZoom = canZoom();
 
             if (isFrozen) {
                 brickPlacer.hide();
@@ -499,9 +501,17 @@ namespace Brickcraft
             if (unzoomedFov < 0 || eye.fieldOfView != zoomedFov) {
                 unzoomedFov = eye.fieldOfView;
             }
-            bool canZoom = !isFrozen && !GameInput.IsTyping && !isBlocking && SelectedItem == null && (lookedBrick == null || !isUsable(lookedBrick));
-            zoomedFov = unzoomedFov * zoom.Update(GameInput.GetButtonDown(GameInput.Place), GameInput.GetButton(GameInput.Place), canZoom, Time.deltaTime);
+            // a press zooms if it could when it went down, before the button did anything
+            bool pressed = GameInput.GetButtonDown(GameInput.Place);
+            zoomedFov = unzoomedFov * zoom.Update(pressed, GameInput.GetButton(GameInput.Place), pressed ? couldZoom : canZoom(), Time.deltaTime);
             eye.fieldOfView = zoomedFov;
+        }
+
+        // whether the place button would zoom now: nothing in hand, nothing to use looked at, playing
+        private bool couldZoom;
+
+        private bool canZoom() {
+            return !isFrozen && !GameInput.IsTyping && !isBlocking && SelectedItem == null && (lookedBrick == null || !isUsable(lookedBrick));
         }
 
         // the place button held with a shield worn raises it, unless what's in hand is a brick (the button places it)

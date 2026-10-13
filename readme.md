@@ -132,7 +132,7 @@ The server keeps a SQLite database (`players.db`, via [unity-sqlite-net](https:/
 
 To test with several instances, a build can be started with `-name <name>` and `-host` (`-world <save>` picks the world, `world` by default) or `-join <address>` (and `-password <password>`). Players are their computer, so each instance of the same computer joining the same server needs `-identity <tag>` too (any word, a different one each); only development builds read it. `-test` starts the test scene, which has no button in the menu, and `-profileLoad` logs how long loading the world takes, step by step (`WorldLoadProfiler`). Playing a game scene straight from the editor starts a singleplayer game.
 
-Automated tests (Unity Test Framework) are in `Assets/Tests`: Window -> General -> Test Runner runs them, or `Unity.exe -batchmode -projectPath . -runTests -testPlatform EditMode -testResults results.xml`. The Edit Mode ones run without a game: fluids flow in a world of blocks in memory (`TestWorld`, through `IFluidWorld`), with the game's items and blocks, and who joins as whom is `JoinRules`. The Play Mode ones (`-testPlatform PlayMode`) play the game alone on a world of their own (`TestGame`, a save named `zz_test_...` deleted afterwards, drawn as near as the game allows so few chunks load), in about 15 seconds.
+Automated tests (Unity Test Framework) are in `Assets/Tests`: Window -> General -> Test Runner runs them, or `Unity.exe -batchmode -projectPath . -runTests -testPlatform EditMode -testResults results.xml`. The Edit Mode ones run without a game: fluids flow in a world of blocks in memory (`TestWorld`, through `IFluidWorld`), with the game's items and blocks, and who joins as whom is `JoinRules`. The Play Mode ones (`-testPlatform PlayMode`) play the game alone on a world of their own (`TestGame`, a save named `zz_test_...` deleted afterwards, drawn as near as the game allows so few chunks load), in about 40 seconds; `InputTests` play it with the Input System's test keyboard and mouse (`InputTestFixture`).
 
 ## Code structure
 
@@ -424,3 +424,9 @@ Brick colours are limited to a palette, Rebrickable's colour list: `Resources/Br
 - A bucket of water with a rag by 16G_Panska_Veinlich_Jakub -- https://freesound.org/s/498572/ -- License: Creative Commons 0
 - PloppyMix.wav by digifishmusic -- https://freesound.org/s/53763/ -- License: Attribution 4.0
 - 8-Bit Sunrise song by Brylie Christopher - https://freemusicarchive.org/music/Brylie_Christopher_Oxley/contact
+- 8 Bit Ancient Ruins by Kirk Osamayo - https://freemusicarchive.org/music/kirk-osamayo/contact
+- 8-Bit Kung Fu by John Bartmann - https://freemusicarchive.org/music/John_Bartmann/contact
+- Fortsetzung Folgt by Gumbel - https://freemusicarchive.org/music/Gumbel/contact
+- Killing Bosses by Gumbel - https://freemusicarchive.org/music/Gumbel/contact
+- Levels by Gumbel - https://freemusicarchive.org/music/Gumbel/contact
+- El Siniestro Y La Velóz by Gumbel - https://freemusicarchive.org/music/Gumbel/contact

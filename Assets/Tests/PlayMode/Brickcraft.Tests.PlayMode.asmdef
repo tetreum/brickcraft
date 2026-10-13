@@ -4,6 +4,8 @@
     "references": [
         "Brickcraft",
         "Mirror",
+        "Unity.InputSystem.TestFramework",
+        "Unity.InputSystem",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

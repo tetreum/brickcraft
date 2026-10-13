@@ -132,6 +132,16 @@ namespace Brickcraft
             get { return Keyboard.current != null || Mouse.current != null; }
         }
 
+        /// <summary>Its actions are made again the next time one is read: the Input System was reset (tests' InputTestFixture).</summary>
+        public static void Reload() {
+            if (actions != null) {
+                foreach (InputAction action in actions.Values) {
+                    action.Dispose();
+                }
+                actions = null;
+            }
+        }
+
         private static InputAction actionOf(string button) {
             if (actions == null) {
                 actions = new Dictionary<string, InputAction>();

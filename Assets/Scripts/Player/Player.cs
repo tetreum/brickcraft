@@ -227,6 +227,12 @@ namespace Brickcraft
                     }
                 }
 
+                // a model importer opens its window, unless its ghost is out (it places it, see ModelImporterView)
+                if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Place) && SelectedItem != null && SelectedItem.item.IsModelImporter
+                        && !ModelImporterView.IsOpen && ModelImporterView.ClosedFrame != Time.frameCount) {
+                    ModelImporterView.RequestWindow(SelectedSlot);
+                }
+
                 // buckets: an empty one picks up the liquid looked at, a full one pours it against what's looked at
                 if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Place) && SelectedItem != null && SelectedItem.item.bucket != null) {
                     useBucket(SelectedItem.item.bucket);

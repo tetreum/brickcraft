@@ -60,7 +60,7 @@ namespace Brickcraft.Bricks.LDraw
             parts = null;
             try {
                 if (File.Exists(file)) {
-                    parts = read(File.ReadAllLines(file));
+                    parts = Parse(File.ReadAllLines(file));
                 } else {
                     Debug.LogError("The item " + item.id + " has \"ldr\": true but no " + file);
                 }
@@ -71,8 +71,8 @@ namespace Brickcraft.Bricks.LDraw
             return parts;
         }
 
-        // an LDR, or an MPD (0 FILE sections, the first the main model): its parts, submodels taken apart
-        private static List<Part> read(string[] lines) {
+        /// <summary>An LDR, or an MPD (0 FILE sections, the first the main model): its parts, submodels taken apart.</summary>
+        public static List<Part> Parse(string[] lines) {
             Dictionary<string, List<string>> files = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
             string main = null;
             List<string> current = null;

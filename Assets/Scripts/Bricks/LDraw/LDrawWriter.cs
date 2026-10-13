@@ -69,7 +69,7 @@ namespace Brickcraft.Bricks.LDraw
                         Bounds bounds = mesh.bounds;
                         origin = new Vector3(-bounds.center.x, -bounds.min.y, -bounds.center.z) / LDrawModelBuilder.Scale;
                     }
-                    Object.Destroy(mesh);
+                    Object.DestroyImmediate(mesh); // outside play mode too (tests)
                 }
                 origins[part] = origin;
             }

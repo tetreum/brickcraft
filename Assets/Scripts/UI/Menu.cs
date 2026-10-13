@@ -31,6 +31,9 @@ public class Menu : MonoBehaviour {
 		Brickcraft.Network.ClientStorage.Changed += onStorageChanged;
 		PartsListerView.Opened += PartsListerPanel.Show;
 		PartsListerView.Closed += PartsListerPanel.Hide;
+		ModelImporterView.WindowRequested += ModelImporterPanel.Open;
+		ModelImporterView.Opened += ModelImporterPanel.ShowHint;
+		ModelImporterView.Closed += ModelImporterPanel.HideHint;
     }
 
 	// a storage brick the server opened for us: its panel, over the others
@@ -46,6 +49,9 @@ public class Menu : MonoBehaviour {
 		Brickcraft.Network.ClientStorage.Changed -= onStorageChanged;
 		PartsListerView.Opened -= PartsListerPanel.Show;
 		PartsListerView.Closed -= PartsListerPanel.Hide;
+		ModelImporterView.WindowRequested -= ModelImporterPanel.Open;
+		ModelImporterView.Opened -= ModelImporterPanel.ShowHint;
+		ModelImporterView.Closed -= ModelImporterPanel.HideHint;
 	}
 
 	private void onLocalPlayerStarted(LocalPlayerStartedEvent e) {
@@ -66,6 +72,11 @@ public class Menu : MonoBehaviour {
 			if (GameInput.GetButtonDown(GameInput.Menu)) {
 				PartsListerView.Current.Cancel();
 			}
+			return;
+		}
+		// placing an imported model: Escape gives up
+		if (ModelImporterView.IsOpen && GameInput.GetButtonDown(GameInput.Menu)) {
+			ModelImporterView.Current.Close();
 			return;
 		}
 		// a storage panel open: the inventory key and Escape close it

@@ -187,6 +187,12 @@ namespace Brickcraft
         public bool IsPartsLister {
             get { return type == Type.Tool && tags.Contains(PartsListerTag); }
         }
+        /// <summary>Tools: used, it places an LDraw model from the player's imports folder (see Network.ModelImporter).</summary>
+        public const string ModelImporterTag = "modelimporter";
+
+        public bool IsModelImporter {
+            get { return type == Type.Tool && tags.Contains(ModelImporterTag); }
+        }
         /// <summary>Placed, it keeps items (see Network.BrickStorage).</summary>
         public const string StorageTag = "storage";
         public const int DefaultStorageSlots = 27;

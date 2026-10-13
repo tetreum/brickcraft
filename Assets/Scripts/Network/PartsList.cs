@@ -361,15 +361,15 @@ namespace Brickcraft.Network
                     continue;
                 }
                 // named like the game's item of that part, or LDraw's
-                Item partItem = itemOfPart(part.part);
+                Item partItem = ItemOfPart(part.part);
                 LDrawPart catalog = LDrawLibrary.CatalogPart(part.part);
                 string name = partItem != null ? partItem.name : catalog != null ? catalog.name : part.part;
                 add(rows, part.part, paletteColor(part.color, color), name, partItem != null ? partItem.BricklinkPart : part.part);
             }
         }
 
-        // the game's item of an LDraw part: its catalogue item, or one of the game's made of it (the door 7102)
-        private static Item itemOfPart(string part) {
+        /// <summary>The game's item of an LDraw part: its catalogue item, or one of the game's made of it (the door 7102), null if none.</summary>
+        public static Item ItemOfPart(string part) {
             if (Server.items.TryGetValue(ItemDatabase.LDrawItemPrefix + part, out Item item)) {
                 return item;
             }

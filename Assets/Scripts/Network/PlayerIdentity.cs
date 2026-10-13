@@ -35,17 +35,36 @@ namespace Brickcraft.Network
 
         /// <summary>
         /// SystemInfo.deviceUniqueIdentifier, or a random id generated once and stored locally
-        /// on platforms where Unity can't provide one.
+        /// on platforms where Unity can't provide one. The "-identity [tag]" command line option (development builds
+        /// only) adds that tag:
+        /// players are their machine (see BrickcraftAuthenticator), so instances of the same computer joining
+        /// the same server (to test) need one each.
         /// </summary>
         public static string MachineId {
             get {
                 string id = SystemInfo.deviceUniqueIdentifier;
 
-                if (!string.IsNullOrEmpty(id) && id != SystemInfo.unsupportedIdentifier) {
-                    return id;
+                if (string.IsNullOrEmpty(id) || id == SystemInfo.unsupportedIdentifier) {
+                    id = fallbackId();
                 }
-                return fallbackId();
+                string tag = identityTag();
+                return tag != null ? id + ":" + tag : id;
             }
+        }
+
+        // the "-identity" command line option's tag, null without it; only development builds (and the editor) read it,
+        // so players can't pass themselves off as another player of their computer
+        private static string identityTag() {
+            if (!Debug.isDebugBuild) {
+                return null;
+            }
+            string[] args = Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length - 1; i++) {
+                if (args[i] == "-identity" && args[i + 1].Trim().Length > 0) {
+                    return args[i + 1].Trim();
+                }
+            }
+            return null;
         }
 
         private static string fallbackId() {

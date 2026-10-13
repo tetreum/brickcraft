@@ -82,8 +82,10 @@ public class MainPanel : MonoBehaviour
     }
 
     // "-host" or "-join <address>" start a multiplayer game right away, handy to test with several instances
+    // ("-world <save>" is the world "-host" hosts, "world" by default)
     // "-test" starts the test scene, which has no button
     // "-name <name>" picks the player name, "-password <password>" the server's password to join with
+    // "-identity <tag>" makes this instance another player of the same computer, in development builds (see PlayerIdentity.MachineId)
     private void Start () {
         if (hasReadCommandLine) {
             return;
@@ -97,6 +99,8 @@ public class MainPanel : MonoBehaviour
                 nameInput.text = args[i + 1];
             } else if (args[i] == "-password" && passwordInput != null) {
                 passwordInput.text = args[i + 1];
+            } else if (args[i] == "-world") {
+                BrickcraftNetworkManager.GetOrCreate().saveName = args[i + 1];
             }
         }
         for (int i = 0; i < args.Length; i++) {

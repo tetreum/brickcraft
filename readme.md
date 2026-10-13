@@ -128,7 +128,7 @@ The server keeps a SQLite database (`players.db`, via [unity-sqlite-net](https:/
 - `inventory_items`: each player's inventory. Inventories only change on the server and are synced to their owner; new players get the `starterItems` of the NetworkManager.
 - `pets`: the pets following each player while they're away (kind, health, attack mode), saved when they leave and with every autosave.
 
-To test with several instances, a build can be started with `-name <name>` and `-host` or `-join <address>` (and `-password <password>`). `-test` starts the test scene, which has no button in the menu, and `-profileLoad` logs how long loading the world takes, step by step (`WorldLoadProfiler`). Playing a game scene straight from the editor starts a singleplayer game.
+To test with several instances, a build can be started with `-name <name>` and `-host` (`-world <save>` picks the world, `world` by default) or `-join <address>` (and `-password <password>`). Players are their computer, so each instance of the same computer joining the same server needs `-identity <tag>` too (any word, a different one each); only development builds read it. `-test` starts the test scene, which has no button in the menu, and `-profileLoad` logs how long loading the world takes, step by step (`WorldLoadProfiler`). Playing a game scene straight from the editor starts a singleplayer game.
 
 ## Code structure
 

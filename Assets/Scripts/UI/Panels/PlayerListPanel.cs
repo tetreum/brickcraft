@@ -68,7 +68,7 @@ namespace Brickcraft.UI
             if (!show) {
                 return;
             }
-            if (isAdmin() && !isMouseFree && Input.GetMouseButtonDown(1)) {
+            if (isAdmin() && !isMouseFree && GameInput.KeyDown(KeyCode.Mouse1)) {
                 freeMouse();
             }
             if (Time.unscaledTime >= nextRefresh) {

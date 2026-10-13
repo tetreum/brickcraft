@@ -244,7 +244,7 @@ namespace Brickcraft
 
                 // throwing what's in hand: one, or the whole stack with Ctrl
                 if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Drop) && SelectedItem != null) {
-                    bool whole = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+                    bool whole = GameInput.CtrlHeld;
                     inventory.CmdDrop(SelectedSlot, whole ? SelectedItem.quantity : 1);
                 }
 

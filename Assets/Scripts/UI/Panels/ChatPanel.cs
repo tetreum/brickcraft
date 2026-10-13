@@ -73,7 +73,7 @@ namespace Brickcraft.UI
                 }
             } else if (GameInput.GetButtonDown(GameInput.Menu)) {
                 close();
-            } else if (isChatPressed() || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) {
+            } else if (isChatPressed() || GameInput.SubmitDown) {
                 send();
                 close();
             }

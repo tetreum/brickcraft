@@ -141,7 +141,7 @@ namespace Brickcraft.UI
                 pressableKeys = findPressableKeys();
             }
             foreach (KeyCode key in pressableKeys) {
-                if (!Input.GetKeyDown(key)) {
+                if (!GameInput.KeyDown(key)) {
                     continue;
                 }
                 Row row = waiting;

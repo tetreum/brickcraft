@@ -91,7 +91,7 @@ namespace Brickcraft.UI
         }
 
         private void LateUpdate() {
-            Vector2 pointer = Input.mousePosition;
+            Vector2 pointer = GameInput.PointerPosition;
             if ((pointer - stillAt).sqrMagnitude > StillPixels * StillPixels) {
                 restartStill();
             } else if (!preview.gameObject.activeSelf && Time.unscaledTime - stillSince >= PreviewDelay && shownItem != null) {
@@ -103,7 +103,7 @@ namespace Brickcraft.UI
 
         // the pointer moved (or another item): the big view waits for it to stay still again
         private void restartStill() {
-            stillAt = Input.mousePosition;
+            stillAt = GameInput.PointerPosition;
             stillSince = Time.unscaledTime;
             preview.gameObject.SetActive(false);
         }
@@ -155,7 +155,7 @@ namespace Brickcraft.UI
         private void follow() {
             RectTransform parent = (RectTransform)transform.parent;
             Camera eye = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
-            Vector2 pointer = Input.mousePosition;
+            Vector2 pointer = GameInput.PointerPosition;
             Vector2 size = rect.rect.size * (canvas != null ? canvas.scaleFactor : 1);
             Vector2 at = pointer + Offset;
             if (at.x + size.x > Screen.width) {

@@ -118,7 +118,7 @@ namespace Brickcraft.UI
             if (PartsListerView.Current == null) {
                 return;
             }
-            bool fast = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            bool fast = GameInput.ShiftHeld;
             PartsListerView.Current.Grow(face, fast ? steps * 4 : steps);
         }
     }

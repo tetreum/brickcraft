@@ -89,7 +89,7 @@ namespace Brickcraft.UI
         private void Update() {
             if (GameInput.GetButtonDown(GameInput.Menu)) {
                 Close(-1);
-            } else if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) {
+            } else if (GameInput.SubmitDown) {
                 Close(0);
             }
         }

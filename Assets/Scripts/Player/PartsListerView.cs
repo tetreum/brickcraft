@@ -201,12 +201,12 @@ namespace Brickcraft
         }
 
         private void fly() {
-            bool looking = !GameInput.IsTyping && Input.GetMouseButton(1);
+            bool looking = !GameInput.IsTyping && GameInput.KeyHeld(KeyCode.Mouse1);
             if (looking) {
                 Game.lockMouse();
-                yaw += Input.GetAxis("Mouse X") * LookSpeed;
-                pitch = Mathf.Clamp(pitch - Input.GetAxis("Mouse Y") * LookSpeed, -89, 89);
-            } else if (Input.GetMouseButtonUp(1)) {
+                yaw += GameInput.LookDelta.x * LookSpeed;
+                pitch = Mathf.Clamp(pitch - GameInput.LookDelta.y * LookSpeed, -89, 89);
+            } else if (GameInput.KeyUp(KeyCode.Mouse1)) {
                 Game.unlockMouse();
             }
             Transform tr = eye.transform;
@@ -219,7 +219,7 @@ namespace Brickcraft
             if (GameInput.GetButton(GameInput.Jump)) {
                 direction += Vector3.up;
             }
-            if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) {
+            if (GameInput.CtrlHeld) {
                 direction += Vector3.down;
             }
             float speed = GameInput.GetButton(GameInput.Sprint) ? FastFlySpeed : FlySpeed;
@@ -233,11 +233,11 @@ namespace Brickcraft
         // the face under the pointer lights up; the wheel or a drag moves it
         private void editFaces() {
             bool overUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
-            Ray ray = eye.ScreenPointToRay(Input.mousePosition);
-            bool fast = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            Ray ray = eye.ScreenPointToRay(GameInput.PointerPosition);
+            bool fast = GameInput.ShiftHeld;
 
             if (dragged >= 0) {
-                if (!Input.GetMouseButton(0)) {
+                if (!GameInput.KeyHeld(KeyCode.Mouse0)) {
                     dragged = -1;
                 } else {
                     if (!alongAxis(dragged, ray, out float along)) {
@@ -260,11 +260,11 @@ namespace Brickcraft
             if (hovered < 0) {
                 return;
             }
-            float wheel = Input.mouseScrollDelta.y;
+            float wheel = GameInput.ScrollDelta;
             if (wheel != 0) {
                 Grow(hovered, (wheel > 0 ? 1 : -1) * (fast ? FastSteps : 1));
             }
-            if (Input.GetMouseButtonDown(0)) {
+            if (GameInput.KeyDown(KeyCode.Mouse0)) {
                 dragAnchor = worldBounds.center;
                 if (alongAxis(hovered, ray, out dragFrom)) {
                     dragged = hovered;

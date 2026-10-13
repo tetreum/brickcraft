@@ -160,7 +160,7 @@ namespace Brickcraft
             if (hit.normal.y < -0.5f) {
                 at.y -= size.y - 1;
             }
-            bool anyStud = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            bool anyStud = GameInput.ShiftHeld;
             if (!anyStud) {
                 at.x = BrickGrid.FloorDiv(at.x, BrickGrid.StudsPerBlock) * BrickGrid.StudsPerBlock;
                 at.z = BrickGrid.FloorDiv(at.z, BrickGrid.StudsPerBlock) * BrickGrid.StudsPerBlock;

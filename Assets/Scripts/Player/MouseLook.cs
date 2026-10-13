@@ -1,8 +1,12 @@
 using System;
 using UnityEngine;
 
-namespace UnityStandardAssets.Characters.FirstPerson
+namespace Brickcraft
 {
+    /// <summary>
+    /// Looking around with the mouse (Unity's Standard Assets' MouseLook, reading GameInput): the body turns sideways, the
+    /// camera up and down.
+    /// </summary>
     [Serializable]
     public class MouseLook
     {
@@ -29,8 +33,8 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
         public void LookRotation(Transform character, Transform camera)
         {
-            float yRot = Input.GetAxis("Mouse X") * XSensitivity;
-            float xRot = Input.GetAxis("Mouse Y") * YSensitivity;
+            float yRot = GameInput.LookDelta.x * XSensitivity;
+            float xRot = GameInput.LookDelta.y * YSensitivity;
 
             m_CharacterTargetRot *= Quaternion.Euler (0f, yRot, 0f);
             m_CameraTargetRot *= Quaternion.Euler (-xRot, 0f, 0f);
@@ -73,11 +77,11 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
         private void InternalLockUpdate()
         {
-            if(Input.GetKeyUp(KeyCode.Escape))
+            if(GameInput.KeyUp(KeyCode.Escape))
             {
                 m_cursorIsLocked = false;
             }
-            else if(Input.GetMouseButtonUp(0))
+            else if(GameInput.KeyUp(KeyCode.Mouse0))
             {
                 m_cursorIsLocked = true;
             }

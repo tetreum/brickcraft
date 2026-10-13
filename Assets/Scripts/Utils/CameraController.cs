@@ -14,13 +14,15 @@ public class CameraController : MonoBehaviour
         if (!enabled) {
             return;
         }
-        movementSpeed = Mathf.Max(movementSpeed += Input.GetAxis("Mouse ScrollWheel"), 0.0f);
-        if (Input.GetAxis("Vertical") != 0) {
-            transform.Translate(Vector3.forward * movementSpeed * Input.GetAxis("Vertical"));
+        movementSpeed = Mathf.Max(movementSpeed += Brickcraft.GameInput.ScrollDelta * 0.1f, 0.0f);
+        Vector2 move = Brickcraft.GameInput.GetMovement();
+        if (move.y != 0) {
+            transform.Translate(Vector3.forward * movementSpeed * move.y);
         }
-        if (Input.GetAxis("Horizontal") != 0) {
-            transform.Translate(Vector3.right * movementSpeed * Input.GetAxis("Horizontal"));
+        if (move.x != 0) {
+            transform.Translate(Vector3.right * movementSpeed * move.x);
         }
-        transform.eulerAngles += new Vector3(-Input.GetAxis("Mouse Y"), Input.GetAxis("Mouse X"), 0);
+        Vector2 look = Brickcraft.GameInput.LookDelta;
+        transform.eulerAngles += new Vector3(-look.y, look.x, 0);
     }
 }

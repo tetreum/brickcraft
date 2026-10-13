@@ -55,7 +55,7 @@ namespace Brickcraft.UI
         }
 
         private void Update() {
-            if (Input.GetKeyDown(KeyCode.Escape)) {
+            if (GameInput.KeyDown(KeyCode.Escape)) {
                 Close();
             }
         }

@@ -1,6 +1,5 @@
 using UnityEngine;
 using Random = UnityEngine.Random;
-using UnityStandardAssets.Characters.FirstPerson;
 using UnityStandardAssets.Utility;
 
 namespace Brickcraft

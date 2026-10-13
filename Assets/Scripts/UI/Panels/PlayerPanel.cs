@@ -54,7 +54,7 @@ namespace Brickcraft.UI
         // the mouse wheel selects the next (down) or previous (up) slot of the bottom bar, only while
         // playing: not with another panel open (inventory, menu, settings...), the player list or the chat
         private void scrollSlots() {
-            float scroll = Input.mouseScrollDelta.y;
+            float scroll = GameInput.ScrollDelta;
             if (scroll == 0 || !isOnlyPanelOpen()) {
                 return;
             }

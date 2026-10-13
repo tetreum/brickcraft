@@ -4,6 +4,7 @@ using Brickcraft.Events;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.UI;
 
 namespace Brickcraft
@@ -218,6 +219,98 @@ namespace Brickcraft
             return new Vector2(
                 (GetButton(MoveRight) ? 1 : 0) - (GetButton(MoveLeft) ? 1 : 0),
                 (GetButton(MoveForward) ? 1 : 0) - (GetButton(MoveBack) ? 1 : 0));
+        }
+
+        // -------- keys and the mouse --------
+        // what isn't one of the remappable buttons: modifiers (Shift for any stud, Ctrl for the whole stack), Enter and
+        // Escape in dialogs, the mouse's movement, pointer and wheel
+
+        // the classic input's mouse axes are a tenth of the pixels moved (Input Manager's sensitivity)
+        private const float MouseAxisScale = 0.1f;
+
+        /// <summary>A key or mouse button (KeyCode.Mouse0...) is held.</summary>
+        public static bool KeyHeld(KeyCode key) {
+            if (UsesInputSystem) {
+                ButtonControl control = controlOf(key);
+                return control != null && control.isPressed;
+            }
+            return Input.GetKey(key);
+        }
+
+        /// <summary>A key or mouse button went down this frame.</summary>
+        public static bool KeyDown(KeyCode key) {
+            if (UsesInputSystem) {
+                ButtonControl control = controlOf(key);
+                return control != null && control.wasPressedThisFrame;
+            }
+            return Input.GetKeyDown(key);
+        }
+
+        /// <summary>A key or mouse button went up this frame.</summary>
+        public static bool KeyUp(KeyCode key) {
+            if (UsesInputSystem) {
+                ButtonControl control = controlOf(key);
+                return control != null && control.wasReleasedThisFrame;
+            }
+            return Input.GetKeyUp(key);
+        }
+
+        // the key's control on the keyboard or the mouse there is, null if there's none
+        private static ButtonControl controlOf(KeyCode key) {
+            string path = KeyPaths.PathOf(key);
+            if (path == null) {
+                return null;
+            }
+            // "<Keyboard>/q": its device and its control's name
+            InputDevice device = path.StartsWith("<Mouse>") ? (InputDevice)Mouse.current : Keyboard.current;
+            return device != null ? device.TryGetChildControl<ButtonControl>(path.Substring(path.IndexOf('/') + 1)) : null;
+        }
+
+        /// <summary>Either Shift is held.</summary>
+        public static bool ShiftHeld {
+            get { return KeyHeld(KeyCode.LeftShift) || KeyHeld(KeyCode.RightShift); }
+        }
+
+        /// <summary>Either Ctrl is held.</summary>
+        public static bool CtrlHeld {
+            get { return KeyHeld(KeyCode.LeftControl) || KeyHeld(KeyCode.RightControl); }
+        }
+
+        /// <summary>Enter (or the keypad's) went down this frame: a dialog's default button, sending a chat line.</summary>
+        public static bool SubmitDown {
+            get { return KeyDown(KeyCode.Return) || KeyDown(KeyCode.KeypadEnter); }
+        }
+
+        /// <summary>How much the mouse moved this frame, like the classic input's "Mouse X" and "Mouse Y" axes (looking around).</summary>
+        public static Vector2 LookDelta {
+            get {
+                if (UsesInputSystem) {
+                    return Mouse.current != null ? Mouse.current.delta.ReadValue() * MouseAxisScale : Vector2.zero;
+                }
+                return new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+            }
+        }
+
+        /// <summary>Where the pointer is on the screen, in pixels from its bottom left.</summary>
+        public static Vector2 PointerPosition {
+            get {
+                if (UsesInputSystem) {
+                    return Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
+                }
+                return Input.mousePosition;
+            }
+        }
+
+        /// <summary>How far the mouse wheel turned this frame, in notches (up positive).</summary>
+        public static float ScrollDelta {
+            get {
+                if (UsesInputSystem) {
+                    float scroll = Mouse.current != null ? Mouse.current.scroll.ReadValue().y : 0;
+                    // notches; where it reports the platform's units instead (120 a notch on Windows), in notches too
+                    return Mathf.Abs(scroll) > 2 ? scroll / 120 : scroll;
+                }
+                return Input.mouseScrollDelta.y;
+            }
         }
 
         /// <summary>The fast inventory slot (0 to 8) whose button went down this frame, -1 if none.</summary>

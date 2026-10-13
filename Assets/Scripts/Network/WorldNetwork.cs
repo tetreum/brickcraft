@@ -537,9 +537,8 @@ namespace Brickcraft.Network
             }
             // returning players stream in around where they left
             ClientInterest interest = new ClientInterest() { spawnChunk = spawnChunk, viewDistance = allowedViewDistance(conn, message.viewDistance) };
-            if (conn.authenticationData is ConnectedPlayer player && BrickcraftNetworkManager.HasSavedPosition(player.record)) {
-                PlayerRecord record = player.record;
-                interest.spawnChunk = WorldBehaviour.ChunkAt(FloatingOrigin.ToLocal(record.LastX.Value, record.LastY.Value, record.LastZ.Value));
+            if (conn.authenticationData is ConnectedPlayer player && BrickcraftNetworkManager.SavedPosition(player.record, out Vector3 back, out _)) {
+                interest.spawnChunk = WorldBehaviour.ChunkAt(back);
             }
             interests[conn] = interest;
 

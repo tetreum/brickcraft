@@ -60,6 +60,13 @@ namespace Brickcraft.Network
             get { return LastX.HasValue && LastY.HasValue && LastZ.HasValue; }
         }
 
+        /// <summary>Its health when it left (null: all of it), 0 if it left dead: it comes back alive at its spawn point.</summary>
+        public int? Health { get; set; }
+
+        public bool LeftDead {
+            get { return Health.HasValue && Health.Value <= 0; }
+        }
+
         /// <summary>The bed it last slept in (a brick id), where it comes back when it dies; null for the world's spawn.</summary>
         public string SpawnBed { get; set; }
         // where it stands up there, beside the bed (absolute coordinates)
@@ -227,12 +234,13 @@ namespace Brickcraft.Network
             connection.Update(player);
         }
 
-        /// <summary>Remembers where the player is, to put it back there next time.</summary>
-        public void SavePosition(PlayerRecord player, double x, double y, double z, float yaw) {
+        /// <summary>Remembers where the player is and its health (0 dead), to put it back so next time.</summary>
+        public void SavePosition(PlayerRecord player, double x, double y, double z, float yaw, int health) {
             player.LastX = x;
             player.LastY = y;
             player.LastZ = z;
             player.LastYaw = yaw;
+            player.Health = health;
             connection.Update(player);
         }
 

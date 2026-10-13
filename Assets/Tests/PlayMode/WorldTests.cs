@@ -69,6 +69,34 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator HealthIsKeptBetweenSessions() {
+            Combat.Health health = TestGame.Player.GetComponent<Combat.Health>();
+            Assert.IsTrue(health.ServerDamage(new Combat.DamageInfo() { amount = 7, kind = Combat.DamageInfo.Kind.Script }));
+            Assert.AreEqual(health.maxHealth - 7, health.health);
+            int hurt = health.health;
+
+            yield return game.Stop();
+            yield return game.Start();
+            health = TestGame.Player.GetComponent<Combat.Health>();
+            Assert.AreEqual(hurt, health.health, "back with the health it left with");
+
+            // left dead: back alive, at the spawn
+            Vector3 died = TestGame.Player.transform.position + new Vector3(30, 0, 30);
+            TestGame.Player.GetComponent<PlayerNetwork>().ServerTeleport(died);
+            Vector3 diedAt = FloatingOrigin.ToAbsolute(died);
+            yield return null;
+            yield return TestGame.Wait(1); // past the hit's invulnerability
+            Assert.IsTrue(health.ServerDamage(new Combat.DamageInfo() { amount = 100, kind = Combat.DamageInfo.Kind.Script }));
+            Assert.IsTrue(health.isDead);
+            yield return game.Stop();
+            yield return game.Start();
+            health = TestGame.Player.GetComponent<Combat.Health>();
+            Assert.IsFalse(health.isDead);
+            Assert.AreEqual(health.maxHealth, health.health);
+            Assert.Greater(Vector3.Distance(FloatingOrigin.ToAbsolute(TestGame.Player.transform.position), diedAt), 20, "not where it died");
+        }
+
+        [UnityTest]
         public IEnumerator WaterPouredOnAFloorSpreads() {
             BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
             BlockType water = (BlockType)BlockDatabase.IdOf("water");

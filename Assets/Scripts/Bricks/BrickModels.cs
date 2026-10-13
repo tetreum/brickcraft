@@ -166,7 +166,8 @@ namespace Brickcraft.Bricks
                 return null;
             }
             BrickModel model;
-            if (cache.TryGetValue(id, out model)) {
+            // a template made in another play session is gone (play mode entered without reloading the scripts)
+            if (cache.TryGetValue(id, out model) && (model == null || model.prefab != null)) {
                 return model;
             }
             string folder;

@@ -263,11 +263,8 @@ namespace Brickcraft.Network
             Vector3 position;
             Quaternion rotation;
 
-            if (HasSavedPosition(connected.record)) {
-                // back where it left
-                PlayerRecord record = connected.record;
-                position = FloatingOrigin.ToLocal(record.LastX.Value, record.LastY.Value, record.LastZ.Value);
-                rotation = Quaternion.Euler(0, record.LastYaw ?? 0, 0);
+            if (SavedPosition(connected.record, out position, out float yaw)) {
+                rotation = Quaternion.Euler(0, yaw, 0);
             } else {
                 position = ServerSpawnPosition(out rotation);
             }
@@ -279,6 +276,10 @@ namespace Brickcraft.Network
             network.playerName = connected.record.Name;
             network.role = connected.record.Role;
             network.ServerSetSpawn(position, rotation.eulerAngles.y);
+            // with the health it left with (it left dead: back to life)
+            Combat.Health health = player.GetComponent<Combat.Health>();
+            int? saved = connected.record.Health;
+            health.health = saved.HasValue && saved.Value > 0 ? Mathf.Min(saved.Value, health.maxHealth) : health.maxHealth;
             loadInventory(player.GetComponent<PlayerInventory>(), connected.record);
 
             NetworkServer.AddPlayerForConnection(conn, player);
@@ -289,11 +290,29 @@ namespace Brickcraft.Network
         }
 
         /// <summary>
-        /// Players come back where they left, but only in the generated world: the test scene shares
-        /// the players database but is another place.
+        /// Where a joining player comes back (local position, and facing): where it left, or beside its bed if it left
+        /// dead (like respawning, see PlayerNetwork.CmdRespawn); false for the world's spawn. Only in the generated
+        /// world: the test scene shares the players database but is another place.
         /// </summary>
-        public static bool HasSavedPosition(PlayerRecord record) {
-            return record.HasLastPosition && WorldBehaviour.Instance != null;
+        public static bool SavedPosition(PlayerRecord record, out Vector3 position, out float yaw) {
+            position = default(Vector3);
+            yaw = 0;
+            if (WorldBehaviour.Instance == null) {
+                return false;
+            }
+            if (record.LeftDead) {
+                if (!record.HasSpawnBed) {
+                    return false;
+                }
+                position = FloatingOrigin.ToLocal(record.SpawnX.Value, record.SpawnY.Value, record.SpawnZ.Value);
+                return true;
+            }
+            if (!record.HasLastPosition) {
+                return false;
+            }
+            position = FloatingOrigin.ToLocal(record.LastX.Value, record.LastY.Value, record.LastZ.Value);
+            yaw = record.LastYaw ?? 0;
+            return true;
         }
 
         // absolute position and facing direction, saved as doubles so they're exact however far
@@ -303,7 +322,8 @@ namespace Brickcraft.Network
             }
             Transform transform = conn.identity.transform;
             FloatingOrigin.ToAbsolute(transform.position, out double x, out double y, out double z);
-            Database.SavePosition(player.record, x, y, z, transform.eulerAngles.y);
+            Combat.Health health = conn.identity.GetComponent<Combat.Health>();
+            Database.SavePosition(player.record, x, y, z, transform.eulerAngles.y, health.isDead ? 0 : health.health);
         }
 
         private void loadInventory(PlayerInventory inventory, PlayerRecord record) {

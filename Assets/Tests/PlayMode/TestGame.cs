@@ -38,6 +38,7 @@ namespace Brickcraft.Tests
         /// <summary>Plays its world until the player is in it, drawing it as near as the game allows (fewer chunks to load).</summary>
         public IEnumerator Start() {
             GameSettings.RenderDistanceOverride = GameSettings.MinRenderDistance;
+            GameSettings.MasterVolumeOverride = 0; // silent (a test about sound sets its own)
             BrickcraftNetworkManager.GetOrCreate().PlayWorld(saveName);
             float end = Time.realtimeSinceStartup + StartTimeout;
             while (Player == null) {
@@ -70,6 +71,7 @@ namespace Brickcraft.Tests
         public IEnumerator Delete() {
             yield return Stop();
             GameSettings.RenderDistanceOverride = null;
+            GameSettings.MasterVolumeOverride = null;
             for (int attempt = 0; Directory.Exists(SaveFolder); attempt++) {
                 try {
                     Directory.Delete(SaveFolder, true);

@@ -59,8 +59,19 @@ namespace Brickcraft
 
         /// <summary>Volume of the whole game, from 0 to 1.</summary>
         public static float MasterVolume {
-            get { return getVolume(MasterVolumeSetting, 1f); }
+            get { return MasterVolumeOverride ?? getVolume(MasterVolumeSetting, 1f); }
             set { setFloat(MasterVolumeSetting, Mathf.Clamp01(value)); }
+        }
+
+        private static float? masterVolumeOverride;
+
+        /// <summary>The master volume used instead of the player's, without saving it (Play Mode tests are silent), null for the player's.</summary>
+        public static float? MasterVolumeOverride {
+            get { return masterVolumeOverride; }
+            set {
+                masterVolumeOverride = value;
+                changed(MasterVolumeSetting);
+            }
         }
 
         /// <summary>Volume of the music, from 0 to 1, on top of the master volume.</summary>

@@ -23,8 +23,13 @@ public static class LDrawLibraryBuilder
         "Minifig", "Minifig Accessory", "Minifig Footwear", "Minifig Headwear", "Minifig Hipwear", "Minifig Neckwear",
         "Figure", "Figure Accessory", "Sticker", "Sheet Fabric", "Sheet Cardboard", "Sheet Plastic",
     };
-    // minifig parts kept anyway, as the game's tools: pickaxe, torch, handaxe, shovel, mallet, sledgehammer
-    private static readonly HashSet<string> KeptParts = new HashSet<string>() { "3841", "3959", "3835", "3837", "4522b", "75904" };
+    // minifig parts kept anyway, as the game's tools: pickaxe, torch, handaxe, shovel, mallet, sledgehammer; and the
+    // conical flask with its green fluid (LDraw's 93549, obsolete for being in two colours, BrickLink's 93549pb01)
+    private static readonly HashSet<string> KeptParts = new HashSet<string>() { "3841", "3959", "3835", "3837", "4522b", "75904", "93549" };
+    // kept parts whose LDraw description isn't a name (obsolete ones)
+    private static readonly Dictionary<string, string> KeptNames = new Dictionary<string, string>() {
+        { "93549", "Minifig Conical Flask with Trans-Bright Green Fluid" },
+    };
     private static readonly Regex Printed = new Regex(@"\d[p]\w*$");
     private static readonly Regex PrintedName = new Regex(@"(?i)pattern|print|sticker");
     private static readonly Regex Composite = new Regex(@"c\d\d$");
@@ -255,6 +260,9 @@ public static class LDrawLibraryBuilder
         }
         if (string.IsNullOrEmpty(description) || (kind != "Part" && kind != "Unofficial_Part")) {
             return null; // subparts, primitives, shortcuts, aliases...
+        }
+        if (KeptNames.TryGetValue(id, out string keptName)) {
+            return new LDrawPart() { id = id, name = keptName, category = "Minifig Accessory" };
         }
         if ("~=_|".IndexOf(description[0]) >= 0 || description.Contains("Moved to") || PrintedName.IsMatch(description)) {
             return null;

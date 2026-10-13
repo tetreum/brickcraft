@@ -1,0 +1,23 @@
+{
+    "name": "Brickcraft.Tests.PlayMode",
+    "rootNamespace": "Brickcraft.Tests",
+    "references": [
+        "Brickcraft",
+        "Mirror",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

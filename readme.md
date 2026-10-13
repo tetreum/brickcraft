@@ -130,7 +130,7 @@ The server keeps a SQLite database (`players.db`, via [unity-sqlite-net](https:/
 
 To test with several instances, a build can be started with `-name <name>` and `-host` (`-world <save>` picks the world, `world` by default) or `-join <address>` (and `-password <password>`). Players are their computer, so each instance of the same computer joining the same server needs `-identity <tag>` too (any word, a different one each); only development builds read it. `-test` starts the test scene, which has no button in the menu, and `-profileLoad` logs how long loading the world takes, step by step (`WorldLoadProfiler`). Playing a game scene straight from the editor starts a singleplayer game.
 
-Automated tests (Unity Test Framework) are in `Assets/Tests`: Window -> General -> Test Runner runs them, or `Unity.exe -batchmode -projectPath . -runTests -testPlatform EditMode -testResults results.xml`. The Edit Mode ones run without a game: fluids flow in a world of blocks in memory (`TestWorld`, through `IFluidWorld`), with the game's items and blocks, and who joins as whom is `JoinRules`.
+Automated tests (Unity Test Framework) are in `Assets/Tests`: Window -> General -> Test Runner runs them, or `Unity.exe -batchmode -projectPath . -runTests -testPlatform EditMode -testResults results.xml`. The Edit Mode ones run without a game: fluids flow in a world of blocks in memory (`TestWorld`, through `IFluidWorld`), with the game's items and blocks, and who joins as whom is `JoinRules`. The Play Mode ones (`-testPlatform PlayMode`) play the game alone on a world of their own (`TestGame`, a save named `zz_test_...` deleted afterwards), so they take a few minutes.
 
 ## Code structure
 

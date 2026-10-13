@@ -138,6 +138,8 @@ namespace Brickcraft.Network
             serverChanges = null;
             interests.Clear();
             serverChunks.Clear();
+            // the next server (another world, or this one again) loads its chunks even where these players were
+            lastAreas.Clear();
         }
 
         public static void ServerDisconnect(NetworkConnectionToClient conn) {

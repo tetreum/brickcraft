@@ -9,8 +9,8 @@ namespace Brickcraft.UI
 {
     /// <summary>
     /// The Controls tab of the settings: every action of GameInput.Bindings, grouped by category.
-    /// Clicking an action's key waits for the next key or mouse button and maps the action to it;
-    /// Escape cancels.
+    /// Clicking an action's key waits for the next key or mouse button and maps the action to it
+    /// (GameInput.StartRebinding); Escape cancels.
     /// </summary>
     public class ControlsTab : MonoBehaviour
     {
@@ -36,10 +36,8 @@ namespace Brickcraft.UI
 
         private readonly List<Row> rows = new List<Row>();
         private Row waiting;
-        private int waitingSince;
-
-        // what a player can press: keyboard keys and mouse buttons (not joysticks)
-        private static KeyCode[] pressableKeys;
+        // waiting for its key, see GameInput.StartRebinding
+        private IDisposable rebinding;
 
         private void Awake() {
             categoryTemplate.SetActive(false);
@@ -104,13 +102,17 @@ namespace Brickcraft.UI
         }
 
         private static string keysText(string button) {
-            return string.Join(" / ", Array.ConvertAll(GameInput.GetKeys(button), GameInput.KeyName));
+            return string.Join(" / ", Array.ConvertAll(GameInput.GetPaths(button), GameInput.PathName));
         }
 
         private void startWaiting(Row row) {
             stopWaiting();
+            rebinding = GameInput.StartRebinding(row.binding.button, path => onKey(row, path));
+            if (rebinding == null) {
+                status.text = "Keys can't be changed without the Input System's devices (restart the editor).";
+                return;
+            }
             waiting = row;
-            waitingSince = Time.frameCount;
             // the key pressed now picks the action's key, it's no shortcut
             GameInput.SetTyping(true);
             // the clicked button stays selected, and the UI's Submit (Enter, Space) would click it
@@ -128,52 +130,32 @@ namespace Brickcraft.UI
                 return;
             }
             waiting = null;
+            if (rebinding != null) {
+                rebinding.Dispose();
+                rebinding = null;
+            }
             GameInput.SetTyping(false);
             refresh();
         }
 
-        private void Update() {
-            // the click that started waiting doesn't count
-            if (waiting == null || Time.frameCount == waitingSince) {
-                return;
-            }
-            if (pressableKeys == null) {
-                pressableKeys = findPressableKeys();
-            }
-            foreach (KeyCode key in pressableKeys) {
-                if (!GameInput.KeyDown(key)) {
-                    continue;
-                }
-                Row row = waiting;
-                stopWaiting();
-
-                if (key != KeyCode.Escape) {
-                    GameInput.Remap(row.binding.button, key);
-                    status.text = sharedWith(row.binding, key);
-                }
-                return;
+        // the key pressed (its control path), null if cancelled (Escape): GameInput already uses it
+        private void onKey(Row row, string path) {
+            rebinding = null;
+            stopWaiting();
+            if (path != null) {
+                status.text = sharedWith(row.binding, path);
             }
         }
 
         // tells if other actions use the key too, it's allowed (like Sprint and Place on any stud)
-        private static string sharedWith(GameInput.Binding binding, KeyCode key) {
+        private static string sharedWith(GameInput.Binding binding, string path) {
             List<string> others = new List<string>();
             foreach (GameInput.Binding other in GameInput.Bindings) {
-                if (other != binding && Array.IndexOf(GameInput.GetKeys(other.button), key) >= 0) {
+                if (other != binding && Array.IndexOf(GameInput.GetPaths(other.button), path) >= 0) {
                     others.Add(other.label);
                 }
             }
-            return others.Count == 0 ? "" : GameInput.KeyName(key) + " is also used by " + string.Join(", ", others.ToArray()) + ".";
-        }
-
-        private static KeyCode[] findPressableKeys() {
-            List<KeyCode> keys = new List<KeyCode>();
-            foreach (KeyCode key in Enum.GetValues(typeof(KeyCode))) {
-                if (key != KeyCode.None && key < KeyCode.JoystickButton0) {
-                    keys.Add(key);
-                }
-            }
-            return keys.ToArray();
+            return others.Count == 0 ? "" : GameInput.PathName(path) + " is also used by " + string.Join(", ", others.ToArray()) + ".";
         }
     }
 }

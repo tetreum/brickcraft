@@ -180,7 +180,7 @@ namespace Brickcraft
             if (UsesInputSystem) {
                 return actionOf(button).WasPressedThisFrame();
             }
-            foreach (KeyCode key in GetKeys(button)) {
+            foreach (KeyCode key in keysOf(button)) {
                 if (Input.GetKeyDown(key)) {
                     return true;
                 }
@@ -193,7 +193,7 @@ namespace Brickcraft
             if (UsesInputSystem) {
                 return actionOf(button).IsPressed();
             }
-            foreach (KeyCode key in GetKeys(button)) {
+            foreach (KeyCode key in keysOf(button)) {
                 if (Input.GetKey(key)) {
                     return true;
                 }
@@ -206,8 +206,8 @@ namespace Brickcraft
         /// input's smoothed Input Manager axes while the player didn't remap them and the Input System has no devices.
         /// </summary>
         public static Vector2 GetMovement() {
-            bool remapped = GetPlayerKey(MoveForward).HasValue || GetPlayerKey(MoveBack).HasValue
-                || GetPlayerKey(MoveLeft).HasValue || GetPlayerKey(MoveRight).HasValue;
+            bool remapped = playerPath(MoveForward) != null || playerPath(MoveBack) != null
+                || playerPath(MoveLeft) != null || playerPath(MoveRight) != null;
 
             if (!remapped && !UsesInputSystem) {
                 try {
@@ -325,31 +325,44 @@ namespace Brickcraft
 
         // -------- remapping --------
 
-        /// <summary>The key the player chose for the button, null if it uses the default.</summary>
-        public static KeyCode? GetPlayerKey(string button) {
-            KeyCode key = KeyPaths.KeyOf(playerPath(button));
-            return key != KeyCode.None ? key : (KeyCode?)null;
-        }
-
         private static string playerPath(string button) {
             string path = PlayerPrefs.GetString(PathPrefix + button, "");
             return path.Length > 0 ? path : null;
         }
 
-        /// <summary>The keys the button uses now: the player's, or its defaults.</summary>
-        public static KeyCode[] GetKeys(string button) {
-            KeyCode? key = GetPlayerKey(button);
-            if (key.HasValue) {
-                return new[] { key.Value };
+        /// <summary>The controls the button uses now (control paths, see KeyPaths): the player's, or its defaults.</summary>
+        public static string[] GetPaths(string button) {
+            string player = playerPath(button);
+            if (player != null) {
+                return new[] { player };
             }
             Binding binding = bindingsByButton[button];
-            return binding.defaultAltKey == KeyCode.None ? new[] { binding.defaultKey } : new[] { binding.defaultKey, binding.defaultAltKey };
+            List<string> paths = new List<string>();
+            foreach (KeyCode key in new[] { binding.defaultKey, binding.defaultAltKey }) {
+                string path = KeyPaths.PathOf(key);
+                if (path != null) {
+                    paths.Add(path);
+                }
+            }
+            return paths.ToArray();
         }
 
-        public static void Remap(string button, KeyCode key) {
-            string path = KeyPaths.PathOf(key);
-            if (path == null) {
-                return; // a key the Input System doesn't have
+        // the classic input's keys of the button's controls (those it has)
+        private static List<KeyCode> keysOf(string button) {
+            List<KeyCode> keys = new List<KeyCode>();
+            foreach (string path in GetPaths(button)) {
+                KeyCode key = KeyPaths.KeyOf(path);
+                if (key != KeyCode.None) {
+                    keys.Add(key);
+                }
+            }
+            return keys;
+        }
+
+        /// <summary>The button uses that control now (a key or mouse button, a control path), instead of its defaults.</summary>
+        public static void Remap(string button, string path) {
+            if (string.IsNullOrEmpty(path) || !(path.StartsWith("<Keyboard>/") || path.StartsWith("<Mouse>/"))) {
+                return;
             }
             PlayerPrefs.SetString(PathPrefix + button, path);
             PlayerPrefs.Save();
@@ -365,6 +378,75 @@ namespace Brickcraft
             }
             PlayerPrefs.Save();
             EventManager.SettingChanged.Raise(new SettingChangedEvent() { setting = SettingPrefix + "*" });
+        }
+
+        /// <summary>
+        /// Waits for the next key or mouse button pressed (the Input System's interactive rebinding: not the mouse's movement
+        /// or wheel), and the button uses it; Escape cancels. Then calls done with its control path, null if cancelled.
+        /// Dispose what it returns to stop waiting. Null (done isn't called) while the Input System has no devices.
+        /// </summary>
+        public static IDisposable StartRebinding(string button, Action<string> done) {
+            if (!UsesInputSystem) {
+                return null;
+            }
+            return new Rebinding(button, actionOf(button), done);
+        }
+
+        // waiting for the key of a button: the Input System's rebinding of its action, its result kept by Remap
+        private sealed class Rebinding : IDisposable
+        {
+            private readonly string button;
+            private readonly InputAction action;
+            private readonly Action<string> done;
+            private readonly InputActionRebindingExtensions.RebindingOperation operation;
+            private bool finished;
+
+            public Rebinding(string button, InputAction action, Action<string> done) {
+                this.button = button;
+                this.action = action;
+                this.done = done;
+                action.Disable();
+                operation = action.PerformInteractiveRebinding(0)
+                    .WithControlsHavingToMatchPath("<Keyboard>")
+                    .WithControlsHavingToMatchPath("<Mouse>")
+                    .WithControlsExcluding("<Keyboard>/anyKey")
+                    .WithControlsExcluding("<Mouse>/press")
+                    .WithControlsExcluding("<Mouse>/position")
+                    .WithControlsExcluding("<Mouse>/delta")
+                    .WithControlsExcluding("<Mouse>/scroll")
+                    .WithExpectedControlType("Button")
+                    .WithCancelingThrough("<Keyboard>/escape")
+                    .OnComplete(o => finish(o.action.bindings[0].overridePath, true))
+                    .OnCancel(o => finish(null, true))
+                    .Start();
+            }
+
+            // the action back as it was (Remap rebuilds it with the new key), and whoever waited told
+            private void finish(string path, bool tell) {
+                if (finished) {
+                    return;
+                }
+                finished = true;
+                operation.Dispose();
+                action.RemoveAllBindingOverrides();
+                action.Enable();
+                if (path != null) {
+                    Remap(button, path);
+                }
+                if (tell) {
+                    done(path);
+                }
+            }
+
+            public void Dispose() {
+                finish(null, false);
+            }
+        }
+
+        /// <summary>A control as players know it: "Left Click", "Left Shift", "1"... (the Input System's name for keys the game didn't know).</summary>
+        public static string PathName(string path) {
+            KeyCode key = KeyPaths.KeyOf(path);
+            return key != KeyCode.None ? KeyName(key) : InputControlPath.ToHumanReadableString(path, InputControlPath.HumanReadableStringOptions.OmitDevice);
         }
 
         private static void rebind(string button) {

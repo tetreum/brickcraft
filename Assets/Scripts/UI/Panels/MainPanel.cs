@@ -38,6 +38,8 @@ public class MainPanel : MonoBehaviour
 
     private void OnEnable () {
         waitForVideo();
+        // the music starts with the menu and goes on in the game
+        Brickcraft.GameMusic.Play();
 
         if (versionText != null) {
             versionText.text = "v" + Brickcraft.GameVersion.Current;

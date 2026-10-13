@@ -65,7 +65,7 @@ namespace Brickcraft
 
         /// <summary>Volume of the music, from 0 to 1, on top of the master volume.</summary>
         public static float MusicVolume {
-            get { return getVolume(MusicVolumeSetting, 0.7f); }
+            get { return getVolume(MusicVolumeSetting, 0.3f); }
             set { setFloat(MusicVolumeSetting, Mathf.Clamp01(value)); }
         }
 

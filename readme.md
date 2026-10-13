@@ -29,7 +29,7 @@ The Graphics tab has the screen's resolution (those of the screen, and the windo
 
 The Controls tab lists every action with its key: clicking one waits for the next key or mouse button (Escape cancels), and Reset to defaults brings the default keys back.
 
-The Audio tab has the master volume (the whole game, `AudioListener.volume`), the music volume and the effects volume (SoundManager's effects and the player's steps). `SoundManager.PlayMusic` plays music at the music volume; there's no music in the game yet.
+The Audio tab has the master volume (the whole game, `AudioListener.volume`), the music volume and the effects volume (SoundManager's effects and the player's steps). The music (`GameMusic`) starts with the main menu and goes on in the game: the songs in `Resources/Sound/Music` (streamed) in a random order, shuffled again after each round, at the music volume.
 
 Its icons and rounded shapes are white sprites tinted in Unity, drawn by `python Tools/make_ui_sprites.py` (needs Pillow) into `Assets/Textures/UI/Sprites`.
 

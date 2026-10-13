@@ -4,8 +4,8 @@ using Brickcraft.Events;
 using UnityEngine;
 
 /// <summary>
-/// Plays the game's sound effects and music, at the volumes of the settings: the master volume
-/// is the whole game's (AudioListener.volume), effects and music each have their own on top.
+/// Plays the game's sound effects at the volumes of the settings: the master volume is the whole
+/// game's (AudioListener.volume), effects have their own on top (the music's is GameMusic's).
 /// </summary>
 public class SoundManager : MonoBehaviour {
 
@@ -55,7 +55,6 @@ public class SoundManager : MonoBehaviour {
 	private readonly Dictionary<string, AudioClip> clips = new Dictionary<string, AudioClip>();
 
 	private AudioSource stereo;
-	private AudioSource music;
 
 	public static SoundManager Instance;
 
@@ -66,11 +65,6 @@ public class SoundManager : MonoBehaviour {
 		held = gameObject.AddComponent<AudioSource>();
 		held.playOnAwake = false;
 		held.spatialBlend = 0;
-
-		music = gameObject.AddComponent<AudioSource>();
-		music.loop = true;
-		music.playOnAwake = false;
-		music.spatialBlend = 0;
 
 		EventManager.SettingChanged.Subscribe(onSettingChanged);
 		applyVolumes();
@@ -131,21 +125,8 @@ public class SoundManager : MonoBehaviour {
 		return clip;
 	}
 
-	/// <summary>Plays the clip as music, looping, until another or StopMusic.</summary>
-	public void PlayMusic (AudioClip clip) {
-		if (music.clip == clip && music.isPlaying) {
-			return;
-		}
-		music.clip = clip;
-		music.Play();
-	}
-
-	public void StopMusic () {
-		music.Stop();
-	}
-
 	private void onSettingChanged (SettingChangedEvent e) {
-		if (e.setting == GameSettings.MasterVolumeSetting || e.setting == GameSettings.MusicVolumeSetting || e.setting == GameSettings.EffectsVolumeSetting) {
+		if (e.setting == GameSettings.MasterVolumeSetting || e.setting == GameSettings.EffectsVolumeSetting) {
 			applyVolumes();
 		}
 	}
@@ -154,6 +135,5 @@ public class SoundManager : MonoBehaviour {
 		AudioListener.volume = GameSettings.MasterVolume;
 		stereo.volume = GameSettings.EffectsVolume;
 		held.volume = GameSettings.EffectsVolume;
-		music.volume = GameSettings.MusicVolume;
 	}
 }

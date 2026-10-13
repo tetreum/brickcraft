@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using Brickcraft.Events;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace Brickcraft
 {
     /// <summary>
     /// The game's controls: each action has default keys (see Bindings), and players can remap them in the
-    /// settings (their key is kept in PlayerPrefs and replaces the defaults). The keys are read directly, not
-    /// through the Input Manager: a button it doesn't define throws in the editor but fails quietly in builds.
-    /// Only the movement uses its axes, for their smoothing.
+    /// settings (their key is kept in PlayerPrefs, as an Input System control path, and replaces the defaults).
+    /// They're read with the Input System: an InputAction for each button. While it has no devices (the editor
+    /// before restarting with it on), the classic input is read instead, the keys directly and the movement with
+    /// the Input Manager's axes.
     /// </summary>
     public static class GameInput
     {
@@ -56,7 +58,10 @@ namespace Brickcraft
             }
         }
 
-        private const string BindingPrefix = "binding.";
+        // a player's key for the button, a control path (see KeyPaths)
+        private const string PathPrefix = "binding.path.";
+        // the setting a remap changes (see EventManager.SettingChanged)
+        private const string SettingPrefix = "binding.";
 
         // before Bindings: static fields are initialized in order, and creating Bindings fills it
         private static readonly Dictionary<string, Binding> bindingsByButton = new Dictionary<string, Binding>();
@@ -121,35 +126,89 @@ namespace Brickcraft
 
         // -------- reading --------
 
+        // -------- actions --------
+
+        // an action for each button, made the first time one is read
+        private static Dictionary<string, InputAction> actions;
+
+        /// <summary>The Input System has devices to read (it's on and the editor was restarted with it).</summary>
+        public static bool UsesInputSystem {
+            get { return Keyboard.current != null || Mouse.current != null; }
+        }
+
+        private static InputAction actionOf(string button) {
+            if (actions == null) {
+                actions = new Dictionary<string, InputAction>();
+                foreach (Binding binding in Bindings) {
+                    InputAction action = new InputAction(binding.button, InputActionType.Button);
+                    actions[binding.button] = action;
+                    bind(action, binding);
+                    action.Enable();
+                }
+            }
+            return actions[button];
+        }
+
+        // its keys: the player's, or its defaults
+        private static void bind(InputAction action, Binding binding) {
+            bool enabled = action.enabled;
+            action.Disable();
+            while (action.bindings.Count > 0) {
+                action.ChangeBinding(0).Erase();
+            }
+            string player = playerPath(binding.button);
+            if (player != null) {
+                action.AddBinding(player);
+            } else {
+                foreach (KeyCode key in new[] { binding.defaultKey, binding.defaultAltKey }) {
+                    string path = KeyPaths.PathOf(key);
+                    if (path != null) {
+                        action.AddBinding(path);
+                    }
+                }
+            }
+            if (enabled) {
+                action.Enable();
+            }
+        }
+
+        // -------- reading --------
+
         /// <summary>The button went down this frame.</summary>
         public static bool GetButtonDown(string button) {
-            KeyCode? key = GetPlayerKey(button);
-            if (key.HasValue) {
-                return Input.GetKeyDown(key.Value);
+            if (UsesInputSystem) {
+                return actionOf(button).WasPressedThisFrame();
             }
-            Binding binding = bindingsByButton[button];
-            return Input.GetKeyDown(binding.defaultKey) || (binding.defaultAltKey != KeyCode.None && Input.GetKeyDown(binding.defaultAltKey));
+            foreach (KeyCode key in GetKeys(button)) {
+                if (Input.GetKeyDown(key)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>The button is held.</summary>
         public static bool GetButton(string button) {
-            KeyCode? key = GetPlayerKey(button);
-            if (key.HasValue) {
-                return Input.GetKey(key.Value);
+            if (UsesInputSystem) {
+                return actionOf(button).IsPressed();
             }
-            Binding binding = bindingsByButton[button];
-            return Input.GetKey(binding.defaultKey) || (binding.defaultAltKey != KeyCode.None && Input.GetKey(binding.defaultAltKey));
+            foreach (KeyCode key in GetKeys(button)) {
+                if (Input.GetKey(key)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>
-        /// Movement from -1 to 1 on each axis (x: left/right, y: back/forward). The Input Manager's
-        /// smoothed axes while the player didn't remap the movement, the keys as they are otherwise.
+        /// Movement from -1 to 1 on each axis (x: left/right, y: back/forward): the movement keys as they are. The classic
+        /// input's smoothed Input Manager axes while the player didn't remap them and the Input System has no devices.
         /// </summary>
         public static Vector2 GetMovement() {
             bool remapped = GetPlayerKey(MoveForward).HasValue || GetPlayerKey(MoveBack).HasValue
                 || GetPlayerKey(MoveLeft).HasValue || GetPlayerKey(MoveRight).HasValue;
 
-            if (!remapped) {
+            if (!remapped && !UsesInputSystem) {
                 try {
                     return new Vector2(Input.GetAxis(HorizontalAxis), Input.GetAxis(VerticalAxis));
                 } catch (ArgumentException) {
@@ -175,8 +234,13 @@ namespace Brickcraft
 
         /// <summary>The key the player chose for the button, null if it uses the default.</summary>
         public static KeyCode? GetPlayerKey(string button) {
-            string key = BindingPrefix + button;
-            return PlayerPrefs.HasKey(key) ? (KeyCode)PlayerPrefs.GetInt(key) : (KeyCode?)null;
+            KeyCode key = KeyPaths.KeyOf(playerPath(button));
+            return key != KeyCode.None ? key : (KeyCode?)null;
+        }
+
+        private static string playerPath(string button) {
+            string path = PlayerPrefs.GetString(PathPrefix + button, "");
+            return path.Length > 0 ? path : null;
         }
 
         /// <summary>The keys the button uses now: the player's, or its defaults.</summary>
@@ -190,18 +254,30 @@ namespace Brickcraft
         }
 
         public static void Remap(string button, KeyCode key) {
-            PlayerPrefs.SetInt(BindingPrefix + button, (int)key);
+            string path = KeyPaths.PathOf(key);
+            if (path == null) {
+                return; // a key the Input System doesn't have
+            }
+            PlayerPrefs.SetString(PathPrefix + button, path);
             PlayerPrefs.Save();
-            EventManager.SettingChanged.Raise(new SettingChangedEvent() { setting = BindingPrefix + button });
+            rebind(button);
+            EventManager.SettingChanged.Raise(new SettingChangedEvent() { setting = SettingPrefix + button });
         }
 
         /// <summary>Back to the default keys of every button.</summary>
         public static void ResetAll() {
             foreach (Binding binding in Bindings) {
-                PlayerPrefs.DeleteKey(BindingPrefix + binding.button);
+                PlayerPrefs.DeleteKey(PathPrefix + binding.button);
+                rebind(binding.button);
             }
             PlayerPrefs.Save();
-            EventManager.SettingChanged.Raise(new SettingChangedEvent() { setting = BindingPrefix + "*" });
+            EventManager.SettingChanged.Raise(new SettingChangedEvent() { setting = SettingPrefix + "*" });
+        }
+
+        private static void rebind(string button) {
+            if (actions != null) {
+                bind(actions[button], bindingsByButton[button]);
+            }
         }
 
         /// <summary>A key as players know it: "Left Click", "Left Shift", "1"...</summary>

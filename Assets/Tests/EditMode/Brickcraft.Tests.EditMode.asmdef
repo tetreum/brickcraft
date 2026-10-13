@@ -3,6 +3,7 @@
     "rootNamespace": "Brickcraft.Tests",
     "references": [
         "Brickcraft",
+        "Unity.InputSystem",
         "Gilzoide.SqliteNet",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

@@ -18,13 +18,37 @@ namespace Brickcraft.World
                 || Physics.CheckSphere(position, BrickCheckRadius, 1 << (int)Game.Layers.Water, QueryTriggerInteraction.Collide);
         }
 
-        /// <summary>Whether that point is in a fluid world block (not a water brick).</summary>
+        /// <summary>Whether that point is in a fluid world block (not a water brick): flowing ones up to their surface (see Fluid).</summary>
         public static bool IsFluidBlockAt(Vector3 position) {
             if (WorldBehaviour.Instance == null) {
                 return false;
             }
-            BlockType type = WorldBehaviour.Instance.GetBlockType(BrickGrid.CellToBlock(BrickGrid.WorldToCell(position)));
-            return type != BlockType.NULL && BlockDatabase.Get(type).isFluid;
+            Vector3Int block = BrickGrid.CellToBlock(BrickGrid.WorldToCell(position));
+            BlockType type = WorldBehaviour.Instance.GetBlockType(block);
+            if (type == BlockType.NULL) {
+                return false;
+            }
+            BlockDefinition definition = BlockDatabase.Get(type);
+            if (!definition.isFluid) {
+                return false;
+            }
+            if (definition.fluid == null || definition.fluidLevel == 0 || definition.fluidLevel == Fluid.Falling) {
+                return true;
+            }
+            float bottom = BrickGrid.CellToWorld(BrickGrid.BlockToCell(block)).y;
+            return position.y - bottom <= Fluid.HeightOf(definition.fluidLevel) * Server.brickHeight;
+        }
+
+        /// <summary>Whether that block is a source of that fluid block's fluid (what buckets pick up), or that block itself.</summary>
+        public static bool IsSourceOf(BlockType there, BlockType liquid) {
+            if (there == liquid) {
+                return true;
+            }
+            if (there == BlockType.NULL || liquid == BlockType.NULL) {
+                return false;
+            }
+            BlockDefinition block = BlockDatabase.Get(there), liquidBlock = BlockDatabase.Get(liquid);
+            return liquidBlock.fluid != null && block.fluid == liquidBlock.fluid && block.fluidLevel == 0;
         }
     }
 }

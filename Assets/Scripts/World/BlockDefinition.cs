@@ -41,6 +41,16 @@ namespace Brickcraft.World
         /// <summary>A liquid (water, lava): NPCs that walk keep out of it.</summary>
         public bool isFluid;
 
+        /// <summary>Fluids that flow: the fluid it's part of, null for the others (see Fluid).</summary>
+        public Fluid fluid;
+        /// <summary>
+        /// Its level in its fluid: 0 for a source, 1 to 7 flowing (lower each block it spreads), Fluid.Falling for
+        /// what flows down.
+        /// </summary>
+        public int fluidLevel;
+        /// <summary>Flowing levels: their shapes, flat and sloped toward each side (see Fluid.ShapeFor).</summary>
+        public BlockShape[] fluidShapes;
+
         /// <summary>The sound effect played while it's dug (see SoundManager).</summary>
         public string digSound = SoundManager.EFFECT_DIG;
 

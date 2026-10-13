@@ -814,7 +814,8 @@ namespace Brickcraft.Network
                     || !Server.items.TryGetValue(full.bucket.liquid, out Item liquid)) {
                 return;
             }
-            if (WorldBehaviour.Instance.GetBlockType(block) != liquid.blockType.Value || !isInReach(blockCenter(block))) {
+            // its sources only (still water too), not what flows from them
+            if (!Water.IsSourceOf(WorldBehaviour.Instance.GetBlockType(block), liquid.blockType.Value) || !isInReach(blockCenter(block))) {
                 return;
             }
             if (WorldNetwork.ServerSetBlock(block, BlockType.Air, null)) {
@@ -832,7 +833,8 @@ namespace Brickcraft.Network
                 return;
             }
             BlockType there = WorldBehaviour.Instance.GetBlockType(block);
-            if ((there != BlockType.Air && !BlockDatabase.Get(there).isReplaceable) || there == liquid.blockType.Value || !isInReach(blockCenter(block))) {
+            // where it can go: air, or what it covers (flowing water too: it's a source there now)
+            if ((there != BlockType.Air && !BlockDatabase.Get(there).isReplaceable) || Water.IsSourceOf(there, liquid.blockType.Value) || !isInReach(blockCenter(block))) {
                 return;
             }
             // nothing else in it: bricks, players

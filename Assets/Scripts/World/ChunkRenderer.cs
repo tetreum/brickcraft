@@ -138,18 +138,22 @@ namespace Brickcraft.World
 						int colorLayer = color == Bricks.BrickColor.None ? -1 : BlockDatabase.ColorLayer(color);
 						bool translucent = definition.isTranslucent || (colorLayer >= 0 && BlockDatabase.IsTransparentColor(color));
 						Vector3 offset = new Vector3(x * Server.brickWidth, y * Server.brickHeight, z * Server.brickWidth);
+						// flowing fluid: sloped down toward the sides it's lower on (see Fluid.ShapeFor)
+						BlockShape fluidShape = detailed && definition.fluidShapes != null ? fluidShapeOf(chunk, sliceIndex, x, y, z, definition) : null;
 
 						// only sides that can be seen are rendered: the ones touching air, and for
-						// opaque blocks also the ones seen through translucent blocks (under water)
+						// opaque blocks also the ones seen through translucent blocks (under water);
+						// fluids also where they're higher than the same fluid next to them
 						for (int side = 0; side < BlockShape.SideCount; side++)
 						{
 							Vector3Int direction = BlockShape.SideDirections[side];
 							byte neighbour = GetNeighbour(chunk, sliceIndex, x + direction.x, y + direction.y, z + direction.z);
 
-							if (neighbour != 0 && (translucent || !isTranslucent(chunk, sliceIndex, x + direction.x, y + direction.y, z + direction.z, neighbour)))
+							if (neighbour != 0 && (translucent || !isTranslucent(chunk, sliceIndex, x + direction.x, y + direction.y, z + direction.z, neighbour))
+									&& !(direction.y == 0 && isLowerFluid(definition, neighbour)))
 								continue;
 
-							BlockShape shape = detailed ? definition.shape : definition.colliderShape;
+							BlockShape shape = fluidShape ?? (detailed ? definition.shape : definition.colliderShape);
 							// far away, flat sides of boxes are merged with the ones beside them that look the same
 							bool merged = !detailed && shape.IsBox;
 							visibleSides.Add(new VisibleSide() { shape = shape, definition = definition, side = (BlockSide)side, offset = offset, translucent = translucent, colorLayer = colorLayer, merged = merged });
@@ -340,6 +344,34 @@ namespace Brickcraft.World
 			triangles[triangle++] = first;
 			triangles[triangle++] = first + 2;
 			triangles[triangle++] = first + 3;
+		}
+
+		// a fluid's block next to the same fluid lower than it: its side there is seen
+		static bool isLowerFluid(BlockDefinition definition, byte neighbour)
+		{
+			if (definition.fluid == null)
+				return false;
+			BlockDefinition other = BlockDatabase.Get(neighbour);
+			return other.fluid == definition.fluid && Fluid.HeightOf(other.fluidLevel) < Fluid.HeightOf(definition.fluidLevel);
+		}
+
+		// the shape of a flowing level by the sides it's lower on: air, a replaceable block or a lower level there
+		BlockShape fluidShapeOf(Chunk chunk, int sliceIndex, int x, int y, int z, BlockDefinition definition)
+		{
+			bool front = isLowerSide(chunk, sliceIndex, x, y, z - 1, definition);
+			bool back = isLowerSide(chunk, sliceIndex, x, y, z + 1, definition);
+			bool left = isLowerSide(chunk, sliceIndex, x - 1, y, z, definition);
+			bool right = isLowerSide(chunk, sliceIndex, x + 1, y, z, definition);
+			return definition.fluidShapes[Fluid.ShapeFor(front, back, left, right)];
+		}
+
+		bool isLowerSide(Chunk chunk, int sliceIndex, int x, int y, int z, BlockDefinition definition)
+		{
+			byte neighbour = GetNeighbour(chunk, sliceIndex, x, y, z);
+			if (neighbour == 0)
+				return true;
+			BlockDefinition other = BlockDatabase.Get(neighbour);
+			return isLowerFluid(definition, neighbour) || (other.isReplaceable && !other.isFluid);
 		}
 
 		// Block type at slice local coords, which may fall into a neighbour slice or chunk

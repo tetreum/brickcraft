@@ -119,6 +119,7 @@ namespace Brickcraft.Network
 
         public static void StopServer() {
             PlayerSleep.Stop();
+            FluidSimulator.Clear();
             Npcs.NpcSystem.StopServer();
             SaveTime();
             if (WorldBehaviour.Instance != null) {
@@ -149,6 +150,8 @@ namespace Brickcraft.Network
             }
             serverChanges.SetBlock(block, type, placer, color);
             Npcs.Navigation.NavGrid.MarkBlockDirty(block);
+            // the fluid around it may flow now (or stop)
+            FluidSimulator.BlockChanged(block);
             Placer sent = placer ?? default(Placer);
             sendToChunk(WorldChanges.ChunkOfBlock(block), new BlockChangedMessage() {
                 block = block,
@@ -285,6 +288,10 @@ namespace Brickcraft.Network
             }
             Npcs.Navigation.NavGrid.MarkDirty(brick);
             Server.Instance.removeBrick(brick);
+            // the fluid around it can flow where it was
+            if (brick.attachedTo == null) {
+                FluidSimulator.CellsChanged(brick.placement.origin, brick.placement.origin + brick.placement.Size);
+            }
             serverChanges.RemoveBrick(new Guid(brick.id), brick.placement.origin);
             sendToChunk(WorldChanges.ChunkOfBrick(brick.placement.origin), new BrickRemovedMessage() { id = brick.id, origin = brick.placement.origin });
             removed.Add(brick);
@@ -364,6 +371,7 @@ namespace Brickcraft.Network
         public static void ServerUpdate() {
             WorldBehaviour world = WorldBehaviour.Instance;
             updateTime();
+            FluidSimulator.ServerUpdate();
             PlayerSleep.Update();
             DroppedItems.Update();
             BrickStorage.Update();

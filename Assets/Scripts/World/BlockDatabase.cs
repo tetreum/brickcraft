@@ -118,6 +118,8 @@ namespace Brickcraft.World
 
             defaultShape = loadDefaultShape(DefaultModelFile);
             defaultColliderShape = loadDefaultShape(DefaultColliderFile);
+            Fluid.ClearShapes();
+            pendingFluidSources.Clear();
 
             for (int id = 0; id < definitions.Length; id++) {
                 definitions[id] = createUnknown((byte)id);
@@ -190,6 +192,68 @@ namespace Brickcraft.World
 
             definitions[id] = definition;
             definitionsByName[name] = definition;
+
+            // a fluid that flows: its levels are blocks too; a source of another fluid joins it once that one is added
+            if (info.flow != null && info.fluid) {
+                if (string.IsNullOrEmpty(info.flow.of)) {
+                    addFluid(definition, info.flow);
+                } else {
+                    pendingFluidSources[definition] = info.flow.of;
+                }
+            }
+            return definition;
+        }
+
+        // blocks that are sources of a fluid named by its block, see FinishLoading
+        private static readonly Dictionary<BlockDefinition, string> pendingFluidSources = new Dictionary<BlockDefinition, string>();
+
+        // the flowing levels and falling block of a fluid's source (see Fluid)
+        private static void addFluid(BlockDefinition source, FlowInfo flow) {
+            Fluid fluid = new Fluid() { source = source, flow = flow };
+            source.fluid = fluid;
+            source.fluidLevel = 0;
+            fluid.levels[0] = source;
+            string model = source.folder != null ? Path.Combine(source.folder, ModelFile) : null;
+            ObjLoader.Load(model != null && File.Exists(model) ? model : Path.Combine(Application.streamingAssetsPath, DefaultModelFile),
+                out Vector3[] vertices, out int[] triangles);
+            for (int level = 1; level <= Fluid.MaxLevel; level++) {
+                BlockShape[] shapes = Fluid.ShapesOf(level, vertices, triangles);
+                BlockDefinition flowing = addFluidLevel(source, source.name + "_level_" + level, level, shapes[Fluid.FlatShape]);
+                if (flowing == null) {
+                    return;
+                }
+                flowing.fluidShapes = shapes;
+                fluid.levels[level] = flowing;
+            }
+            fluid.falling = addFluidLevel(source, source.name + "_falling", Fluid.Falling, source.shape);
+        }
+
+        private static BlockDefinition addFluidLevel(BlockDefinition source, string name, int level, BlockShape shape) {
+            byte id = numberFor(name);
+            if (id == 0) {
+                Debug.LogError("The fluid " + source.name + " can't flow, there are already 254 blocks");
+                return null;
+            }
+            BlockDefinition definition = new BlockDefinition() {
+                id = id,
+                name = name,
+                folder = source.folder,
+                isBreakable = false,
+                isReplaceable = true,
+                isTransparent = source.isTransparent,
+                isTranslucent = source.isTranslucent,
+                isFluid = true,
+                digSound = source.digSound,
+                topTextureLayer = source.topTextureLayer,
+                sideTextureLayer = source.sideTextureLayer,
+                bottomTextureLayer = source.bottomTextureLayer,
+                shape = shape,
+                colliderShape = shape,
+                fluid = source.fluid,
+                fluidLevel = level,
+            };
+            definitions[id] = definition;
+            definitionsByName[name] = definition;
             return definition;
         }
 
@@ -204,6 +268,16 @@ namespace Brickcraft.World
 
         /// <summary>Builds the terrain texture array once every block is added.</summary>
         public static void FinishLoading() {
+            foreach (KeyValuePair<BlockDefinition, string> pending in pendingFluidSources) {
+                if (definitionsByName.TryGetValue(pending.Value, out BlockDefinition of) && of.fluid != null) {
+                    pending.Key.fluid = of.fluid;
+                    pending.Key.fluidLevel = 0;
+                } else {
+                    Debug.LogError("The block " + pending.Key.name + " is a source of \"" + pending.Value + "\", which isn't a fluid that flows");
+                }
+            }
+            pendingFluidSources.Clear();
+
             if (TextureArray != null) {
                 TerrainTextures.Destroy(TextureArray);
             }

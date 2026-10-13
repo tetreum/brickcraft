@@ -125,6 +125,19 @@ namespace Brickcraft
         public string drop;
         /// <summary>The sound effect played while it's dug (Resources/Sound/Effects), like "PickaxeDig"; "Dig" if empty.</summary>
         public string digSound;
+        /// <summary>Fluids: how they flow (see World.Fluid), still if missing.</summary>
+        public FlowInfo flow;
+    }
+
+    /// <summary>How a fluid block flows, the "flow" of its block (see World.Fluid and World.FluidSimulator).</summary>
+    public class FlowInfo
+    {
+        /// <summary>How many blocks it spreads on flat ground from a source, 1 to 7.</summary>
+        public int reach = 7;
+        /// <summary>Seconds it takes to spread one block.</summary>
+        public float seconds = 0.25f;
+        /// <summary>A block that is a source of another fluid (still_water of water): its name, the rest is that one's.</summary>
+        public string of;
     }
 
     public class RecipeInfo

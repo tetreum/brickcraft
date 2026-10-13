@@ -468,7 +468,7 @@ namespace Brickcraft
             float distance = hasHit ? latestHit.distance : rayLength;
             for (float along = 0; along <= distance; along += 0.05f) {
                 Vector3Int block = BrickGrid.CellToBlock(BrickGrid.WorldToCell(ray.GetPoint(along)));
-                if (WorldBehaviour.Instance.GetBlockType(block) == liquid.blockType.Value) {
+                if (Water.IsSourceOf(WorldBehaviour.Instance.GetBlockType(block), liquid.blockType.Value)) {
                     return block;
                 }
             }

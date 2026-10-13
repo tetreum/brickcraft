@@ -10,6 +10,9 @@
         "fluid": true,
         "replaceable": true,
         "transparent": true,
-        "translucent": true
+        "translucent": true,
+        "flow": {
+            "of": "water"
+        }
     }
 }

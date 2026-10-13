@@ -36,6 +36,8 @@ namespace Brickcraft.World
         private const float InwardThreshold = -0.1f;
 
         private readonly FaceMap[] sides;
+        // how high it is: a block's, or less (see the constructor)
+        private readonly float height;
 
         /// <summary>
         /// It's the block's box, each side a flat square across it: the faces of neighbouring blocks like it can be
@@ -47,7 +49,12 @@ namespace Brickcraft.World
             return sides[(int)side];
         }
 
-        public BlockShape(Vector3[] vertices, int[] triangles) {
+        public BlockShape(Vector3[] vertices, int[] triangles) : this(vertices, triangles, Server.brickHeight) {
+        }
+
+        /// <summary>A shape lower than a block (a shallow fluid): its sides are found against its own height.</summary>
+        public BlockShape(Vector3[] vertices, int[] triangles, float height) {
+            this.height = height;
             List<int>[] sideTriangles = new List<int>[SideCount];
             for (int i = 0; i < SideCount; i++) {
                 sideTriangles[i] = new List<int>();
@@ -57,7 +64,7 @@ namespace Brickcraft.World
                 Vector3 a = vertices[triangles[i]];
                 Vector3 b = vertices[triangles[i + 1]];
                 Vector3 c = vertices[triangles[i + 2]];
-                BlockSide side = classify((a + b + c) / 3f, Vector3.Cross(b - a, c - a).normalized);
+                BlockSide side = classify((a + b + c) / 3f, Vector3.Cross(b - a, c - a).normalized, height);
 
                 sideTriangles[(int)side].Add(triangles[i]);
                 sideTriangles[(int)side].Add(triangles[i + 1]);
@@ -109,9 +116,8 @@ namespace Brickcraft.World
             return new BlockShape(vertices, triangles);
         }
 
-        private static BlockSide classify(Vector3 center, Vector3 normal) {
+        private static BlockSide classify(Vector3 center, Vector3 normal, float height) {
             float halfWidth = Server.brickWidth / 2;
-            float height = Server.brickHeight;
 
             // distance to each side, relative to the block size so tall and flat sides compare fairly
             float[] distances = {

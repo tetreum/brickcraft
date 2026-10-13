@@ -10,6 +10,10 @@
         "fluid": true,
         "replaceable": true,
         "transparent": true,
-        "translucent": true
+        "translucent": true,
+        "flow": {
+            "reach": 7,
+            "seconds": 0.25
+        }
     }
 }

@@ -246,6 +246,7 @@ namespace Brickcraft.World
 
 			refreshColliderChunks(center);
 
+			rebuildDirtySlices();
 			updateMeshes(center);
 			uploadSliceMeshes();
 		}
@@ -549,6 +550,10 @@ namespace Brickcraft.World
 			return true;
 		}
 
+		// slices whose blocks changed, meshed again once a frame (see rebuildDirtySlices): a flood changes many at once
+		private readonly HashSet<(Chunk chunk, int slice)> dirtySlices = new HashSet<(Chunk chunk, int slice)>();
+		private readonly List<(Chunk chunk, int slice)> rebuilding = new List<(Chunk chunk, int slice)>();
+
 		private void RebuildSlice(Chunk chunk, int sliceIndex)
 		{
 			if (chunk == null || sliceIndex < 0 || sliceIndex > Chunk.MaxSliceIndex)
@@ -556,16 +561,27 @@ namespace Brickcraft.World
 
 			// meshes of this chunk still being computed by a thread are outdated now
 			chunk.Version++;
+			dirtySlices.Add((chunk, sliceIndex));
+		}
 
-			// chunks out of view have no mesh to update
-			if (!chunk.HasMesh)
+		private void rebuildDirtySlices()
+		{
+			if (dirtySlices.Count == 0)
 				return;
+			rebuilding.Clear();
+			rebuilding.AddRange(dirtySlices);
+			dirtySlices.Clear();
 
-			if (chunk.Slices[sliceIndex].IsEmpty && chunk.ChunkSliceObjects[sliceIndex] == null)
-				return;
+			foreach ((Chunk chunk, int sliceIndex) in rebuilding) {
+				// chunks out of view have no mesh to update
+				if (chunk.State == Chunk.ChunkState.Unloaded || !chunk.HasMesh)
+					continue;
+				if (chunk.Slices[sliceIndex].IsEmpty && chunk.ChunkSliceObjects[sliceIndex] == null)
+					continue;
 
-			chunk.GetOrCreateSliceObject(sliceIndex);
-			BuildChunkSliceMesh(sliceRenderer.RenderSlice(chunk, sliceIndex, chunk.IsDetailed, chunk.WithColliders, chunk.Version));
+				chunk.GetOrCreateSliceObject(sliceIndex);
+				BuildChunkSliceMesh(sliceRenderer.RenderSlice(chunk, sliceIndex, chunk.IsDetailed, chunk.WithColliders, chunk.Version));
+			}
 		}
 
 		/// <summary>A generated chunk, null if it isn't loaded (yet).</summary>

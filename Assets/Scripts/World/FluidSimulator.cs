@@ -16,7 +16,8 @@ namespace Brickcraft.World
     /// down only), toward the nearest way down within FindDownReach blocks, or every way if there's none.
     /// Where a fluid that hardens touches the one it hardens with (see HardenInfo: lava and water), it becomes a
     /// block, and what of the other it flows down onto too.
-    /// Fluids don't go into bricks, but wash away those tagged "washable" (a torch: dropped, the current carries them),
+    /// Fluids don't go into bricks, but wash away those tagged "washable" (a torch: dropped, the current carries them;
+    /// those that burn, lava, destroy them),
     /// nor into chunks that aren't loaded: they go on when those load. Flowing blocks of a
     /// chunk that loads (saved flowing, the server stopped) go on too.
     /// </summary>
@@ -299,15 +300,17 @@ namespace Brickcraft.World
             return found;
         }
 
-        // the fluid comes in: what it washes away there goes, dropped (it floats along the current)
-        private static void washAway(Vector3Int block) {
+        // the fluid comes in: what it washes away there goes, dropped (it floats along the current), or burnt (lava)
+        private static void washAway(Vector3Int block, Fluid fluid) {
             foreach (Brick brick in bricksIn(block)) {
                 if (!isWashable(brick)) {
                     continue;
                 }
                 Vector3 at = brick.placement.WorldBounds.center;
                 foreach (Brick removed in WorldNetwork.ServerRemoveBrick(brick)) {
-                    DroppedItems.ServerDrop(removed.itemId, removed.color, 1, 0, at, Vector3.zero);
+                    if (!fluid.flow.burns) {
+                        DroppedItems.ServerDrop(removed.itemId, removed.color, 1, 0, at, Vector3.zero);
+                    }
                 }
             }
         }
@@ -321,8 +324,9 @@ namespace Brickcraft.World
         }
 
         private static void set(Vector3Int block, BlockType type) {
-            if (BlockDatabase.Get((byte)type).fluid != null) {
-                washAway(block);
+            Fluid fluid = BlockDatabase.Get((byte)type).fluid;
+            if (fluid != null) {
+                washAway(block, fluid);
             }
             WorldNetwork.ServerSetBlock(block, type, null);
         }

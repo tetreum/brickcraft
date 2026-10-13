@@ -15,7 +15,8 @@
                 "source": "obsidian",
                 "flowing": "cobblestone",
                 "below": "stone"
-            }
+            },
+            "burns": true
         }
     }
 }

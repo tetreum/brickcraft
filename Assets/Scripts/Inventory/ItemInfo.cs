@@ -140,6 +140,8 @@ namespace Brickcraft
         public string of;
         /// <summary>What it becomes where it meets another fluid (lava and water), see HardenInfo.</summary>
         public HardenInfo hardens;
+        /// <summary>What it washes away (bricks tagged "washable") burns: it's gone, not dropped (lava).</summary>
+        public bool burns;
     }
 
     /// <summary>

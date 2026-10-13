@@ -109,7 +109,7 @@ namespace Brickcraft.UI
             stopWaiting();
             rebinding = GameInput.StartRebinding(row.binding.button, path => onKey(row, path));
             if (rebinding == null) {
-                status.text = "Keys can't be changed without the Input System's devices (restart the editor).";
+                status.text = "Keys can't be changed without a keyboard or mouse.";
                 return;
             }
             waiting = row;

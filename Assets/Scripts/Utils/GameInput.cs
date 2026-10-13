@@ -12,9 +12,8 @@ namespace Brickcraft
     /// <summary>
     /// The game's controls: each action has default keys (see Bindings), and players can remap them in the
     /// settings (their key is kept in PlayerPrefs, as an Input System control path, and replaces the defaults).
-    /// They're read with the Input System: an InputAction for each button. While it has no devices (the editor
-    /// before restarting with it on), the classic input is read instead, the keys directly and the movement with
-    /// the Input Manager's axes.
+    /// They're read with the Input System: an InputAction for each button, and the keyboard and mouse for the rest
+    /// (modifiers, the mouse's movement, pointer and wheel).
     /// </summary>
     public static class GameInput
     {
@@ -35,10 +34,6 @@ namespace Brickcraft
         public const string PlayerList = "PlayerList";
         public const string Menu = "Menu";
         public const string SlotPrefix = "Slot"; // Slot1 to Slot9
-
-        // Input Manager axes the movement uses while the player didn't remap it
-        private const string HorizontalAxis = "Horizontal";
-        private const string VerticalAxis = "Vertical";
 
         public sealed class Binding
         {
@@ -132,8 +127,8 @@ namespace Brickcraft
         // an action for each button, made the first time one is read
         private static Dictionary<string, InputAction> actions;
 
-        /// <summary>The Input System has devices to read (it's on and the editor was restarted with it).</summary>
-        public static bool UsesInputSystem {
+        /// <summary>There's a keyboard or a mouse to read.</summary>
+        public static bool HasKeyboardOrMouse {
             get { return Keyboard.current != null || Mouse.current != null; }
         }
 
@@ -177,45 +172,16 @@ namespace Brickcraft
 
         /// <summary>The button went down this frame.</summary>
         public static bool GetButtonDown(string button) {
-            if (UsesInputSystem) {
-                return actionOf(button).WasPressedThisFrame();
-            }
-            foreach (KeyCode key in keysOf(button)) {
-                if (Input.GetKeyDown(key)) {
-                    return true;
-                }
-            }
-            return false;
+            return actionOf(button).WasPressedThisFrame();
         }
 
         /// <summary>The button is held.</summary>
         public static bool GetButton(string button) {
-            if (UsesInputSystem) {
-                return actionOf(button).IsPressed();
-            }
-            foreach (KeyCode key in keysOf(button)) {
-                if (Input.GetKey(key)) {
-                    return true;
-                }
-            }
-            return false;
+            return actionOf(button).IsPressed();
         }
 
-        /// <summary>
-        /// Movement from -1 to 1 on each axis (x: left/right, y: back/forward): the movement keys as they are. The classic
-        /// input's smoothed Input Manager axes while the player didn't remap them and the Input System has no devices.
-        /// </summary>
+        /// <summary>Movement from -1 to 1 on each axis (x: left/right, y: back/forward): the movement keys.</summary>
         public static Vector2 GetMovement() {
-            bool remapped = playerPath(MoveForward) != null || playerPath(MoveBack) != null
-                || playerPath(MoveLeft) != null || playerPath(MoveRight) != null;
-
-            if (!remapped && !UsesInputSystem) {
-                try {
-                    return new Vector2(Input.GetAxis(HorizontalAxis), Input.GetAxis(VerticalAxis));
-                } catch (ArgumentException) {
-                    // no axes in the Input Manager, use the keys
-                }
-            }
             return new Vector2(
                 (GetButton(MoveRight) ? 1 : 0) - (GetButton(MoveLeft) ? 1 : 0),
                 (GetButton(MoveForward) ? 1 : 0) - (GetButton(MoveBack) ? 1 : 0));
@@ -225,34 +191,25 @@ namespace Brickcraft
         // what isn't one of the remappable buttons: modifiers (Shift for any stud, Ctrl for the whole stack), Enter and
         // Escape in dialogs, the mouse's movement, pointer and wheel
 
-        // the classic input's mouse axes are a tenth of the pixels moved (Input Manager's sensitivity)
+        // the mouse's movement as the classic input's axes had it: a tenth of the pixels moved (the feel of looking around)
         private const float MouseAxisScale = 0.1f;
 
         /// <summary>A key or mouse button (KeyCode.Mouse0...) is held.</summary>
         public static bool KeyHeld(KeyCode key) {
-            if (UsesInputSystem) {
-                ButtonControl control = controlOf(key);
-                return control != null && control.isPressed;
-            }
-            return Input.GetKey(key);
+            ButtonControl control = controlOf(key);
+            return control != null && control.isPressed;
         }
 
         /// <summary>A key or mouse button went down this frame.</summary>
         public static bool KeyDown(KeyCode key) {
-            if (UsesInputSystem) {
-                ButtonControl control = controlOf(key);
-                return control != null && control.wasPressedThisFrame;
-            }
-            return Input.GetKeyDown(key);
+            ButtonControl control = controlOf(key);
+            return control != null && control.wasPressedThisFrame;
         }
 
         /// <summary>A key or mouse button went up this frame.</summary>
         public static bool KeyUp(KeyCode key) {
-            if (UsesInputSystem) {
-                ButtonControl control = controlOf(key);
-                return control != null && control.wasReleasedThisFrame;
-            }
-            return Input.GetKeyUp(key);
+            ButtonControl control = controlOf(key);
+            return control != null && control.wasReleasedThisFrame;
         }
 
         // the key's control on the keyboard or the mouse there is, null if there's none
@@ -281,35 +238,22 @@ namespace Brickcraft
             get { return KeyDown(KeyCode.Return) || KeyDown(KeyCode.KeypadEnter); }
         }
 
-        /// <summary>How much the mouse moved this frame, like the classic input's "Mouse X" and "Mouse Y" axes (looking around).</summary>
+        /// <summary>How much the mouse moved this frame, for looking around (see MouseAxisScale).</summary>
         public static Vector2 LookDelta {
-            get {
-                if (UsesInputSystem) {
-                    return Mouse.current != null ? Mouse.current.delta.ReadValue() * MouseAxisScale : Vector2.zero;
-                }
-                return new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-            }
+            get { return Mouse.current != null ? Mouse.current.delta.ReadValue() * MouseAxisScale : Vector2.zero; }
         }
 
         /// <summary>Where the pointer is on the screen, in pixels from its bottom left.</summary>
         public static Vector2 PointerPosition {
-            get {
-                if (UsesInputSystem) {
-                    return Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
-                }
-                return Input.mousePosition;
-            }
+            get { return Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero; }
         }
 
         /// <summary>How far the mouse wheel turned this frame, in notches (up positive).</summary>
         public static float ScrollDelta {
             get {
-                if (UsesInputSystem) {
-                    float scroll = Mouse.current != null ? Mouse.current.scroll.ReadValue().y : 0;
-                    // notches; where it reports the platform's units instead (120 a notch on Windows), in notches too
-                    return Mathf.Abs(scroll) > 2 ? scroll / 120 : scroll;
-                }
-                return Input.mouseScrollDelta.y;
+                float scroll = Mouse.current != null ? Mouse.current.scroll.ReadValue().y : 0;
+                // notches; where it reports the platform's units instead (120 a notch on Windows), in notches too
+                return Mathf.Abs(scroll) > 2 ? scroll / 120 : scroll;
             }
         }
 
@@ -347,18 +291,6 @@ namespace Brickcraft
             return paths.ToArray();
         }
 
-        // the classic input's keys of the button's controls (those it has)
-        private static List<KeyCode> keysOf(string button) {
-            List<KeyCode> keys = new List<KeyCode>();
-            foreach (string path in GetPaths(button)) {
-                KeyCode key = KeyPaths.KeyOf(path);
-                if (key != KeyCode.None) {
-                    keys.Add(key);
-                }
-            }
-            return keys;
-        }
-
         /// <summary>The button uses that control now (a key or mouse button, a control path), instead of its defaults.</summary>
         public static void Remap(string button, string path) {
             if (string.IsNullOrEmpty(path) || !(path.StartsWith("<Keyboard>/") || path.StartsWith("<Mouse>/"))) {
@@ -383,10 +315,10 @@ namespace Brickcraft
         /// <summary>
         /// Waits for the next key or mouse button pressed (the Input System's interactive rebinding: not the mouse's movement
         /// or wheel), and the button uses it; Escape cancels. Then calls done with its control path, null if cancelled.
-        /// Dispose what it returns to stop waiting. Null (done isn't called) while the Input System has no devices.
+        /// Dispose what it returns to stop waiting. Null (done isn't called) without a keyboard or mouse.
         /// </summary>
         public static IDisposable StartRebinding(string button, Action<string> done) {
-            if (!UsesInputSystem) {
+            if (!HasKeyboardOrMouse) {
                 return null;
             }
             return new Rebinding(button, actionOf(button), done);

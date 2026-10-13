@@ -6,5 +6,8 @@
     "light": {
         "range": 8,
         "intensity": 400
-    }
+    },
+    "tags": [
+        "washable"
+    ]
 }

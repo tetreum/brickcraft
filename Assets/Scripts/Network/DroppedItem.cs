@@ -112,11 +112,13 @@ namespace Brickcraft.Network
             if (World.Water.IsAt(here + Vector3.up * FloatDepth)) {
                 Velocity = Vector3.zero;
                 transform.position = here + Vector3.up * FloatSpeed * delta;
+                drift(delta);
                 return;
             }
             if (World.Water.IsAt(here)) {
                 Velocity = Vector3.zero;
-                isResting = true; // floating at the surface
+                // floating at the surface, carried along while it flows
+                isResting = !drift(delta);
                 return;
             }
             Vector3 velocity = Velocity;
@@ -140,6 +142,21 @@ namespace Brickcraft.Network
             if (transform.position.y < FallLimit) {
                 NetworkServer.Destroy(gameObject);
             }
+        }
+
+        // flowing water carries it along (see World.Water.CurrentAt), not into walls; false where it doesn't flow
+        private bool drift(float delta) {
+            Vector3 current = World.Water.CurrentAt(transform.position);
+            current.y = 0;
+            if (current == Vector3.zero) {
+                return false;
+            }
+            Vector3 step = current * delta;
+            Vector3 position = transform.position;
+            if (!Physics.Raycast(position + Vector3.up * 0.1f, step.normalized, step.magnitude + 0.1f, SolidLayers, QueryTriggerInteraction.Ignore)) {
+                transform.position = position + step;
+            }
+            return true;
         }
 
         /// <summary>Server: what was under it changed (a block dug...): it may fall again.</summary>

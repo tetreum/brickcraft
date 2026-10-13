@@ -16,7 +16,8 @@ namespace Brickcraft.World
     /// down only), toward the nearest way down within FindDownReach blocks, or every way if there's none.
     /// Where a fluid that hardens touches the one it hardens with (see HardenInfo: lava and water), it becomes a
     /// block, and what of the other it flows down onto too.
-    /// Fluids don't go into bricks, nor chunks that aren't loaded: they go on when those load. Flowing blocks of a
+    /// Fluids don't go into bricks, but wash away those tagged "washable" (a torch: dropped, the current carries them),
+    /// nor into chunks that aren't loaded: they go on when those load. Flowing blocks of a
     /// chunk that loads (saved flowing, the server stopped) go on too.
     /// </summary>
     public static class FluidSimulator
@@ -266,19 +267,49 @@ namespace Brickcraft.World
             return isFreeOfBricks(block, fluid);
         }
 
+        // no bricks there, or only some it washes away
         private static bool isFreeOfBricks(Vector3Int block, Fluid fluid) {
+            foreach (Brick brick in bricksIn(block)) {
+                if (!isWashable(brick)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static bool isWashable(Brick brick) {
+            return brick.item != null && brick.item.tags.Contains(Item.WashableTag) && brick.attachedTo == null && Server.attachmentOf(brick) == null;
+        }
+
+        // the bricks with a cell in that block
+        private static List<Brick> bricksIn(Vector3Int block) {
+            List<Brick> found = new List<Brick>();
             Vector3Int min = BrickGrid.BlockToCell(block);
             Vector3Int max = BrickGrid.BlockToCell(block + Vector3Int.one);
             for (int x = min.x; x < max.x; x++) {
                 for (int y = min.y; y < max.y; y++) {
                     for (int z = min.z; z < max.z; z++) {
-                        if (BrickGrid.GetBrickAt(new Vector3Int(x, y, z)) != null) {
-                            return false;
+                        Brick brick = BrickGrid.GetBrickAt(new Vector3Int(x, y, z));
+                        if (brick != null && !found.Contains(brick)) {
+                            found.Add(brick);
                         }
                     }
                 }
             }
-            return true;
+            return found;
+        }
+
+        // the fluid comes in: what it washes away there goes, dropped (it floats along the current)
+        private static void washAway(Vector3Int block) {
+            foreach (Brick brick in bricksIn(block)) {
+                if (!isWashable(brick)) {
+                    continue;
+                }
+                Vector3 at = brick.placement.WorldBounds.center;
+                foreach (Brick removed in WorldNetwork.ServerRemoveBrick(brick)) {
+                    DroppedItems.ServerDrop(removed.itemId, removed.color, 1, 0, at, Vector3.zero);
+                }
+            }
         }
 
         private static BlockDefinition definitionAt(WorldBehaviour world, Vector3Int block) {
@@ -290,6 +321,9 @@ namespace Brickcraft.World
         }
 
         private static void set(Vector3Int block, BlockType type) {
+            if (BlockDatabase.Get((byte)type).fluid != null) {
+                washAway(block);
+            }
             WorldNetwork.ServerSetBlock(block, type, null);
         }
 

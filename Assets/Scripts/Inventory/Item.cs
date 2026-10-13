@@ -179,6 +179,8 @@ namespace Brickcraft
         public HashSet<string> tags = new HashSet<string>();
 
         public const string BedTag = "bed";
+        /// <summary>Bricks flowing water breaks and carries away as items (a torch), see World.FluidSimulator.</summary>
+        public const string WashableTag = "washable";
         /// <summary>Tools: used on a brick of the player's, it lists the LEGO parts of its creation (see Network.PartsLister).</summary>
         public const string PartsListerTag = "partslister";
 

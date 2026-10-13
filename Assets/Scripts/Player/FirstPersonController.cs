@@ -199,7 +199,7 @@ namespace Brickcraft
             }
             m_Jump = false;
             m_Jumping = false;
-            m_CollisionFlags = m_CharacterController.Move((m_MoveDir + m_Knockback)*Time.fixedDeltaTime);
+            m_CollisionFlags = m_CharacterController.Move((m_MoveDir + m_Knockback + current())*Time.fixedDeltaTime);
             m_Knockback = Vector3.MoveTowards(m_Knockback, Vector3.zero, KnockbackDrag*Time.fixedDeltaTime);
             m_StepCameraOffset = Mathf.MoveTowards(m_StepCameraOffset, 0, m_StepSmoothing*Time.fixedDeltaTime);
             UpdateCameraPosition(0);
@@ -209,6 +209,14 @@ namespace Brickcraft
         private void OnDisable()
         {
             UnderwaterView.Show(false);
+        }
+
+        // flowing water pushes the player along (see Water.CurrentAt): where its feet are, or its middle swimming
+        private Vector3 current()
+        {
+            Vector3 feet = transform.position + Vector3.down * (m_CharacterController.height / 2 - 0.1f);
+            Vector3 push = World.Water.CurrentAt(feet);
+            return push != Vector3.zero ? push : World.Water.CurrentAt(transform.position);
         }
 
         /// <summary>Pushes the player (a hit): horizontally for a moment, and up like a small jump.</summary>
@@ -300,7 +308,7 @@ namespace Brickcraft
             }
             bool wasGrounded = m_CharacterController.isGrounded;
             float heightBefore = transform.position.y;
-            m_CollisionFlags = m_CharacterController.Move((m_MoveDir + m_Knockback)*Time.fixedDeltaTime);
+            m_CollisionFlags = m_CharacterController.Move((m_MoveDir + m_Knockback + current())*Time.fixedDeltaTime);
             // walked up a step (the controller lifted it, see m_StepHeight): the camera eases up instead of jumping
             float rise = transform.position.y - heightBefore;
             if (wasGrounded && !m_Jumping && rise > 0.1f) {

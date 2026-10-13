@@ -39,6 +39,50 @@ namespace Brickcraft.World
             return position.y - bottom <= Fluid.HeightOf(definition.fluidLevel) * Server.brickHeight;
         }
 
+        /// <summary>How fast currents push what's in them (players, NPCs, items on the ground), meters a second (Minecraft's).</summary>
+        public const float CurrentSpeed = 1.39f;
+
+        /// <summary>
+        /// Where flowing fluid at that point pushes what's in it (meters a second; none in sources and still
+        /// water, nor outside fluids): from where it's higher to where it's lower or flows out, down where it falls.
+        /// </summary>
+        public static Vector3 CurrentAt(Vector3 position) {
+            WorldBehaviour world = WorldBehaviour.Instance;
+            if (world == null) {
+                return Vector3.zero;
+            }
+            Vector3Int block = BrickGrid.CellToBlock(BrickGrid.WorldToCell(position));
+            BlockType type = world.GetBlockType(block);
+            if (type == BlockType.NULL) {
+                return Vector3.zero;
+            }
+            BlockDefinition definition = BlockDatabase.Get(type);
+            if (definition.fluid == null || definition.fluidLevel == 0 || !IsFluidBlockAt(position)) {
+                return Vector3.zero;
+            }
+            float height = Fluid.HeightOf(definition.fluidLevel);
+            Vector3 flow = Vector3.zero;
+            foreach (BlockSide side in new[] { BlockSide.Front, BlockSide.Back, BlockSide.Left, BlockSide.Right }) {
+                Vector3Int direction = BlockShape.SideDirections[(int)side];
+                BlockType neighbourType = world.GetBlockType(block + direction);
+                if (neighbourType == BlockType.NULL) {
+                    continue;
+                }
+                BlockDefinition neighbour = BlockDatabase.Get(neighbourType);
+                if (neighbour.fluid == definition.fluid) {
+                    flow += (Vector3)direction * (height - Fluid.HeightOf(neighbour.fluidLevel));
+                } else if (neighbourType == BlockType.Air || (neighbour.isReplaceable && !neighbour.isFluid)) {
+                    flow += (Vector3)direction * height; // it flows out there
+                }
+            }
+            flow.y = 0;
+            Vector3 current = flow.sqrMagnitude > 0.0001f ? flow.normalized * CurrentSpeed : Vector3.zero;
+            if (definition.fluidLevel == Fluid.Falling) {
+                current.y = -CurrentSpeed;
+            }
+            return current;
+        }
+
         /// <summary>Whether that block is a source of that fluid block's fluid (what buckets pick up), or that block itself.</summary>
         public static bool IsSourceOf(BlockType there, BlockType liquid) {
             if (there == liquid) {

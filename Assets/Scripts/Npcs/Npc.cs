@@ -790,7 +790,10 @@ namespace Brickcraft.Npcs
             if (heading != Vector3.zero && Time.time - steeringAt < SteeringFreshness) {
                 walk = Vector3.ClampMagnitude(steering, Info.speed);
             }
-            Vector3 step = (walk + knockback) * deltaTime;
+            // flowing water pushes it along (see Water.CurrentAt)
+            Vector3 current = World.Water.CurrentAt(position + Vector3.up * 0.1f);
+            current.y = 0;
+            Vector3 step = (walk + knockback + current) * deltaTime;
             knockback = Vector3.MoveTowards(knockback, Vector3.zero, KnockbackDrag * deltaTime);
 
             body.enabled = false; // its own capsule isn't in the way

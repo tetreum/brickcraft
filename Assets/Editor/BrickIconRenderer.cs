@@ -100,9 +100,12 @@ public static class BrickIconRenderer
         } catch (System.Exception) {
             return false;
         }
-        // weapons and the like are long and thin: tilted, they fill the icon better
+        // weapons, digging tools and the like are long and thin: tilted, they fill the icon better; "iconTurn" turns
+        // them around their up axis first (degrees), for those seen end-on otherwise (minifig tools)
         string type = (string)info["type"] ?? "brick";
-        Quaternion tilt = type == "weapon" || type == "material" ? Quaternion.Euler(0, 0, -45) : Quaternion.identity;
+        bool thin = type == "weapon" || type == "material" || (type == "tool" && info["digSpeed"] != null);
+        Quaternion turn = Quaternion.Euler(0, (float?)info["iconTurn"] ?? 0, 0);
+        Quaternion tilt = (thin ? Quaternion.Euler(0, 0, -45) : Quaternion.identity) * turn;
         string model = BrickModels.Resolve((string)info["brickModel"] ?? "3003", modOf(folder));
         if (onlyModel != null && model != onlyModel) {
             return false;

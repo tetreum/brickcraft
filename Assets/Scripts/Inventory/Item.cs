@@ -86,6 +86,17 @@ namespace Brickcraft
         /// forever. How worn a stack is goes in its InventoryItem.health (uses taken).
         /// </summary>
         public int durability;
+        /// <summary>Tools that dig: how many times faster than a bare hand, 1 for everything else (see ItemInfo.digSpeed).</summary>
+        public float digSpeed = 1;
+        /// <summary>The light it gives, held and placed, null for none (see ItemInfo.light).</summary>
+        public LightInfo light;
+        /// <summary>Buckets: what they pick up and pour, null for other items (see ItemInfo.bucket).</summary>
+        public BucketInfo bucket;
+
+        /// <summary>A tool that digs faster than a hand, worn by digging.</summary>
+        public bool Digs {
+            get { return digSpeed > 1; }
+        }
 
         /// <summary>
         /// Weapons and shields: how a player holds its model (see HeldItems), in the hand's space (+Z where the

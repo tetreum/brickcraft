@@ -98,7 +98,8 @@ namespace Brickcraft
             }
             Server.items.TryGetValue(network.heldItem ?? "", out Item held);
             Server.items.TryGetValue(network.offhandItem ?? "", out Item offhand);
-            rightItem = held != null && held.type == Item.Type.Weapon ? held : null;
+            // weapons, tools and what gives light (a torch) are in hand; bricks are placed
+            rightItem = held != null && (held.type == Item.Type.Weapon || held.type == Item.Type.Tool || held.light != null) ? held : null;
             show(ref rightModel, right, rightItem, network.heldColor);
             show(ref leftModel, left, offhand != null && offhand.IsShield ? offhand : null, offhand != null ? offhand.color : 0);
         }
@@ -152,6 +153,8 @@ namespace Brickcraft
             tr.localScale = Vector3.one * scale;
             tr.localRotation = item.heldRotation;
             tr.localPosition = -(item.heldRotation * grip) * scale;
+            // a torch lights around its holder
+            ItemLight.Attach(model, item);
         }
 
         // the model's size as placed (it's at the origin, unturned)

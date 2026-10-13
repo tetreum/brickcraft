@@ -227,6 +227,11 @@ namespace Brickcraft
                     }
                 }
 
+                // buckets: an empty one picks up the liquid looked at, a full one pours it against what's looked at
+                if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Place) && SelectedItem != null && SelectedItem.item.bucket != null) {
+                    useBucket(SelectedItem.item.bucket);
+                }
+
                 // throwing what's in hand: one, or the whole stack with Ctrl
                 if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Drop) && SelectedItem != null) {
                     bool whole = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
@@ -439,6 +444,37 @@ namespace Brickcraft
             }
         }
 
+        // the server checks the block, that it's in reach, and swaps the bucket (see PlayerNetwork.CmdFillBucket)
+        void useBucket (BucketInfo bucket) {
+            if (bucket.filled != null) {
+                Vector3Int? liquid = liquidLookedAt(bucket);
+                if (liquid.HasValue) {
+                    network.CmdFillBucket(SelectedSlot, liquid.Value);
+                }
+            } else if (bucket.liquid != null && hasHit) {
+                // the block in front of the face looked at
+                Vector3Int cell = BrickGrid.WorldToCell(latestHit.point + latestHit.normal * 0.01f);
+                network.CmdPourBucket(SelectedSlot, BrickGrid.CellToBlock(cell));
+            }
+        }
+
+        // liquid blocks have no collider: the first one along the crosshair, before what it hits
+        Vector3Int? liquidLookedAt (BucketInfo bucket) {
+            if (WorldBehaviour.Instance == null || !Server.items.TryGetValue(bucket.filled, out Item full)
+                    || !Server.items.TryGetValue(full.bucket.liquid ?? "", out Item liquid) || !liquid.blockType.HasValue) {
+                return null;
+            }
+            Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0));
+            float distance = hasHit ? latestHit.distance : rayLength;
+            for (float along = 0; along <= distance; along += 0.05f) {
+                Vector3Int block = BrickGrid.CellToBlock(BrickGrid.WorldToCell(ray.GetPoint(along)));
+                if (WorldBehaviour.Instance.GetBlockType(block) == liquid.blockType.Value) {
+                    return block;
+                }
+            }
+            return null;
+        }
+
         // the place button held with nothing in hand (nor a shield to raise) zooms in, after the camera's view is set
         private void updateZoom() {
             Camera eye = Camera.main;
@@ -515,6 +551,11 @@ namespace Brickcraft
                 digHardness = block.hardness;
                 diggedBlock = lookedBlock;
                 digSound = block.digSound;
+            }
+            // a tool that digs (a pickaxe) is faster than a hand; the server wears it (see PlayerNetwork.CmdDigBlock)
+            UserItem tool = SelectedItem;
+            if (tool != null && tool.item.Digs) {
+                digHardness /= tool.item.digSpeed;
             }
 
             isDigging = true;

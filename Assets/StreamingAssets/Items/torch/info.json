@@ -1,0 +1,10 @@
+{
+    "name": "Torch",
+    "type": "brick",
+    "brickModel": "torch",
+    "color": 70,
+    "light": {
+        "range": 8,
+        "intensity": 400
+    }
+}

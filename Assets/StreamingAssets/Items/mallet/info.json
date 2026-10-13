@@ -1,0 +1,9 @@
+{
+    "name": "Mallet",
+    "type": "weapon",
+    "brickModel": "4522b",
+    "color": 70,
+    "damage": 4,
+    "attackSpeed": 1.4,
+    "durability": 200
+}

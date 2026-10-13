@@ -61,6 +61,39 @@ namespace Brickcraft
         public string[] tags;
         /// <summary>Items tagged "storage": how many slots a placed one has, 1 to 54 (27 by default).</summary>
         public int storageSlots = Item.DefaultStorageSlots;
+        /// <summary>
+        /// Tools that dig: how many times faster than a bare hand (more than 1). Each block or brick dug with it wears
+        /// it (see durability).
+        /// </summary>
+        public float? digSpeed;
+        /// <summary>It gives light, held and placed (a torch).</summary>
+        public LightInfo light;
+        /// <summary>Buckets: what they pick up and pour (see BucketInfo).</summary>
+        public BucketInfo bucket;
+        /// <summary>Degrees its model is turned around its up axis for its icon (see BrickIconRenderer), for those seen end-on.</summary>
+        public float iconTurn;
+    }
+
+    /// <summary>The light an item gives, the "light" of its info.json.</summary>
+    public class LightInfo
+    {
+        /// <summary>How far it reaches, in meters.</summary>
+        public float range = 8;
+        /// <summary>How bright, in lumens (a candle is about 12, a light bulb 800).</summary>
+        public float intensity = 400;
+        /// <summary>Its colour, [r, g, b] from 0 to 1: warm by default.</summary>
+        public float[] color;
+    }
+
+    /// <summary>
+    /// A bucket, the "bucket" of its info.json: an empty one has "filled" (the item it becomes picking up the liquid
+    /// of that item's "liquid"), a full one "liquid" (the item of the block it pours) and "empty" (what's left after).
+    /// </summary>
+    public class BucketInfo
+    {
+        public string filled;
+        public string liquid;
+        public string empty;
     }
 
     /// <summary>How players hold an item, the "held" of its info.json, in its model's space (as placed, meters).</summary>

@@ -624,6 +624,7 @@ namespace Brickcraft.Network
             foreach (Brick removed in WorldNetwork.ServerRemoveBrick(brick)) {
                 inventory.ServerAdd(removed.itemId, removed.color, 1);
             }
+            wearDigTool();
             ModScripts.ItemEvent(brick.itemId, "onBroken", handle, player);
         }
 
@@ -791,6 +792,7 @@ namespace Brickcraft.Network
             }
             if (WorldNetwork.ServerSetBlock(block, BlockType.Air, null)) {
                 Npcs.NpcPerception.MakeNoise(blockCenter, DigNoise, health, Npcs.Noise.Dig);
+                wearDigTool();
                 // a block placed with a colour gives back its brick in that colour
                 Item item = blockColor != BrickColor.None
                     ? (Server.items.TryGetValue(BlockDatabase.Get(blockType).itemId ?? "", out Item colored) ? colored : null)
@@ -800,6 +802,72 @@ namespace Brickcraft.Network
                     inventory.ServerAdd(item.id, blockColor != BrickColor.None ? blockColor : item.color, 1);
                 }
                 ModScripts.ItemEvent(blockItem, "onBroken", handle, player);
+            }
+        }
+
+        /// <summary>An empty bucket in the slot picks up the liquid of that block (its block goes, the bucket is full).</summary>
+        [Command]
+        public void CmdFillBucket(int slot, Vector3Int block) {
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            if (health.isDead || WorldBehaviour.Instance == null || !held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item)
+                    || item.bucket == null || item.bucket.filled == null || !Server.items.TryGetValue(item.bucket.filled, out Item full)
+                    || !Server.items.TryGetValue(full.bucket.liquid, out Item liquid)) {
+                return;
+            }
+            if (WorldBehaviour.Instance.GetBlockType(block) != liquid.blockType.Value || !isInReach(blockCenter(block))) {
+                return;
+            }
+            if (WorldNetwork.ServerSetBlock(block, BlockType.Air, null)) {
+                swapBucket(slot, full);
+            }
+        }
+
+        /// <summary>A full bucket in the slot pours its liquid in that block, if it's empty (the bucket is empty then).</summary>
+        [Command]
+        public void CmdPourBucket(int slot, Vector3Int block) {
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            if (health.isDead || WorldBehaviour.Instance == null || !held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item)
+                    || item.bucket == null || item.bucket.liquid == null || !Server.items.TryGetValue(item.bucket.liquid, out Item liquid)
+                    || !Server.items.TryGetValue(item.bucket.empty, out Item empty)) {
+                return;
+            }
+            BlockType there = WorldBehaviour.Instance.GetBlockType(block);
+            if ((there != BlockType.Air && !BlockDatabase.Get(there).isReplaceable) || there == liquid.blockType.Value || !isInReach(blockCenter(block))) {
+                return;
+            }
+            // nothing else in it: bricks, players
+            BrickPlacement placement = new BrickPlacement(liquid.brickModel, BrickGrid.BlockToCell(block), 0);
+            if (!BrickGrid.IsFree(placement) || BrickPlacer.overlapsPlayer(placement)) {
+                return;
+            }
+            ConnectedPlayer player = connectionToClient.authenticationData as ConnectedPlayer;
+            if (WorldNetwork.ServerSetBlock(block, liquid.blockType.Value, Placer.Now(player != null ? player.record.Id : 0))) {
+                swapBucket(slot, empty);
+            }
+        }
+
+        // one bucket of the slot becomes the other (in the slot if it was the last one); dropped if it doesn't fit
+        [Server]
+        private void swapBucket(int slot, Item into) {
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            bool last = held.HasValue && held.Value.quantity == 1;
+            inventory.ServerRemoveFromSlot(slot, 1);
+            if (!inventory.ServerAdd(into.id, into.color, 1, 0, last ? slot : 0)) {
+                Vector3 forward = transform.forward;
+                DroppedItems.ServerDrop(into.id, into.color, 1, 0, transform.position + forward * 0.6f + Vector3.up * 0.5f, forward * 2);
+            }
+        }
+
+        private static Vector3 blockCenter(Vector3Int block) {
+            return BrickGrid.CellToWorld(BrickGrid.BlockToCell(block), new Vector3(1, 1.5f, 1));
+        }
+
+        // what's in hand dug something: a tool that digs (a pickaxe) wears
+        [Server]
+        private void wearDigTool() {
+            InventoryItem? held = inventory.ServerGetSlot(selectedSlot);
+            if (held.HasValue && Server.items.TryGetValue(held.Value.itemId, out Item tool) && tool.Digs) {
+                inventory.ServerWear(selectedSlot);
             }
         }
 

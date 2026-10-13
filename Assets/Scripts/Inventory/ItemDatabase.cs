@@ -75,6 +75,7 @@ namespace Brickcraft
             BlockDatabase.FinishLoading();
             resolveDrops();
             resolveAmmo();
+            resolveBuckets();
             loadRecipes();
             Npcs.NpcDatabase.Load(mods); // their drops are items
         }
@@ -304,6 +305,24 @@ namespace Brickcraft
                 item.heldRotation = info.held.rotation != null ? Quaternion.Euler(info.held.rotation[0], info.held.rotation[1], info.held.rotation[2]) : Quaternion.identity;
                 item.heldScale = info.held.scale;
             }
+            if (info.digSpeed.HasValue) {
+                if (info.digSpeed.Value < 1) {
+                    Debug.LogError("Item file " + file + " has the digSpeed " + info.digSpeed.Value + ", it's how many times faster than a hand: 1 or more");
+                    return false;
+                }
+                item.digSpeed = info.digSpeed.Value;
+            }
+            if (info.light != null) {
+                if (info.light.range <= 0 || info.light.intensity <= 0 || (info.light.color != null && info.light.color.Length != 3)) {
+                    Debug.LogError("Item file " + file + " has an invalid light: range and intensity more than 0, color [r, g, b]");
+                    return false;
+                }
+                item.light = info.light;
+            }
+            if (info.bucket != null) {
+                // the items they name are checked once every item is known, see checkBuckets
+                item.bucket = info.bucket;
+            }
             // each one wears on its own: they don't stack
             if (item.type == Item.Type.Armor || item.durability > 0) {
                 item.maxStack = 1;
@@ -326,6 +345,39 @@ namespace Brickcraft
                     Debug.LogError("Item " + item.id + " shoots \"" + item.ammo + "\", which doesn't exist");
                     item.ammo = null;
                 }
+            }
+        }
+
+        // buckets name items loaded after theirs too: an empty one what it becomes full, a full one its liquid (a
+        // block's item) and what it becomes empty
+        private static void resolveBuckets() {
+            foreach (KeyValuePair<string, ModInfo> entry in modOf) {
+                Item item = Server.items[entry.Key];
+                BucketInfo bucket = item.bucket;
+                if (bucket == null) {
+                    continue;
+                }
+                BucketInfo resolved = new BucketInfo() {
+                    filled = string.IsNullOrEmpty(bucket.filled) ? null : resolve(bucket.filled, entry.Value),
+                    liquid = string.IsNullOrEmpty(bucket.liquid) ? null : resolve(bucket.liquid, entry.Value),
+                    empty = string.IsNullOrEmpty(bucket.empty) ? null : resolve(bucket.empty, entry.Value),
+                };
+                string error = null;
+                if (resolved.filled != null && (!Server.items.TryGetValue(resolved.filled, out Item full) || full.bucket == null || full.bucket.liquid == null)) {
+                    error = "becomes \"" + bucket.filled + "\" full, which isn't a bucket with a liquid";
+                } else if (resolved.liquid != null && (!Server.items.TryGetValue(resolved.liquid, out Item liquid) || !liquid.blockType.HasValue)) {
+                    error = "pours \"" + bucket.liquid + "\", which isn't an item with a block";
+                } else if (resolved.liquid != null && (resolved.empty == null || !Server.items.ContainsKey(resolved.empty))) {
+                    error = "pours a liquid but becomes \"" + bucket.empty + "\" empty, which doesn't exist";
+                } else if (resolved.filled == null && resolved.liquid == null) {
+                    error = "is a bucket without \"filled\" (empty ones) nor \"liquid\" (full ones)";
+                }
+                if (error != null) {
+                    Debug.LogError("Item " + item.id + " " + error);
+                    item.bucket = null;
+                    continue;
+                }
+                item.bucket = resolved;
             }
         }
 

@@ -1,0 +1,9 @@
+{
+    "name": "Sledgehammer",
+    "type": "weapon",
+    "brickModel": "75904",
+    "color": 72,
+    "damage": 7,
+    "attackSpeed": 0.8,
+    "durability": 300
+}

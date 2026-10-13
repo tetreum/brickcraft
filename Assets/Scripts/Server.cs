@@ -134,6 +134,8 @@ namespace Brickcraft
             if ((Game.Layers)item.layer == Game.Layers.Water) {
                 meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             }
+            // a torch lights around it
+            Bricks.ItemLight.Attach(brickObj, item);
             return brickObj;
         }
 

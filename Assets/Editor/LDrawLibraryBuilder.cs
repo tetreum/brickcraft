@@ -12,7 +12,7 @@ using UnityEngine;
 /// <summary>
 /// Builds the game's LDraw library (StreamingAssets/LDraw) from an unpacked library.ldraw.org complete.zip: the
 /// catalogue (catalog.json: every part but subparts, primitives, aliases, moved and obsolete ones, printed parts,
-/// stickers, minifigs and other figures, sheets of fabric, cardboard or plastic, and other systems: Duplo, Quatro, Primo, Modulex, Znap, Scala, Homemaker, Belville, Fabuland, Clikits, Constraction), the files they use (subparts
+/// stickers, minifigs and other figures (but the minifig tools of KeptParts), sheets of fabric, cardboard or plastic, and other systems: Duplo, Quatro, Primo, Modulex, Znap, Scala, Homemaker, Belville, Fabuland, Clikits, Constraction), the files they use (subparts
 /// and primitives, low resolution where LDraw has them) in library.zip, in lowercase, and LDraw's license files.
 /// Run again with a newer library to update it.
 /// </summary>
@@ -23,6 +23,8 @@ public static class LDrawLibraryBuilder
         "Minifig", "Minifig Accessory", "Minifig Footwear", "Minifig Headwear", "Minifig Hipwear", "Minifig Neckwear",
         "Figure", "Figure Accessory", "Sticker", "Sheet Fabric", "Sheet Cardboard", "Sheet Plastic",
     };
+    // minifig parts kept anyway, as the game's tools: pickaxe, torch, handaxe, shovel, mallet, sledgehammer
+    private static readonly HashSet<string> KeptParts = new HashSet<string>() { "3841", "3959", "3835", "3837", "4522b", "75904" };
     private static readonly Regex Printed = new Regex(@"\d[p]\w*$");
     private static readonly Regex PrintedName = new Regex(@"(?i)pattern|print|sticker");
     private static readonly Regex Composite = new Regex(@"c\d\d$");
@@ -90,18 +92,53 @@ public static class LDrawLibraryBuilder
     /// game units, the pivot in the middle of its footprint on its bottom. Returns what it did.
     /// </summary>
     public static string MakeTerrainBlock() {
+        string path = Path.Combine(Application.streamingAssetsPath, Brickcraft.World.BlockDatabase.DefaultModelFile);
+        return "Terrain block model: " + writePartObj(TerrainBrickPart, Quaternion.identity, path,
+            "Default terrain block model (2x2 brick, LDraw's " + TerrainBrickPart + " in low resolution: see LDrawLibraryBuilder)");
+    }
+
+    // LDraw parts the game uses turned, as file models of their own (StreamingAssets/BrickModels/[model]): a
+    // minifig's torch lies along its hand, but stands when placed
+    private static readonly (string model, string part, Vector3 rotation)[] TurnedParts = {
+        ("torch", "3959", new Vector3(90, 0, 0)),
+    };
+
+    [MenuItem("Brickcraft/LDraw/Make the turned part models")]
+    public static void MakeTurnedModelsFromMenu() {
+        Debug.Log(MakeTurnedModels());
+    }
+
+    /// <summary>Writes the models of TurnedParts (their model.obj, the brick's colour everywhere). Returns what it did.</summary>
+    public static string MakeTurnedModels() {
+        List<string> made = new List<string>();
+        foreach ((string model, string part, Vector3 rotation) in TurnedParts) {
+            string folder = Path.Combine(Application.streamingAssetsPath, BrickModels.Folder, model);
+            Directory.CreateDirectory(folder);
+            made.Add(model + ": " + writePartObj(part, Quaternion.Euler(rotation), Path.Combine(folder, "model.obj"),
+                model + " model: LDraw's " + part + " turned " + rotation + ", see LDrawLibraryBuilder.TurnedParts"));
+        }
+        return string.Join("; ", made);
+    }
+
+    // an LDraw part turned, as an OBJ in game units with the pivot in the middle of its footprint, on its bottom
+    private static string writePartObj(string part, Quaternion rotation, string path, string description) {
         LDrawLibrary.Reload();
         LDrawModelBuilder.ClearCache();
-        Mesh mesh = LDrawModelBuilder.Build(TerrainBrickPart, out _);
+        Mesh mesh = LDrawModelBuilder.Build(part, out _);
         if (mesh == null) {
-            return "The LDraw library has no " + TerrainBrickPart;
+            return "the LDraw library has no " + part;
         }
-        Bounds bounds = mesh.bounds;
-        Vector3 pivot = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
         Vector3[] vertices = mesh.vertices;
         int[] triangles = mesh.triangles;
+        Object.DestroyImmediate(mesh);
+        Bounds bounds = new Bounds(rotation * vertices[0], Vector3.zero);
+        for (int i = 0; i < vertices.Length; i++) {
+            vertices[i] = rotation * vertices[i];
+            bounds.Encapsulate(vertices[i]);
+        }
+        Vector3 pivot = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
         System.Text.StringBuilder obj = new System.Text.StringBuilder();
-        obj.Append("# Default terrain block model (2x2 brick, LDraw's ").Append(TerrainBrickPart).Append(" in low resolution: see LDrawLibraryBuilder)\n");
+        obj.Append("# ").Append(description).Append('\n');
         obj.Append("# Game units, pivot at the center of the footprint on the bottom face, +Y up.\n");
         foreach (Vector3 vertex in vertices) {
             Vector3 v = vertex - pivot;
@@ -112,11 +149,9 @@ public static class LDrawLibraryBuilder
             // and so does its winding
             obj.Append("f ").Append(triangles[i] + 1).Append(' ').Append(triangles[i + 2] + 1).Append(' ').Append(triangles[i + 1] + 1).Append('\n');
         }
-        Object.DestroyImmediate(mesh);
-        string path = Path.Combine(Application.streamingAssetsPath, Brickcraft.World.BlockDatabase.DefaultModelFile);
         File.WriteAllText(path, obj.ToString(), new System.Text.UTF8Encoding(false));
         AssetDatabase.Refresh();
-        return "Terrain block model: " + path + ", " + triangles.Length / 3 + " triangles, " + vertices.Length + " vertices";
+        return path + ", " + triangles.Length / 3 + " triangles, " + vertices.Length + " vertices";
     }
 
     private static string number(float value) {
@@ -228,8 +263,8 @@ public static class LDrawLibraryBuilder
             string[] words = description.Split((char[])null, System.StringSplitOptions.RemoveEmptyEntries);
             category = words.Length > 0 ? words[0] : "";
         }
-        if (SkippedCategories.Contains(category) || category.StartsWith("Minifig", System.StringComparison.OrdinalIgnoreCase)
-                || OtherSystems.IsMatch(description) || OtherSystems.IsMatch(category)) {
+        if (!KeptParts.Contains(id) && (SkippedCategories.Contains(category) || category.StartsWith("Minifig", System.StringComparison.OrdinalIgnoreCase)
+                || OtherSystems.IsMatch(description) || OtherSystems.IsMatch(category))) {
             return null;
         }
         return new LDrawPart() { id = id, name = CompactName(description), category = category };

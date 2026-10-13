@@ -8240,6 +8240,16 @@
     "category": "Train"
   },
   {
+    "id": "3835",
+    "name": "Minifig Tool Handaxe",
+    "category": "Minifig Accessory"
+  },
+  {
+    "id": "3837",
+    "name": "Minifig Shovel",
+    "category": "Minifig Accessory"
+  },
+  {
     "id": "3839a",
     "name": "Plate 1x2 with Handles Type 1",
     "category": "Plate"
@@ -8248,6 +8258,11 @@
     "id": "3839b",
     "name": "Plate 1x2 with Handles Type 2",
     "category": "Plate"
+  },
+  {
+    "id": "3841",
+    "name": "Minifig Pickaxe",
+    "category": "Minifig Accessory"
   },
   {
     "id": "3853",
@@ -8503,6 +8518,11 @@
     "id": "3958",
     "name": "Plate 6x6",
     "category": "Plate"
+  },
+  {
+    "id": "3959",
+    "name": "Minifig Torch",
+    "category": "Minifig Accessory"
   },
   {
     "id": "3960",
@@ -10583,6 +10603,11 @@
     "id": "451b",
     "name": "Tyre 3/100x8 Double Smooth",
     "category": "Tyre"
+  },
+  {
+    "id": "4522b",
+    "name": "Minifig Tool Mallet",
+    "category": "Minifig Accessory"
   },
   {
     "id": "4526",
@@ -16663,6 +16688,11 @@
     "id": "7567",
     "name": "Panel 1x8x5",
     "category": "Panel"
+  },
+  {
+    "id": "75904",
+    "name": "Minifig Tool Sledgehammer",
+    "category": "Minifig Accessory"
   },
   {
     "id": "75937",

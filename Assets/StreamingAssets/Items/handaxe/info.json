@@ -1,0 +1,10 @@
+{
+    "name": "Handaxe",
+    "type": "tool",
+    "brickModel": "3835",
+    "color": 72,
+    "digSpeed": 2,
+    "damage": 4,
+    "durability": 200,
+    "iconTurn": 90
+}

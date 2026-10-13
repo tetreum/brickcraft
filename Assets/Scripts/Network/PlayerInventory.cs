@@ -118,6 +118,20 @@ namespace Brickcraft.Network
             return removed;
         }
 
+        /// <summary>The stack in the slot takes that colour (one its item can have), false if it can't or the slot is empty.</summary>
+        [Server]
+        public bool ServerSetColor(int slot, int color) {
+            int index = Inventory.FindSlot(items, slot);
+            if (index == -1 || !Server.items.TryGetValue(items[index].itemId, out Item item) || !item.AllowsColor(color)) {
+                return false;
+            }
+            InventoryItem stack = items[index];
+            stack.color = color;
+            items[index] = stack;
+            save();
+            return true;
+        }
+
         /// <summary>The stack in the slot, null if it's empty.</summary>
         [Server]
         public InventoryItem? ServerGetSlot(int slot) {

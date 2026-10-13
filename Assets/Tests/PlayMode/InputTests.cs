@@ -1,5 +1,7 @@
 using System.Collections;
+using Brickcraft.Bricks;
 using Brickcraft.Network;
+using Brickcraft.World;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -133,6 +135,88 @@ namespace Brickcraft.Tests
             Assert.AreEqual(view, Camera.main.fieldOfView, 0.1f, "the hand is empty now, but the press was a drink");
             input.Release(mouse.rightButton);
             yield return frames(2);
+        }
+
+        [UnityTest]
+        public IEnumerator TheColorPickerOpensItsWindowAndPaintsWhatItsAimedAt() {
+            const int Blue = 1;
+            // a brick right in front of the crosshair
+            Transform eye = Camera.main.transform;
+            Item brickItem = Server.items["brick_2x2"];
+            Vector3Int cell = BrickGrid.WorldToCell(eye.position + eye.forward * 2) - new Vector3Int(1, 1, 1);
+            BrickPlacement placement = new BrickPlacement(brickItem.brickModel, cell);
+            Assume.That(BrickGrid.IsFree(placement), "room in front of the player");
+            Brick brick = WorldNetwork.ServerPlaceBrick(brickItem, 4, placement, Placer.Now(0));
+
+            hold(5, "color_picker", 1);
+            player.network.CmdSetToolColor(Player.FirstFastSlot + 5, Blue);
+            int windows = 0;
+            System.Action<int> opened = slot => windows++;
+            ColorPickerTool.WindowRequested += opened;
+            try {
+                yield return frames(2);
+                input.PressAndRelease(mouse.rightButton);
+                yield return frames(2);
+                Assert.AreEqual(1, windows, "right click opens the window");
+                input.PressAndRelease(keyboard.escapeKey); // closed again: the game takes clicks
+                yield return frames(2);
+
+                input.PressAndRelease(mouse.leftButton);
+                yield return frames(5);
+                Assert.AreEqual(Blue, brick.color, "left click paints it");
+                Assert.IsTrue(Server.bricks.ContainsKey(brick.id), "and doesn't dig it");
+            } finally {
+                ColorPickerTool.WindowRequested -= opened;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator ClickingABrickWithTheWindowOpenPicksItsColour() {
+            const int Blue = 1, Green = 2;
+            Transform eye = Camera.main.transform;
+            Item brickItem = Server.items["brick_2x2"];
+            Vector3Int cell = BrickGrid.WorldToCell(eye.position + eye.forward * 2) - new Vector3Int(1, 1, 1);
+            BrickPlacement placement = new BrickPlacement(brickItem.brickModel, cell);
+            Assume.That(BrickGrid.IsFree(placement), "room in front of the player");
+            Brick brick = WorldNetwork.ServerPlaceBrick(brickItem, Green, placement, Placer.Now(0));
+
+            hold(5, "color_picker", 1);
+            player.network.CmdSetToolColor(Player.FirstFastSlot + 5, Blue);
+            yield return frames(2);
+            input.PressAndRelease(mouse.rightButton); // the window
+            yield return frames(2);
+            Assert.IsTrue(GameInput.IsTyping, "the window is open");
+
+            input.Set(mouse.position, new Vector2(Screen.width / 2f, Screen.height / 2f)); // on the brick
+            yield return frames(1);
+            input.PressAndRelease(mouse.leftButton);
+            yield return frames(5);
+            Assert.AreEqual(Green, ColorPickerTool.HeldColor, "the brick's colour picked");
+            Assert.AreEqual(Green, brick.color, "and the brick isn't painted");
+            Assert.IsFalse(GameInput.IsTyping, "the window closed");
+        }
+
+        [UnityTest]
+        public IEnumerator ClickingTerrainWithTheWindowOpenPicksItsBricksColour() {
+            const int Blue = 1;
+            Transform eye = Camera.main.transform;
+            Vector3Int block = BrickGrid.CellToBlock(BrickGrid.WorldToCell(eye.position + eye.forward * 2.5f));
+            BlockType dirt = (BlockType)BlockDatabase.IdOf("dirt");
+            Assert.IsTrue(WorldNetwork.ServerSetBlock(block, dirt, Placer.Now(0)));
+            // its chunk's mesh rebuilt: something solid right in front
+            yield return TestGame.WaitUntil(() => Physics.Raycast(eye.position, eye.forward, out RaycastHit hit, 4f)
+                && hit.collider.name.StartsWith("ChunkSlice"), 10, "the dirt in front");
+
+            hold(5, "color_picker", 1);
+            player.network.CmdSetToolColor(Player.FirstFastSlot + 5, Blue);
+            yield return frames(2);
+            input.PressAndRelease(mouse.rightButton);
+            yield return frames(2);
+            input.Set(mouse.position, new Vector2(Screen.width / 2f, Screen.height / 2f));
+            yield return frames(1);
+            input.PressAndRelease(mouse.leftButton);
+            yield return frames(5);
+            Assert.AreEqual(Server.items["dirt"].color, ColorPickerTool.HeldColor, "the dirt brick's colour picked");
         }
 
         [UnityTest]

@@ -820,6 +820,35 @@ namespace Brickcraft.Network
             inventory.ServerRemoveFromSlot(slot, 1);
         }
 
+        /// <summary>The color picker in the slot takes that colour (one of the palette's), what it paints with.</summary>
+        [Command]
+        public void CmdSetToolColor(int slot, int color) {
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            if (health.isDead || !held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || !item.IsColorPicker) {
+                return;
+            }
+            inventory.ServerSetColor(slot, color);
+        }
+
+        /// <summary>Paints a placed brick with the colour of the color picker in the slot, if the brick can have it.</summary>
+        [Command]
+        public void CmdPaintBrick(int slot, string brickId) {
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            if (health.isDead || !held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || !item.IsColorPicker
+                    || brickId == null || !Server.bricks.TryGetValue(brickId, out Brick brick) || brick.item == null
+                    || !isInReach(brick.placement.WorldBounds.center)) {
+                return;
+            }
+            int color = held.Value.color;
+            if (!brick.item.AllowsColor(color)) {
+                BrickColor named = BrickColorPalette.Get(color);
+                connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName,
+                    text = brick.item.name + " can't be " + (named != null ? named.name : "that colour") });
+                return;
+            }
+            WorldNetwork.ServerSetBrickColor(brick, color);
+        }
+
         /// <summary>An empty bucket in the slot picks up the liquid of that block (its block goes, the bucket is full).</summary>
         [Command]
         public void CmdFillBucket(int slot, Vector3Int block) {

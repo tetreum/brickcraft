@@ -199,6 +199,14 @@ namespace Brickcraft
             return true;
         }
 
+        /// <summary>Paints a brick of this game instance (a colour its item can have, see Item.ValidColor).</summary>
+        public void setBrickColor(Brick brick, int color) {
+            brick.color = brick.item.ValidColor(color);
+            if (brick.gameObject != null) {
+                BrickModels.ApplyColor(brick.gameObject, brick.item.MaterialFor(brick.color));
+            }
+        }
+
         /// <summary>Changes a brick's state in this game instance, its model shows it (see IBrickState).</summary>
         public void setBrickState(Brick brick, int state) {
             brick.state = state;

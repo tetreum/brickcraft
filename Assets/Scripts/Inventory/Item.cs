@@ -194,6 +194,15 @@ namespace Brickcraft
         public bool IsPartsLister {
             get { return type == Type.Tool && tags.Contains(PartsListerTag); }
         }
+        /// <summary>
+        /// Tools: the place button picks a colour (the stack's), the dig button paints a placed brick with it (see
+        /// PlayerNetwork.CmdPaintBrick).
+        /// </summary>
+        public const string ColorPickerTag = "colorpicker";
+
+        public bool IsColorPicker {
+            get { return type == Type.Tool && tags.Contains(ColorPickerTag); }
+        }
         /// <summary>Tools: used, it places an LDraw model from the player's imports folder (see Network.ModelImporter).</summary>
         public const string ModelImporterTag = "modelimporter";
 

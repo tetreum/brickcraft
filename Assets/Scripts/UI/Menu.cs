@@ -32,6 +32,7 @@ public class Menu : MonoBehaviour {
 		PartsListerView.Opened += PartsListerPanel.Show;
 		PartsListerView.Closed += PartsListerPanel.Hide;
 		ModelImporterView.WindowRequested += ModelImporterPanel.Open;
+		ColorPickerTool.WindowRequested += ColorPickerPanel.Open;
 		ModelImporterView.Opened += ModelImporterPanel.ShowHint;
 		ModelImporterView.Closed += ModelImporterPanel.HideHint;
     }
@@ -50,6 +51,7 @@ public class Menu : MonoBehaviour {
 		PartsListerView.Opened -= PartsListerPanel.Show;
 		PartsListerView.Closed -= PartsListerPanel.Hide;
 		ModelImporterView.WindowRequested -= ModelImporterPanel.Open;
+		ColorPickerTool.WindowRequested -= ColorPickerPanel.Open;
 		ModelImporterView.Opened -= ModelImporterPanel.ShowHint;
 		ModelImporterView.Closed -= ModelImporterPanel.HideHint;
 	}

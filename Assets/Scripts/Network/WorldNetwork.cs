@@ -263,6 +263,21 @@ namespace Brickcraft.Network
         }
 
         /// <summary>Changes a brick's state (opens a door...), see Brick.state.</summary>
+        /// <summary>Paints a brick: a colour its item can have (see Item.AllowsColor), saved and shown to everyone.</summary>
+        public static void ServerSetBrickColor(Brick brick, int color) {
+            if (brick.color == color) {
+                return;
+            }
+            Placer placer = ServerPlacerOf(brick);
+            Server.Instance.setBrickColor(brick, color);
+            serverChanges.AddBrick(toSaved(brick, placer));
+            sendToChunk(WorldChanges.ChunkOfBrick(brick.placement.origin), new BrickColorMessage() {
+                id = brick.id,
+                origin = brick.placement.origin,
+                color = brick.color,
+            });
+        }
+
         public static void ServerSetBrickState(Brick brick, int state) {
             if (brick.state == state) {
                 return;
@@ -615,6 +630,7 @@ namespace Brickcraft.Network
             NetworkClient.RegisterHandler<BrickPlacedMessage>(onBrickPlaced);
             NetworkClient.RegisterHandler<BrickRemovedMessage>(onBrickRemoved);
             NetworkClient.RegisterHandler<BrickStateMessage>(onBrickState);
+            NetworkClient.RegisterHandler<BrickColorMessage>(onBrickColor);
             NetworkClient.RegisterHandler<TimeMessage>(onTime);
             NetworkClient.RegisterHandler<SleepStatusMessage>(message => SleepStatus = message);
             ClientStorage.Register();
@@ -831,6 +847,19 @@ namespace Brickcraft.Network
             }
             if (Server.bricks.TryGetValue(message.id, out Brick brick)) {
                 Server.Instance.setBrickState(brick, message.state);
+            }
+        }
+
+        private static void onBrickColor(BrickColorMessage message) {
+            if (NetworkServer.active) {
+                return;
+            }
+            if (clientChanges.TryGetBrick(new Guid(message.id), message.origin, out SavedBrick saved)) {
+                saved.color = message.color;
+                clientChanges.AddBrick(saved);
+            }
+            if (Server.bricks.TryGetValue(message.id, out Brick brick)) {
+                Server.Instance.setBrickColor(brick, message.color);
             }
         }
 

@@ -57,6 +57,16 @@ namespace Brickcraft.Tests
         }
 
         [Test]
+        public void TheColorPickerTakesAnyColour() {
+            Item picker = item("color_picker");
+            Assert.IsTrue(picker.IsColorPicker);
+            Assert.IsTrue(picker.AllowsColor(1));
+            Assert.IsTrue(picker.AllowsColor(41));
+            Assert.IsNotNull(picker.brickModel, "the paint palette, LDraw's 93551p01");
+            Assert.IsFalse(item("pickaxe").IsColorPicker);
+        }
+
+        [Test]
         public void LavaHardensWithWater() {
             Fluid lava = GameData.Definition(GameData.Block("lava")).fluid;
             Fluid water = GameData.Definition(GameData.Block("water")).fluid;

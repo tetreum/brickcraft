@@ -105,6 +105,14 @@ namespace Brickcraft.Network
         public int state;
     }
 
+    /// <summary>Server to client: a brick was painted (see WorldNetwork.ServerSetBrickColor).</summary>
+    public struct BrickColorMessage : NetworkMessage
+    {
+        public string id;
+        public Vector3Int origin;
+        public int color;
+    }
+
     /// <summary>Server to client: a brick was removed.</summary>
     public struct BrickRemovedMessage : NetworkMessage
     {

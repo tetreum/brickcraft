@@ -23,12 +23,14 @@ public static class LDrawLibraryBuilder
         "Minifig", "Minifig Accessory", "Minifig Footwear", "Minifig Headwear", "Minifig Hipwear", "Minifig Neckwear",
         "Figure", "Figure Accessory", "Sticker", "Sheet Fabric", "Sheet Cardboard", "Sheet Plastic",
     };
-    // minifig parts kept anyway, as the game's tools: pickaxe, torch, handaxe, shovel, mallet, sledgehammer; and the
-    // conical flask with its green fluid (LDraw's 93549, obsolete for being in two colours, BrickLink's 93549pb01)
-    private static readonly HashSet<string> KeptParts = new HashSet<string>() { "3841", "3959", "3835", "3837", "4522b", "75904", "93549" };
-    // kept parts whose LDraw description isn't a name (obsolete ones)
+    // minifig parts kept anyway, as the game's tools: pickaxe, torch, handaxe, shovel, mallet, sledgehammer; the
+    // conical flask with its green fluid (LDraw's 93549, obsolete for being in two colours, BrickLink's 93549pb01, the HP
+    // Potion) and the paint palette with paint drops (printed, the Color Picker)
+    private static readonly HashSet<string> KeptParts = new HashSet<string>() { "3841", "3959", "3835", "3837", "4522b", "75904", "93549", "93551p01" };
+    // kept parts that would be left out otherwise (obsolete, printed), with their name
     private static readonly Dictionary<string, string> KeptNames = new Dictionary<string, string>() {
         { "93549", "Minifig Conical Flask with Trans-Bright Green Fluid" },
+        { "93551p01", "Minifig Paint Palette with Paint Drops" },
     };
     private static readonly Regex Printed = new Regex(@"\d[p]\w*$");
     private static readonly Regex PrintedName = new Regex(@"(?i)pattern|print|sticker");
@@ -236,7 +238,7 @@ public static class LDrawLibraryBuilder
 
     // the catalogue's entry of a part file, null if it isn't one (see the class)
     private static LDrawPart catalogPart(string file, string id) {
-        if (!Slug.IsMatch(id) || Printed.IsMatch(id) || Composite.IsMatch(id)) {
+        if (!Slug.IsMatch(id) || (!KeptNames.ContainsKey(id) && (Printed.IsMatch(id) || Composite.IsMatch(id)))) {
             return null;
         }
         string description = null, kind = null, category = null;

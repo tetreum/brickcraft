@@ -195,14 +195,20 @@ namespace Brickcraft
                 wasDigHeld = false;
                 cancelDraw();
             } else {
-                // with a ranged weapon (and its ammo) the dig button draws it instead
+                // with a ranged weapon (and its ammo) the dig button draws it instead; with a color picker it paints
                 bool isDrawing = updateDrawing();
-                bool isDigHeld = !isDrawing && GameInput.GetButton(GameInput.Dig);
+                bool isPainting = SelectedItem != null && SelectedItem.item.IsColorPicker;
+                bool isDigHeld = !isDrawing && !isPainting && GameInput.GetButton(GameInput.Dig);
                 bool isClickingDoor = clickDoors(isDigHeld);
 
                 // the server checks it can be hit (PvP for players...)
-                if (!isDrawing && GameInput.GetButtonDown(GameInput.Dig) && Time.time >= nextAttack) {
+                if (!isDrawing && !isPainting && GameInput.GetButtonDown(GameInput.Dig) && Time.time >= nextAttack) {
                     attack();
+                }
+
+                // the brick looked at takes the color picker's colour (the server checks it can)
+                if (isPainting && !GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Dig) && lookedBrick != null) {
+                    network.CmdPaintBrick(SelectedSlot, lookedBrick.id);
                 }
 
                 // the placing preview would hide what's being dug
@@ -231,6 +237,11 @@ namespace Brickcraft
                 if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Place) && SelectedItem != null && SelectedItem.item.IsModelImporter
                         && !ModelImporterView.IsOpen && ModelImporterView.ClosedFrame != Time.frameCount) {
                     ModelImporterView.RequestWindow(SelectedSlot);
+                }
+
+                // a color picker opens its window, to pick its colour
+                if (isPainting && !GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Place)) {
+                    ColorPickerTool.RequestWindow(SelectedSlot);
                 }
 
                 // food is used up, if the player is hurt (the server checks)

@@ -121,6 +121,38 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator TheColorPickerPaintsBricks() {
+            const int Blue = 1, Red = 4;
+            BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
+            Vector3Int floor = above(3);
+            TestGame.Floor(floor, 1, stone);
+            Item brickItem = Server.items["brick_2x2"], glassItem = Server.items["glass_2x2"];
+            Vector3Int cell = BrickGrid.BlockToCell(floor + Vector3Int.up);
+            Brick brick = WorldNetwork.ServerPlaceBrick(brickItem, Red, new BrickPlacement(brickItem.brickModel, cell), Placer.Now(0));
+            Brick glass = WorldNetwork.ServerPlaceBrick(glassItem, glassItem.color, new BrickPlacement(glassItem.brickModel, cell + new Vector3Int(0, 3, 0)), Placer.Now(0));
+
+            PlayerInventory inventory = TestGame.Player.GetComponent<PlayerInventory>();
+            PlayerNetwork network = TestGame.Player.GetComponent<PlayerNetwork>();
+            int slot = Player.FirstFastSlot + 4;
+            Assert.IsTrue(inventory.ServerAdd("color_picker", Server.items["color_picker"].color, 1, 0, slot));
+
+            network.CmdSetToolColor(slot, Blue);
+            yield return null;
+            Assert.AreEqual(Blue, inventory.ServerGetSlot(slot).Value.color, "the picker takes the colour");
+
+            network.CmdPaintBrick(slot, brick.id);
+            network.CmdPaintBrick(slot, glass.id);
+            yield return null;
+            Assert.AreEqual(Blue, brick.color);
+            Assert.AreEqual(glassItem.color, glass.color, "glass only takes transparent colours");
+
+            yield return game.Stop();
+            yield return game.Start();
+            yield return TestGame.WaitUntil(() => BrickGrid.GetBrickAt(cell) != null, 10, "the brick coming back");
+            Assert.AreEqual(Blue, BrickGrid.GetBrickAt(cell).color, "painted, saved");
+        }
+
+        [UnityTest]
         public IEnumerator WaterPouredOnAFloorSpreads() {
             BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
             BlockType water = (BlockType)BlockDatabase.IdOf("water");

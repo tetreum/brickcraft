@@ -112,6 +112,11 @@ namespace Brickcraft.Network
             Npcs.NpcSystem.StartServer();
         }
 
+        /// <summary>The server's blocks of that chunk that changed to one of those that pass the test (none on clients).</summary>
+        public static List<Vector3Int> ServerChangedBlocks(Vector2Int chunk, Func<byte, bool> test) {
+            return serverChanges != null ? serverChanges.ChangedBlocks(chunk, test) : new List<Vector3Int>();
+        }
+
         /// <summary>Whether the server sent that chunk to the client (and it still has it).</summary>
         public static bool HasSentChunk(NetworkConnectionToClient conn, Vector2Int chunk) {
             return interests.TryGetValue(conn, out ClientInterest interest) && interest.sentChunks.Contains(chunk);
@@ -565,6 +570,7 @@ namespace Brickcraft.Network
         // the bricks of a chunk are game objects, they live while the chunk is loaded
         private static void onServerChunkGenerated(Chunk chunk) {
             spawnBricks(serverChanges.GetBricks(new Vector2Int(chunk.X, chunk.Z)));
+            FluidSimulator.ChunkGenerated(chunk);
         }
 
         private static void onServerChunkUnloaded(Vector2Int coords) {

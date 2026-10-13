@@ -161,6 +161,23 @@ namespace Brickcraft.World
         }
 
         /// <summary>Who placed a block, false when no one did (it was generated, or dug).</summary>
+        /// <summary>The blocks of a chunk that changed (world block coordinates) to one of those that pass the test.</summary>
+        public List<Vector3Int> ChangedBlocks(Vector2Int chunk, Func<byte, bool> test) {
+            List<Vector3Int> found = new List<Vector3Int>();
+            lock (sync) {
+                if (!chunks.TryGetValue(chunk, out ChunkChanges changes)) {
+                    return found;
+                }
+                foreach (KeyValuePair<ushort, byte> block in changes.blocks) {
+                    if (test(block.Value)) {
+                        Vector3Int local = ChunkChanges.BlockFromIndex(block.Key);
+                        found.Add(new Vector3Int((chunk.x << 4) + local.x, local.y, (chunk.y << 4) + local.z));
+                    }
+                }
+            }
+            return found;
+        }
+
         public bool TryGetPlacer(Vector3Int block, out Placer placer) {
             lock (sync) {
                 placer = default(Placer);

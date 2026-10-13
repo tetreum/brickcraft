@@ -14,7 +14,8 @@ namespace Brickcraft.World
     /// are beside them and below them is solid or a source; with none, they dry up. Then they spread: down first
     /// (falling, as far as it goes), and sideways one level weaker, up to its reach (sources and what can't go
     /// down only), toward the nearest way down within FindDownReach blocks, or every way if there's none.
-    /// Fluids don't go into bricks, nor chunks that aren't loaded: they go on when those load.
+    /// Fluids don't go into bricks, nor chunks that aren't loaded: they go on when those load. Flowing blocks of a
+    /// chunk that loads (saved flowing, the server stopped) go on too.
     /// </summary>
     public static class FluidSimulator
     {
@@ -32,16 +33,11 @@ namespace Brickcraft.World
         private static readonly List<Vector3Int> due = new List<Vector3Int>();
         // blocks that wanted to flow into a chunk that isn't loaded, by that chunk
         private static readonly Dictionary<Vector2Int, HashSet<Vector3Int>> waiting = new Dictionary<Vector2Int, HashSet<Vector3Int>>();
-        private static WorldBehaviour subscribed;
 
         /// <summary>Forgets what was going on (the world was left).</summary>
         public static void Clear() {
             scheduled.Clear();
             waiting.Clear();
-            if (subscribed != null) {
-                subscribed.ChunkGenerated -= onChunkGenerated;
-                subscribed = null;
-            }
         }
 
         /// <summary>A block changed (see WorldNetwork.ServerSetBlock): the fluid in and around it is looked at.</summary>
@@ -69,17 +65,7 @@ namespace Brickcraft.World
         /// <summary>The server's frame: the blocks whose time came are looked at.</summary>
         public static void ServerUpdate() {
             WorldBehaviour world = WorldBehaviour.Instance;
-            if (world == null) {
-                return;
-            }
-            if (subscribed != world) {
-                if (subscribed != null) {
-                    subscribed.ChunkGenerated -= onChunkGenerated;
-                }
-                subscribed = world;
-                world.ChunkGenerated += onChunkGenerated;
-            }
-            if (scheduled.Count == 0) {
+            if (world == null || scheduled.Count == 0) {
                 return;
             }
             float now = Time.time;
@@ -284,13 +270,24 @@ namespace Brickcraft.World
             blocks.Add(block);
         }
 
-        private static void onChunkGenerated(Chunk chunk) {
-            if (waiting.TryGetValue(new Vector2Int(chunk.X, chunk.Z), out HashSet<Vector3Int> blocks)) {
-                waiting.Remove(new Vector2Int(chunk.X, chunk.Z));
+        /// <summary>A chunk was loaded on the server (see WorldNetwork): what waited for it, and what was flowing in it, goes on.</summary>
+        public static void ChunkGenerated(Chunk chunk) {
+            Vector2Int coords = new Vector2Int(chunk.X, chunk.Z);
+            if (waiting.TryGetValue(coords, out HashSet<Vector3Int> blocks)) {
+                waiting.Remove(coords);
                 foreach (Vector3Int block in blocks) {
                     BlockChanged(block);
                 }
             }
+            // what was flowing when it was saved (flowing blocks only come from changes)
+            foreach (Vector3Int block in WorldNetwork.ServerChangedBlocks(coords, isFlowing)) {
+                schedule(block);
+            }
+        }
+
+        private static bool isFlowing(byte id) {
+            BlockDefinition definition = BlockDatabase.Get(id);
+            return definition.fluid != null && definition.fluidLevel != 0;
         }
     }
 }

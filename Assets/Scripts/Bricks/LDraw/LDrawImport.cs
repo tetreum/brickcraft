@@ -72,6 +72,20 @@ namespace Brickcraft.Bricks.LDraw
             return model;
         }
 
+        // an old part number LDraw now has lettered versions of (3023 is 3023a and 3023b, the same shape): the first one's item
+        private static Item renumbered(string part) {
+            if (part.Length == 0 || !char.IsDigit(part[part.Length - 1])) {
+                return null;
+            }
+            for (char version = 'a'; version <= 'e'; version++) {
+                Item item = PartsList.ItemOfPart(part + version);
+                if (item != null) {
+                    return item;
+                }
+            }
+            return null;
+        }
+
         // the game's bricks made of an LDraw part (see findOwnItems), by part number
         private Dictionary<string, Item> ownItems;
 
@@ -88,7 +102,7 @@ namespace Brickcraft.Bricks.LDraw
         }
 
         private void add(LDrawContraption.Part part, HashSet<Vector3Int> taken, List<BrickPlacement> placements, List<(LDrawContraption.Part, Item)> hanging) {
-            Item item = ownItems.TryGetValue(part.part, out Item own) ? own : PartsList.ItemOfPart(part.part);
+            Item item = ownItems.TryGetValue(part.part, out Item own) ? own : PartsList.ItemOfPart(part.part) ?? renumbered(part.part);
             BrickModel brickModel = item != null && item.type == Item.Type.Brick ? item.brickModel : null;
             if (brickModel == null) {
                 unknown++;
@@ -206,22 +220,61 @@ namespace Brickcraft.Bricks.LDraw
             if (!front || !side) {
                 return false; // turned other than by quarter turns, or scaled
             }
+            // mirrored, a part that doesn't fill its box (a corner brick) is another turn of it
+            if (r.determinant < 0 && brickModel.footprint != null) {
+                turns = mirroredTurn(r, brickModel, turns);
+                rotation = Quaternion.Euler(0, 90 * turns, 0);
+            }
 
             // its pivot (the middle of its footprint, at its bottom), from where its LDraw origin is
             Vector3 pivot = PivotOf(part, brickModel, item);
             Vector3Int size = BrickPlacement.SizeFor(brickModel, turns);
             Vector3 cell = new Vector3(pivot.x / Server.studSize - size.x / 2f, pivot.y / Server.plateHeight, pivot.z / Server.studSize - size.z / 2f);
             Vector3Int rounded = Vector3Int.RoundToInt(cell);
-            // half a plate off (a baseplate is that thick): in the plate below
-            if (Mathf.Abs(cell.y - Mathf.Floor(cell.y) - 0.5f) <= Tolerance) {
+            // up and down: a quarter plate off goes to the nearest plate (files have whole sub-assemblies 2 LDU up),
+            // half a plate off (a baseplate is that thick) in the plate below
+            float up = cell.y - Mathf.Floor(cell.y);
+            if (Mathf.Abs(up - 0.5f) < 0.2f) {
                 rounded.y = Mathf.FloorToInt(cell.y);
-                cell.y = rounded.y;
+            } else if (Mathf.Abs(cell.y - rounded.y) > 0.3f) {
+                return false;
             }
-            if ((cell - rounded).sqrMagnitude > Tolerance * Tolerance) {
+            // sideways the studs have to line up
+            if (Mathf.Abs(cell.x - rounded.x) > Tolerance || Mathf.Abs(cell.z - rounded.z) > Tolerance) {
                 return false;
             }
             placement = new BrickPlacement(brickModel, rounded, turns);
             return true;
+        }
+
+        // the turn whose filled columns are where the mirrored part's are (that one if none is)
+        private static int mirroredTurn(Matrix4x4 r, BrickModel brickModel, int fallback) {
+            HashSet<Vector2Int> mirrored = new HashSet<Vector2Int>();
+            for (int x = 0; x < brickModel.width; x++) {
+                for (int z = 0; z < brickModel.depth; z++) {
+                    if (brickModel.Fills(x, z)) {
+                        // the column's middle from the pivot in half studs, where the part's matrix puts it
+                        int px = 2 * x + 1 - brickModel.width, pz = 2 * z + 1 - brickModel.depth;
+                        mirrored.Add(new Vector2Int(Mathf.RoundToInt(r.m00 * px + r.m02 * pz), Mathf.RoundToInt(r.m20 * px + r.m22 * pz)));
+                    }
+                }
+            }
+            for (int turn = 0; turn < 4; turn++) {
+                BrickPlacement placement = new BrickPlacement(brickModel, Vector3Int.zero, turn);
+                Vector3Int size = placement.Size;
+                HashSet<Vector2Int> columns = new HashSet<Vector2Int>();
+                for (int x = 0; x < size.x; x++) {
+                    for (int z = 0; z < size.z; z++) {
+                        if (placement.FillsColumn(x, z)) {
+                            columns.Add(new Vector2Int(2 * x + 1 - size.x, 2 * z + 1 - size.z));
+                        }
+                    }
+                }
+                if (columns.SetEquals(mirrored)) {
+                    return turn;
+                }
+            }
+            return fallback;
         }
 
         // the palette's colour of an LDraw code (16 the item's own), one the item can have

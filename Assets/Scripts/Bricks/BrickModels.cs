@@ -305,12 +305,15 @@ namespace Brickcraft.Bricks
                 int depth = Mathf.Max(1, info.depth > 0 ? info.depth : Mathf.RoundToInt(bounds.size.z / Server.studSize));
                 int plates = Mathf.Max(1, info.plates > 0 ? info.plates : Mathf.FloorToInt(bounds.size.y / Server.plateHeight + 0.15f));
 
-                GameObject template = makeTemplate(id, mesh, info, materialNames, width, depth, plates);
+                bool[] footprint = BrickFootprint.Of(mesh, width, depth);
+                GameObject template = makeTemplate(id, mesh, info, materialNames, width, depth, plates, footprint);
                 Texture2D normalMap = loadNormalMap(Path.Combine(folder, NormalMapFile));
                 if (normalMap != null) {
                     template.AddComponent<BrickNormalMap>().normalMap = normalMap;
                 }
-                return create(id, template, width, depth, plates);
+                BrickModel model = create(id, template, width, depth, plates);
+                model.footprint = footprint;
+                return model;
             } catch (Exception e) {
                 Debug.LogError("Can't read the model " + folder + ": " + e.Message);
                 return null;
@@ -342,13 +345,15 @@ namespace Brickcraft.Bricks
                 int width = Mathf.Max(1, Mathf.RoundToInt(bounds.size.x / Server.studSize));
                 int depth = Mathf.Max(1, Mathf.RoundToInt(bounds.size.z / Server.studSize));
                 int plates = Mathf.Max(1, Mathf.FloorToInt(bounds.size.y / Server.plateHeight + 0.15f));
-                GameObject template = makeTemplate(id, mesh, info, materialNames, width, depth, plates);
+                bool[] footprint = attachesTo == null ? BrickFootprint.Of(mesh, width, depth) : null;
+                GameObject template = makeTemplate(id, mesh, info, materialNames, width, depth, plates, footprint);
                 BrickModel model;
                 if (attachesTo != null) {
                     model = create(id, template, 1, 1, 1);
                     model.attachesTo = attachesTo;
                 } else {
                     model = create(id, template, width, depth, plates);
+                    model.footprint = footprint;
                     string takes = LDraw.LDrawGlass.FrameFits(catalogPart);
                     if (takes != null) {
                         addSlot(template, origin, takes);
@@ -415,7 +420,7 @@ namespace Brickcraft.Bricks
         }
 
         // like the game's prefabs: the brick's mesh, a collider (a box of its size, or its shape) and its parts' colours
-        private static GameObject makeTemplate(string id, Mesh mesh, ModelInfo info, string[] materialNames, int width, int depth, int plates) {
+        private static GameObject makeTemplate(string id, Mesh mesh, ModelInfo info, string[] materialNames, int width, int depth, int plates, bool[] footprint) {
             if (templates == null) {
                 templates = new GameObject("BrickModels");
                 templates.SetActive(false); // what's in it stays out of the world
@@ -452,10 +457,7 @@ namespace Brickcraft.Bricks
             if (info.collider == "mesh") {
                 brick.AddComponent<MeshCollider>().sharedMesh = mesh;
             } else {
-                float height = plates * Server.plateHeight;
-                BoxCollider collider = brick.AddComponent<BoxCollider>();
-                collider.center = new Vector3(0, height / 2, 0);
-                collider.size = new Vector3(width * Server.studSize, height, depth * Server.studSize);
+                addBoxes(brick, width, depth, plates, footprint);
             }
 
             if (info.points != null) {
@@ -468,6 +470,36 @@ namespace Brickcraft.Bricks
                 }
             }
             return brick;
+        }
+
+        // a box of its size; for models that leave columns free (see BrickFootprint), a box for each run of filled ones
+        private static void addBoxes(GameObject brick, int width, int depth, int plates, bool[] footprint) {
+            float height = plates * Server.plateHeight;
+            float stud = Server.studSize;
+            if (footprint == null) {
+                addBox(brick, new Vector3(0, height / 2, 0), new Vector3(width * stud, height, depth * stud));
+                return;
+            }
+            for (int z = 0; z < depth; z++) {
+                for (int x = 0; x < width; x++) {
+                    if (!footprint[x + z * width]) {
+                        continue;
+                    }
+                    int length = 1;
+                    while (x + length < width && footprint[x + length + z * width]) {
+                        length++;
+                    }
+                    addBox(brick, new Vector3((x + length / 2f - width / 2f) * stud, height / 2, (z + 0.5f - depth / 2f) * stud),
+                        new Vector3(length * stud, height, stud));
+                    x += length - 1;
+                }
+            }
+        }
+
+        private static void addBox(GameObject brick, Vector3 center, Vector3 size) {
+            BoxCollider collider = brick.AddComponent<BoxCollider>();
+            collider.center = center;
+            collider.size = size;
         }
 
         private static BrickModel create(string id, GameObject prefab, int width, int depth, int plates) {

@@ -19,6 +19,17 @@ namespace Brickcraft
         public int depth;
         public int heightInPlates;
 
+        /// <summary>
+        /// The columns of its box it fills (x + z * width, unrotated; see Bricks.BrickFootprint), null if it fills them
+        /// all: a corner brick leaves one free, another part can go there.
+        /// </summary>
+        public bool[] footprint;
+
+        /// <summary>Whether it fills that column of its box (unrotated).</summary>
+        public bool Fills(int x, int z) {
+            return footprint == null || footprint[x + z * width];
+        }
+
         /// <summary>What bricks of it are copies of: its pivot at the center of its bottom.</summary>
         public GameObject prefab;
 

@@ -385,6 +385,8 @@ Bricks have a state (`Brick.state`, an int saved with them and sent to players, 
 
 Some models are attachments (a `BrickAttachment` on the prefab's root): their bricks don't go on the grid but in the slot of another brick (a `BrickSlot`, with the point their pivot goes to), when both say the same `fits`. Holding one, the preview shows it in the slot of the brick you look at, and placing puts it there if the slot is free (`PlayerNetwork.CmdAttachBrick`). An attached brick (`Brick.attachedTo`, saved and sent like its state) takes no cells, moves with its brick and is removed on its own; removing its brick removes it too, and whoever removed them gets both. Mods' `world.spawn` can't spawn attachments.
 
+Bricks fill the cells of their box, but models of LDraw parts and file models only fill the columns their shape covers (`Bricks.BrickFootprint`, worked out when they load): a corner brick leaves its notch free for another part, and has a box collider for each row of filled columns instead of one for its box. Prefab models fill their box.
+
 Doors are both: the door frame 60596 has a slot that fits `door 4x6`, and the door 7102 is an attachment that fits it, with its pivot on its hinge. Other doors and frames only need the same `fits` (a door with another size, another `fits`).
 
 Items using a model are added like any item (see How can i add a new item?), with its id as `brickModel`. Their icons: `Brickcraft > Generate missing item icons` renders one for every brick item without `icon.png` (items with a world block use their block's texture instead), in its colour, without playing (`BrickIconRenderer`).

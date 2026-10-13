@@ -138,15 +138,42 @@ namespace Brickcraft.Tests
                 "1 4 400 -24 0 1 0 0 0 1 0 0 0 1 notapart.dat",    // not a part the game has
                 "1 4 600 -24 0 1 0 0 0 0 -1 0 1 0 3001.dat",       // lying on its side
                 "1 4 800 -24 0 -1 0 0 0 1 0 0 0 1 3001.dat",       // mirrored: symmetric, the same brick
+                "1 4 1000 -8 10 1 0 0 0 1 0 0 0 1 3023.dat",       // an old number: LDraw has 3023a and 3023b now
+                "1 4 1200 -26 0 1 0 0 0 1 0 0 0 1 3001.dat",       // a quarter plate up: in the nearest plate
             };
             LDrawImport model = LDrawImport.Read(lines);
 
-            Assert.AreEqual(2, model.bricks.Count);
+            Assert.AreEqual(4, model.bricks.Count);
             Assert.AreEqual(0, model.bricks[1].rotation, "mirrored, not turned");
+            Assert.AreEqual("part_3023a", model.bricks[2].itemId);
+            Assert.AreEqual(model.bricks[0].origin.y, model.bricks[3].origin.y, "snapped to the plate");
             Assert.AreEqual(1, model.overlapping);
             Assert.AreEqual(2, model.offGrid);
             Assert.AreEqual(1, model.unknown);
             CollectionAssert.AreEqual(new[] { "notapart" }, model.unknownParts);
+        }
+
+        [Test]
+        public void AMirroredCornerBrickHasItsNotchMirrored() {
+            BrickModel corner = BrickModels.Get("2357");
+            LDrawImport plain = LDrawImport.Read(new[] { "1 4 10 -24 10 1 0 0 0 1 0 0 0 1 2357.dat" });
+            LDrawImport mirrored = LDrawImport.Read(new[] { "1 4 10 -24 10 -1 0 0 0 1 0 0 0 1 2357.dat" });
+
+            // the notch's column, from the box's middle, in half studs
+            Vector2Int notch(LDrawImport model) {
+                BrickPlacement placement = new BrickPlacement(corner, model.bricks[0].origin, model.bricks[0].rotation);
+                for (int x = 0; x < 2; x++) {
+                    for (int z = 0; z < 2; z++) {
+                        if (!placement.FillsColumn(x, z)) {
+                            return new Vector2Int(2 * x - 1, 2 * z - 1);
+                        }
+                    }
+                }
+                Assert.Fail("no notch");
+                return default;
+            }
+            Vector2Int plainNotch = notch(plain);
+            Assert.AreEqual(new Vector2Int(-plainNotch.x, plainNotch.y), notch(mirrored), "mirrored left to right");
         }
 
         [Test]

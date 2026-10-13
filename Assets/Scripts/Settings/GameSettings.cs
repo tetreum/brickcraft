@@ -35,9 +35,12 @@ namespace Brickcraft
 
         /// <summary>How far the world is drawn around the player, in chunks (the server sends that far, see WorldNetwork).</summary>
         public static int RenderDistance {
-            get { return Mathf.Clamp(getInt(RenderDistanceSetting, DefaultRenderDistance), MinRenderDistance, MaxRenderDistance); }
+            get { return Mathf.Clamp(RenderDistanceOverride ?? getInt(RenderDistanceSetting, DefaultRenderDistance), MinRenderDistance, MaxRenderDistance); }
             set { setInt(RenderDistanceSetting, Mathf.Clamp(value, MinRenderDistance, MaxRenderDistance)); }
         }
+
+        /// <summary>The render distance used instead of the player's, without saving it (Play Mode tests load less), null for the player's.</summary>
+        public static int? RenderDistanceOverride { get; set; }
 
         public static bool ShowCoordinates {
             get { return getBool(ShowCoordinatesSetting, false); }

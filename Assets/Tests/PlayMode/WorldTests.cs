@@ -9,7 +9,7 @@ using UnityEngine.TestTools;
 namespace Brickcraft.Tests
 {
     /// <summary>The game running: a new world loads, holds its player, keeps what's built in it and floods.</summary>
-    [Timeout(300000)]
+    [Timeout(120000)]
     public class WorldTests
     {
         private TestGame game;

@@ -17,7 +17,7 @@ namespace Brickcraft.Tests
     /// </summary>
     public class TestGame
     {
-        private const float StartTimeout = 90;
+        private const float StartTimeout = 30;
         private const float StopTimeout = 30;
 
         public readonly string saveName = "zz_test_" + Guid.NewGuid().ToString("N").Substring(0, 8);
@@ -35,8 +35,9 @@ namespace Brickcraft.Tests
             get { return BrickGrid.CellToBlock(BrickGrid.WorldToCell(Player.transform.position)); }
         }
 
-        /// <summary>Plays its world until the player is in it.</summary>
+        /// <summary>Plays its world until the player is in it, drawing it as near as the game allows (fewer chunks to load).</summary>
         public IEnumerator Start() {
+            GameSettings.RenderDistanceOverride = GameSettings.MinRenderDistance;
             BrickcraftNetworkManager.GetOrCreate().PlayWorld(saveName);
             float end = Time.realtimeSinceStartup + StartTimeout;
             while (Player == null) {
@@ -56,8 +57,8 @@ namespace Brickcraft.Tests
             }
             BrickcraftNetworkManager.Instance.Leave();
             float end = Time.realtimeSinceStartup + StopTimeout;
-            // back in the menu, its scene loaded
-            while ((NetworkServer.active || NetworkClient.active || NetworkManager.loadingSceneAsync != null
+            // back in the menu, its scene loaded (Mirror keeps loadingSceneAsync once done)
+            while ((NetworkServer.active || NetworkClient.active || (NetworkManager.loadingSceneAsync != null && !NetworkManager.loadingSceneAsync.isDone)
                     || SceneManager.GetActiveScene().path != BrickcraftNetworkManager.Instance.offlineScene)
                     && Time.realtimeSinceStartup < end) {
                 yield return null;
@@ -68,6 +69,7 @@ namespace Brickcraft.Tests
         /// <summary>Stops the game if it's on and deletes its save.</summary>
         public IEnumerator Delete() {
             yield return Stop();
+            GameSettings.RenderDistanceOverride = null;
             for (int attempt = 0; Directory.Exists(SaveFolder); attempt++) {
                 try {
                     Directory.Delete(SaveFolder, true);

@@ -138,6 +138,21 @@ namespace Brickcraft
         public float seconds = 0.25f;
         /// <summary>A block that is a source of another fluid (still_water of water): its name, the rest is that one's.</summary>
         public string of;
+        /// <summary>What it becomes where it meets another fluid (lava and water), see HardenInfo.</summary>
+        public HardenInfo hardens;
+    }
+
+    /// <summary>
+    /// What a fluid becomes where another touches it (Minecraft's lava and water): its sources "source" (obsidian),
+    /// what flows of it "flowing" (cobblestone), and the other fluid it flows down onto "below" (stone). Blocks' names.
+    /// </summary>
+    public class HardenInfo
+    {
+        /// <summary>The other fluid's block, like "water".</summary>
+        public string with;
+        public string source;
+        public string flowing;
+        public string below;
     }
 
     public class RecipeInfo

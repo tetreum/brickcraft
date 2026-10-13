@@ -1,0 +1,10 @@
+{
+    "name": "Obsidian 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "color": 85,
+    "block": {
+        "hardness": 15,
+        "digSound": "PickaxeDig"
+    }
+}

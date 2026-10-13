@@ -6,6 +6,9 @@
     "color": 4,
     "block": {
         "breakable": false,
-        "fluid": true
+        "fluid": true,
+        "flow": {
+            "of": "lava"
+        }
     }
 }

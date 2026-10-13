@@ -14,6 +14,8 @@ namespace Brickcraft.World
     /// are beside them and below them is solid or a source; with none, they dry up. Then they spread: down first
     /// (falling, as far as it goes), and sideways one level weaker, up to its reach (sources and what can't go
     /// down only), toward the nearest way down within FindDownReach blocks, or every way if there's none.
+    /// Where a fluid that hardens touches the one it hardens with (see HardenInfo: lava and water), it becomes a
+    /// block, and what of the other it flows down onto too.
     /// Fluids don't go into bricks, nor chunks that aren't loaded: they go on when those load. Flowing blocks of a
     /// chunk that loads (saved flowing, the server stopped) go on too.
     /// </summary>
@@ -100,6 +102,15 @@ namespace Brickcraft.World
             Fluid fluid = definition.fluid;
             int level = definition.fluidLevel;
 
+            // touched by the fluid it hardens with (lava by water): it becomes a block (obsidian, cobblestone)
+            if (fluid.hardensWith != null && touches(world, block, fluid.hardensWith)) {
+                BlockDefinition hard = level == 0 ? fluid.hardSource : fluid.hardFlowing;
+                if (hard != null) {
+                    set(block, (BlockType)hard.id);
+                    return;
+                }
+            }
+
             // flowing: what feeds it decides its level (its change has it looked at again)
             if (level != 0) {
                 int wanted = levelFor(world, block, fluid);
@@ -150,8 +161,29 @@ namespace Brickcraft.World
             return definition.fluidLevel == 0 || !canFlowInto(world, block - Up, definition.fluid);
         }
 
+        // the other fluid is beside or above it
+        private static bool touches(WorldBehaviour world, Vector3Int block, Fluid other) {
+            BlockDefinition above = definitionAt(world, block + Up);
+            if (above != null && above.fluid == other) {
+                return true;
+            }
+            foreach (Vector3Int side in Sideways) {
+                BlockDefinition neighbour = definitionAt(world, block + side);
+                if (neighbour != null && neighbour.fluid == other) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private static void spread(WorldBehaviour world, Vector3Int block, Fluid fluid, int level) {
             Vector3Int below = block - Up;
+            // flowing down onto the fluid it hardens with (lava onto water): that one hardens (stone)
+            BlockDefinition under = definitionAt(world, below);
+            if (fluid.hardensWith != null && fluid.hardBelow != null && under != null && under.fluid == fluid.hardensWith) {
+                set(below, (BlockType)fluid.hardBelow.id);
+                return;
+            }
             if (canFlowInto(world, below, fluid)) {
                 BlockDefinition there = definitionAt(world, below);
                 if (there.fluid != fluid || there.fluidLevel != Fluid.Falling) {

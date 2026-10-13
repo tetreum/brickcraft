@@ -204,6 +204,35 @@ namespace Brickcraft.World
             return definition;
         }
 
+        // fluids that harden where another touches them (lava and water): the blocks they name, once all are added
+        private static void resolveHardening() {
+            foreach (BlockDefinition definition in definitionsByName.Values) {
+                Fluid fluid = definition.fluid;
+                if (fluid == null || fluid.source != definition || fluid.flow.hardens == null) {
+                    continue;
+                }
+                HardenInfo hardens = fluid.flow.hardens;
+                fluid.hardensWith = !string.IsNullOrEmpty(hardens.with) && definitionsByName.TryGetValue(hardens.with, out BlockDefinition with) ? with.fluid : null;
+                if (fluid.hardensWith == null) {
+                    Debug.LogError("The fluid " + definition.name + " hardens with \"" + hardens.with + "\", which isn't a fluid that flows");
+                    continue;
+                }
+                fluid.hardSource = hardeningBlock(definition, hardens.source);
+                fluid.hardFlowing = hardeningBlock(definition, hardens.flowing);
+                fluid.hardBelow = hardeningBlock(definition, hardens.below);
+            }
+        }
+
+        private static BlockDefinition hardeningBlock(BlockDefinition fluid, string name) {
+            if (string.IsNullOrEmpty(name)) {
+                return null;
+            }
+            if (!definitionsByName.TryGetValue(name, out BlockDefinition block)) {
+                Debug.LogError("The fluid " + fluid.name + " hardens into \"" + name + "\", which isn't a block");
+            }
+            return block;
+        }
+
         // blocks that are sources of a fluid named by its block, see FinishLoading
         private static readonly Dictionary<BlockDefinition, string> pendingFluidSources = new Dictionary<BlockDefinition, string>();
 
@@ -277,6 +306,7 @@ namespace Brickcraft.World
                 }
             }
             pendingFluidSources.Clear();
+            resolveHardening();
 
             if (TextureArray != null) {
                 TerrainTextures.Destroy(TextureArray);

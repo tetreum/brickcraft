@@ -33,6 +33,11 @@ namespace Brickcraft.World
         public readonly BlockDefinition[] levels = new BlockDefinition[MaxLevel + 1];
         public BlockDefinition falling;
 
+        /// <summary>The fluid it hardens where it touches (water, for lava), null for none (see HardenInfo).</summary>
+        public Fluid hardensWith;
+        /// <summary>What its sources, its flowing blocks and the other fluid below it become then (null: they don't).</summary>
+        public BlockDefinition hardSource, hardFlowing, hardBelow;
+
         /// <summary>How far it spreads, at most MaxLevel.</summary>
         public int Reach {
             get { return Mathf.Clamp(flow.reach, 1, MaxLevel); }

@@ -6,6 +6,16 @@
     "color": 4,
     "block": {
         "breakable": false,
-        "fluid": true
+        "fluid": true,
+        "flow": {
+            "reach": 3,
+            "seconds": 1.5,
+            "hardens": {
+                "with": "water",
+                "source": "obsidian",
+                "flowing": "cobblestone",
+                "below": "stone"
+            }
+        }
     }
 }

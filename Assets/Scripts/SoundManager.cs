@@ -30,6 +30,9 @@ public class SoundManager : MonoBehaviour {
 	/// <summary>A chest's lid (see Bricks.BrickLid) opening and closing.</summary>
 	public const string EFFECT_OPEN_CHEST = "OpenChest";
 	public const string EFFECT_CLOSE_CHEST = "CloseChest";
+	/// <summary>A bucket picking up a liquid and pouring it.</summary>
+	public const string EFFECT_GRAB_WATER = "GrabWater";
+	public const string EFFECT_DROP_WATER = "DropWater";
 	/// <summary>Bare hand hits, one picked at random each time (see Punch).</summary>
 	public static readonly string[] EFFECT_PUNCHES = { "Punch", "Punch2" };
 

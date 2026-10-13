@@ -820,6 +820,7 @@ namespace Brickcraft.Network
             }
             if (WorldNetwork.ServerSetBlock(block, BlockType.Air, null)) {
                 swapBucket(slot, full);
+                RpcBucket(block, true);
             }
         }
 
@@ -845,6 +846,18 @@ namespace Brickcraft.Network
             ConnectedPlayer player = connectionToClient.authenticationData as ConnectedPlayer;
             if (WorldNetwork.ServerSetBlock(block, liquid.blockType.Value, Placer.Now(player != null ? player.record.Id : 0))) {
                 swapBucket(slot, empty);
+                RpcBucket(block, false);
+            }
+        }
+
+        // everybody hears a bucket picking up or pouring (its player over everything, the others from the block)
+        [ClientRpc]
+        private void RpcBucket(Vector3Int block, bool filled) {
+            string sound = filled ? SoundManager.EFFECT_GRAB_WATER : SoundManager.EFFECT_DROP_WATER;
+            if (isLocalPlayer) {
+                SoundManager.Instance.playOnce(sound);
+            } else {
+                SoundManager.Instance.playAt(sound, blockCenter(block));
             }
         }
 

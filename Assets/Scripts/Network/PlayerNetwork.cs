@@ -679,6 +679,10 @@ namespace Brickcraft.Network
                     || !isInReach(bed.placement.WorldBounds.center)) {
                 return;
             }
+            // a bed it can't sleep in now (by day...) still becomes its spawn point
+            if (Npcs.NpcBeds.IsBed(bed)) {
+                PlayerSleep.SetSpawn(this, bed);
+            }
             string problem = PlayerSleep.WhyNot(this, bed);
             if (problem != null) {
                 connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = problem });

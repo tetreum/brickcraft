@@ -21,8 +21,8 @@ namespace Brickcraft.Network
     /// time goes to 06:00 and everyone wakes up. Being hurt, the bed going away, morning or asking to stop
     /// (PlayerNetwork.CmdStopSleeping) wakes a player. Clients get SleepStatusMessage when the counts change.
     ///
-    /// The bed a player sleeps in becomes its spawn point: it comes back beside it when it dies (see
-    /// PlayerNetwork.CmdRespawn), until it sleeps in another or the bed goes away (BedRemoved).
+    /// The bed a player uses becomes its spawn point, even when it can't sleep in it then (by day): it comes back
+    /// beside it when it dies (see PlayerNetwork.CmdRespawn), until it uses another or the bed goes away (BedRemoved).
     /// </summary>
     public static class PlayerSleep
     {
@@ -88,11 +88,11 @@ namespace Brickcraft.Network
             Transform point = Npcs.NpcBeds.SleepPointOf(bed);
             player.sleepingIn = bed.id;
             player.ServerLieDown(point.position, point.rotation);
-            setSpawn(player, bed);
+            SetSpawn(player, bed);
         }
 
-        // where it stands up beside the bed is where it comes back
-        private static void setSpawn(PlayerNetwork player, Brick bed) {
+        /// <summary>The bed becomes the player's spawn point: where it stands up beside it is where it comes back.</summary>
+        public static void SetSpawn(PlayerNetwork player, Brick bed) {
             if (!(player.connectionToClient.authenticationData is ConnectedPlayer connected) || bed.gameObject == null
                     || !Npcs.NpcSystem.SpotNear(bed.gameObject.transform, 0.35f, 1.8f, out Vector3 spot)) {
                 return;

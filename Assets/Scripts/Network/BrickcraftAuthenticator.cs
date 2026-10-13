@@ -95,28 +95,15 @@ namespace Brickcraft.Network
 
             if (error == null) {
                 string machineIdHash = PlayerIdentity.HashMachineId(request.machineId);
-                PlayerRecord named = database.FindPlayer(request.name);
-                // the machine's player, whatever its name; the name's if it's another machine's
-                player = named != null && named.TokenHash != machineIdHash ? named : database.FindPlayerByMachine(machineIdHash);
-
-                // admins are never locked out by the ban of someone using the same machine
-                bool isAdmin = player != null && player.IsAdmin && player.TokenHash == machineIdHash;
-
-                if ((player != null && player.Banned) || (!isAdmin && database.IsMachineBanned(machineIdHash))) {
-                    error = "You are banned from this server";
-                    if (player != null && !string.IsNullOrEmpty(player.BanReason)) {
-                        error += ": " + player.BanReason;
-                    }
-                } else if (player == null) {
+                JoinRules.Decision decision = JoinRules.Decide(request.name, machineIdHash, database.FindPlayer(request.name),
+                    database.FindPlayerByMachine(machineIdHash), database.IsMachineBanned(machineIdHash), isOnline);
+                error = decision.error;
+                player = decision.player;
+                if (error == null && player == null) {
                     player = database.CreatePlayer(request.name, machineIdHash);
-                } else if (player.TokenHash != machineIdHash) {
-                    error = "The name " + player.Name + " belongs to someone else";
-                } else if (isOnline(player.Id)) {
-                    error = player.Name + " is already playing";
-                } else if (player.Name != request.name) {
-                    // another player of this machine (from an older save) had the name: it gets another
-                    if (named != null && named.Id != player.Id) {
-                        database.RenamePlayer(named, PlayerIdentity.FreeName(named.Name + "_" + named.Id, database));
+                } else if (error == null && decision.rename) {
+                    if (decision.moveAside != null) {
+                        database.RenamePlayer(decision.moveAside, PlayerIdentity.FreeName(decision.moveAside.Name + "_" + decision.moveAside.Id, database));
                     }
                     Debug.Log(player.Name + " is now " + request.name);
                     database.RenamePlayer(player, request.name);

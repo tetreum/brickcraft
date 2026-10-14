@@ -39,6 +39,9 @@ namespace Brickcraft.Events
         /// <summary>A setting of the player's preferences changed.</summary>
         public static readonly GameEvent<SettingChangedEvent> SettingChanged = new GameEvent<SettingChangedEvent>();
 
+        /// <summary>The game is in another language now, its texts loaded (see Loc): what shows text says it again.</summary>
+        public static readonly GameEvent<LanguageChangedEvent> LanguageChanged = new GameEvent<LanguageChangedEvent>();
+
         /// <summary>This client left the server, or couldn't join it, and there's something to tell the player.</summary>
         public static readonly GameEvent<DisconnectedEvent> Disconnected = new GameEvent<DisconnectedEvent>();
 
@@ -72,6 +75,7 @@ namespace Brickcraft.Events
             ChatLineReceived.Clear();
             Disconnected.Clear();
             SettingChanged.Clear();
+            LanguageChanged.Clear();
             ModUi.Clear();
             LocalPlayerHealthChanged.Clear();
             LocalPlayerAirChanged.Clear();

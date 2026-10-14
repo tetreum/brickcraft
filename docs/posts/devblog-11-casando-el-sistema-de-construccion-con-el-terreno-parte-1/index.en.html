@@ -1,0 +1,82 @@
+<p>In Minecraft the building system is really simple, since any face of a block works. In our case that's not how it is.<br>
+    If you remember, to generate the terrain, we merged the bricks into a single mesh/model. So when we click to build on that model, we know the player is looking at a piece of terrain. But not at which brick exactly.<br>
+
+</p>
+<p>When the player clicks to build, we'll have to:<br>
+    1. Determine which part of the terrain they're looking at.<br>
+    2. Whether they're looking at a horizontal or vertical surface (to know if it's a top/bottom face or a side).<br>
+    3. Determine which stud they're looking at.<br>
+
+</p>
+<p>To be able to know if they're looking at a part of the terrain, we're going to need the terrain to have colliders.<br>
+    Luckily this part is "magic" since Unity takes care of it (and I'm sure it won't be the most optimal xD). We add a collider to each chunk and then in code we tell the collider to use that chunk's mesh:</p>
+<p><img src="https://i.imgur.com/5pnhUro.png" alt="" style="width: 656px; height: 31px;"></p>
+<p>
+
+
+    The automatic collider generation is quite noticeable. While the terrain is generating, everything runs slower.<br>
+
+</p>
+<p>Now we can walk on and detect the terrain. Next up is determining what we're looking at.<br>
+
+</p>
+<p>When we do raycasting, besides the object's name, we know exactly which triangle of the mesh we hit.</p>
+<p><img src="https://i.imgur.com/p4cHk1G.png" alt="" style="width: 607px; height: 455px;"></p>
+<p>
+
+    With the object's name we already know which part of the terrain they're looking at. What's left is determining whether it's a horizontal or vertical surface, and for that we'll use the triangle.<br>
+    As you'll remember, each triangle is made of 3 vertices. If the "y" of all of them is the same, it means they're aligned horizontally, but that's not enough. We want to take the studs into account, and the trick we can use is that they're circular, which means none of their vectors will be equal since they'll all have a slight difference.</p>
+<p><img src="https://i.imgur.com/G5L0985.png" alt="" style="width: 845px; height: 217px;"></p>
+<p>
+
+
+    Perfect, now we know they're looking at the top or bottom of a terrain brick. What's left is determining exactly which stud.<br>
+
+</p>
+<p>Each part of the terrain can have a very different shape:</p>
+<p><img src="https://i.imgur.com/UZJQpQu.png" alt="" style="width: 859px; height: 590px;"></p>
+<p>
+
+
+    But if you think about it, that doesn't matter to us at all, since each terrain chunk is still a grid of studs, just some of them are at a different height.</p>
+<p><img src="https://i.imgur.com/dz57ADo.png" alt="" style="width: 857px; height: 628px;"></p>
+<p>
+
+    We can pretend they're all flat to do the math.<br>
+
+</p>
+<p>This way we can use the system we already had coded to determine which stud they're looking at. Or so I thought.<br>
+    Turns out the center of each terrain piece is wrong. That makes aaaall the calculations have an offset.<br>
+    The right thing to do would be to understand why there's this offset. As far as I can tell it's because we're dealing with an integer three-dimensional matrix and at the last moment I make tweaks so it's decimal.<br>
+    I take the quick route and what I do is figure out the offset from the center and correct it.</p>
+<p><img src="https://i.imgur.com/c17cdOw.png" alt="" style="width: 1009px; height: 94px;"></p>
+<p>
+
+
+    With the offset fixed, we have to make another tweak. Until now, the building system expected each stud grid to have its own collider, whose name indicated its dimensions.<br>
+    That doesn't happen here, as I said, we have just 1 collider for each piece of terrain and it's rarely flat. Luckily it's not going to be a problem. Why? Because each chunk/piece of terrain literally has the same dimensions: 16x16 2x2 bricks. That is, it's a 32 x 32 stud grid.<br>
+    We add this "exception" to the system and done.</p>
+<p><img src="https://i.imgur.com/IBCEDBV.png" alt="" style="width: 1008px; height: 208px;"></p>
+<p>
+
+
+    After this we can do a quick test:</p>
+<p>
+    <jodit-media data-jodit-temp="1" contenteditable="false" draggable="true" data-jodit_fake_wrapper="1" style="display: block; width: 960px; height: 541px;"><jodit-media data-jodit-temp="1" contenteditable="false" draggable="true" data-jodit_fake_wrapper="1" style="display: block; width: 960px; height: 541px;"><video controls="" muted="" autoplay="">
+            <source src="https://i.imgur.com/omEigz9.mp4" type="video/mp4">
+        </video></jodit-media></jodit-media>
+    </p><p><br></p><p><img src="https://i.imgur.com/JQwILRN.gif" alt="" style="width: 703px; height: 316px;">
+</p>
+<p>
+
+    HoHoHo. It might look like nothing special given what we already had, but it's a completely different thing. As I said, to know which stud the player was looking at in the building system, we used colliders placed specifically where the studs are.<br>
+    On the terrain we don't have them, we imagined them and worked on top of them.<br>
+
+    </p><p>Unfortunately that's not all, as you can see in the video, the system marks every position as red/not buildable. That's because the brick is colliding with the terrain and we haven't explained to it what the terrain is yet.<br>
+    We have to edit the collision detection so that, when it's against the terrain, it determines whether it's a horizontal or vertical collision. The horizontal one is the one we expect (piece on top of another), the vertical one is the unwanted one (piece going through terrain).
+</p>
+<p style="text-align: center;">
+    <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+        <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+        https://github.com/tetreum/brickcraft</a>
+</p>

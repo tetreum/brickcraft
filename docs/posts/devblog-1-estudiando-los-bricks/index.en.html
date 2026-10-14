@@ -1,0 +1,247 @@
+<p style="text-align: center;"><strong><a href="https://www.indiedb.com/games/brickcraft/news/devblog-1-studying-the-bricks" rel="nofollow">ENGLISH VERSION</a></strong></p><p style="text-align: center;"><img src="https://i.imgur.com/UUoTVvk.gif" alt="" style="width: 506px; height: 371px;"></p>
+<p>This Christmas I wanted to build a Christmas Lego set with some friends, but with the whole COVID thing in the way it hasn't been possible. So I got the idea of making a game where we can build them online.</p>
+<p><br>
+
+    I figured Lego would have something like that, but after looking around all I found was Lego Worlds, which is not at all the experience I'm after (minecraft). Although it's also possible I'm blind and it does exist.</p>
+<p><br>
+
+    I have the (bad) habit of not finishing what I start, and I don't see why this case should be an exception. Even so, I publish most of the stuff I make as open source, so there's always room for someone else to pick it up if they want to.</p>
+<p><img src="https://i.imgur.com/eto9I6s.png" alt="" style="width: 1066px; height: 597px;"></p>
+
+
+
+
+<h2>1. Studying the bricks</h2>
+<p>
+
+    To figure out what data structure each brick will have, we need to look a bit at what types there are, their smallest unit, the vocabulary, etc..<br>
+
+    </p><p>I'm not a Lego fan/AFOL, and proof of that is that I was convinced the smallest unit was:</p>
+<p><img src="https://i.imgur.com/NDRZIOc.png" alt="" style=""><br>
+
+
+    But no, it turns out the smallest unit is:</p>
+<p><img src="https://i.imgur.com/LcRh55X.png" alt="" style=""><br>
+
+
+    While the blocks are called bricks, the smallest ones are called plates.<br>
+    With this we now know that height will have to be measured in plates.<br>
+
+    </p><p>1 brick equals 3 plates:</p>
+<p><img src="https://i.imgur.com/Yzs1KAa.png" alt="" style="width: 300px;"><br>
+
+
+    Another important part to keep in mind is the studs.<br>
+    Studs are the "connectors", the cylindrical part that lets us connect pieces to each other.<br>
+
+    </p><p>Bricks can have studs in multiple places and angles:</p>
+<p><img src="https://i.imgur.com/y46D2vN.png" alt="" style=""><br>
+
+
+    The variety of colors is (luckily) limited to:</p>
+<p><img src="https://i.imgur.com/DQcvTCG.jpg" alt="" style="width: 1174px; height: 685px;"><br>
+
+
+    To find out whether something like this could be published I looked into the patent thing, and it turns out it expired a long time ago.</p>
+<p><img src="https://i.imgur.com/A5hTiC0.png" alt="" style="width: 300px;"><br>
+
+    Which means the way is clear as long as the brand isn't put anywhere.<br>
+    You also have to keep in mind that only the patent for the bricks has expired. The one for their figures is still in force.</p><p><img src="https://i.imgur.com/pEYfjKy.png" alt="" style="width: 642px; height: 377px;"><br><a href="https://theconversation.com/how-lego-legally-locked-in-the-iconic-status-of-its-mini-figures-43489" rel="nofollow">https://theconversation.com/how-lego-legally-locked-in-the-iconic-status-of-its-mini-figures-43489</a><br>
+
+</p>
+<h2>2. Technology and project definition</h2>
+<p>
+
+    The only thing I've touched to hack together the odd thing is Unity, so the engine is an easy pick.<br>
+    For the multiplayer part (if I ever get to it), Unity's official library is dead, so I'll go with Mirror.<br>
+    It's an open source library maintained by competent people.<br>
+
+    </p><p>As for the project definition, the more tightly I scope it, the higher the chance I'll finish it.<br>
+    The idea is to be able to build in first person like in minecraft, but with bricks. No enemies, no procedural world.<br>
+    - FPV (First Person View) controller<br>
+    - Inventory system<br>
+    - Building system<br>
+    - Multiplayer (if I manage to finish everything above)<br>
+
+</p>
+<h2>3. First steps</h2>
+<p>
+
+    First of all, I need the 3d models of the bricks. After searching, it looks like <a href="https://www.ldraw.org/" rel="nofollow">LLDraw</a> is the perfect repository, but the files are .dat. I downloaded LLD View, unsuccessfully, to try to convert them to a useful format like FBX or OBJ. Time to keep searching.....<br>
+    I finally found <a href="https://www.mecabricks.com/" rel="nofollow">https://www.mecabricks.com/</a>, a website that lets you create whatever you want using bricks from the browser and... It has an option to export to DAE or OBJ!<br>
+    With this we now have a source to download from, brick by brick.<br>
+
+    </p><p>To start I've only grabbed the ones I considered basic: 1 1x1 plate, 1 1x1 brick, 1 2x2 brick and a brick with multiple studs at different angles.</p>
+<p><img src="https://i.imgur.com/jlqf3TM.png" alt="" style="width: 581px; height: 387px;"><br>
+
+
+
+    Time to define the model with what we learned in the first section.</p>
+<p><img src="https://i.imgur.com/ti1qbIM.png" alt="" style=""><br>
+
+
+
+    </p><p>Now comes the nasty part, positioning new blocks.<br>
+
+    </p><p>In Minecraft placing a new block is really easy. The whole world is one big three-dimensional matrix and all objects have the same shape (cube), so all you have to do is check whether that space in the matrix is free.</p>
+<p><img src="https://i.imgur.com/T9DGuMC.png" alt="" style="width: 748px; height: 426px;"><br>
+
+
+    But with bricks?... What a pain. We could make a matrix using plates as the unit, but we'd have to calculate the spaces taken up by bricks like:</p>
+<p><img src="https://i.imgur.com/2UCfflu.png" alt="" style="width: 807px; height: 401px;"><br>
+
+
+    And I don't feel like it. So we'll go for something cheaper.<br>
+
+    </p><p>Unity has a component called "Collider" that lets you work with physics. That is, make an object take up space or act as a hitbox, detecting when another object is inside it (trigger).</p>
+<p><img src="https://i.stack.imgur.com/e949n.gif" alt="" style="width: 964px; height: 572px;"><br>
+
+
+    In this example, the cubes with green edges are the colliders.<br>
+
+    </p><p>We'll show a preview of where the new block will appear and give this preview a collider in trigger mode.<br>
+    If the player puts it somewhere that touches/has another brick, we'll know and won't let them.<br>
+
+    </p><p>But before that, we need to know exactly where the player is looking. Again, in minecraft it's easy, you do a raycast and you instantly know which block and which face of it they're looking at.<br>
+    For those who don't know, raycasting is this:</p>
+<p><img src="https://i.imgur.com/EIAI59N.png" alt="" style="width: 1062px; height: 591px;"><br>
+
+    Sending a "beam" in a direction to detect what it runs into along the way.<br>
+
+    </p><p>But with bricks?... Not the whole surface of a brick is "useful", what we really need to know is whether they're looking at a stud.<br>
+    If you've been following along so far you'll have thought "well, just stick a collider on each stud and done". Well yes, it's an option:</p>
+<p><img src="https://i.imgur.com/h3fu88Q.png" alt="" style="width: 705px; height: 620px;"><br>
+
+
+    However, that's a no. Every component consumes resources, you have to scrimp on everything.</p>
+<p><img src="https://i.imgur.com/dKxSr8B.png" alt="" style="width: 683px; height: 717px;"><br>
+
+
+
+    With this you're back where you started, you don't know which one they're looking at!<br>
+    I'm afraid so, that part we'll have to calculate. The studs all have the same surface, so if we know which coordinate the raycast hit, we can work out which stud it belongs to.</p>
+<p><img src="https://i.imgur.com/xQ4Rb5I.png" alt="" style="width: 629px; height: 631px;"><br>
+
+
+    (Imagine the red dot is where the player is looking)<br>
+
+    </p><p>Isn't there an easier way to figure it out? I'm sure there is, but I have no idea.<br>
+
+
+    </p><p>Now we know where to place the block and whether it's colliding with something or not.<br>
+    So we've got it, right? Allllllmost. If I test it you'll see why:</p>
+<p><img src="https://i.imgur.com/3iarFAh.png" alt="" style=""><br>
+
+
+    Placement fails again, but because we don't know how the player wants it. In Minecraft there's only one way, but here there are multiple possible combinations.</p>
+<p><img src="https://i.imgur.com/jui8bmZ.png" alt="" style="width: 456px; height: 114px;"><br>
+
+
+
+    And how do we fix it? Time to make a little button that lets you keep rotating the piece until it's in the desired position.<br>
+    Obviously we can try to make the builder somewhat "smart". If the player is trying to place a 2x2 piece on top of another 2x2 piece, they probably want it to end up like this:</p>
+<p><img src="https://i.imgur.com/xJ8AM9b.png" alt="" style=""><br>
+
+
+    So we add a check so that, in cases where the number of studs matches, it copies the position and only changes the height.</p>
+<p><img src="https://s8.gifyu.com/images/324a01c789706951c.gif" alt="" style="width: 594px; height: 410px;"><br>
+
+
+
+    I'm afraid the result of the rotation system is pretty janky. It's a mix of not knowing what's going on + being too lazy to understand it.<br>
+    I guess it has to do with how the piece's rotation is done. It's probably done based on its center and not on the axis that matches the stud. If that's the case, it's not something I know how to fix, I don't think I can change the rotation axis temporarily, but who knows.</p>
+<p><img src="https://i.imgur.com/Ldz6yWU.png" alt="" style="width: 624px; height: 431px;"><br>
+
+
+    In red, the desired rotation axis (with the stud as the base). In black, the current rotation point.<br>
+
+    With this we can now try to build something:</p>
+<p><img src="https://i.imgur.com/UUoTVvk.gif" alt="" style="width: 583px; height: 428px;"></p>
+<p><img src="https://i.imgur.com/UuH1sfN.png" alt="" style="width: 588px; height: 402px;"><br>
+
+
+
+
+</p>
+<h2>4. The damn inventory system</h2>
+<p>
+
+    As usual I underestimated how complex it would be. I thought it'd be 10 lines, give or take, and off we go, but no. Turns out there's more to it than meets the eye.<br>
+
+    </p><p>I always need to start with the visual part, not because I'm good at it, but because unlike banging out code, even a little work shows a visible change.<br>
+    Making use of my GREAT creativity, I've come up with the following design:</p>
+<p><img src="https://i.imgur.com/cehyvTx.png" alt="" style="width: 827px; height: 535px;"><br>
+
+
+    Now it's back to the code.<br>
+
+    </p><p>We'll start with the data model. What are we going to have to store? The item id, the amount and its state.</p>
+<p><img src="https://i.imgur.com/ZXofzNW.png" alt="" style="width: 300px;"><br>
+
+
+    </p><p>Done! Right? Well no.. We forgot the slot it's in within the inventory. And that little piece of crap is what adds the complication, because eeevery time an item is added to the inventory, we'll have to find it an available slot (as long as we don't already have it). And whenever possible, the fast access slots have to be prioritized, the ones on the bottom bar basically.</p>
+<p><img src="https://i.imgur.com/gYr6a05.png" alt="" style="width: 300px;"><br>
+
+
+    Fine, let's add the damn slot.<br>
+
+    </p><p>What will our inventory have to do?/What do we need to keep in mind?<br>
+    - Add and remove items<br>
+    - When they're added, always prioritize filling the bottom bar<br>
+    - When items are added or removed the UI has to update<br>
+    - In the inventory panel you have to be able to move items between slots via drag & drop.<br>
+    - In the inventory panel, if an item is dragged outside the window, it has to be discarded.<br>
+    - In the bottom bar there always has to be a selected slot<br>
+    - You have to be able to change the selected slot of the bottom bar<br>
+    - When in the inventory panel, the player's camera has to be frozen<br>
+    - All bricks need a preview icon<br>
+
+
+    </p><p>Dang, this is longer than I thought.<br>
+
+    </p><p>The add item function alone already beats the 10 lines, give or take, that I expected to write xD</p>
+<p><img src="https://i.imgur.com/YlQt1t7.png" alt="" style="width: 724px; height: 804px;"><br>
+
+
+    As you can see, when adding an item, the first thing I do is iterate over the whole inventory, to do 2 things:<br>
+    Check whether I already have that item, so I only need to increase the amount, and note down the occupied slots.<br>
+
+    </p><p>If I don't find the item, I'll at least know which slots I can't fill. After that, since I know for sure a new slot has to be taken, I check whether the inventory is full. If it isn't, I keep going, and iterate over the remaining free slots to see if any of them is in the bottom bar (the inventory has 36 slots, so I check whether the free slot is > 27).<br>
+    If that's not possible, I just grab the first available one and screw it. Oh right, and I update the UI.<br>
+
+    </p><p>Next up we do the part of moving items between slots. For that we'll use Unity's drag&drop system, via IBeginDragHandler, IDragHandler, IEndDragHandler.</p>
+<p><img src="https://i.imgur.com/fe2SbmZ.gif" alt="" style="width: 742px; height: 586px;"><br>
+
+
+
+    It might look like I've moved the icon somewhere else but I'm not actually doing that.<br>
+    Instead of dynamically generating the occupied slots, I have them all already generated statically, whether they're full or empty.<br>
+    After dragging, when the icon is dropped, what I do is check which slot you were moving and where you dropped it. I put the slot you moved back in its place and swap the contents of the 2 slots via code (if they have anything).</p><p><br>
+
+    On to having a selected slot. This part is a bit problematic for me because we're used to using the mouse wheel to move between our weapons/inventory. But I've assigned the brick rotating function to the wheel. It felt natural to me and I don't see how I could tell when you want to rotate a cube from when you want to change slot so that both can use the wheel.<br>
+    The only way would be if the process of adding a brick were:<br>
+    1. You aim at the stud and left click.<br>
+    2. This makes the preview appear, and now you can use the wheel to rotate it.<br>
+    3. You left click to confirm the build.</p><p><br>
+
+    It feels cumbersome/slower to me. And since you also don't have the preview in the first step, you might not realize that unlike minecraft, you can aim at exactly which stud you want to put it on.<br>
+    Although on the other hand..<br>
+    1. This would let me use the wheel to move through the inventory, since there would only be one moment when the building system uses it and I'd know whether you're in that step or not.<br>
+    2. Another win would be that you could walk around the map with a brick selected in the inventory without the preview showing up wherever you look.<br>
+    3. I wouldn't have to be raycasting every frame, only once the player left clicks, because I'd know they want to build. [Although now that I think about it, I can avoid this right now too, by checking whether the selected item is a brick].</p><p><br>
+
+    MMMMMMMmmm. There might be more pros than cons after all.</p><p><br>
+
+    I'll have to chew on it.</p>
+<p><img src="https://statics.memondo.com/p/99/cfs/2016/09/CF_44573_301b77648ed846cb989e7054fc274524_salvajes_dfsfdf.gif" alt="" style="width: 537px; height: 303px;"></p>
+<p>
+
+
+
+    That's all for now.<br>
+    As I said at the beginning, everything I make is usually open source. So I'm leaving the repository here with the current progress.</p>
+<p style="text-align: center;">
+    <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+        <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+        https://github.com/tetreum/brickcraft</a>
+</p>

@@ -1,0 +1,234 @@
+<p>I'd abandoned development of this game a long time ago, and I've used the arrival of AI to give it a good push.</p>
+<h2>A facelift</h2>
+<p>Since besides programming it can also draw, the least I could do was get rid of the abomination of a logo I made and generate a new one.</p>
+<p>We went from:<br>
+<img src="https://i.imgur.com/Ns1x0fQ.png" alt=""></p>
+<p>to:<br>
+<img src="https://i.imgur.com/wJ9hujO.png" alt=""></p>
+<p>Same with the UI, from my hideous design:<br>
+<img src="https://i.imgur.com/fe2SbmZ.gif" alt=""></p>
+<p>We changed to:<br>
+<img src="https://i.imgur.com/HCAcG7J.png" alt=""></p>
+<p>While we were at it, it's a tiiiny bit more responsive than before (meaning it should adapt better to different screen sizes), but not much. Unity has a UI system I barely understand, and I'd rather do everything with CSS. But for now we'll stick with this iteration.</p>
+<p>Now that our eyes no longer bleed the moment we open the game, we can move on to cleaning up the code.</p>
+<h2>Internal event system</h2>
+<p>Until now Brickcraft only had 1 AssemblyFile. In other words, aaaall the code was lumped into a single file.<br>
+Which meant that eeeeeeeeeeevery time, for example, the UI was edited, the game mechanics' code was recompiled. No matter what you touched, everything had to be recompiled.</p>
+<p>The way to avoid this is splitting the code into multiple AssemblyFiles: the UI in one place, the AI in another, the mechanics in another, etc. But of course, these sections still need to talk to each other.</p>
+<p>The solution is to create an event system, so one side emits and the other listens.<br>
+Again, this isn't something I fancied doing by hand, so the AI took on the refactor.</p>
+<p>Now we can start focusing on harder tasks.</p>
+<h2>Multiplayer</h2>
+<p>Since I'd focused entirely on the building mechanics, the game was singleplayer and not much else.<br>
+When you want to make a multiplayer game, the process is a pain, even using third-party libraries.<br>
+The reason is that in this kind of game you want to stop the player from cheating, which means the server has to validate each and every sensitive action.</p>
+<p>If, for example, you want to place a block, where before we'd have something as simple as:</p>
+<pre><code>void addBlock(Vector3 position, string type) {
+ if (!IsValidPlacement(position)) return;
+   return;
+ }
+ Instantiate("prefabs/type", position);
+}</code></pre>
+<p>To make it secure it would end up, at MINIMUM, like this:</p>
+<pre><code>public void RequestAddBlock(Vector3 position, string type)
+    {
+        if (IsServer)
+        {
+            AddBlockServerInternal(position, type);
+        }
+        else
+        {
+            AddBlockServerRpc(position, type);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void AddBlockServerRpc(Vector3 position, string type)
+    {
+        if (!IsValidPlacement(position)) return;
+
+        AddBlockServerInternal(position, type);
+    }
+
+    private void AddBlockServerInternal(Vector3 position, string type)
+    {
+        GameObject prefabToSpawn = GetPrefabForType(type);
+
+        GameObject blockInstance = Instantiate(prefabToSpawn, position, Quaternion.identity);
+
+        NetworkObject netObj = blockInstance.GetComponent&lt;NetworkObject&gt;();
+        netObj.Spawn();
+    }</code></pre>
+<p>A constant ping-pong between client and server, what's known as authoritative multiplayer.<br>
+Thanks to AI, migrating the existing code to this wall of text was automatic, and for that I relied on the Mirror library (because it's free and open source).<br>
+That said, the auth part is a bit flimsy when it comes to how easy it is to impersonate other users. The only good way I see to avoid that would be publishing the game on Steam so I could use its auth. That's left for another iteration. For the same reason I haven't enabled creating dedicated servers. It's not worth it for now.</p>
+<p>The next multiplayer headache is showing the other users on screen, so we need a model.<br>
+If you remember the first blog post, LEGO minifigures are still copyrighted, so using them isn't an option.<br>
+Instead I chose to iterate on the design with AI, making a version that, among other things, has knees.<br>
+<img src="https://i.imgur.com/Gzqs4A3.png" alt=""><br>
+With another AI I was able to get a 3D model from that image, but I won't post pictures so I don't spoil the final result for you. We'll just call this part done xD</p>
+<p>Obviously there has to be some way for players to communicate, so chat has been added too.</p>
+<h2>Chat</h2>
+<p>Which in turn will serve as a channel for sending certain messages to the player. For example, notifying when a player connects:<br>
+<img src="https://i.imgur.com/mc1jIbJ.png" alt=""></p>
+<p>There are a couple of basic actions every multiplayer game needs: kicking and banning users. Taking advantage of the chat, these have been added along with several more commands (like giving someone the admin role), which can be seen with /help.<br>
+To keep track of the users who join a server, their role, whether they're banned and so on, you need a database. The choice here was simple because I only see 1 candidate: sqlite. It works on every platform and there's even a Unity package for it.</p>
+<p>We can't forget the player list either. While we were at it, buttons have been added to do the same admin tasks with total comfort.<br>
+<img src="https://i.imgur.com/dbmXpKz.png" alt=""></p>
+<p>Finally, adding multiplayer comes with one last big headache: versioning.<br>
+It's not just that client and server need versions so the server only lets in those on the same one, but that after every update both the database and the generated world must be able to receive changes.<br>
+In other words, a migration system has to be built.<br>
+<img src="https://i.imgur.com/WM935uh.png" alt=""></p>
+<p>When you update the game and go to your list of worlds, those last played on an older version will be marked and upgraded automatically, without (hopefully) any noticeable change.<br>
+<img src="https://i.imgur.com/snV4WFD.png" alt=""></p>
+<p>With the multiplayer part done, we can move on to the next big headache: having aaaaaaaaaaaaaaaaaaaaaaaaall the official pieces.</p>
+<h2>Adding every piece</h2>
+<p>When I started this project I barely added a couple of pieces. The most important one for me was the 2x2, because it was the closest to a Minecraft cube, which made it much easier to reuse Minecraft world generators.<br>
+<img src="https://i.imgur.com/xJ8AM9b.png" alt=""></p>
+<p>However, Lego has a couple more pieces, about 4,000 more...<br>
+Obviously adding them had to be done in bulk and therefore automatically.<br>
+Luckily there are several options, the most interesting one for me being LDraw: an open source library that holds a 3D model of every piece.<br>
+With that it was "just a matter" of downloading the 180-odd MBs it took up and building an interpreter that could read the library's custom format. Then the icon generator would also need improving so it could be run indiscriminately, in bulk.</p>
+<p>And that's how admins got the ALL tab in the inventory:<br>
+<img src="https://i.imgur.com/DdJfL2s.png" alt=""></p>
+<p>Buuuuuuuuuuuuut...... Having every model isn't enough... We also need every color.<br>
+Luckily there are websites like Rebrickable where you can download that list with total ease: <a href="https://rebrickable.com/downloads/" target="_blank" rel="nofollow">https://rebrickable.com/downloads/</a></p>
+<p>Now only one tiny detail was left: combining both lists.<br>
+Usually what all these websites do is generate an icon for each piece, in every available color.<br>
+I don't want my PC full of 99999 duplicate images whose only difference is the color, so I went for a dirty little hack: tinting the images.<br>
+We know the model's standard color, so just generating the icon in that color and then replacing it does the trick.<br>
+<img src="https://i.imgur.com/A9VbZmD.png" alt=""><br>
+It won't look right in every case, but in the vast majority it passes, and that's good enough for me.</p>
+<p>Great! Perfect! We don't have to worry about pieces/models anymore. Right?<br>
+How wrong you are, my friend. I want more. Much more.</p>
+<p>The point of Lego is that there are no prefab models of things like beds, because you're expected to build them out of pieces.<br>
+That means we need a way to load models that are a combination of many pieces. And this is where the next new feature comes in.</p>
+<h2>Importing and exporting models</h2>
+<p>The need is clear: you have to be able to build anything in-game and then export it so the game itself can use it.<br>
+To do that there's an item that, when you right click a block, goes looking for every block connected to it to work out the model's bounding box, which is just a box representing its limits. Since there's room to screw it up (imagine you've changed the floor you built on but don't want it to be part of the model), there's an option to edit the bounding box by hand before generating the model.<br>
+<img src="https://i.imgur.com/Zs365Lh.png" alt=""><br>
+While we're at it, we optimize the generated model by doing things like removing the studs of pieces that have another piece on top. You can't see them, so we can spare them.</p>
+<p>Making the exporter also unlocked the main reason I started this game: being able to build models intuitively, aka Minecraft-style, and then buy the physical pieces they're made of and build it in real life.<br>
+At first I was looking at and implementing the format websites like BrickLink use to import a list of pieces you want to buy. (<a href="https://www.bricklink.com/help.asp?helpID=2567" target="_blank" rel="nofollow">https://www.bricklink.com/help.asp?helpID=2567</a>)</p>
+<pre><code>&lt;INVENTORY&gt;
+&lt;ITEM&gt;
+&lt;ITEMTYPE&gt;P&lt;/ITEMTYPE&gt;
+&lt;ITEMID&gt;6260&lt;/ITEMID&gt;
+&lt;COLOR&gt;1&lt;/COLOR&gt;
+&lt;QTY&gt;1&lt;/QTY&gt;
+&lt;CONDITION&gt;N&lt;/CONDITION&gt;
+&lt;/ITEM&gt;</code></pre>
+<p>After building that format, I found out BrickLink also accepts LDraw files... So I chose to add generating that file too, so you can not only get the parts list but also import the models you create into other Lego building tools:<br>
+<img src="https://i.imgur.com/1xITxtz.png" alt=""></p>
+<p>Now we're finally sorted for models, right? Nope.<br>
+The next big model-related problem to solve is my lack of creativity. And how do we solve that? By using other people's.</p>
+<p>For that the game should support mods, so any user can add new items/models to the game and, while at it, do much more than that.</p>
+<h2>Added mod support</h2>
+<p>Mods usually need 3 things: running code, creating UIs and adding models.<br>
+I'm not one bit happy about third-party code running on my PC, so it has to be something I know will be locked down to the bare minimum. So the choice is obvious: Lua.<br>
+Lua is an embeddable language. Unlike, say, C#, the functions a Lua script can reach are limited to exactly the ones the programmer enables. A Lua script will have a hard time downloading and running an .exe from the internet. And on top of that it doesn't even weigh 1MB.<br>
+<img src="https://i.imgur.com/HUcfj6M.png" alt=""></p>
+<p>Adding mods brings a whole bunch of changes to the systems we already had: the server must not only validate the client's version, but also that it has the right mods, in the expected version.<br>
+The most typical UI components (button, alert, panel...) also have to be created, so Lua can use presets.<br>
+And little by little, wire up every system we want them to reach: like reading the blocks at certain coordinates, spawning creatures there, or doing something at a certain time of day.</p>
+<p>Although of course, for many of those functions we'd first need NPCs and a day/night cycle.</p>
+<h2>Day cycle</h2>
+<p>To add a day cycle you have to think about how much real-life time each in-game day will last, and track it on the server to know which "day number" we're on in-game.<br>
+Then it's a matter of showing it visually by rotating the light that acts as the Sun at a speed that completes the cycle in that time, and adding the moon.<br>
+<img src="https://i.imgur.com/34dQkEs.png" alt=""></p>
+<p>We're in a world of blocks, so if you zoom in on the moon you'll see it's made of blocks too :p<br>
+<img src="https://i.imgur.com/5GOetDC.png" alt=""></p>
+<p>But of course, not all of us like playing at night. Time has to be skippable.<br>
+This is where the system that lets us create new items out of multiple pieces comes into play. Thanks to it we have a bed to script so that clicking it makes the character sleep and the night pass faster.<br>
+<img src="https://i.imgur.com/cMNaIP1.png" alt=""><br>
+And of course, commands have been added to switch to whatever time of day you want if you're an admin.</p>
+<p>Beds have also been made the respawn point in case you kick the bucket.</p>
+<p>And who could hurt you? The NPCs...</p>
+<h2>NPCs</h2>
+<p>Adding AI to a game is a slog; doing it in multiplayer is twice that.<br>
+The first thing to consider is which navigation system they'll use. Unity has navmesh, but like everything Unity makes, it has its problems.</p>
+<p><img src="https://i.imgur.com/Byi1awB.png" alt=""></p>
+<p>Imagine you want the user to be attacked by a group of enemies. Unity doesn't consider that possibility, which means the enemies don't see each other, so they all pick the same route (the shortest). Forming a queue that makes no sense at all, because normally each one would try to keep line of sight with its target (to be able to shoot it, for example).<br>
+<img src="https://i.imgur.com/TC0NlC1.png" alt=""></p>
+<p>The usual hack is adding a component called NavMeshObstacle to each enemy, which, as you can see in one of the previous images, removes the space it takes up from the navigation system (that's the blue area). That way the space is marked as taken and the next enemy doesn't even consider walking through it.<br>
+But of course, things with a NavMeshObstacle CAN'T move. So what people do is enable the component, recalculate the route and disable it, constantly.<br>
+Extraordinarily gross.</p>
+<p>Another detail is that Unity's pathfinding is single-threaded; it has to run on the main thread.</p>
+<p>Knowing the official solution is utter crap, I chose to create one that uses the grid generated when building the world out of blocks. After all, in the worst case it'll be just as bad as the official one.</p>
+<p>The next thing needed is a model. This time I went with one made by someone else, which isn't even made of bricks. It's one of the things to improve.</p>
+<p><img src="https://i.imgur.com/6lufmON.png" alt=""><br>
+The result is on par with an official Unity package: it has bugs and needs improving.<br>
+You can see the land NPCs happily walking on the water instead of avoiding it.<br>
+The cause of this problem lies in several of the optimizations applied to the terrain.</p>
+<h2>Increasing the FPS</h2>
+<p>When you roamed around the world, it rarely went above 30fps. In fact, it often dropped to 10.<br>
+The 2x2 brick model I used as the base for building the world had waaaaaaaay too many triangles because of the spherical studs.<br>
+<img src="https://i.imgur.com/h3fu88Q.png" alt=""></p>
+<p>Which led to more than 16 million triangles when several chunks were rendered at once.<br>
+Once again LDraw comes to the rescue. This library has a lowpoly version of each model that basically skimps on the studs:<br>
+<img src="https://i.imgur.com/MucQkyv.png" alt=""></p>
+<p>Although it looks much worse, the result of using this model is clear:<br>
+<img src="https://i.imgur.com/Xi4jO9E.png" alt=""><br>
+Now it's "only" 3 million pixels and we've gone up to 140fps.</p>
+<p>It wasn't the only change made to reach those frames. Every chunk generated its collider even when far from the player. Not giving every chunk a collider is what let the NPCs walk on water.</p>
+<p>Right, we have a game you can get absorbed building in for a while. The problem is it's still missing something. It's all very quiet.</p>
+<h2>Adding some music</h2>
+<p>To create some atmosphere, it needed some background music. The most fitting style for this seemed to be 8-bit. So I loaded the game with several songs that have a commercial license.</p>
+<p>Not everyone will like it, so a settings section was needed where, among other things, the music volume can be changed.<br>
+<img src="https://i.imgur.com/pH2XCqR.png" alt=""></p>
+<p>The settings panel is what I'm least passionate about when making games, so being able to feed it to the AI so it's its problem has been a real treat.<br>
+Doing it also forced me to take another big step: migrating to Unity's new input system.</p>
+<h2>Making key remapping easier</h2>
+<p>In Unity, if you want to know whether the player is pressing a certain key, you just have to do:</p>
+<pre><code>if (Input.GetKeyDown(KeyCode.Space)) {
+  // pressing the Space bar
+}</code></pre>
+<p>Simple and convenient, but with one problem. The key is hardcoded. The player can't change it to another one.<br>
+The hack used to get around that was putting a class in between that kept the relation between an action and a key, so the code ended up as:</p>
+<pre><code>if (Input.GetKeyDown(GameInput.keyFor("Jump"))) {
+  // pressing the Space bar
+}</code></pre>
+<p>Well, Unity's InputSystem does exactly that, but officially and with more improvements, including letting you fake the keys being pressed. And why would anyone want to fake key presses? To be able to add tests.</p>
+<h2>Stabilizing the game?</h2>
+<p>Usually validating a flow in an application is relatively simple.<br>
+Want to check that sign-up works automatically? You just have to follow a few steps:</p>
+<ol>
+<li>Go to example.com/signup</li>
+<li>Fill in the email and password fields</li>
+<li>Press the submit button</li>
+<li>Check that the new record is in the database.</li>
+</ol>
+<p><img src="https://i.imgur.com/zqUVQUn.png" alt=""></p>
+<p>With video games, however, the plot thickens. We're now in a 3D environment, and if on top of that it's a sandbox, there are mechanics that can play tricks on you and make a check fail intermittently.</p>
+<ul>
+<li>What if, while you're testing placing a block on top of another, a creature shows up from behind, smacks the player and moves them before the block is placed?</li>
+<li>What if you're testing hitting a tree but the game has a randomness mechanic that makes it miss?</li>
+</ul>
+<p>You have to try to make everything as deterministic as possible. Everything random has to be seeded. Every mechanic that could interfere has to be controlled.<br>
+Even so, it's usually the combination of several mechanics that causes a bug.<br>
+For example: I made right clicking with nothing in your hand zoom in. Now every time you drank a potion the system zoomed in. Because at first the potion was there, but then it wasn't.</p>
+<p><img src="https://i.imgur.com/FwPrOoz.png" alt=""></p>
+<p>I don't know the perfect way to fix this, but I've tried to give the game a minimum of checks to avoid messes in the most basic mechanics.<br>
+Ideally they'd run on every PR, but I have to check whether that's doable, because I know Unity likes to complain if its runtime is run the wrong way.<br>
+We'll see; for now we have tests even for fluids.</p>
+<h2>Making water flow</h2>
+<p>Back in the day I made blocks able to have different physics, so a water block would have different gravity. But water isn't just about that; it should also be able to flow.<br>
+Just like in Minecraft, grabbing a block of water and dropping it on the ground now makes it spread to the neighbouring blocks.</p>
+<p><img src="https://i.imgur.com/w1JebeE.png" alt=""><br>
+The first iteration didn't turn out very well.</p>
+<p><img src="https://i.imgur.com/Zk1fpJ3.png" alt=""><br>
+The next one improved things a bit by not removing extra polys. The brick model I picked to simulate sloped water probably isn't the best.</p>
+<p>All these tests slowly filled my inventory with junk. It was time to add the option to drop items.</p>
+<h2>Quality of life improvements</h2>
+<p>There were 2 ways to fix the problem and I chose to implement both.<br>
+On one hand, you can now press Q to drop whatever you're holding at that moment.<br>
+While at it, that feature has been reused so that killing an NPC makes it spit out its loot too.</p>
+<p><img src="https://i.imgur.com/Rx41fPA.gif" alt=""><br>
+How pretty, floating there and spinning around.<br>
+Getting close to those items lets you pick them up.</p>
+<p>The other way to fix the problem was adding a chest system.<br>
+Again, the behaviour is what we all expect: click it to open it and you can put things in and take them out. Only 1 player at a time. Breaking the chest makes it spit out everything it had stored.</p>
+<p>The only new thing I've added is that in Lego, chests are 2 pieces: the lid and the box.<br>
+<img src="https://i.imgur.com/pcXf4WX.png" alt=""><br>
+If you don't put the lid on, any player can get at what's inside.</p>
+<p>And that would be most of the latest update.</p>

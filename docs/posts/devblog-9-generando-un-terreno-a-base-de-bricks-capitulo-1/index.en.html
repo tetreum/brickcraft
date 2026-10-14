@@ -1,0 +1,122 @@
+<p>Alright, one thing I'd like this game to have is terrain to explore like Minecraft's, with its caves, mountains, seas, etc..<br>
+    As I explained at the beginning, to make something like that, we first have to generate a three-dimensional matrix where we decide what type each block is (dirt, water, air, etc..)</p><p><img src="https://i.imgur.com/T9DGuMC.png" alt="" style="width: 617px; height: 352px;"></p><p>
+
+
+    It's something I didn't want to do at first because in the world of bricks, there are more shapes than squares. But screw it, I'll use just 1 square brick model to generate the whole environment.<br>
+    Now that we've given up on our (block) diversity principles, we can move on.</p><p><br>
+
+    Once we've generated the matrix comes the hardest part, rendering it.<br>
+    We can't render the whole thing, no GPU could load that many bricks (and it would be a stupid idea), so we have to go with a chunk system.<br>
+    This is nothing more than splitting the matrix into smaller matrices. That way we can load or unload them as the player moves around the map.<br>
+    This would be a chunk, an area bounded by "x", "z" and not by "y":</p><p><img src="https://i.imgur.com/YnKUgP8.jpg" alt="" style="width: 300px;"></p><p>
+
+
+    With this subdivision we now have to worry about figuring out which blocks are "exposed". Look where the player is in that image.<br>
+    What's the point of rendering the blocks below the ground if he can't see them?<br>
+    We have to determine which blocks are exposed and render only those:</p><p><img src="https://i.imgur.com/uYayydY.png" alt="" style="width: 646px; height: 340px;"></p><p>
+
+
+    And theeeen, we have to focus on the model itself. A cube has multiple faces, and the player will rarely see all of them (water blocks). For example, from this angle, only 3 are visible:</p><p><img src="https://i.imgur.com/Hm221nP.png" alt="" style="width: 300px;"></p><p>
+
+    And not even that, blocks are going to be surrounded by other blocks, so it's silly to render the whole model.</p><p><br>
+
+    So, to sum up:<br>
+    We need to generate a matrix, split it into chunks, in each chunk determine the exposed blocks and in each exposed block, determine the visible faces.<br>
+    Once we know that, we'll have to rip that face off the model and merge it into a new model that will only contain all the exposed faces of the chunk.<br>
+    To cut a face out of a model we'll need to understand what a mesh/model is and how it works.<br>
+
+    </p><h2>Understanding meshes</h2><p>A mesh is a set of points (vertices) that, connected to each other, form triangles. To know which way each triangle is facing/painted we use vectors (normals) and finally we also map how the material (texture) is applied to the mesh.<br>
+
+    Okay, that explanation was unreadable. Let's try a more visual example.</p><p><img src="https://i.imgur.com/4TbZtLN.png" alt="" style="width: 815px; height: 359px;"></p><p>
+
+    The face of a cube is a square, which is made of 2 triangles. Each one is created from 3 vertices out of the 4 the whole face has.<br>
+
+    If we wanted to make the face of a square in Unity (ignoring which way the triangles face and what color they are) we'd do this:</p><p><img src="https://i.imgur.com/KsyXJ1I.png" alt="" style="width: 519px; height: 529px;"></p><p>
+
+
+    How do we determine which triangles make up a face of the mesh?<br>
+
+    Good question, I have no idea. But I can think of a hack to get by.<br>
+    Look at the shape of a basic brick:</p><p><img src="https://i.imgur.com/Hm221nP.png" alt="" style="width: 300px;"></p><p>
+
+
+    In this case, to know the triangles of each face, what we can do is put in a plane that acts as a "delimiter", any vertex beyond that limit will be part of that face.</p><p><img src="https://i.imgur.com/1ZdUkYF.png" alt="" style="width: 555px; height: 512px;"></p><p>
+
+    If you look closely, each blue plane is right before the end of a face.<br>
+    Good, now we have to code something that iterates over all the triangles of the mesh with each delimiter to know which face they belong to.<br>
+    In Unity we have the mesh data in the following format:<br>
+    Code:<br>
+    <pre>
+        int[] triangles;
+        Vector3[] vertices;
+    </pre>
+    Triangles are referenced through a list of integers, which only act as references to the vertex list.<br>
+    Let me explain:<br>
+    Code:<br>
+    <pre>
+    int[] triangles would be a list like this: [0,1,2,2,3,0]
+    Vector3[] vertices would be
+    [
+        0 => Vector3(0, 0, 0),
+        1 => Vector3(0, 0, 1),
+        2 => Vector3(1, 0, 1),
+        3 => Vector3(1, 0, 0)
+    ]
+    </pre>
+    So you can picture it:</p><p><img src="https://i.imgur.com/thb0dcM.png" alt="" style="width: 716px; height: 506px;"></p><p>
+
+
+    As we already know, each triangle is made of 3 vertices, so to get a triangle from the triangles list, we'll grab 3 values each time:<br>
+    - The first triangle will be 0,1,2<br>
+    - The second 2,3,0<br>
+
+    These are just the indices to take from the vertex list, so now we know that the first triangle, the one on the left, is made of the vertices:<br>
+    0 => Vector3(0, 0, 0)<br>
+    1 => Vector3(0, 0, 1)<br>
+    2 => Vector3(1, 0, 1)<br>
+
+    And the second:<br>
+    2 => Vector3(1, 0, 1)<br>
+    3 => Vector3(1, 0, 0)<br>
+    0 => Vector3(0, 0, 0)<br>
+
+    Which you should be able to easily check against the image I posted.<br>
+
+    We do a quick test to get the triangles of each face:</p><p><img src="https://i.imgur.com/vKAHzoe.png" alt="" style="width: 692px; height: 734px;"></p><p>
+
+    And........... W-T-F..<br>
+
+    These are the results:<br>
+    Top face: 784<br>
+    Bottom face: 80<br>
+    Left face: 8<br>
+    Right face: 8<br>
+    Front face: 4<br>
+    Back face: 4</p><p><br>
+
+    It makes sense for the top face to have quite a few triangles because it has the studs (but even so it has way too many). The bottom one.. well, fine, it has the round clutch bits.</p><p><br>
+
+    But...what the hell is going on with the side faces?????????<br>
+    We're talking about a cube, how can it have a different number of triangles per side? And how!! can it be more than 2!!!??</p><p><br>
+
+    Clearly I did something wrong, so I throw together a quick script to draw the vertices straight onto the model and................</p><p><img src="https://i.imgur.com/0dhespE.png" alt="" style="width: 520px; height: 494px;"></p><p>
+
+    It's not very clear because as you can see, the top face, with the studs, is full of vertices. And you can also easily see the bottom circle of the piece.<br><br>
+
+    If we "rip off" the side faces we see that no, my system for separating triangles works correctly:</p><p><img src="https://i.imgur.com/FMoCCn3.png" alt="" style="width: 493px; height: 616px;"></p><p>
+
+    One of the faces has 8 triangles</p><p><img src="https://i.imgur.com/hA8FVzk.png" alt="" style="width: 440px; height: 657px;"></p><p>
+
+    Another one, we see 4.<br>
+    Remember we're counting triangles:</p><p><img src="https://i.imgur.com/5UtsxY4.png" alt="" style="width: 458px; height: 573px;"></p><p>
+
+
+    So the problem is the model itself, it has more triangles than it really needs.</p><p><br>
+
+    The only way to fix it is by optimizing the model, opening it in some 3D editor like Blender and removing triangles. Thing is, I have no idea how to model. So here I am, stuck.<br>
+    Let's see if I can find someone to touch up the model for me.</p><p><img src="https://i.imgur.com/LmWecwR.png" alt="" style="width: 555px; height: 625px;"></p>
+    <p style="text-align: center;">
+        <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+            <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+            https://github.com/tetreum/brickcraft</a>
+    </p>

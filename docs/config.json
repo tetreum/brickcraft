@@ -1,77 +1,192 @@
 {
     "title": "Brickcraft",
-    "logo": "https://i.imgur.com/Ns1x0fQ.png",
-    "entries" : [
+    "logo": "https://i.imgur.com/wJ9hujO.png",
+    "languages": {
+        "en": "English",
+        "es": "Español"
+    },
+    "defaultLanguage": "en",
+    "strings": {
+        "en": {
+            "home": "Home",
+            "helpWanted": "HELP WANTED",
+            "postedOn": "Posted on",
+            "readMore": "Read More",
+            "previousEntry": "Previous entry:",
+            "nextEntry": "Next entry:",
+            "untranslated": "This entry isn't available in English yet.",
+            "notFoundTitle": "Page not found",
+            "notFoundText": "The requested page could not be found.",
+            "backHome": "Head to homepage"
+        },
+        "es": {
+            "home": "Inicio",
+            "helpWanted": "SE BUSCA AYUDA",
+            "postedOn": "Publicado el",
+            "readMore": "Leer más",
+            "previousEntry": "Entrada anterior:",
+            "nextEntry": "Entrada siguiente:",
+            "untranslated": "Esta entrada aún no está disponible en español.",
+            "notFoundTitle": "Página no encontrada",
+            "notFoundText": "La página solicitada no existe.",
+            "backHome": "Volver al inicio"
+        }
+    },
+    "entries": [
+        {
+            "slug": "y-llego-la-ia",
+            "title": {
+                "en": "And then AI arrived",
+                "es": "Y llegó la IA"
+            },
+            "preview": {
+                "en": "I'd abandoned development of this game a long time ago, and I've used the arrival of AI to give it a good push. A facelift Since besides programming it can also draw, the least I could do was get rid ...",
+                "es": "Hace mucho tiempo que tenía el desarrollo de este juego abandonado y he aprovechado la aparición de la IA para darle un buen empujón al tema. Lavado de cara Ya que además de programar también sabe dib..."
+            },
+            "date": "2026-10-14T11:17:00Z"
+        },
         {
             "slug": "devblog-12-casando-el-sistema-de-construccion-con-el-terreno-parte-2",
-            "title": "Devblog 12 - Casando el sistema de construcción con el terreno - Parte 2",
-            "preview": "Retomamos donde lo dejamos: El sistema de construcción detecta colisiones con el terreno constantemente.(Rojo es que no deja construir, blanco es que sí).Como indiqué, puede haber 2 tipos de colisione...",
+            "title": {
+                "en": "Devblog 12 - Hooking up the building system with the terrain - Part 2",
+                "es": "Devblog 12 - Casando el sistema de construcción con el terreno - Parte 2"
+            },
+            "preview": {
+                "en": "Picking up where we left off: The building system detects collisions with the terrain constantly.(Red means it won't let you build, white means it will). As I mentioned, there can be 2 types of collis...",
+                "es": "Retomamos donde lo dejamos: El sistema de construcción detecta colisiones con el terreno constantemente.(Rojo es que no deja construir, blanco es que sí).Como indiqué, puede haber 2 tipos de colisione..."
+            },
             "date": "2021-03-07T17:54:00Z"
         },
         {
             "slug": "devblog-11-casando-el-sistema-de-construccion-con-el-terreno-parte-1",
-            "title": "Devblog 11 - Casando el sistema de construcción con el terreno - Parte 1",
-            "preview": "En minecraft el sistema de construcción es muy simple, ya que cualquier cara de un bloque sirve. En nuestro caso no es así. Si os acordáis, para generar el terreno, hemos unido los bricks en una sola ...",
+            "title": {
+                "en": "Devblog 11 - Hooking up the building system with the terrain - Part 1",
+                "es": "Devblog 11 - Casando el sistema de construcción con el terreno - Parte 1"
+            },
+            "preview": {
+                "en": "In Minecraft the building system is really simple, since any face of a block works. In our case that's not how it is. If you remember, to generate the terrain, we merged the bricks into a single mesh/...",
+                "es": "En minecraft el sistema de construcción es muy simple, ya que cualquier cara de un bloque sirve. En nuestro caso no es así. Si os acordáis, para generar el terreno, hemos unido los bricks en una sola ..."
+            },
             "date": "2021-02-28T17:54:00Z"
         },
         {
             "slug": "devblog-10-generando-un-terreno-a-base-de-bricks-capitulo-2",
-            "title": "Devblog 10 - Generando un terreno a base de bricks - Capítulo 2",
-            "preview": "Nos quedamos en que el modelo era demasiado detallado para un juego. Como dije, no tengo ni idea de modelar (ni ganas), de modo que opté por el camino más fácil -> Sketchup. Sketchup es probablemen...",
+            "title": {
+                "en": "Devblog 10 - Generating a terrain made of bricks - Chapter 2",
+                "es": "Devblog 10 - Generando un terreno a base de bricks - Capítulo 2"
+            },
+            "preview": {
+                "en": "We left off with the model being way too detailed for a game. Like I said, I have no idea how to model (nor do I want to), so I took the easy way out -> Sketchup. Sketchup is probably the worst tool t...",
+                "es": "Nos quedamos en que el modelo era demasiado detallado para un juego. Como dije, no tengo ni idea de modelar (ni ganas), de modo que opté por el camino más fácil -> Sketchup. Sketchup es probablemen..."
+            },
             "date": "2021-02-21T17:54:00Z"
         },
         {
             "slug": "devblog-9-generando-un-terreno-a-base-de-bricks-capitulo-1",
-            "title": "Devblog 9 - Generando un terreno a base de bricks - Capítulo 1",
-            "preview": "Veamos, algo que me gustaría que este juego tenga es terreno a explorar como el de Minecraft, con sus cuevas, montañas, mares, etc..Como ya había contado al principio, para hacer algo así, primero ten...",
+            "title": {
+                "en": "Devblog 9 - Generating a terrain made of bricks - Chapter 1",
+                "es": "Devblog 9 - Generando un terreno a base de bricks - Capítulo 1"
+            },
+            "preview": {
+                "en": "Alright, one thing I'd like this game to have is terrain to explore like Minecraft's, with its caves, mountains, seas, etc.. As I explained at the beginning, to make something like that, we first have...",
+                "es": "Veamos, algo que me gustaría que este juego tenga es terreno a explorar como el de Minecraft, con sus cuevas, montañas, mares, etc..Como ya había contado al principio, para hacer algo así, primero ten..."
+            },
             "date": "2021-02-14T17:54:00Z"
         },
         {
             "slug": "devblog-8-sistema-de-crafteo",
-            "title": "Devblog 8 - Sistema de crafteo",
-            "preview": "Otra parte importante de este tipo de juegos es el poder combinar múltiples items para crear otros nuevos y Brickcraft no será menos. Por desgracia este update es más rollo, ya que hay poco de cálculo...",
+            "title": {
+                "en": "Devblog 8 - Crafting system",
+                "es": "Devblog 8 - Sistema de crafteo"
+            },
+            "preview": {
+                "en": "Another important part of this kind of game is being able to combine multiple items to create new ones, and Brickcraft won't be any less. Unfortunately this update is more boring, since there's little...",
+                "es": "Otra parte importante de este tipo de juegos es el poder combinar múltiples items para crear otros nuevos y Brickcraft no será menos. Por desgracia este update es más rollo, ya que hay poco de cálculo..."
+            },
             "date": "2021-01-09T17:54:00Z"
         },
         {
             "slug": "devblog-7-generacion-de-iconos",
-            "title": "Devblog 7 - Generación de iconos",
-            "preview": "Dado que el progreso en la generación del mapa vía chunks es nulo, he decidido avanzar por este lado. Como había comentado en entradas anteriores, se necesita un sistema para generar los iconos de cad...",
+            "title": {
+                "en": "Devblog 7 - Icon generation",
+                "es": "Devblog 7 - Generación de iconos"
+            },
+            "preview": {
+                "en": "Since progress on generating the map via chunks is zero, I've decided to move forward on this front instead. As I mentioned in previous posts, we need a system to generate the icons for every item in ...",
+                "es": "Dado que el progreso en la generación del mapa vía chunks es nulo, he decidido avanzar por este lado. Como había comentado en entradas anteriores, se necesita un sistema para generar los iconos de cad..."
+            },
             "date": "2021-01-02T17:54:00Z"
         },
         {
             "slug": "devblog-6-nadando-entre-bricks",
-            "title": "Devblog 6 - Nadando entre bricks",
-            "preview": "He añadido un nuevo bloque, el de agua. No se expande progresivamente, pero sí es \"líquido\" para el jugador. Para hacerlo posible, hay que jugar con las físicas, ya que cuando estás bajo el agua el mo...",
+            "title": {
+                "en": "Devblog 6 - Swimming among bricks",
+                "es": "Devblog 6 - Nadando entre bricks"
+            },
+            "preview": {
+                "en": "I've added a new block, water. It doesn't spread progressively, but it is \"liquid\" for the player. To make that possible, we have to play with the physics, since when you're underwater you move slower...",
+                "es": "He añadido un nuevo bloque, el de agua. No se expande progresivamente, pero sí es \"líquido\" para el jugador. Para hacerlo posible, hay que jugar con las físicas, ya que cuando estás bajo el agua el mo..."
+            },
             "date": "2021-01-01T17:54:00Z"
         },
         {
             "slug": "devblog-5-usando-decals-para-romper-bricks",
-            "title": "Devblog 5 - Usando decals para romper bricks",
-            "preview": "Al final me decidí por hacer la animación de cuando empiezas a romper un bloque. Si no me equivoco, la técnica de sobreponer texturas encima de otras se llama decal. Un ejemplo podrían ser los impacto...",
+            "title": {
+                "en": "Devblog 5 - Using decals to break bricks",
+                "es": "Devblog 5 - Usando decals para romper bricks"
+            },
+            "preview": {
+                "en": "In the end I decided to do the animation for when you start breaking a block. If I'm not mistaken, the technique of overlaying textures on top of others is called a decal. An example would be bullet i...",
+                "es": "Al final me decidí por hacer la animación de cuando empiezas a romper un bloque. Si no me equivoco, la técnica de sobreponer texturas encima de otras se llama decal. Un ejemplo podrían ser los impacto..."
+            },
             "date": "2020-12-31T17:54:00Z"
         },
         {
             "slug": "devblog-4-mejorando-el-sistema-de-construccion",
-            "title": "Devblog 4 - Mejorando el sistema de construcción",
-            "preview": "Como dije anteriormente, la siguiente mejora es que cuando pones un brick mal, el sistema de lo diga visualmente.No tiene mucho misterio, cambio la textura del prev...",
+            "title": {
+                "en": "Devblog 4 - Improving the building system",
+                "es": "Devblog 4 - Mejorando el sistema de construcción"
+            },
+            "preview": {
+                "en": "As I said before, the next improvement is for the system to tell you visually when you place a brick wrong. There's not much mystery to it, I swap the preview's texture for a red one when there's a co...",
+                "es": "Como dije anteriormente, la siguiente mejora es que cuando pones un brick mal, el sistema de lo diga visualmente.No tiene mucho misterio, cambio la textura del prev..."
+            },
             "date": "2020-12-30T17:54:00Z"
         },
         {
             "slug": "devblog-3-arreglando-el-sistema-de-rotacion",
-            "title": "Devblog 3 - Arreglando el sistema de rotación",
-            "preview": "Tras revisar el sistema de rotación lo primero en lo que me he fijado es en el eje de rotación.Este debería ser el centro exacto del stud, pero como podéis ver aquí, a...",
+            "title": {
+                "en": "Devblog 3 - Fixing the rotation system",
+                "es": "Devblog 3 - Arreglando el sistema de rotación"
+            },
+            "preview": {
+                "en": "After reviewing the rotation system, the first thing I noticed was the rotation axis. It should be the exact center of the stud, but as you can see here, it's currently the center of the brick: With t...",
+                "es": "Tras revisar el sistema de rotación lo primero en lo que me he fijado es en el eje de rotación.Este debería ser el centro exacto del stud, pero como podéis ver aquí, a..."
+            },
             "date": "2020-12-29T17:54:00Z"
         },
         {
             "slug": "devblog-2-texturas",
-            "title": "Devblog 2 - Texturas",
-            "preview": "Al final, para moverse entre los distintos slots del fast inventory he optado por usar la tecla TAB.He hecho que cambie el background del item seleccion...",
+            "title": {
+                "en": "Devblog 2 - Textures",
+                "es": "Devblog 2 - Texturas"
+            },
+            "preview": {
+                "en": "ENGLISH VERSIONBack to the damn inventory systemIn the end, to move between the different slots of the fast inventory I went with the TAB key. I made the background of the selected item change so it's...",
+                "es": "Al final, para moverse entre los distintos slots del fast inventory he optado por usar la tecla TAB.He hecho que cambie el background del item seleccion..."
+            },
             "date": "2020-12-28T16:44:00Z"
         },
         {
             "slug": "devblog-1-estudiando-los-bricks",
-            "title": "Devblog 1 - Estudiando los bricks",
-            "preview": "Estas navidades quería montar un set de Lego navideño con unos amigos, pero con el tema COVID por en medio no ha sido posible. Así que me ha dado por hacer un juego donde podamos montar...",
+            "title": {
+                "en": "Devblog 1 - Studying the bricks",
+                "es": "Devblog 1 - Estudiando los bricks"
+            },
+            "preview": {
+                "en": "ENGLISH VERSIONThis Christmas I wanted to build a Christmas Lego set with some friends, but with the whole COVID thing in the way it hasn't been possible. So I got the idea of making a game where we c...",
+                "es": "Estas navidades quería montar un set de Lego navideño con unos amigos, pero con el tema COVID por en medio no ha sido posible. Así que me ha dado por hacer un juego donde podamos montar..."
+            },
             "date": "2020-12-27T17:22:00Z"
         }
     ]

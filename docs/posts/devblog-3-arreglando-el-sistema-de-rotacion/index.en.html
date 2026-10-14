@@ -1,0 +1,79 @@
+<p>After reviewing the rotation system, the first thing I noticed was the rotation axis.<br>
+    It should be the exact center of the stud, but as you can see here, it's currently the center of the brick:</p><p><img src="https://i.imgur.com/IxBWyjO.png" alt="" style="width: 617px; height: 642px;"></p><p>
+
+
+    With this all we'll manage is to spin it in place, when what we want is for it to swing like a door.<br>
+    The problem was in how it calculated the center of the stud (not of the brick). It assumed 0,0 (x,y) was one of the sides of the brick and that's not the case, 0,0 is the center. So the right way would be</p><p><img src="https://i.imgur.com/aNNKHC3.png" alt="" style="width: 1039px; height: 984px;"></p><p>
+
+
+    Which, turned into code, becomes:</p><p><img src="https://i.imgur.com/VvNGgRP.png" alt="" style="width: 1003px; height: 124px;"><br>
+
+
+    If you're a bit sharp you'll have spotted that I'm making a new mistake. This calculation only works for exactly 2x2 GridStuds. Example:</p><p><img src="https://i.imgur.com/uELhPAx.png" alt="" style="width: 539px; height: 482px;"></p><p>
+
+
+    And in fact I'm a bit of a dummy, I had already calculated elsewhere which stud it is based on the area each one takes up. I can go there and add 2 more lines that calculate the center for me.</p><p><img src="https://i.imgur.com/3Ft5Tjt.png" alt="" style="width: 806px; height: 309px;"></p><p>
+
+
+    (The only new things are stud.center.x and stud.center.y)<br>
+
+    After changing this, I grabbed a 1x1 brick and went to place it expecting it to sit right on 1 stud. Result:</p><p><img src="https://i.imgur.com/J8Obsm0.png" alt="" style="width: 431px; height: 417px;"></p><p>
+
+
+    Wroooong.<br>
+    The previous stuff is perfect now, so I keep digging and find another bug.<br>
+
+    If you remember, I made the builder somewhat "smart", and if it detected the same model or the same number of studs, it placed it centered so they'd end up one on top of the other.<br>
+    The problem is that it wasn't checking the number of studs, but the number of GridStuds in the 2 models. And of course, these 2 pieces only have 1 grid each, so they fell into that condition.<br>
+
+    There, now it works, right? Allllmost:</p><p><img src="https://i.imgur.com/etZWQzX.png" alt="" style="width: 474px; height: 414px;"></p><p>
+
+
+    The calculations part couldn't fail anymore, so the screw-up was somewhere else and I suspected it was in the GridStuds. And so it was.<br>
+    To set the size each GridStud took up, I edited the cube's scale instead of editing the collider's dimensions.<br>
+
+    So that those of you who don't use Unity understand the mistake:<br>
+    Every object in a scene has a component called Transform. The transform holds the location data, namely: position, rotation and scale.</p><p><img src="https://i.imgur.com/TgrqI3m.png" alt="" style="width: 571px; height: 154px;"></p><p>
+
+
+    Normally you don't touch the scale, but if you do, you have to keep in mind that you're altering all the vectors/positions you generate from it.<br>
+
+    In the collider component you can tweak its dimensions:</p><p><img src="https://i.imgur.com/nMmjvyo.png" alt="" style="width: 557px; height: 221px;"></p><p>
+
+    So when you're adding collisions to an object via the collider, the normal thing is to tweak the collider's dimensions, not the object itself.<br>
+
+    I had tweaked the scales, hence the offset from the center:<br>
+
+
+    Right, time for a quick pass over aaall the bricks I have to set it right.</p><p><img src="https://i.imgur.com/sBE7ZYe.png" alt="" style="width: 469px; height: 421px;"></p><p>
+
+
+    Self-applause for fixing all the fails.</p><p><img src="https://i.imgur.com/EsELfsh.gif" alt="" style="width: 300px;"></p><p>
+
+
+    Now it's time to make the piece rotate using that position as the pivot point.<br>
+
+    In Unity you can't (or I couldn't find how to) change the center of an object at runtime, so we'll work around it by creating a temporary empty object at that position and making the piece to rotate its child with the necessary offset.</p><p><img src="https://i.imgur.com/3gPYNkl.gif" alt="" style="width: 823px; height: 442px;"></p><p>
+
+
+
+    It's a bit of a drag because it means specifying the pivot vector for each model, and I can't think of anything to do it automatically and efficiently. But the result couldn't be better.</p><p><img src="https://i.imgur.com/QqzDwVt.png" alt="" style="width: 1157px; height: 590px;"></p><p>
+
+
+
+    I can finally make the arch!<br>
+    While doing this I noticed yet aaaaaanother little thing I hadn't taken into account.. Bricks can also be connected from below. I wanted to put a block in the square of the arch, but that option isn't supported by the current system xD</p><p><img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/Paris_Tuileries_Garden_Facepalm_statue.jpg" alt="" style="width: 490px; height: 327px;"></p><p>
+
+
+
+    Before getting into that mess I'll go over a detail of the brick preview.<br>
+    Currently, when you put the brick in an impossible/colliding position, it suddenly disappears:</p><p><img src="https://i.imgur.com/O8Z0Pbm.gif" alt="" style="width: 560px; height: 420px;"></p><p>
+
+    It's confusing, it looks like a bug in the game.<br>
+    I think rather than hiding it, it should show it semi-transparent but in red.<br>
+    </p>
+    <p style="text-align: center;">
+        <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+            <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+            https://github.com/tetreum/brickcraft</a>
+    </p>

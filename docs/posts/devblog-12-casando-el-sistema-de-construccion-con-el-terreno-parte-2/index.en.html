@@ -1,0 +1,60 @@
+<p>Picking up where we left off: The building system detects collisions with the terrain constantly.</p><p><img src="https://i.imgur.com/1nTfNNi.gif" alt="" style="width: 757px; height: 426px;"><br>(Red means it won't let you build, white means it will).</p><p><br>
+
+    As I mentioned, there can be 2 types of collisions, vertical ones which are "expected" (since the brick bumps into another brick's studs) and horizontal ones, which are real collisions since they happen when the models go through each other.<br>
+    To fix something like that we'd have to check all the intersection points between the 2 objects and discard the vertical ones. But we'd be trying to fix a problem that comes from another problem.<br>
+
+    </p><p>The real problem is that to generate each chunk's collider, I'm using the mesh that gets displayed. That means Unity takes the bricks' studs into account, making it a hell of an expensive operation, and an unwanted one too.</p><p><img src="https://i.imgur.com/qktiyhp.png" alt="" style="width: 937px; height: 600px;"></p><p><img src="https://i.imgur.com/wJf7xO7.png" alt="" style="width: 940px; height: 564px;"></p><p>
+
+
+
+    As painful to generate as it looks.<br>
+
+    If you remember, our bricks' GridStuds are box colliders:</p><p><img src="https://i.imgur.com/dKxSr8B.png" alt="" style="width: 614px; height: 645px;"><br>
+
+    (the green stuff)<br>
+    At no point do we take the shape of the studs into account, we don't care. And we should do the same with the terrain.<br>
+
+    How are we going to do it? By creating a neeew model that's a plain old cube. We grab the brick and remove the studs and the bottom part. That way it has the same measurements, but it's a cube.</p><p><img src="https://i.imgur.com/1g6j6fd.png" alt="" style="width: 700px; height: 509px;"></p><p>
+
+
+    And now we have to edit the chunk generation, so that 2 meshes get created, 1 that takes the studs into account and another that doesn't.</p><p><img src="https://i.imgur.com/wtTp0pT.png" alt="" style="width: 689px; height: 487px;"></p><p>
+
+    It's almost all copy&paste of what we already had, we just have to remove the uvs and colors part since we don't care about it.<br>
+
+    We try generating the terrain and... Damn, what a difference in loading speed, it's not nearly as painful as before.</p><p><img src="https://i.imgur.com/VF8uwbv.png" alt="" style="width: 876px; height: 596px;"></p><p><img src="https://i.imgur.com/2LPlcBN.png" alt="" style="width: 875px; height: 540px;"></p><p>
+
+
+
+    With this move we've achieved several things:<br>
+    - Reduced loading times by simplifying the mesh used to generate the colliders<br>
+    - No more vertical collisions.<br>
+    - Improved the "walking". With the studs having collisions, it felt like you were walking through the hills, with mini-mountains all the time. Now, despite having shape, the terrain is flat to walk on.<br>
+
+    </p><p>Now that we don't have vertical collisions, the collision detection system should work without needing any edits.</p><p><img src="https://i.imgur.com/DE5EVfz.gif" alt="" style="width: 870px; height: 490px;"></p><p>
+
+
+    If you look closely, in the last part of the video I can't place bricks between the terrain and other bricks.</p><p><img src="https://i.imgur.com/IA6Co8N.gif" alt="" style="width: 438px; height: 275px;"></p><p>
+
+
+
+    This is because of something I've avoided dealing with the whole time: The map's bricks are placed at a different height than the ones placed by the player.<br>
+
+    </p><p>Between the player's bricks there's always a small gap, which in my opinion gives it a more "Lego" touch:</p><p><img src="https://i.imgur.com/fjpoEtK.png" alt="" style="width: 1288px; height: 734px;"></p><p>
+
+
+    If I placed them like on the map, I think part of the essence/charm would be lost:</p><p><img src="https://i.imgur.com/7gRamac.png" alt="" style="width: 590px; height: 568px;"></p><p><img src="https://i.imgur.com/bmkIlya.png" alt="" style="width: 589px; height: 622px;"></p><p>
+
+
+
+
+    Much to my regret, I'm afraid I have no choice, because I could add that gap when aaaall the faces of the model get rendered. We don't do that on the terrain, so if I add the gap, you'd literally see through it/the inside of the map.</p><p><img src="https://i.imgur.com/DmUTtvp.gif" alt="" style="width: 948px; height: 537px;"></p><p><img src="https://i.imgur.com/UCJWQpv.gif" alt="" style="width: 679px; height: 383px;"></p><p>
+
+
+
+
+    I'm celebrating too early because I didn't show it in the video, but bricks you connect from the bottom of another brick still have the wrong height. Let's see if I can fix it easily.</p>
+    <p style="text-align: center;">
+        <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+            <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+            https://github.com/tetreum/brickcraft</a>
+    </p>

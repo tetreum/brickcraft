@@ -1,0 +1,37 @@
+<p>Another important part of this kind of game is being able to combine multiple items to create new ones, and Brickcraft won't be any less. Unfortunately this update is more boring, since there's little math and a lot of code, although I've tried to show as little as possible.<br>
+
+</p><p>Starting with the UI, once again I'll do something super creative and never seen before:</p><p><img src="https://i.imgur.com/OwTQh1K.png" alt="" style="width: 661px; height: 419px;"></p><p>
+
+
+With the easy part done, it's time to get to the code.<br>
+
+</p><p>We need to create the data structure for recipes, which should contain the id of the item that will be created, its amount and the required ingredients. For the ingredients we'll have another structure, since we can't reuse any existing one: at first we'd think it's just the item and the amount, but we're forgetting the slot, because to craft objects we'll force players to place them in a certain order.</p><p><img src="https://i.imgur.com/EX1tDB9.png" alt="" style="width: 616px; height: 306px;"></p><p>
+
+
+
+No sooner said than done.<br>
+
+We'll also have to store the recipes somewhere, of course.</p><p><img src="https://i.imgur.com/ZXl7s9c.png" alt="" style="width: 555px; height: 461px;"></p><p>
+
+
+The first crafting recipe in the game will be combining 2 2x2 bricks to make a 2x4 one.<br>
+
+</p><p>Now we need to focus on the UI again. The 4 crafting slots will be different from the inventory ones. The player must be able to put objects there but not take them back to the inventory. To discard them, they can drag them out of the inventory.<br>
+Every time they drag an item into a crafting slot, we'll have to iterate over aaaall the recipes to see if they can craft any of them.<br>
+Here we can pull a few tricks to go faster, like checking whether the total number of items they've put in matches the recipe's total number of ingredients.</p><p><img src="https://i.imgur.com/rrq1Fb0.png" alt="" style="width: 609px; height: 725px;"></p><p>
+
+
+When we find a recipe they can craft, we'll show it to them visually, and if they drag the item into their inventory, we'll go ahead and remove all the ingredients and add the new object.</p><p><img src="https://i.imgur.com/lruB3sC.png" alt="" style="width: 672px; height: 311px;"></p><p>
+
+
+We'll also update the UI to reflect whether they've run out of any material, or at least show how much it has gone down.<br>
+
+Result:</p><p><img src="https://i.imgur.com/AxfrWbu.gif" alt="" style="width: 694px; height: 507px;"></p><p>
+
+
+I should lock the camera because it's a bit wtf that it keeps moving while you're looking at the inventory xD</p>
+<p style="text-align: center;">
+    <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+        <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+        https://github.com/tetreum/brickcraft</a>
+</p>

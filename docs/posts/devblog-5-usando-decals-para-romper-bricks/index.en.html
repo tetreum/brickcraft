@@ -1,0 +1,122 @@
+<p>In the end I decided to do the animation for when you start breaking a block. If I'm not mistaken, the technique of overlaying textures on top of others is called a decal.<br>
+    An example would be bullet impacts in a level.</p>
+<p><img src="https://i.imgur.com/Pb6i7HE.png" alt="" style="width: 709px; height: 562px;"></p>
+<p><img src="https://i.imgur.com/f9Di4BZ.png" alt="" style="width: 706px; height: 435px;"></p>
+<p>
+
+
+    They adapt to the shape of the surface and, using parallax, they can even give a perforation effect and everything.</p>
+<p><img src="https://i.imgur.com/MX1lAwn.png" alt="" style="width: 907px; height: 457px;"></p>
+<p>
+
+
+    Unfortunately I have no clue at all about graphics stuff (decals are usually applied using Shaders and depend on the render pipeline you've chosen. I don't even know the differences between pipelines).<br>
+
+    </p><p>So I'll do something much simpler, without details like depth or adapting to the shape.<br>
+    It'll be a texture that I'll place wherever the player is mining.<br>
+
+    </p><p>We start by looking for a breaking sprite:</p>
+<p><img src="https://i.imgur.com/uLYdtvS.png" alt="" style="width: 581px; height: 58px;"></p>
+<p>
+
+
+    We save it as a texture, assign the texture to a material and tweak the background transparency and the offset on it so only part of the texture is visible.<br>
+
+    </p><p>Now comes the nasty part, the code.<br>
+    My idea is to create a class that handles its positioning and movement. At any given time we'll have just 1 animation, which we'll keep moving to whichever brick it belongs to.<br>
+
+    </p><p>The class will need to have the texture "frames"/offsets where each image is shown. We'll only put the animation in the scene if it actually gets used, so there are no extra objects.<br>
+
+    </p><p>Every so often while you're mining I'm already playing a sound effect, so we'll use that spot to advance the animation:</p>
+<p><img src="https://i.imgur.com/0V2n3lZ.png" alt="" style="width: 657px; height: 169px;"></p>
+<p>
+
+
+    To figure out where to put it, we'll use the raycasting done earlier to know which block you want to mine. From it we can get the hit point and the angle. We can't use the hit point directly, because it's exactly where the face of the brick's model is. That leads to a problem known as "z fighting":</p>
+<p><img src="https://i.imgur.com/uGQDOmU.gif" alt="" style="width: 681px; height: 544px;"></p>
+<p>
+
+
+    It's not very noticeable, but it's that flickering, the fight between showing the block's texture or the breaking one.<br>
+
+    As a fix we can use the model's position: depending on where it is, we'll move the animation a tiiiiny bit forward/backward:</p>
+<p><img src="https://i.imgur.com/qWOoU7x.png" alt="" style="width: 798px; height: 85px;"></p>
+<p>
+
+
+    Much better:<br>
+
+
+    With this, there's just one detail left, the size of the animation:</p>
+<p><img src="https://i.imgur.com/ecul1XT.png" alt="" style="width: 675px; height: 434px;"></p>
+<p>
+
+
+    I can't think of any fix. If we always showed the animation in the center of the face, it'd just be a matter of using its height, but the hit point can be anywhere on the brick, so it'll always end up sticking out unless a decal is used <br>
+
+    </p><p>I'll have to get serious about graphics and start understanding what it's all about, time to do some research:</p>
+<p>
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/j1cadH71rtg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""><br></iframe>
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/5MuA92xUJCA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""><br></iframe>
+</p>
+<p>
+
+
+
+
+
+    After this it's clear there are 2 paths to choose from when it comes to pipelines:<br>
+    - URP: Meant for mobile and 2d, with new tools and lights for 2d.<br>
+    - HDRP: Meant for PC/consoles, with RTX support, new light types, fabric shader, a built-in decal system, etc..<br>
+    - BuiltIn: The system the project currently uses.</p><p><br>
+
+    And, at least for me, it's even clearer which one to pick -> HDRP.<br>
+    The game isn't 2d and the focus is for it to run on my gaming laptop, not on a phone. I won't be the one using all of HDRP's new features, but decals are something I want.<br>
+
+    </p><p>I've migrated the project to HDRP. Some things broke along the way, like the preview of the block you're about to place, but I think everything is fixed now.<br>
+
+    </p><p>Now we can get back to the original topic, the decal.<br>
+    HDRP has a component called Decal Projector, and thanks to it we can put our texture over the block without it sticking out weirdly.<br>
+    The class I had written to spawn the texture, position it and animate it works almost perfectly with the Decal Projector. Thank goodness, we didn't waste our time.</p>
+<p><img src="https://i.imgur.com/GOAxlCF.gif" alt="" style="width: 567px; height: 552px;"></p>
+<p>
+
+
+    It doesn't stick out anymore!<br>
+
+    </p><p>The drawing is ugly as hell.<br>
+
+    Something like this + depth would be way cooler:</p>
+<p><img src="https://1067544234.rsc.cdn77.org/photoThumbnail/2014-09/13761-141558/damage-decals-high-resolution-decal-damaged-texture_640v640.png" alt="" style="width: 449px; height: 304px;"></p>
+<p>
+
+    Too bad I'm not good at this stuff.</p><p><br>
+</p><h2>
+    Mini building improvement</h2>
+<p>I noticed something else that was pretty demoralizing: every time you aimed at a different stud, the object's rotation got lost, so it was a constant fight:</p>
+<p><img src="https://i.imgur.com/s4rB9vj.gif" alt="" style="width: 781px; height: 385px;"></p>
+<p>
+
+
+    After a tweak the behavior feels more natural now:</p>
+<p><img src="https://i.imgur.com/grNWdCr.gif" alt="" style="width: 778px; height: 384px;"></p>
+<p>
+
+
+    I built the little house again to see if there was any visual difference:</p>
+<p><img src="https://i.imgur.com/fjpoEtK.png" alt="" style="width: 1045px; height: 596px;"></p>
+<p>
+
+
+    Old lighting/pipeline:</p>
+<p><img src="https://i.imgur.com/XjAM0zg.png" alt="" style="width: 1040px; height: 627px;"></p>
+<p>
+
+
+    It looks a bit more washed out, although I like that you can see vivid colors and not the depressing ones from before.</p>
+
+<p style="text-align: center;">
+    <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+        <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+        https://github.com/tetreum/brickcraft</a>
+</p>

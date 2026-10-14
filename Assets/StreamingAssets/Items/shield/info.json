@@ -1,0 +1,13 @@
+{
+    "name": "Shield",
+    "type": "armor",
+    "brickModel": "3846UV",
+    "slot": "offhand",
+    "armor": 3,
+    "durability": 336,
+    "held": {
+        "grip": [0, 0.18, 0.2],
+        "rotation": [0, 180, 0],
+        "scale": 0.6
+    }
+}

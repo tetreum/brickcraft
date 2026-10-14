@@ -1,0 +1,136 @@
+{
+    "name": "7102",
+    "type": "solid",
+    "geometry": {
+        "file": "7102.json",
+        "extras": {
+            "logos": [],
+            "knobs": [
+                {
+                    "transform": {
+                        "position": [
+                            23.318,
+                            0,
+                            1.5
+                        ],
+                        "quaternion": [
+                            0.70711,
+                            0,
+                            0,
+                            0.70711
+                        ]
+                    },
+                    "type": 2
+                },
+                {
+                    "transform": {
+                        "position": [
+                            23.318,
+                            0,
+                            -1.5
+                        ],
+                        "quaternion": [
+                            0,
+                            -0.70711,
+                            0.70711,
+                            0
+                        ]
+                    },
+                    "type": 2
+                }
+            ],
+            "pins": [],
+            "tubes": []
+        }
+    },
+    "points": [
+        {
+            "transform": {
+                "position": [
+                    0,
+                    0,
+                    0
+                ],
+                "quaternion": [
+                    0,
+                    0,
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "transform": {
+                "position": [
+                    13.04,
+                    9.73,
+                    -0.04
+                ],
+                "quaternion": [
+                    0,
+                    0,
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "transform": {
+                "position": [
+                    23.318,
+                    0,
+                    1.5
+                ],
+                "quaternion": [
+                    0.70711,
+                    0,
+                    0,
+                    0.70711
+                ]
+            }
+        },
+        {
+            "transform": {
+                "position": [
+                    23.318,
+                    0,
+                    -1.5
+                ],
+                "quaternion": [
+                    0,
+                    -0.70711,
+                    0.70711,
+                    0
+                ]
+            }
+        }
+    ],
+    "normals": [
+        {
+            "file": "7102_1.png",
+            "uv": 0,
+            "bevel": true,
+            "repeat": false
+        }
+    ],
+    "bumps": [
+        {
+            "file": "7102_1.png",
+            "uv": 1,
+            "strength": 1
+        }
+    ],
+    "roughness": [
+        {
+            "scale": 1.5,
+            "strength": 0.5,
+            "mask": {
+                "file": "br.png",
+                "uv": 2,
+                "channel": "r"
+            }
+        }
+    ],
+    "materials": [],
+    "decorationUvs": []
+}

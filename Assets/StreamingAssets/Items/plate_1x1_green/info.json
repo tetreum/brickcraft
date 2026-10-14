@@ -1,0 +1,8 @@
+{
+    "id": "plate_1x1_green",
+    "name": "A brick",
+    "type": "brick",
+    "brickModel": 3024,
+    "color": 10,
+    "colors": "all"
+}

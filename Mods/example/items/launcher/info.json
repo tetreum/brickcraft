@@ -1,0 +1,15 @@
+{
+    "name": "Launcher",
+    "type": "brick",
+    "brickModel": 3003,
+    "color": 4,
+    "recipes": [
+        {
+            "quantity": 1,
+            "ingredients": [
+                { "id": "sturdy_brick", "quantity": 1, "slot": 1 },
+                { "id": "dirt", "quantity": 1, "slot": 2 }
+            ]
+        }
+    ]
+}

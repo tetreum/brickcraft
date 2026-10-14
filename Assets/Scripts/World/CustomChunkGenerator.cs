@@ -66,6 +66,12 @@ namespace Brickcraft.World.CustomGenerator
         {
 
             InitGen();
+
+            // random features depend only on the seed and the chunk, not on which thread generated
+            // which chunk before, so every player of a multiplayer game gets the same world
+            long chunkSeed = _Seed ^ ((long)x * 341873128712L) ^ ((long)z * 132897987541L);
+            _FastRandom = new FastRandom(chunkSeed);
+            r = new Random((int)(chunkSeed ^ (chunkSeed >> 32)));
 #if PROFILE
             Stopwatch watch = new Stopwatch();
             watch.Start();
@@ -253,13 +259,14 @@ namespace Brickcraft.World.CustomGenerator
 
         private void GenerateCactus(Chunk c, int x, int y, int z)
         {
-            int height = (_FastRandom.randomInt() + 1) % 3;
+            // 1 to 3 blocks on top of the sand
+            int height = Math.Abs(_FastRandom.randomInt() % 3) + 1;
 
             if (!CanSeeTheSky(x, y + 1, z, c))
                 return;
 
-            for (int by = height; by < y + height; ++y)
-                c.SetType(x, y, z, BlockType.Cactus, false);
+            for (int by = y + 1; by <= y + height && by < Chunk.NumSlices * Chunk.SliceHeight; ++by)
+                c.SetType(x, by, z, BlockType.Cactus, false);
         }
 
         private void GenerateTree(Chunk c, int x, int y, int z)

@@ -1,0 +1,28 @@
+{
+    "name": "Brickcraft.Tests.PlayMode",
+    "rootNamespace": "Brickcraft.Tests",
+    "references": [
+        "Brickcraft",
+        "Brickcraft.UI",
+        "Brickcraft.Events",
+        "Mirror",
+        "Unity.InputSystem.TestFramework",
+        "Unity.InputSystem",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "MoonSharp.Interpreter.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

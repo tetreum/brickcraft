@@ -1,0 +1,13 @@
+{
+    "name": "Sword",
+    "type": "weapon",
+    "brickModel": "98370",
+    "damage": 5,
+    "attackSpeed": 1.6,
+    "durability": 250,
+    "held": {
+        "grip": [0, 0.15, 0],
+        "rotation": [40, 0, 0],
+        "scale": 0.5
+    }
+}

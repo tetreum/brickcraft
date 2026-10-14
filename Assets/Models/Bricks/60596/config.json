@@ -1,0 +1,217 @@
+{
+    "name": "60596",
+    "type": "solid",
+    "geometry": {
+        "file": "60596.json",
+        "extras": {
+            "logos": [
+                {
+                    "transform": {
+                        "position": [
+                            -4,
+                            57.6,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            -0.70711,
+                            0,
+                            0.70711
+                        ]
+                    },
+                    "type": 4
+                },
+                {
+                    "transform": {
+                        "position": [
+                            4,
+                            57.6,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            -0.70711,
+                            0,
+                            0.70711
+                        ]
+                    },
+                    "type": 2
+                }
+            ],
+            "knobs": [
+                {
+                    "transform": {
+                        "position": [
+                            -4,
+                            57.6,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0,
+                            0,
+                            1
+                        ]
+                    },
+                    "type": 2
+                },
+                {
+                    "transform": {
+                        "position": [
+                            4,
+                            57.6,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0,
+                            0,
+                            1
+                        ]
+                    },
+                    "type": 2
+                }
+            ],
+            "pins": [
+                {
+                    "transform": {
+                        "position": [
+                            -8,
+                            0,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0,
+                            0,
+                            1
+                        ]
+                    },
+                    "type": 2
+                },
+                {
+                    "transform": {
+                        "position": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0,
+                            0,
+                            1
+                        ]
+                    },
+                    "type": 2
+                },
+                {
+                    "transform": {
+                        "position": [
+                            8,
+                            0,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0,
+                            0,
+                            1
+                        ]
+                    },
+                    "type": 2
+                }
+            ],
+            "tubes": []
+        }
+    },
+    "points": [
+        {
+            "transform": {
+                "position": [
+                    0,
+                    0,
+                    0
+                ],
+                "quaternion": [
+                    0,
+                    0,
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "transform": {
+                "position": [
+                    0,
+                    57.6,
+                    0
+                ],
+                "quaternion": [
+                    0,
+                    0,
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "transform": {
+                "position": [
+                    -12.9,
+                    29.6,
+                    2
+                ],
+                "quaternion": [
+                    0,
+                    0,
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "transform": {
+                "position": [
+                    0,
+                    29.6,
+                    2
+                ],
+                "quaternion": [
+                    0,
+                    0,
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "transform": {
+                "position": [
+                    12.9,
+                    29.6,
+                    2
+                ],
+                "quaternion": [
+                    0,
+                    1,
+                    0,
+                    0
+                ]
+            }
+        }
+    ],
+    "normals": [
+        {
+            "file": "60596_1.png",
+            "uv": 0,
+            "bevel": true,
+            "repeat": false
+        }
+    ],
+    "bumps": [],
+    "roughness": [],
+    "materials": [],
+    "decorationUvs": []
+}

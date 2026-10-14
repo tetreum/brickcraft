@@ -1,0 +1,1352 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 831c6bea22eaf29408f88c9d1fc162ed, type: 3}
+  m_Name: BrickColorPalette
+  m_EditorClassIdentifier: 
+  colors:
+  - id: 0
+    name: Black
+    hex: 05131D
+    isTransparent: 0
+    material: {fileID: 2100000, guid: e96350debe99ebb4e93be623a98af558, type: 2}
+    bricklinkId: 11
+    ldrawId: 0
+  - id: 1
+    name: Blue
+    hex: 0055BF
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 32c68ad8a84be7847abce7560e7ca97a, type: 2}
+    bricklinkId: 7
+    ldrawId: 1
+  - id: 2
+    name: Green
+    hex: 237841
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 37daea93cc552e442a91c58f5462ad26, type: 2}
+    bricklinkId: 6
+    ldrawId: 2
+  - id: 3
+    name: Dark Turquoise
+    hex: 008F9B
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 167a1fb364d7b75458fde678986509d3, type: 2}
+    bricklinkId: 39
+    ldrawId: 3
+  - id: 4
+    name: Red
+    hex: C91A09
+    isTransparent: 0
+    material: {fileID: 2100000, guid: c6eeb5171d626e846a8c05a5e3bbdf24, type: 2}
+    bricklinkId: 5
+    ldrawId: 4
+  - id: 5
+    name: Dark Pink
+    hex: C870A0
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 15cc0ee55f111a649b9154cb582975b0, type: 2}
+    bricklinkId: 47
+    ldrawId: 5
+  - id: 6
+    name: Brown
+    hex: 583927
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 150a8e6c8ff5858449255cac129627aa, type: 2}
+    bricklinkId: 8
+    ldrawId: 6
+  - id: 7
+    name: Light Gray
+    hex: 9BA19D
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 3e119c4e5d459a24089b9e379136865d, type: 2}
+    bricklinkId: 9
+    ldrawId: 7
+  - id: 8
+    name: Dark Gray
+    hex: 6D6E5C
+    isTransparent: 0
+    material: {fileID: 2100000, guid: c8afd7dd3f437a0449552f6c459142fe, type: 2}
+    bricklinkId: 10
+    ldrawId: 8
+  - id: 9
+    name: Light Blue
+    hex: B4D2E3
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 471fdb39e4916ee40a7410bd9d8cdc28, type: 2}
+    bricklinkId: 62
+    ldrawId: 9
+  - id: 10
+    name: Bright Green
+    hex: 4B9F4A
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 04b0f3f39b6d741409896baa79104bc7, type: 2}
+    bricklinkId: 36
+    ldrawId: 10
+  - id: 11
+    name: Light Turquoise
+    hex: 55A5AF
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 948789b72bb011042af76a1bf960d693, type: 2}
+    bricklinkId: 40
+    ldrawId: 11
+  - id: 12
+    name: Salmon
+    hex: F2705E
+    isTransparent: 0
+    material: {fileID: 2100000, guid: bb9dcfc38c3969042a6ae3474493212b, type: 2}
+    bricklinkId: 25
+    ldrawId: 12
+  - id: 13
+    name: Pink
+    hex: FC97AC
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 68714f0c4ab46a5418dd6b25af6dce71, type: 2}
+    bricklinkId: 23
+    ldrawId: 13
+  - id: 14
+    name: Yellow
+    hex: F2CD37
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 4e3d25265201cc947bb6a157d7f82a65, type: 2}
+    bricklinkId: 3
+    ldrawId: 14
+  - id: 15
+    name: White
+    hex: FFFFFF
+    isTransparent: 0
+    material: {fileID: 2100000, guid: fd5bd48ed250cb94299cef1e753b215b, type: 2}
+    bricklinkId: 1
+    ldrawId: 15
+  - id: 17
+    name: Light Green
+    hex: C2DAB8
+    isTransparent: 0
+    material: {fileID: 2100000, guid: a5340db4936504d409c2da9f3637c2fd, type: 2}
+    bricklinkId: 38
+    ldrawId: 17
+  - id: 18
+    name: Light Yellow
+    hex: FBE696
+    isTransparent: 0
+    material: {fileID: 2100000, guid: aeb7e096e4af37d4ca0d388cbac5a745, type: 2}
+    bricklinkId: 33
+    ldrawId: 18
+  - id: 19
+    name: Tan
+    hex: E4CD9E
+    isTransparent: 0
+    material: {fileID: 2100000, guid: d225e11999ae0364eadcf8d07c6edea2, type: 2}
+    bricklinkId: 2
+    ldrawId: 19
+  - id: 20
+    name: Light Violet
+    hex: C9CAE2
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 7a44983377d3d934f85780711e6ddf6d, type: 2}
+    bricklinkId: 44
+    ldrawId: 20
+  - id: 21
+    name: Glow In Dark Opaque
+    hex: D4D5C9
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 4069f5957a1951147b5de8165618e443, type: 2}
+    bricklinkId: 46
+    ldrawId: 21
+  - id: 22
+    name: Purple
+    hex: 81007B
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 86210169647712244a6ec0c21e54ca7e, type: 2}
+    bricklinkId: 24
+    ldrawId: 22
+  - id: 23
+    name: Dark Blue-Violet
+    hex: 2032B0
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 506ddd64bb728c34f8753c56b22fb43d, type: 2}
+    bricklinkId: 109
+    ldrawId: 23
+  - id: 25
+    name: Orange
+    hex: FE8A18
+    isTransparent: 0
+    material: {fileID: 2100000, guid: d4ee516e6eb14144b810e41271f6feeb, type: 2}
+    bricklinkId: 4
+    ldrawId: 25
+  - id: 26
+    name: Magenta
+    hex: 923978
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 04f03ffad3c2a6f43b43c48a3ce1edf7, type: 2}
+    bricklinkId: 71
+    ldrawId: 26
+  - id: 27
+    name: Lime
+    hex: BBE90B
+    isTransparent: 0
+    material: {fileID: 2100000, guid: ff2ffcdb0c43a4b45bd541388aa65c31, type: 2}
+    bricklinkId: 34
+    ldrawId: 27
+  - id: 28
+    name: Dark Tan
+    hex: 958A73
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 88b17038a9d9190448e1a90519f5863f, type: 2}
+    bricklinkId: 69
+    ldrawId: 28
+  - id: 29
+    name: Bright Pink
+    hex: E4ADC8
+    isTransparent: 0
+    material: {fileID: 2100000, guid: b092c818d0b43bc48a963a5b6400c414, type: 2}
+    bricklinkId: 104
+    ldrawId: 29
+  - id: 30
+    name: Medium Lavender
+    hex: AC78BA
+    isTransparent: 0
+    material: {fileID: 2100000, guid: c5220003fe7ea3e4d82768de3e379d31, type: 2}
+    bricklinkId: 157
+    ldrawId: 30
+  - id: 31
+    name: Lavender
+    hex: E1D5ED
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 995b13036e594834dbf78762da0d09e3, type: 2}
+    bricklinkId: 154
+    ldrawId: 31
+  - id: 32
+    name: Trans-Black IR Lens
+    hex: 635F52
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 23aa8bc9accea9a4f812b095806409aa, type: 2}
+    bricklinkId: -1
+    ldrawId: 32
+  - id: 33
+    name: Trans-Dark Blue
+    hex: 0020A0
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 4477a2bac58281a499ba2c6bc617b380, type: 2}
+    bricklinkId: 14
+    ldrawId: 33
+  - id: 34
+    name: Trans-Green
+    hex: 84B68D
+    isTransparent: 1
+    material: {fileID: 2100000, guid: d424fbe4450930a4899ec2aab471779f, type: 2}
+    bricklinkId: 20
+    ldrawId: 34
+  - id: 35
+    name: Trans-Bright Green
+    hex: D9E4A7
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 529398d596da40e48ba90c2f6bad2f86, type: 2}
+    bricklinkId: 108
+    ldrawId: 35
+  - id: 36
+    name: Trans-Red
+    hex: C91A09
+    isTransparent: 1
+    material: {fileID: 2100000, guid: d8695af373bb68d4a93d16c25e2641c1, type: 2}
+    bricklinkId: 17
+    ldrawId: 36
+  - id: 40
+    name: Trans-Brown
+    hex: 635F52
+    isTransparent: 1
+    material: {fileID: 2100000, guid: be242eef40e73ab4b886c93073f60be2, type: 2}
+    bricklinkId: 13
+    ldrawId: 40
+  - id: 41
+    name: Trans-Light Blue
+    hex: AEEFEC
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 61ea6e2f0eacec744b9cf1013feb38a2, type: 2}
+    bricklinkId: 15
+    ldrawId: 43
+  - id: 42
+    name: Trans-Neon Green
+    hex: F8F184
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 20b36e8c061a7ea428da9b4f63a4ee73, type: 2}
+    bricklinkId: 16
+    ldrawId: 42
+  - id: 43
+    name: Trans-Very Lt Blue
+    hex: C1DFF0
+    isTransparent: 1
+    material: {fileID: 2100000, guid: ec082c6d60937144d91a4fa74df3907f, type: 2}
+    bricklinkId: 113
+    ldrawId: 43
+  - id: 45
+    name: Trans-Dark Pink
+    hex: DF6695
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 26e3b7972f31d874581ed935bbbfbf8b, type: 2}
+    bricklinkId: 50
+    ldrawId: 37
+  - id: 46
+    name: Trans-Yellow
+    hex: F5CD2F
+    isTransparent: 1
+    material: {fileID: 2100000, guid: f8cb6cffa161cae408e7369804c01ac1, type: 2}
+    bricklinkId: 19
+    ldrawId: 46
+  - id: 47
+    name: Trans-Clear
+    hex: FCFCFC
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 197ab33a89987c64592a4051acec47d9, type: 2}
+    bricklinkId: 12
+    ldrawId: 47
+  - id: 52
+    name: Trans-Purple
+    hex: A5A5CB
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 8094c2520cc747e47b17b869fbea4715, type: 2}
+    bricklinkId: 51
+    ldrawId: 52
+  - id: 54
+    name: Trans-Neon Yellow
+    hex: DAB000
+    isTransparent: 1
+    material: {fileID: 2100000, guid: d80f738140c27204b9e527a640fa7cb8, type: 2}
+    bricklinkId: 121
+    ldrawId: 54
+  - id: 57
+    name: Trans-Neon Orange
+    hex: FF800D
+    isTransparent: 1
+    material: {fileID: 2100000, guid: cef5867296d33a543a8bc984306f2019, type: 2}
+    bricklinkId: 18
+    ldrawId: 38
+  - id: 60
+    name: Chrome Antique Brass
+    hex: 645A4C
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 04619ec997a5a3a48a15175f653c4bef, type: 2}
+    bricklinkId: 57
+    ldrawId: 60
+  - id: 61
+    name: Chrome Blue
+    hex: 6C96BF
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 6ea6f7d93185be14ca50527b0236b55f, type: 2}
+    bricklinkId: 52
+    ldrawId: 61
+  - id: 62
+    name: Chrome Green
+    hex: 3CB371
+    isTransparent: 0
+    material: {fileID: 2100000, guid: c0f1b894d6bdd99479498dc0566ed407, type: 2}
+    bricklinkId: 64
+    ldrawId: 62
+  - id: 63
+    name: Chrome Pink
+    hex: AA4D8E
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 92d439a95e8027541bd913bf6fd3d940, type: 2}
+    bricklinkId: 82
+    ldrawId: 63
+  - id: 64
+    name: Chrome Black
+    hex: 1B2A34
+    isTransparent: 0
+    material: {fileID: 2100000, guid: b429fc26a482d3b4d888a97eefba4dc1, type: 2}
+    bricklinkId: 122
+    ldrawId: 64
+  - id: 68
+    name: Very Light Orange
+    hex: F3CF9B
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 3a9cbaad8ebb0874fadc90bef22c27e5, type: 2}
+    bricklinkId: 96
+    ldrawId: 68
+  - id: 69
+    name: Light Purple
+    hex: CD6298
+    isTransparent: 0
+    material: {fileID: 2100000, guid: bdd3f6db64b07b44b93d52ff2596920f, type: 2}
+    bricklinkId: 93
+    ldrawId: -1
+  - id: 70
+    name: Reddish Brown
+    hex: 582A12
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 49ec42e1080b2c2479b276bc322129f4, type: 2}
+    bricklinkId: 88
+    ldrawId: 70
+  - id: 71
+    name: Light Bluish Gray
+    hex: A0A5A9
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 3bd319d3d291a1145ae0489e6fdbbc01, type: 2}
+    bricklinkId: 86
+    ldrawId: 71
+  - id: 72
+    name: Dark Bluish Gray
+    hex: 6C6E68
+    isTransparent: 0
+    material: {fileID: 2100000, guid: aafdee4a13a3aad4895b9368ab01e2de, type: 2}
+    bricklinkId: 85
+    ldrawId: 72
+  - id: 73
+    name: Medium Blue
+    hex: 5A93DB
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 3971a812bb9b2a3478077bb7f7b30923, type: 2}
+    bricklinkId: 42
+    ldrawId: 73
+  - id: 74
+    name: Medium Green
+    hex: 73DCA1
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 97f0bcdf8e504cd44b658d16afd1bb4d, type: 2}
+    bricklinkId: 37
+    ldrawId: 74
+  - id: 75
+    name: Speckle Black-Copper
+    hex: 05131D
+    isTransparent: 0
+    material: {fileID: 2100000, guid: a5b9bd67be3459145b63940f2d75847d, type: 2}
+    bricklinkId: 116
+    ldrawId: 75
+  - id: 76
+    name: Speckle DBGray-Silver
+    hex: 6C6E68
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 374b2e1521b03984baf174c4725b5a9c, type: 2}
+    bricklinkId: -1
+    ldrawId: 76
+  - id: 77
+    name: Light Pink
+    hex: FECCCF
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 418fd6a36df610848af3793206d90f66, type: 2}
+    bricklinkId: -1
+    ldrawId: 77
+  - id: 78
+    name: Light Nougat
+    hex: F6D7B3
+    isTransparent: 0
+    material: {fileID: 2100000, guid: c90c738877e75584f8a524605edc2338, type: 2}
+    bricklinkId: 90
+    ldrawId: 78
+  - id: 79
+    name: Milky White
+    hex: FFFFFF
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 6aca90016c38053419b7e3e3e549f34d, type: 2}
+    bricklinkId: 60
+    ldrawId: 79
+  - id: 80
+    name: Metallic Silver
+    hex: A5A9B4
+    isTransparent: 0
+    material: {fileID: 2100000, guid: c5a49c65fd9f79e4a8f7e35d7b5d2760, type: 2}
+    bricklinkId: 67
+    ldrawId: 80
+  - id: 81
+    name: Metallic Green
+    hex: 899B5F
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 68ab22a1ffb43f04f9ee14cf7e0202aa, type: 2}
+    bricklinkId: 70
+    ldrawId: 81
+  - id: 82
+    name: Metallic Gold
+    hex: DBAC34
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 6faf2aa1ba5db454a8571c47fe364470, type: 2}
+    bricklinkId: 65
+    ldrawId: 82
+  - id: 84
+    name: Medium Nougat
+    hex: AA7D55
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 3810b0aefdfa85b42b94dab20636afad, type: 2}
+    bricklinkId: 150
+    ldrawId: 84
+  - id: 85
+    name: Dark Purple
+    hex: 3F3691
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 3ac9fb335e372a44c85a27de0d817336, type: 2}
+    bricklinkId: 89
+    ldrawId: 85
+  - id: 86
+    name: Light Brown
+    hex: 7C503A
+    isTransparent: 0
+    material: {fileID: 2100000, guid: f96576dbcfd24e647a507345506bc373, type: 2}
+    bricklinkId: 91
+    ldrawId: 86
+  - id: 89
+    name: Royal Blue
+    hex: 4C61DB
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 7dc5a9c74c1e01d41a45232a79520a8f, type: 2}
+    bricklinkId: 97
+    ldrawId: -1
+  - id: 92
+    name: Nougat
+    hex: D09168
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 7524579838cb1ec45a67b38ac536383a, type: 2}
+    bricklinkId: 28
+    ldrawId: 92
+  - id: 100
+    name: Light Salmon
+    hex: FEBABD
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 1883c00d9f10449498569ed8ad7b95fe, type: 2}
+    bricklinkId: 26
+    ldrawId: 100
+  - id: 110
+    name: Violet
+    hex: 4354A3
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 3a0228093c8298648a125bcb9bdc978c, type: 2}
+    bricklinkId: 43
+    ldrawId: 110
+  - id: 112
+    name: Medium Bluish Violet
+    hex: 6874CA
+    isTransparent: 0
+    material: {fileID: 2100000, guid: ca31e6d4e5df0d54ba6c097ceaf5da12, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 114
+    name: Glitter Trans-Dark Pink
+    hex: DF6695
+    isTransparent: 1
+    material: {fileID: 2100000, guid: e3d0ef3e06891324a99ed0d6eab56554, type: 2}
+    bricklinkId: 100
+    ldrawId: 114
+  - id: 115
+    name: Medium Lime
+    hex: C7D23C
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 14017b656819dd1429ed57faf3958a91, type: 2}
+    bricklinkId: 76
+    ldrawId: 115
+  - id: 117
+    name: Glitter Trans-Clear
+    hex: FFFFFF
+    isTransparent: 1
+    material: {fileID: 2100000, guid: aae43f04e1208fb4d903604c5379cae4, type: 2}
+    bricklinkId: 101
+    ldrawId: 117
+  - id: 118
+    name: Aqua
+    hex: B3D7D1
+    isTransparent: 0
+    material: {fileID: 2100000, guid: d31f4ca3372f5034dbc7c6562e6f3166, type: 2}
+    bricklinkId: 41
+    ldrawId: 118
+  - id: 120
+    name: Light Lime
+    hex: D9E4A7
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 4623d65cecdbe1b489015576f7b5840e, type: 2}
+    bricklinkId: 35
+    ldrawId: 120
+  - id: 125
+    name: Light Orange
+    hex: F9BA61
+    isTransparent: 0
+    material: {fileID: 2100000, guid: ce277946fda26db4a9f531685c25405b, type: 2}
+    bricklinkId: 32
+    ldrawId: 121
+  - id: 129
+    name: Glitter Trans-Purple
+    hex: A5A5CB
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 3387fc3566f94aa42b841cc1ee41da13, type: 2}
+    bricklinkId: 102
+    ldrawId: 129
+  - id: 132
+    name: Speckle Black-Silver
+    hex: 05131D
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 10547d3df7e7e9e44a2346382039f8d7, type: 2}
+    bricklinkId: 111
+    ldrawId: 132
+  - id: 133
+    name: Speckle Black-Gold
+    hex: 05131D
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 0eab4406502c3714a809eb1de5b4b750, type: 2}
+    bricklinkId: 151
+    ldrawId: 133
+  - id: 134
+    name: Copper
+    hex: AE7A59
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 73f197d296186ef489d778c559b9a1e4, type: 2}
+    bricklinkId: 84
+    ldrawId: 134
+  - id: 135
+    name: Pearl Light Gray
+    hex: 9CA3A8
+    isTransparent: 0
+    material: {fileID: 2100000, guid: b10f1948c15602343a0fd80d86825ffb, type: 2}
+    bricklinkId: 66
+    ldrawId: 135
+  - id: 137
+    name: Pearl Sand Blue
+    hex: 7988A1
+    isTransparent: 0
+    material: {fileID: 2100000, guid: f4ada5bd2c8da9e408aac5afdad46cb6, type: 2}
+    bricklinkId: 78
+    ldrawId: -1
+  - id: 142
+    name: Pearl Light Gold
+    hex: DCBC81
+    isTransparent: 0
+    material: {fileID: 2100000, guid: d2df509730fc0694e873a3cf894ad95d, type: 2}
+    bricklinkId: 61
+    ldrawId: 142
+  - id: 143
+    name: Trans-Medium Blue
+    hex: CFE2F7
+    isTransparent: 1
+    material: {fileID: 2100000, guid: d4d7b2eb6fd00b743a0c2be8347814b4, type: 2}
+    bricklinkId: 74
+    ldrawId: 41
+  - id: 148
+    name: Pearl Dark Gray
+    hex: 575857
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 0a02bed396c6e15488bde169412f7528, type: 2}
+    bricklinkId: 77
+    ldrawId: 148
+  - id: 150
+    name: Pearl Very Light Gray
+    hex: ABADAC
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 89d887487d19d704ab906cea3a0443e8, type: 2}
+    bricklinkId: 119
+    ldrawId: 150
+  - id: 151
+    name: Very Light Bluish Gray
+    hex: E6E3E0
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 4921a2aa0ad51724aa9c21f1d6bb769c, type: 2}
+    bricklinkId: 99
+    ldrawId: 151
+  - id: 158
+    name: Yellowish Green
+    hex: DFEEA5
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 576f620cfd7ea9a4cb22241d39d37451, type: 2}
+    bricklinkId: 158
+    ldrawId: 326
+  - id: 178
+    name: Flat Dark Gold
+    hex: B48455
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 2b49128be015a744a9b401a9e845eb9d, type: 2}
+    bricklinkId: 81
+    ldrawId: -1
+  - id: 179
+    name: Flat Silver
+    hex: 898788
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 9ba7f5c704708434fbf763e84d67ac39, type: 2}
+    bricklinkId: 95
+    ldrawId: 179
+  - id: 182
+    name: Trans-Orange
+    hex: F08F1C
+    isTransparent: 1
+    material: {fileID: 2100000, guid: b66b97e3ca6e69f408471af6376f02cf, type: 2}
+    bricklinkId: 98
+    ldrawId: 57
+  - id: 183
+    name: Pearl White
+    hex: F2F3F2
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 4fb36645f99daf3419de6f4159846b8d, type: 2}
+    bricklinkId: 83
+    ldrawId: 183
+  - id: 191
+    name: Bright Light Orange
+    hex: F8BB3D
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 5669c29b2955c2247927f8937738e916, type: 2}
+    bricklinkId: 110
+    ldrawId: 191
+  - id: 212
+    name: Bright Light Blue
+    hex: 9FC3E9
+    isTransparent: 0
+    material: {fileID: 2100000, guid: bfa9f5a679f38e341b1203ba836c7489, type: 2}
+    bricklinkId: 105
+    ldrawId: 212
+  - id: 216
+    name: Rust
+    hex: B31004
+    isTransparent: 0
+    material: {fileID: 2100000, guid: d751ab67c3c66af49be3aa3098f7c5d5, type: 2}
+    bricklinkId: 27
+    ldrawId: 216
+  - id: 226
+    name: Bright Light Yellow
+    hex: FFF03A
+    isTransparent: 0
+    material: {fileID: 2100000, guid: a48dbbdd93008b943b638599762aef87, type: 2}
+    bricklinkId: 103
+    ldrawId: 226
+  - id: 230
+    name: Trans-Pink
+    hex: E4ADC8
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 724afbb3f0b892f4884c539156332796, type: 2}
+    bricklinkId: 107
+    ldrawId: 45
+  - id: 232
+    name: Sky Blue
+    hex: 7DBFDD
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 908404628fc5208498666d809cc4c1a5, type: 2}
+    bricklinkId: 87
+    ldrawId: 232
+  - id: 236
+    name: Trans-Light Purple
+    hex: 96709F
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 3321c8a27b021a74abbf319ec0cc98f3, type: 2}
+    bricklinkId: 114
+    ldrawId: -1
+  - id: 272
+    name: Dark Blue
+    hex: 0A3463
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 6fc3c56e9347011408dbc4365c109f1a, type: 2}
+    bricklinkId: 63
+    ldrawId: 272
+  - id: 288
+    name: Dark Green
+    hex: 184632
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 4655ba6bb746f2449b10fc4ea6a6180c, type: 2}
+    bricklinkId: 80
+    ldrawId: 288
+  - id: 294
+    name: Glow In Dark Trans
+    hex: BDC6AD
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 9e7e122c67c14544588dd9addfe02004, type: 2}
+    bricklinkId: 118
+    ldrawId: 294
+  - id: 297
+    name: Pearl Gold
+    hex: AA7F2E
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 64a11339d31d28149b86e11c4ff0cb43, type: 2}
+    bricklinkId: 115
+    ldrawId: 297
+  - id: 308
+    name: Dark Brown
+    hex: 352100
+    isTransparent: 0
+    material: {fileID: 2100000, guid: d04a111d8f4dd50438a66e5a06d93302, type: 2}
+    bricklinkId: 120
+    ldrawId: 308
+  - id: 313
+    name: Maersk Blue
+    hex: 3592C3
+    isTransparent: 0
+    material: {fileID: 2100000, guid: c1f514ff3ca899648b7efa51c5a8f5d0, type: 2}
+    bricklinkId: 72
+    ldrawId: 313
+  - id: 320
+    name: Dark Red
+    hex: 720E0F
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 5388974c26d488545bb0acdd40144a91, type: 2}
+    bricklinkId: 59
+    ldrawId: 320
+  - id: 321
+    name: Dark Azure
+    hex: 078BC9
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 929a65845cceff740bef383415f400c1, type: 2}
+    bricklinkId: 153
+    ldrawId: 321
+  - id: 322
+    name: Medium Azure
+    hex: 36AEBF
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 3d660e4207072894c9b6efe6721202e5, type: 2}
+    bricklinkId: 156
+    ldrawId: 322
+  - id: 323
+    name: Light Aqua
+    hex: ADC3C0
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 92a956120e9bd7b44a1e25a5d744771c, type: 2}
+    bricklinkId: 152
+    ldrawId: 323
+  - id: 326
+    name: Olive Green
+    hex: 9B9A5A
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 260b44e6e910f39448777e660cbbc3b6, type: 2}
+    bricklinkId: 155
+    ldrawId: 330
+  - id: 334
+    name: Chrome Gold
+    hex: BBA53D
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 48c992759c812f248936b8b1c884d776, type: 2}
+    bricklinkId: 21
+    ldrawId: 334
+  - id: 335
+    name: Sand Red
+    hex: D67572
+    isTransparent: 0
+    material: {fileID: 2100000, guid: f9fd8fb774f66e849bf7f5822c084759, type: 2}
+    bricklinkId: 58
+    ldrawId: 335
+  - id: 351
+    name: Medium Dark Pink
+    hex: F785B1
+    isTransparent: 0
+    material: {fileID: 2100000, guid: b802b712c0baa8143b7419f8c0b98803, type: 2}
+    bricklinkId: 94
+    ldrawId: 351
+  - id: 366
+    name: Earth Orange
+    hex: FA9C1C
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 1124920b18775fd45b35cbfc216680e2, type: 2}
+    bricklinkId: 29
+    ldrawId: 366
+  - id: 373
+    name: Sand Purple
+    hex: 845E84
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 16a8c43b0a2df7a479ce0d6192d450d6, type: 2}
+    bricklinkId: 54
+    ldrawId: 373
+  - id: 378
+    name: Sand Green
+    hex: A0BCAC
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 25d669ebe345a4446884fbcebd684ff9, type: 2}
+    bricklinkId: 48
+    ldrawId: 378
+  - id: 379
+    name: Sand Blue
+    hex: 6074A1
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 8a0774d5c950e3d4d8dd7b34f1b16d7d, type: 2}
+    bricklinkId: 55
+    ldrawId: 379
+  - id: 383
+    name: Chrome Silver
+    hex: E0E0E0
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 26ff7cbc961b2fa41b5a4ade377d9bac, type: 2}
+    bricklinkId: 22
+    ldrawId: 383
+  - id: 462
+    name: Medium Orange
+    hex: FFA70B
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 4517fb0d9a8a4eb47824da67aa3037f8, type: 2}
+    bricklinkId: 31
+    ldrawId: 462
+  - id: 484
+    name: Dark Orange
+    hex: A95500
+    isTransparent: 0
+    material: {fileID: 2100000, guid: f94b89a298ab17d40ab9672b426d45d2, type: 2}
+    bricklinkId: 68
+    ldrawId: 484
+  - id: 503
+    name: Very Light Gray
+    hex: E6E3DA
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 87bb6eca91176a74c951d24419e3131a, type: 2}
+    bricklinkId: 49
+    ldrawId: 503
+  - id: 1000
+    name: Glow in Dark White
+    hex: D9D9D9
+    isTransparent: 0
+    material: {fileID: 2100000, guid: b7fed3f6e9fcf684493edbf3ea1c7863, type: 2}
+    bricklinkId: 159
+    ldrawId: 329
+  - id: 1001
+    name: Medium Violet
+    hex: 9391E4
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 5b1a71ac9eef4b3469c4b29235eb11eb, type: 2}
+    bricklinkId: 73
+    ldrawId: 112
+  - id: 1002
+    name: Glitter Trans-Neon Green
+    hex: C0F500
+    isTransparent: 1
+    material: {fileID: 2100000, guid: e02e04adbce056e4584ddc44642050d1, type: 2}
+    bricklinkId: 163
+    ldrawId: 339
+  - id: 1003
+    name: Glitter Trans-Light Blue
+    hex: 68BCC5
+    isTransparent: 1
+    material: {fileID: 2100000, guid: d6f4b7eacdd600b488ded9a69adc165f, type: 2}
+    bricklinkId: 162
+    ldrawId: 302
+  - id: 1004
+    name: Trans-Flame Yellowish Orange
+    hex: FCB76D
+    isTransparent: 1
+    material: {fileID: 2100000, guid: db32f321b3476ba4589af4510a4229d4, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1005
+    name: Trans-Fire Yellow
+    hex: FBE890
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 728b7f93f3925fa48b75a326304cef37, type: 2}
+    bricklinkId: -1
+    ldrawId: 234
+  - id: 1006
+    name: Trans-Light Royal Blue
+    hex: B4D4F7
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 4d84a3aaf1691c84f8785171a9afa37d, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1007
+    name: Reddish Lilac
+    hex: 8E5597
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 32b5c3fb58793994888219ffd4ff513c, type: 2}
+    bricklinkId: -1
+    ldrawId: 218
+  - id: 1008
+    name: Vintage Blue
+    hex: 039CBD
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 3a5f13bc3163e6841a783e9eccf40487, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1009
+    name: Vintage Green
+    hex: 1E601E
+    isTransparent: 0
+    material: {fileID: 2100000, guid: b33767988ed23e3429c5b923476ccad3, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1010
+    name: Vintage Red
+    hex: CA1F08
+    isTransparent: 0
+    material: {fileID: 2100000, guid: b5da357f7f8d7394f82c35d2f36bdefc, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1011
+    name: Vintage Yellow
+    hex: F3C305
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 9d162db225f5594428daa97f9782e149, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1050
+    name: Coral
+    hex: FF698F
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 061e75477671ecc43a6a3899144ad3bd, type: 2}
+    bricklinkId: 220
+    ldrawId: 353
+  - id: 1051
+    name: Pastel Blue
+    hex: 5AC4DA
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 6688923749f3dd348b198b2589b5da6d, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1052
+    name: Glitter Trans-Orange
+    hex: F08F1C
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 00fe05d4c5d7a284586a5ecdac5112a9, type: 2}
+    bricklinkId: 222
+    ldrawId: 341
+  - id: 1053
+    name: Opal Trans-Light Blue
+    hex: 68BCC5
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 838f23191914d754e830d70b22c94f26, type: 2}
+    bricklinkId: 223
+    ldrawId: 362
+  - id: 1054
+    name: Opal Trans-Dark Pink
+    hex: CE1D9B
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 0587f914f44a13f4e99e8131cd45f7fa, type: 2}
+    bricklinkId: 224
+    ldrawId: 364
+  - id: 1055
+    name: Opal Trans-Clear
+    hex: FCFCFC
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 6c0b55dff33d9424db87dae788f8636a, type: 2}
+    bricklinkId: 228
+    ldrawId: 360
+  - id: 1056
+    name: Opal Trans-Brown
+    hex: 583927
+    isTransparent: 1
+    material: {fileID: 2100000, guid: a5d8b38a3c9da4648bb864b2e62381c4, type: 2}
+    bricklinkId: 229
+    ldrawId: -1
+  - id: 1057
+    name: Trans-Light Bright Green
+    hex: C9E788
+    isTransparent: 1
+    material: {fileID: 2100000, guid: a7e3f1b1af03af54d9ea6e7de2aaf0a4, type: 2}
+    bricklinkId: 226
+    ldrawId: -1
+  - id: 1058
+    name: Trans-Light Green
+    hex: 94E5AB
+    isTransparent: 1
+    material: {fileID: 2100000, guid: b0b5996363fdf6f4298c7a259505760c, type: 2}
+    bricklinkId: 221
+    ldrawId: 285
+  - id: 1059
+    name: Opal Trans-Purple
+    hex: 8320B7
+    isTransparent: 1
+    material: {fileID: 2100000, guid: ba53d6a88fe7cbf42b24e3a433994462, type: 2}
+    bricklinkId: 230
+    ldrawId: 365
+  - id: 1060
+    name: Opal Trans-Bright Green
+    hex: 84B68D
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 4bd4a53014337de47b55c1a39fde93e4, type: 2}
+    bricklinkId: 233
+    ldrawId: 367
+  - id: 1061
+    name: Opal Trans-Dark Blue
+    hex: 0020A0
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 037b3a1aa76832b4899711931e568c0a, type: 2}
+    bricklinkId: 232
+    ldrawId: 10366
+  - id: 1062
+    name: Vibrant Yellow
+    hex: EBD800
+    isTransparent: 0
+    material: {fileID: 2100000, guid: e8578a2bd09bddd41a483a9983d66b5e, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1063
+    name: Pearl Copper
+    hex: B46A00
+    isTransparent: 0
+    material: {fileID: 2100000, guid: eb32d104103483a44a2275107c56131e, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1065
+    name: Reddish Gold
+    hex: AC8247
+    isTransparent: 0
+    material: {fileID: 2100000, guid: f6f9498037aff964cbf637a7462c6bee, type: 2}
+    bricklinkId: 235
+    ldrawId: 189
+  - id: 1066
+    name: Curry
+    hex: DD982E
+    isTransparent: 0
+    material: {fileID: 2100000, guid: f01699f5405d5164eb026cbfd79a5a0b, type: 2}
+    bricklinkId: 161
+    ldrawId: -1
+  - id: 1067
+    name: Dark Nougat
+    hex: AD6140
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 0c150d8b4515cbd4c89a33f990557b53, type: 2}
+    bricklinkId: 225
+    ldrawId: 128
+  - id: 1068
+    name: Bright Reddish Orange
+    hex: EE5434
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 02e853808d05cba4c9776847e2c17a18, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1069
+    name: Pearl Red
+    hex: D60026
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 49adb98477f98b941846b6ce1c2c0f4f, type: 2}
+    bricklinkId: 252
+    ldrawId: 176
+  - id: 1070
+    name: Pearl Blue
+    hex: 0059A3
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 6018a052362f4274d8345f4af7bb267d, type: 2}
+    bricklinkId: 254
+    ldrawId: -1
+  - id: 1071
+    name: Pearl Green
+    hex: 008E3C
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 877f8a49cfaffbc41b0df1fa54dbadc9, type: 2}
+    bricklinkId: 253
+    ldrawId: -1
+  - id: 1072
+    name: Pearl Brown
+    hex: 57392C
+    isTransparent: 0
+    material: {fileID: 2100000, guid: eff3727096e1e3e4fb02a29ec73dfd63, type: 2}
+    bricklinkId: 255
+    ldrawId: 187
+  - id: 1073
+    name: Pearl Black
+    hex: 0A1327
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 8b5c2cfad8f434442b64522f38d834b6, type: 2}
+    bricklinkId: 244
+    ldrawId: 83
+  - id: 1080
+    name: Light Tan
+    hex: F3C988
+    isTransparent: 0
+    material: {fileID: 2100000, guid: dfb0572512519364b8e36e39327c77fe, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1081
+    name: Rust Orange
+    hex: 872B17
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 44e9affd3625ab247aeabe0cf53ec93e, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1083
+    name: Two-tone Copper
+    hex: 945148
+    isTransparent: 0
+    material: {fileID: 2100000, guid: bdf508f657cb264408df33d0cee38d84, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1084
+    name: Two-tone Gold
+    hex: AB673A
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 241ea880d52b01a48a908079c167de00, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1085
+    name: Two-tone Silver
+    hex: 737271
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 51316b03f552f794fb3a91014e57aeb2, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1086
+    name: Pearl Lime
+    hex: 6A7944
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 7c67e10b00c38bf45ae976c4ffb0998c, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1088
+    name: Medium Brown
+    hex: 755945
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 4d011abb1c0d1e74c9c6ca75590e0c53, type: 2}
+    bricklinkId: 240
+    ldrawId: 370
+  - id: 1089
+    name: Warm Tan
+    hex: CCA373
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 3ff7a730fe604314db8d39517805754c, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1091
+    name: Warm Yellowish Orange
+    hex: FFCB78
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 1a2d038ef4334a34f8ba46755d1d060b, type: 2}
+    bricklinkId: 172
+    ldrawId: 225
+  - id: 1092
+    name: Metallic Copper
+    hex: 764D3B
+    isTransparent: 0
+    material: {fileID: 2100000, guid: bbb6f8ec7fe38b74895e6218b1b98219, type: 2}
+    bricklinkId: 250
+    ldrawId: 300
+  - id: 1093
+    name: Light Lilac
+    hex: 9195CA
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 8054dbbdc51772543945be3d9049b864, type: 2}
+    bricklinkId: 246
+    ldrawId: 220
+  - id: 1094
+    name: Trans-Medium Purple
+    hex: 8D73B3
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 1bf9f3627b21fba4cb0902c4ec8d3d81, type: 2}
+    bricklinkId: 234
+    ldrawId: -1
+  - id: 1095
+    name: Trans-Black
+    hex: 635F52
+    isTransparent: 1
+    material: {fileID: 2100000, guid: c8366d3bd8ac3264bb402a7253fada00, type: 2}
+    bricklinkId: 251
+    ldrawId: 10375
+  - id: 1096
+    name: Glitter Trans-Bright Green
+    hex: D9E4A7
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 209d6501bcfafa642a3ff7cb5de46a23, type: 2}
+    bricklinkId: -1
+    ldrawId: 10351
+  - id: 1097
+    name: Glitter Trans-Medium Purple
+    hex: 8D73B3
+    isTransparent: 1
+    material: {fileID: 2100000, guid: c6953228185362542b4554c790bb44f5, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1098
+    name: Glitter Trans-Green
+    hex: 84B68D
+    isTransparent: 1
+    material: {fileID: 2100000, guid: a751440c098b8d4449c34b06de41afd9, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1099
+    name: Glitter Trans-Pink
+    hex: E4ADC8
+    isTransparent: 1
+    material: {fileID: 2100000, guid: fde84101530948c4a9de5a6ca25ef6e4, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1102
+    name: Trans-Neon Red
+    hex: FF0040
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 3dd31f0abc100c54990ab18cf844869a, type: 2}
+    bricklinkId: -1
+    ldrawId: 158
+  - id: 1103
+    name: Pearl Titanium
+    hex: 3E3C39
+    isTransparent: 0
+    material: {fileID: 2100000, guid: bc5737f3832332e4b94704f3ccc256fc, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1135
+    name: Metal
+    hex: A5ADB4
+    isTransparent: 0
+    material: {fileID: 2100000, guid: c494e9d21e02efc4e98133f0dc6d7ac9, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1136
+    name: Reddish Orange
+    hex: CA4C0B
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 78252874cc044e24db7efbaa51bfed54, type: 2}
+    bricklinkId: 167
+    ldrawId: 402
+  - id: 1137
+    name: Sienna Brown
+    hex: 915C3C
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 4318539591f52a842aecb459528c59f8, type: 2}
+    bricklinkId: 169
+    ldrawId: 422
+  - id: 1138
+    name: Umber Brown
+    hex: 5E3F33
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 9930bb2e818a96b458a35c1bd94d2aa7, type: 2}
+    bricklinkId: 168
+    ldrawId: 423
+  - id: 1139
+    name: Opal Trans-Yellow
+    hex: F5CD2F
+    isTransparent: 1
+    material: {fileID: 2100000, guid: 00fb44b7aa3772f4e8c12309766eddd9, type: 2}
+    bricklinkId: 170
+    ldrawId: 376
+  - id: 1140
+    name: Neon Orange
+    hex: EC4612
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 817e0cb9aa1672f48be8358cf53e8b88, type: 2}
+    bricklinkId: 165
+    ldrawId: -1
+  - id: 1141
+    name: Neon Green
+    hex: D2FC43
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 0d302078dea694f48926ba400a03de9b, type: 2}
+    bricklinkId: 166
+    ldrawId: -1
+  - id: 1142
+    name: Dark Olive Green
+    hex: 5d5c36
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 5e4745b6163bd1a4e86e0a00665b72a5, type: 2}
+    bricklinkId: 242
+    ldrawId: -1
+  - id: 1143
+    name: Glitter Milky White
+    hex: FFFFFF
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 0a76d34645220d44f89ea9c507ce35e0, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1144
+    name: Chrome Red
+    hex: CE3021
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 21d58e2dc71d5934ca1e19fa6dbb3e84, type: 2}
+    bricklinkId: -1
+    ldrawId: -1
+  - id: 1145
+    name: Ochre Yellow
+    hex: DD9E47
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 00fa308fd72301e4986e201a1c552721, type: 2}
+    bricklinkId: 173
+    ldrawId: 424
+  - id: 1146
+    name: Warm Pink
+    hex: F6B7BF
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 1e74900fcfb19894c9046d0c25dccbd7, type: 2}
+    bricklinkId: 175
+    ldrawId: 430
+  - id: 1147
+    name: Blue Violet
+    hex: A3A9FF
+    isTransparent: 0
+    material: {fileID: 2100000, guid: 4b9a8d631420bb245a0ef03723bbe11f, type: 2}
+    bricklinkId: 174
+    ldrawId: 89

@@ -1,0 +1,7 @@
+{
+    "name": "Parts Lister",
+    "type": "tool",
+    "brickModel": "14769uv",
+    "maxStack": 1,
+    "tags": ["partslister"]
+}

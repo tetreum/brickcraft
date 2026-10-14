@@ -1,0 +1,49 @@
+{
+    "name": "87994",
+    "type": "solid",
+    "geometry": {
+        "file": "87994.json",
+        "extras": {
+            "logos": [],
+            "knobs": [],
+            "pins": [],
+            "tubes": []
+        }
+    },
+    "points": [
+        {
+            "transform": {
+                "position": [
+                    0,
+                    0,
+                    0
+                ],
+                "quaternion": [
+                    0,
+                    0,
+                    0.707107,
+                    0.707107
+                ]
+            }
+        }
+    ],
+    "normals": [
+        {
+            "file": "87994_1.png",
+            "uv": 0,
+            "repeat": false
+        }
+    ],
+    "bumps": [
+        {
+            "file": "87994_1.png",
+            "uv": 1,
+            "strength": 1
+        }
+    ],
+    "roughness": [],
+    "materials": [],
+    "decorationUvs": [
+        0
+    ]
+}

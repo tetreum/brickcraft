@@ -1,0 +1,11 @@
+{
+    "id": "cobblestone",
+    "name": "Cobblestone 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "block": {
+        "digSound": "PickaxeDig",
+        "hardness": 3,
+        "drop": "stone"
+    }
+}

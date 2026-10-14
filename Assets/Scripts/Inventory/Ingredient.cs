@@ -2,7 +2,7 @@ namespace Brickcraft
 {
     public class Ingredient
     {
-        public int itemId;
+        public string itemId;
         public int quantity;
         public int slot;
     }

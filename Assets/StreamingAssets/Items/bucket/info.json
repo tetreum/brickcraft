@@ -1,0 +1,10 @@
+{
+    "name": "Bucket",
+    "type": "tool",
+    "brickModel": "95343",
+    "color": 72,
+    "maxStack": 16,
+    "bucket": {
+        "filled": "water_bucket"
+    }
+}

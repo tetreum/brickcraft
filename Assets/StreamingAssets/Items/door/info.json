@@ -1,0 +1,9 @@
+{
+    "id": "door",
+    "name": "Door 1x4x6",
+    "type": "brick",
+    "brickModel": "7102",
+    "ldrawShape": "60623",
+    "color": 70,
+    "colors": "all"
+}

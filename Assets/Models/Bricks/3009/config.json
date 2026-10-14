@@ -1,0 +1,253 @@
+{
+    "name": "3009",
+    "type": "solid",
+    "geometry": {
+        "file": "3009.json",
+        "extras": {
+            "logos": [
+                {
+                    "transform": {
+                        "position": [
+                            -20,
+                            11.4,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0.70711,
+                            0,
+                            0.70711
+                        ]
+                    },
+                    "type": 1
+                },
+                {
+                    "transform": {
+                        "position": [
+                            -12,
+                            11.4,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0.70711,
+                            0,
+                            0.70711
+                        ]
+                    },
+                    "type": 1
+                },
+                {
+                    "transform": {
+                        "position": [
+                            4,
+                            11.4,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0.70711,
+                            0,
+                            0.70711
+                        ]
+                    },
+                    "type": 1
+                },
+                {
+                    "transform": {
+                        "position": [
+                            12,
+                            11.4,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0.70711,
+                            0,
+                            0.70711
+                        ]
+                    },
+                    "type": 1
+                },
+                {
+                    "transform": {
+                        "position": [
+                            20,
+                            11.4,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0.70711,
+                            0,
+                            0.70711
+                        ]
+                    },
+                    "type": 1
+                },
+                {
+                    "transform": {
+                        "position": [
+                            -4,
+                            11.4,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0.70711,
+                            0,
+                            0.70711
+                        ]
+                    },
+                    "type": 3
+                }
+            ],
+            "knobs": [
+                {
+                    "transform": {
+                        "position": [
+                            -20,
+                            9.6,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0,
+                            0,
+                            1
+                        ]
+                    },
+                    "type": 1
+                },
+                {
+                    "transform": {
+                        "position": [
+                            -12,
+                            9.6,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0,
+                            0,
+                            1
+                        ]
+                    },
+                    "type": 1
+                },
+                {
+                    "transform": {
+                        "position": [
+                            -4,
+                            9.6,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0,
+                            0,
+                            1
+                        ]
+                    },
+                    "type": 1
+                },
+                {
+                    "transform": {
+                        "position": [
+                            4,
+                            9.6,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0,
+                            0,
+                            1
+                        ]
+                    },
+                    "type": 1
+                },
+                {
+                    "transform": {
+                        "position": [
+                            12,
+                            9.6,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0,
+                            0,
+                            1
+                        ]
+                    },
+                    "type": 1
+                },
+                {
+                    "transform": {
+                        "position": [
+                            20,
+                            9.6,
+                            0
+                        ],
+                        "quaternion": [
+                            0,
+                            0,
+                            0,
+                            1
+                        ]
+                    },
+                    "type": 1
+                }
+            ],
+            "pins": [],
+            "tubes": []
+        }
+    },
+    "points": [
+        {
+            "transform": {
+                "position": [
+                    0,
+                    0,
+                    0
+                ],
+                "quaternion": [
+                    0,
+                    0,
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "transform": {
+                "position": [
+                    0,
+                    9.6,
+                    0
+                ],
+                "quaternion": [
+                    0,
+                    0,
+                    0,
+                    1
+                ]
+            }
+        }
+    ],
+    "normals": [
+        {
+            "file": "3009_1.png",
+            "uv": 0,
+            "bevel": true,
+            "repeat": false
+        }
+    ],
+    "bumps": [],
+    "roughness": [],
+    "materials": [],
+    "decorationUvs": [
+        1
+    ]
+}

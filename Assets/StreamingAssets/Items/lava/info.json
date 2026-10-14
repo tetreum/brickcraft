@@ -1,0 +1,22 @@
+{
+    "id": "lava",
+    "name": "Lava 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "color": 4,
+    "block": {
+        "breakable": false,
+        "fluid": true,
+        "flow": {
+            "reach": 3,
+            "seconds": 1.5,
+            "hardens": {
+                "with": "water",
+                "source": "obsidian",
+                "flowing": "cobblestone",
+                "below": "stone"
+            },
+            "burns": true
+        }
+    }
+}

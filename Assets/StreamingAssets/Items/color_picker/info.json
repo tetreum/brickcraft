@@ -1,0 +1,10 @@
+{
+    "name": "Color Picker",
+    "type": "tool",
+    "brickModel": "93551p01",
+    "bricklinkId": "93551pb01",
+    "color": 15,
+    "colors": "all",
+    "maxStack": 1,
+    "tags": ["colorpicker"]
+}

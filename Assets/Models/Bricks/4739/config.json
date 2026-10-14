@@ -1,0 +1,138 @@
+{
+    "name": "4739",
+    "type": "solid",
+    "geometry": {
+        "file": "4739.json",
+        "extras": {
+            "logos": [
+                {
+                    "transform": {
+                        "position": [
+                            -12,
+                            9.6,
+                            6.6
+                        ],
+                        "quaternion": [
+                            0,
+                            0.70711,
+                            0,
+                            0.70711
+                        ]
+                    },
+                    "type": 1
+                },
+                {
+                    "transform": {
+                        "position": [
+                            -4,
+                            9.6,
+                            6.6
+                        ],
+                        "quaternion": [
+                            0,
+                            0.70711,
+                            0,
+                            0.70711
+                        ]
+                    },
+                    "type": 1
+                },
+                {
+                    "transform": {
+                        "position": [
+                            12,
+                            9.6,
+                            6.6
+                        ],
+                        "quaternion": [
+                            0,
+                            0.70711,
+                            0,
+                            0.70711
+                        ]
+                    },
+                    "type": 1
+                },
+                {
+                    "transform": {
+                        "position": [
+                            4,
+                            9.6,
+                            6.6
+                        ],
+                        "quaternion": [
+                            0,
+                            0.70711,
+                            0,
+                            0.70711
+                        ]
+                    },
+                    "type": 3
+                }
+            ],
+            "knobs": [],
+            "pins": [],
+            "tubes": []
+        }
+    },
+    "points": [
+        {
+            "transform": {
+                "position": [
+                    0,
+                    0,
+                    0
+                ],
+                "quaternion": [
+                    0,
+                    0,
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "transform": {
+                "position": [
+                    0,
+                    7.8,
+                    6.6
+                ],
+                "quaternion": [
+                    0,
+                    0,
+                    0,
+                    1
+                ]
+            }
+        }
+    ],
+    "normals": [
+        {
+            "file": "4739_1.png",
+            "uv": 0,
+            "bevel": true,
+            "repeat": false
+        }
+    ],
+    "bumps": [
+        {
+            "file": "4739_2.png",
+            "uv": 2,
+            "strength": 1
+        }
+    ],
+    "roughness": [
+        {
+            "scale": 1.5,
+            "strength": 0.5,
+            "mask": {
+                "file": "br.png",
+                "uv": 1,
+                "channel": "r"
+            }
+        }
+    ],
+    "materials": [],
+    "decorationUvs": []
+}

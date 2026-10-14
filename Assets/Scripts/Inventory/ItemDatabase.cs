@@ -1,0 +1,528 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Brickcraft.Bricks;
+using Brickcraft.Mods;
+using Brickcraft.World;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using UnityEngine;
+
+namespace Brickcraft
+{
+    /// <summary>
+    /// Every item: the game's own, loaded before the first scene loads, and those of the mods of the
+    /// world being played (see ModDatabase), loaded again with them when it starts. Each item has its
+    /// own folder, StreamingAssets/Items/[item]/ (or Mods/[mod]/items/[item]/), which holds:
+    ///   info.json       what the item is, see <see cref="ItemInfo"/>: its kind, its world block if it
+    ///                   has one (brick items), and the recipes that craft it
+    ///   icon.png        inventory icon, its block's top (or every side) texture otherwise
+    ///   and the block's textures and models, see <see cref="BlockDatabase"/>
+    ///
+    /// To add an item, add a new folder (it also works in builds, where the folder is at
+    /// [Game]_Data/StreamingAssets/Items). A folder with the id of another item replaces it.
+    ///
+    /// Mod items are "[mod]:[item]". Item ids in a mod's info.json (recipe ingredients, drops) are
+    /// first looked for in the mod ("wheel" is "[mod]:wheel" if the mod has it), then in the game.
+    /// </summary>
+    public static class ItemDatabase
+    {
+        public const string Folder = "Items";
+        public const string InfoFile = "info.json";
+        public const string IconFile = "icon.png";
+
+        /// <summary>Crafting grid slots, 1 to 4.</summary>
+        public const int CraftingSlots = 4;
+
+        // their info and mod, to build the recipes once every item is known
+        private static readonly Dictionary<string, ItemInfo> infos = new Dictionary<string, ItemInfo>();
+        private static readonly Dictionary<string, ModInfo> modOf = new Dictionary<string, ModInfo>();
+
+        // the game's own items, until a world is played with its mods
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void loadGameItems() {
+            Load(new ModInfo[0]);
+        }
+
+        /// <summary>Loads the game's items and those of the mods (see ModDatabase.Activate), replacing the loaded ones.</summary>
+        public static void Load(IList<ModInfo> mods) {
+            BrickColorPalette.Load(); // blocks and items need the colours
+            BrickModels.Index(mods); // mods' items can be made of their models
+            foreach (Item old in Server.items.Values) {
+                if (old.iconTexture != null) {
+                    TerrainTextures.Destroy(old.iconTexture);
+                }
+            }
+            Server.items.Clear();
+            Recipes.All.Clear();
+            infos.Clear();
+            modOf.Clear();
+            BlockDatabase.BeginLoading();
+
+            string folder = Path.Combine(Application.streamingAssetsPath, Folder);
+            if (Directory.Exists(folder)) {
+                loadFolder(folder, null);
+            } else {
+                Debug.LogError("Items folder not found: " + folder);
+            }
+            foreach (ModInfo mod in mods) {
+                if (Directory.Exists(mod.ItemsFolder)) {
+                    loadFolder(mod.ItemsFolder, mod);
+                }
+            }
+            loadLDrawCatalog();
+
+            BlockDatabase.FinishLoading();
+            resolveDrops();
+            resolveAmmo();
+            resolveBuckets();
+            loadRecipes();
+            Npcs.NpcDatabase.Load(mods); // their drops are items
+        }
+
+        private static void loadFolder(string folder, ModInfo mod) {
+            string[] itemFolders = Directory.GetDirectories(folder);
+            Array.Sort(itemFolders, StringComparer.Ordinal); // deterministic overrides
+
+            foreach (string itemFolder in itemFolders) {
+                string file = Path.Combine(itemFolder, InfoFile);
+
+                if (!File.Exists(file)) {
+                    Debug.LogWarning("Item folder " + itemFolder + " has no " + InfoFile + ", skipping it");
+                    continue;
+                }
+                loadItem(itemFolder, file, mod);
+            }
+        }
+
+        // an item id written in an info.json: the mod's item if it has one with that name, otherwise the game's
+        private static string resolve(string id, ModInfo mod) {
+            if (string.IsNullOrEmpty(id) || mod == null || id.Contains(":")) {
+                return id;
+            }
+            string own = mod.id + ":" + id;
+            return Server.items.ContainsKey(own) ? own : id;
+        }
+
+        /// <summary>The item of an LDraw part of the catalogue (see Bricks.LDraw.LDrawLibrary): "part_" and its part number.</summary>
+        public const string LDrawItemPrefix = "part_";
+        /// <summary>Their colour until another is picked (they can have any).</summary>
+        public const int LDrawItemColor = 71;
+        /// <summary>The colour of glass parts of the catalogue (Trans-Light Blue), which only can be transparent.</summary>
+        public const int LDrawGlassColor = 41;
+        // the catalogue's glass: "Glass for Window 1x2x3"..., and windscreens with integral glass (not frames "for Glass")
+        private static readonly System.Text.RegularExpressions.Regex GlassPart = new System.Text.RegularExpressions.Regex(
+            @"^Glass\b|^Windscreen\b.*\bGlass\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        // a brick item for every part of the LDraw catalogue (any colour, named like LDraw does), unless one has its id
+        private static void loadLDrawCatalog() {
+            foreach (Bricks.LDraw.LDrawPart part in Bricks.LDraw.LDrawLibrary.Catalog) {
+                string id = LDrawItemPrefix + part.id;
+                if (Server.items.ContainsKey(id) || !Slugs.IsValid(id)) {
+                    continue;
+                }
+                string partId = part.id;
+                bool glass = part.name != null && GlassPart.IsMatch(part.name);
+                Item item = new Item() {
+                    id = id,
+                    name = part.name,
+                    type = Item.Type.Brick,
+                    folder = Bricks.LDraw.LDrawLibrary.Root,
+                    brickModelId = partId,
+                    color = glass ? LDrawGlassColor : LDrawItemColor,
+                    anyColor = true,
+                    transparentOnly = glass,
+                    iconColor = LDrawItemColor, // the catalogue's icons, see LDrawLibrary.LoadIcon
+                    iconLoader = () => Bricks.LDraw.LDrawLibrary.LoadIcon(partId),
+                };
+                item.tags.Add("ldraw");
+                if (!string.IsNullOrEmpty(part.category)) {
+                    item.tags.Add(part.category.Trim().ToLowerInvariant());
+                }
+                Server.items[id] = item;
+            }
+        }
+
+        // drops can name items loaded after the block's
+        private static void resolveDrops() {
+            foreach (KeyValuePair<string, ModInfo> entry in modOf) {
+                Item item = Server.items[entry.Key];
+                if (entry.Value != null && item.blockType.HasValue) {
+                    BlockDefinition block = BlockDatabase.Get(item.blockType.Value);
+                    block.dropItemId = resolve(block.dropItemId, entry.Value);
+                }
+            }
+        }
+
+        private static void loadItem(string folder, string file, ModInfo mod) {
+            ItemInfo info;
+            try {
+                info = JsonConvert.DeserializeObject<ItemInfo>(File.ReadAllText(file));
+            } catch (Exception e) {
+                Debug.LogError("Invalid item file " + file + ": " + e.Message);
+                return;
+            }
+            if (info == null) {
+                Debug.LogError("Empty item file " + file);
+                return;
+            }
+
+            string id = string.IsNullOrEmpty(info.id) ? Path.GetFileName(folder) : info.id;
+            if (!Slugs.IsValid(id)) {
+                Debug.LogError("Item file " + file + " has the id \"" + id + "\", ids are " + Slugs.Rules);
+                return;
+            }
+            if (mod != null) {
+                if (id.Contains(":")) {
+                    Debug.LogError("Item file " + file + " has the id \"" + id + "\", mod item ids don't have a prefix (it's the mod's: " + mod.id + ":)");
+                    return;
+                }
+                id = mod.id + ":" + id;
+            }
+            if (string.IsNullOrEmpty(info.name)) {
+                Debug.LogError("Item file " + file + " needs a name");
+                return;
+            }
+            Item.Type type;
+            if (!Enum.TryParse(info.type, true, out type) || !Enum.IsDefined(typeof(Item.Type), type)) {
+                Debug.LogError("Item file " + file + " has the type \"" + info.type + "\", types are brick, armor, weapon, food, material and tool");
+                return;
+            }
+            int layer = 0;
+            if (!string.IsNullOrEmpty(info.layer)) {
+                Game.Layers named;
+                if (!Enum.TryParse(info.layer, true, out named)) {
+                    Debug.LogError("Item file " + file + " has the layer \"" + info.layer + "\", layers are " + string.Join(", ", Enum.GetNames(typeof(Game.Layers))));
+                    return;
+                }
+                layer = (int)named;
+            }
+
+            if (Server.items.ContainsKey(id)) {
+                Debug.LogWarning("Item folder " + folder + " replaces the item " + id + " of " + Server.items[id].folder);
+                BlockDatabase.RemoveBlock(id);
+            }
+
+            if (info.color.HasValue && BrickColorPalette.Get(info.color.Value) == null) {
+                Debug.LogError("Item file " + file + " has the color " + info.color.Value + ", which isn't in the palette (Resources/BrickColorPalette)");
+                return;
+            }
+
+            string iconPath = iconFor(folder);
+            Item item = new Item() {
+                id = id,
+                name = info.name,
+                type = type,
+                folder = folder,
+                maxStack = Math.Max(1, info.maxStack),
+                damage = Math.Max(0, info.damage ?? Item.HandDamage),
+                brickModelId = BrickModels.Resolve(info.brickModel, mod),
+                materialName = info.material,
+                layer = layer,
+                iconFile = iconPath,
+                iconTexture = loadIcon(iconPath),
+                color = info.color ?? BrickColor.None,
+            };
+            if (!loadColors(item, info.colors, file)) {
+                return;
+            }
+            if (!loadStats(item, info, file, mod)) {
+                return;
+            }
+            item.storageSlots = Math.Max(1, Math.Min(info.storageSlots, Item.MaxStorageSlots));
+            foreach (string tag in info.tags ?? new string[0]) {
+                if (!string.IsNullOrWhiteSpace(tag)) {
+                    item.tags.Add(tag.Trim().ToLowerInvariant());
+                }
+            }
+            if (item.iconTexture == null && item.color != BrickColor.None) {
+                item.iconTexture = colorIcon(BrickColorPalette.Get(item.color));
+            }
+
+            // brick items can be a world block too
+            if (info.block != null) {
+                if (type != Item.Type.Brick) {
+                    Debug.LogError("Item file " + file + " has a block, only bricks can");
+                } else {
+                    BlockDefinition block = BlockDatabase.AddBlock(folder, id, info.block, item.color);
+                    if (block != null) {
+                        item.blockType = (BlockType)block.id;
+                    }
+                }
+            }
+
+            Server.items[id] = item;
+            infos[id] = info;
+            modOf[id] = mod;
+        }
+
+        // weapons' and armor's: how they hit, where they're worn, how long they last
+        private static bool loadStats(Item item, ItemInfo info, string file, ModInfo mod) {
+            item.durability = Math.Max(0, info.durability);
+            item.bricklinkId = string.IsNullOrWhiteSpace(info.bricklinkId) ? null : info.bricklinkId.Trim();
+            item.ldrawId = string.IsNullOrWhiteSpace(info.ldrawId) ? null : info.ldrawId.Trim().ToLowerInvariant();
+            item.ldrawShape = string.IsNullOrWhiteSpace(info.ldrawShape) ? null : info.ldrawShape.Trim().ToLowerInvariant();
+            item.ldr = info.ldr;
+            if (item.ldr && !File.Exists(Path.Combine(item.folder, Bricks.LDraw.LDrawContraption.FileName))) {
+                Debug.LogError("Item file " + file + " has \"ldr\": true but its folder has no " + Bricks.LDraw.LDrawContraption.FileName);
+                item.ldr = false;
+            }
+            if (info.attackSpeed.HasValue) {
+                if (info.attackSpeed.Value <= 0) {
+                    Debug.LogError("Item file " + file + " has the attackSpeed " + info.attackSpeed.Value + ", hits a second should be more than 0");
+                    return false;
+                }
+                item.attackSpeed = info.attackSpeed.Value;
+            }
+            if (!string.IsNullOrEmpty(info.ammo)) {
+                if (item.type != Item.Type.Weapon) {
+                    Debug.LogError("Item file " + file + " has ammo, only weapons can");
+                    return false;
+                }
+                item.ammo = info.ammo; // resolved once every item is known, see resolveAmmo
+                item.range = Math.Max(1, info.range ?? DefaultRange);
+                item.drawTime = Math.Max(0.05f, info.drawTime ?? Item.DefaultDrawTime);
+            }
+            if (item.type == Item.Type.Armor) {
+                Item.ArmorSlot slot;
+                if (string.IsNullOrEmpty(info.slot) || !Enum.TryParse(info.slot, true, out slot) || slot == Item.ArmorSlot.None || !Enum.IsDefined(typeof(Item.ArmorSlot), slot)) {
+                    Debug.LogError("Item file " + file + " is armor with the slot \"" + info.slot + "\", slots are head, chest, legs, feet and offhand");
+                    return false;
+                }
+                item.armorSlot = slot;
+                item.armor = Math.Max(0, info.armor);
+            } else if (!string.IsNullOrEmpty(info.slot) || info.armor != 0) {
+                Debug.LogError("Item file " + file + " has a slot or armor, only armor can");
+                return false;
+            }
+            if (info.held != null) {
+                if ((info.held.grip != null && info.held.grip.Length != 3) || (info.held.rotation != null && info.held.rotation.Length != 3) || info.held.scale <= 0) {
+                    Debug.LogError("Item file " + file + " has an invalid held: grip and rotation are [x, y, z], scale more than 0");
+                    return false;
+                }
+                item.hasHeld = true;
+                item.heldGrip = info.held.grip != null ? new Vector3(info.held.grip[0], info.held.grip[1], info.held.grip[2]) : Vector3.zero;
+                item.heldRotation = info.held.rotation != null ? Quaternion.Euler(info.held.rotation[0], info.held.rotation[1], info.held.rotation[2]) : Quaternion.identity;
+                item.heldScale = info.held.scale;
+            }
+            if (info.digSpeed.HasValue) {
+                if (info.digSpeed.Value < 1) {
+                    Debug.LogError("Item file " + file + " has the digSpeed " + info.digSpeed.Value + ", it's how many times faster than a hand: 1 or more");
+                    return false;
+                }
+                item.digSpeed = info.digSpeed.Value;
+            }
+            if (info.light != null) {
+                if (info.light.range <= 0 || info.light.intensity <= 0 || (info.light.color != null && info.light.color.Length != 3)) {
+                    Debug.LogError("Item file " + file + " has an invalid light: range and intensity more than 0, color [r, g, b]");
+                    return false;
+                }
+                item.light = info.light;
+            }
+            if (info.bucket != null) {
+                // the items they name are checked once every item is known, see checkBuckets
+                item.bucket = info.bucket;
+            }
+            if (info.heal != 0) {
+                if (info.heal < 0 || item.type != Item.Type.Food) {
+                    Debug.LogError("Item file " + file + " has the heal " + info.heal + ": the health food gives back, more than 0");
+                    return false;
+                }
+                item.heal = info.heal;
+            }
+            // each one wears on its own: they don't stack
+            if (item.type == Item.Type.Armor || item.durability > 0) {
+                item.maxStack = 1;
+            }
+            return true;
+        }
+
+        /// <summary>How far ranged weapons shoot when their info.json doesn't say.</summary>
+        public const float DefaultRange = 60;
+
+        // ammo can name items loaded after the weapon's
+        private static void resolveAmmo() {
+            foreach (KeyValuePair<string, ModInfo> entry in modOf) {
+                Item item = Server.items[entry.Key];
+                if (!item.IsRanged) {
+                    continue;
+                }
+                item.ammo = resolve(item.ammo, entry.Value);
+                if (!Server.items.ContainsKey(item.ammo)) {
+                    Debug.LogError("Item " + item.id + " shoots \"" + item.ammo + "\", which doesn't exist");
+                    item.ammo = null;
+                }
+            }
+        }
+
+        // buckets name items loaded after theirs too: an empty one what it becomes full, a full one its liquid (a
+        // block's item) and what it becomes empty
+        private static void resolveBuckets() {
+            foreach (KeyValuePair<string, ModInfo> entry in modOf) {
+                Item item = Server.items[entry.Key];
+                BucketInfo bucket = item.bucket;
+                if (bucket == null) {
+                    continue;
+                }
+                BucketInfo resolved = new BucketInfo() {
+                    filled = string.IsNullOrEmpty(bucket.filled) ? null : resolve(bucket.filled, entry.Value),
+                    liquid = string.IsNullOrEmpty(bucket.liquid) ? null : resolve(bucket.liquid, entry.Value),
+                    empty = string.IsNullOrEmpty(bucket.empty) ? null : resolve(bucket.empty, entry.Value),
+                };
+                string error = null;
+                if (resolved.filled != null && (!Server.items.TryGetValue(resolved.filled, out Item full) || full.bucket == null || full.bucket.liquid == null)) {
+                    error = "becomes \"" + bucket.filled + "\" full, which isn't a bucket with a liquid";
+                } else if (resolved.liquid != null && (!Server.items.TryGetValue(resolved.liquid, out Item liquid) || !liquid.blockType.HasValue)) {
+                    error = "pours \"" + bucket.liquid + "\", which isn't an item with a block";
+                } else if (resolved.liquid != null && (resolved.empty == null || !Server.items.ContainsKey(resolved.empty))) {
+                    error = "pours a liquid but becomes \"" + bucket.empty + "\" empty, which doesn't exist";
+                } else if (resolved.filled == null && resolved.liquid == null) {
+                    error = "is a bucket without \"filled\" (empty ones) nor \"liquid\" (full ones)";
+                }
+                if (error != null) {
+                    Debug.LogError("Item " + item.id + " " + error);
+                    item.bucket = null;
+                    continue;
+                }
+                item.bucket = resolved;
+            }
+        }
+
+        // "colors": "all", "transparent" (any of them, for glass), or a list of colour ids
+        private static bool loadColors(Item item, JToken colors, string file) {
+            if (colors == null || colors.Type == JTokenType.Null) {
+                return true;
+            }
+            if (item.color == BrickColor.None) {
+                Debug.LogError("Item file " + file + " has colors but no default color");
+                return false;
+            }
+            if (colors.Type == JTokenType.String && (string)colors == "transparent") {
+                item.anyColor = true;
+                item.transparentOnly = true;
+                return true;
+            }
+            if (colors.Type == JTokenType.String && (string)colors == "all") {
+                item.anyColor = true;
+                return true;
+            }
+            if (colors.Type != JTokenType.Array) {
+                Debug.LogError("Item file " + file + " has invalid colors, they're \"all\", \"transparent\" or a list of colour ids");
+                return false;
+            }
+            foreach (JToken color in colors) {
+                if (color.Type != JTokenType.Integer || BrickColorPalette.Get((int)color) == null) {
+                    Debug.LogError("Item file " + file + " has the color " + color + ", which isn't in the palette (Resources/BrickColorPalette)");
+                    return false;
+                }
+                item.colors.Add((int)color);
+            }
+            return true;
+        }
+
+        // once every item is known, so recipes can use any of them
+        private static void loadRecipes() {
+            foreach (KeyValuePair<string, ItemInfo> entry in infos) {
+                if (entry.Value.recipes == null) {
+                    continue;
+                }
+                for (int i = 0; i < entry.Value.recipes.Length; i++) {
+                    Recipe recipe = toRecipe(entry.Key, i, entry.Value.recipes[i]);
+                    if (recipe != null) {
+                        Recipes.All.Add(recipe);
+                    }
+                }
+            }
+            infos.Clear();
+        }
+
+        private static Recipe toRecipe(string itemId, int index, RecipeInfo info) {
+            string where = "Recipe " + (index + 1) + " of " + itemId;
+
+            if (info == null || info.ingredients == null || info.ingredients.Length == 0) {
+                Debug.LogError(where + " has no ingredients");
+                return null;
+            }
+            if (info.quantity < 1) {
+                Debug.LogError(where + " makes " + info.quantity + " items, it should make at least 1");
+                return null;
+            }
+
+            List<Ingredient> ingredients = new List<Ingredient>();
+            HashSet<int> slots = new HashSet<int>();
+            foreach (IngredientInfo ingredient in info.ingredients) {
+                string ingredientId = ingredient != null ? resolve(ingredient.id, modOf[itemId]) : null;
+                if (string.IsNullOrEmpty(ingredientId) || !Server.items.ContainsKey(ingredientId)) {
+                    Debug.LogError(where + " uses the item \"" + ingredientId + "\", which doesn't exist");
+                    return null;
+                }
+                if (ingredient.slot < 1 || ingredient.slot > CraftingSlots || !slots.Add(ingredient.slot)) {
+                    Debug.LogError(where + " puts " + ingredient.id + " in slot " + ingredient.slot + ", slots are 1 to " + CraftingSlots + ", one ingredient each");
+                    return null;
+                }
+                if (ingredient.quantity < 1) {
+                    Debug.LogError(where + " needs " + ingredient.quantity + " " + ingredient.id + ", it should need at least 1");
+                    return null;
+                }
+                ingredients.Add(new Ingredient() { itemId = ingredientId, quantity = ingredient.quantity, slot = ingredient.slot });
+            }
+
+            return new Recipe() {
+                id = itemId + "#" + (index + 1),
+                itemId = itemId,
+                quantity = info.quantity,
+                ingredients = ingredients.ToArray(),
+            };
+        }
+
+        // icon.png, or the texture of the block's top, so items without an icon don't show blank
+        private static string iconFor(string folder) {
+            foreach (string file in new[] { IconFile, "top.png", BlockDatabase.TextureFile }) {
+                string path = Path.Combine(folder, file);
+                if (File.Exists(path)) {
+                    return path;
+                }
+            }
+            return Path.Combine(folder, IconFile);
+        }
+
+        // items without an icon nor textures: a square of their colour
+        private static Texture2D colorIcon(BrickColor color) {
+            const int size = 16;
+            Texture2D icon = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            icon.name = color.name;
+            icon.filterMode = FilterMode.Point;
+
+            Color32 fill = color.Color32;
+            Color32 border = new Color32((byte)(fill.r * 0.7f), (byte)(fill.g * 0.7f), (byte)(fill.b * 0.7f), 255);
+            Color32[] pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    bool edge = x == 0 || y == 0 || x == size - 1 || y == size - 1;
+                    pixels[y * size + x] = edge ? border : fill;
+                }
+            }
+            icon.SetPixels32(pixels);
+            icon.Apply();
+            return icon;
+        }
+
+        private static Texture2D loadIcon(string path) {
+            if (!File.Exists(path)) {
+                return null;
+            }
+            Texture2D icon = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            icon.name = path;
+            if (Path.GetFileName(path) != IconFile) {
+                icon.filterMode = FilterMode.Point; // block textures are pixel art
+            }
+
+            if (!icon.LoadImage(File.ReadAllBytes(path))) {
+                Debug.LogError("Unsupported icon file " + path);
+                TerrainTextures.Destroy(icon);
+                return null;
+            }
+            return icon;
+        }
+    }
+}

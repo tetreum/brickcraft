@@ -1,0 +1,18 @@
+{
+    "id": "still_water",
+    "name": "Still Water 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "material": "Water",
+    "layer": "Water",
+    "block": {
+        "breakable": false,
+        "fluid": true,
+        "replaceable": true,
+        "transparent": true,
+        "translucent": true,
+        "flow": {
+            "of": "water"
+        }
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "name": "Moss Golem",
+    "health": 40,
+    "speed": 1.2,
+    "behaviour": "neutral",
+    "tameWith": "leaves",
+    "attack": { "damage": 3, "range": 0.9, "cooldown": 2, "hitTime": 1.2 },
+    "drops": [ { "item": "leaves", "count": 2 } ],
+    "spawn": { "on": ["grass"], "weight": 0.3 },
+    "schedule": [
+        { "time": "21:00-06:30", "activity": "sleep" },
+        { "time": "06:30-21:00", "activity": "wander", "range": 16 }
+    ]
+}

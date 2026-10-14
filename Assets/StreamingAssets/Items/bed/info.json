@@ -1,0 +1,8 @@
+{
+    "name": "Bed",
+    "type": "brick",
+    "brickModel": "bed",
+    "color": 1,
+    "tags": ["bed"],
+    "ldr": true
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Bow",
+    "type": "weapon",
+    "brickModel": "4499",
+    "color": 70,
+    "damage": 4,
+    "attackSpeed": 1,
+    "durability": 200,
+    "ammo": "arrow",
+    "range": 60,
+    "held": {
+        "grip": [0, 0, 0],
+        "rotation": [0, 180, 0],
+        "scale": 0.5
+    }
+}

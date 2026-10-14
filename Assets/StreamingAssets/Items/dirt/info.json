@@ -1,0 +1,10 @@
+{
+    "id": "dirt",
+    "name": "Dirt 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "color": 84,
+    "block": {
+        "hardness": 1
+    }
+}

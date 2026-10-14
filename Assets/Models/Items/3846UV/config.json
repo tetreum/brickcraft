@@ -1,0 +1,1 @@
+{"status":"pass","data":{"configuration":{"type":"part","name":"3846UV.json","geometry":{"file":"3846UV.json","extras":{"knobs":[],"pins":[],"tubes":[],"logos":[]}},"points":[{"transform":{"position":[0,2.25,0],"quaternion":[0,0,0.707,0.707]}},{"transform":{"position":[0,7,-1.2],"quaternion":[0,0.707,0,0.707]}}]}}}

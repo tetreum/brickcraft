@@ -1,0 +1,8 @@
+{
+    "id": "plate_2x2_yellow",
+    "name": "A brick",
+    "type": "brick",
+    "brickModel": 3022,
+    "color": 14,
+    "colors": "all"
+}

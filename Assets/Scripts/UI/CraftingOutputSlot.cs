@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace Brickcraft.UI
 {
-    public class CraftingOutputSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public class CraftingOutputSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public Text quantity;
         [HideInInspector]
@@ -13,26 +13,50 @@ namespace Brickcraft.UI
         [HideInInspector]
         public Recipe currentRecipe;
 
-        private Vector3 initialPos;
+        private bool isDragging;
 
+        // only the left button drags (see InventorySlot)
         public void OnBeginDrag(PointerEventData eventData) {
-
+            if (eventData.button != PointerEventData.InputButton.Left || isDragging) {
+                return;
+            }
             if (originalParent == null) {
                 originalParent = transform.parent;
             }
-
-            //GamePanel.isMovingAPanel = true;
-            //isDragging = true;
-            initialPos = transform.position;
+            isDragging = true;
+            ItemTooltip.Hide();
             transform.SetParent(Menu.Instance.transform);
             GetComponent<RectTransform>().SetAsLastSibling();
         }
 
+        // what it crafts, in a tooltip (see ItemTooltip)
+        public void OnPointerEnter(PointerEventData eventData) {
+            if (!eventData.dragging && currentRecipe != null && GetComponent<UnityEngine.UI.RawImage>().color.a > 0
+                    && Server.items.TryGetValue(currentRecipe.itemId, out Item item)) {
+                ItemTooltip.Show(item, 0);
+            }
+        }
+
+        public void OnPointerExit(PointerEventData eventData) {
+            ItemTooltip.Hide();
+        }
+
+        private void OnDisable() {
+            ItemTooltip.Hide();
+        }
+
         public void OnDrag(PointerEventData eventData) {
-            transform.position = eventData.position;
+            if (isDragging && eventData.button == PointerEventData.InputButton.Left) {
+                transform.position = eventData.position;
+            }
         }
 
         public void OnEndDrag(PointerEventData eventData) {
+            if (!isDragging || eventData.button != PointerEventData.InputButton.Left) {
+                return;
+            }
+            isDragging = false;
+
             List<RaycastResult> raycastResults = new List<RaycastResult>();
             EventSystem.current.RaycastAll(eventData, raycastResults);
 
@@ -58,8 +82,7 @@ namespace Brickcraft.UI
                 break;
             }
 
-            transform.position = initialPos;
-            transform.SetParent(originalParent);
+            InventorySlot.backInSlot(transform, originalParent);
         }
 
         public void setVisible(bool show) {

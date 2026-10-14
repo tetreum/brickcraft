@@ -1,0 +1,9 @@
+{
+    "name": "Chest Lid",
+    "type": "brick",
+    "brickModel": "4739",
+    "bricklinkId": "4739a",
+    "ldrawId": "4739a",
+    "color": 70,
+    "colors": "all"
+}

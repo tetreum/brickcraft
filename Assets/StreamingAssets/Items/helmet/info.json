@@ -1,0 +1,8 @@
+{
+    "name": "Helmet",
+    "type": "armor",
+    "brickModel": "20950uv",
+    "slot": "head",
+    "armor": 2,
+    "durability": 165
+}

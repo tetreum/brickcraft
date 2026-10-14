@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace Brickcraft.UI
 {
-    public class CraftingSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public class CraftingSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public Text quantity;
         [HideInInspector]
@@ -14,54 +14,65 @@ namespace Brickcraft.UI
         [HideInInspector]
         public UserItem currentItem;
 
-        private Vector3 initialPos;
+        private bool isDragging;
 
+        // only the left button drags (see InventorySlot)
         public void OnBeginDrag(PointerEventData eventData) {
-
+            if (eventData.button != PointerEventData.InputButton.Left || isDragging) {
+                return;
+            }
             if (originalParent == null) {
                 originalParent = transform.parent;
             }
-
-            //GamePanel.isMovingAPanel = true;
-            //isDragging = true;
-            initialPos = transform.position;
+            isDragging = true;
+            ItemTooltip.Hide();
             transform.SetParent(Menu.Instance.transform);
             GetComponent<RectTransform>().SetAsLastSibling();
         }
 
-        public void OnDrag(PointerEventData eventData) {
-            transform.position = eventData.position;
+        // the ingredient's tooltip (see ItemTooltip)
+        public void OnPointerEnter(PointerEventData eventData) {
+            if (!isDragging && !eventData.dragging && currentItem != null && Server.items.ContainsKey(currentItem.id)) {
+                ItemTooltip.Show(currentItem.item, currentItem.health, currentItem.color);
+            }
         }
 
-        public void OnEndDrag(PointerEventData eventData) {
-            List<RaycastResult> raycastResults = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(eventData, raycastResults);
-            int raycastedItems = raycastResults.Count;
+        public void OnPointerExit(PointerEventData eventData) {
+            ItemTooltip.Hide();
+        }
 
-            // try to find an slot
-            foreach (RaycastResult raycast in raycastResults) {
-                if (raycast.gameObject == gameObject) { // ignore self detection
-                    raycastedItems--;
-                    continue;
-                }
+        private void OnDisable() {
+            ItemTooltip.Hide();
+        }
 
-                InventorySlot slot = raycast.gameObject.GetComponent<InventorySlot>();
-
-                if (slot == null) {
-                    continue;
-                }
-                Player.Instance.switchInventorySlots(int.Parse(originalParent.name), int.Parse(raycast.gameObject.transform.parent.name));
-                break;
+        public void OnDrag(PointerEventData eventData) {
+            if (isDragging && eventData.button == PointerEventData.InputButton.Left) {
+                transform.position = eventData.position;
             }
+        }
 
-            // he is discarting the item
-            if (raycastedItems == 0) {
-                setVisible(false);
+        // an ingredient only points at an inventory stack: dragging it out of its cell takes it off the grid
+        public void OnEndDrag(PointerEventData eventData) {
+            if (!isDragging || eventData.button != PointerEventData.InputButton.Left) {
                 return;
             }
+            isDragging = false;
 
-            transform.position = initialPos;
-            transform.SetParent(originalParent);
+            List<RaycastResult> raycastResults = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(eventData, raycastResults);
+
+            bool backOnItsCell = false;
+            foreach (RaycastResult raycast in raycastResults) {
+                if (!raycast.gameObject.transform.IsChildOf(transform) && raycast.gameObject.transform.IsChildOf(originalParent)) {
+                    backOnItsCell = true;
+                }
+            }
+            InventorySlot.backInSlot(transform, originalParent);
+
+            if (!backOnItsCell) {
+                setVisible(false);
+                InventoryPanel.Instance.showPossibleCrafting();
+            }
         }
 
         public void setCurrentItem (int slotId) {
@@ -94,8 +105,10 @@ namespace Brickcraft.UI
             if (show) {
                 quantity.text = currentItem.quantity.ToString();
                 rawImage.texture = currentItem.item.icon;
+                ItemColorSwatch.Set(rawImage, currentItem.item, currentItem.color);
             } else {
                 currentItem = null;
+                ItemColorSwatch.Set(rawImage, null, 0);
             }
 
             quantity.gameObject.SetActive(show);

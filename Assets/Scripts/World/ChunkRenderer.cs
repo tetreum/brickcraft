@@ -1,598 +1,464 @@
 using Brickcraft.Utils;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace Brickcraft.World
 {
 	public class ChunkRenderer
 	{
-		private static Color firstSideColor = new Color(0.9f, 0.9f, 0.9f, 1.0f);
-		private static Color secondSideColor = new Color(0.8f, 0.8f, 0.8f, 1.0f);
-		private static Color topColor = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-		private static Color bottomColor = new Color(0.7f, 0.7f, 0.7f, 1.0f);
-		
-		private List<int> indexesToDelete = new List<int>();
-		private List<Vector3> vertices = new List<Vector3>();
-		private	List<int> triangles = new List<int>();
-		private	List<Color> colors = new List<Color>();
-		private	List<Vector2> uvs = new List<Vector2>();
-		private Dictionary<byte, List<Vector3>> meshes = new Dictionary<byte, List<Vector3>>();
-		private Dictionary<Vector3, bool> added = new Dictionary<Vector3, bool>();
+		private static Color32 firstSideColor = new Color(0.9f, 0.9f, 0.9f, 1.0f);
+		private static Color32 secondSideColor = new Color(0.8f, 0.8f, 0.8f, 1.0f);
+		private static Color32 topColor = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+		private static Color32 bottomColor = new Color(0.7f, 0.7f, 0.7f, 1.0f);
 
-		// collider mesh
-		private List<Vector3> colliderVertices = new List<Vector3>();
-		private List<int> colliderTriangles = new List<int>();
+		// indexed by BlockSide
+		private static readonly Color32[] sideColors = {
+			topColor, bottomColor, firstSideColor, firstSideColor, secondSideColor, secondSideColor
+		};
 
-		public void RenderChunk(Chunk chunk)
+		// sides of the blocks that are exposed to air, gathered before building the mesh arrays
+		private struct VisibleSide
+		{
+			public BlockShape shape;
+			public BlockDefinition definition;
+			public BlockSide side;
+			public Vector3 offset;
+			public bool translucent;
+			// texture layer of the block's colour, -1 to use the block's own textures
+			public int colorLayer;
+			// drawn merged with its neighbours' (see mergeFaces): only its collider is added on its own
+			public bool merged;
+		}
+
+		// a side of a box block in a far chunk, to be merged with the ones beside it
+		private struct MergeableSide
+		{
+			public int u, v; // where on its plane, in blocks
+			public int code; // what it looks like: its texture layer and translucency, see codeOf
+		}
+
+		// sides of blocks merged into one rectangle
+		private struct Quad
+		{
+			public BlockSide side;
+			public Vector3 a, b, c, d;
+			public int layer;
+			public bool translucent;
+		}
+
+		private List<VisibleSide> visibleSides = new List<VisibleSide>();
+		// by side and plane (side * 16 + its coordinate across the side)
+		private readonly List<MergeableSide>[] mergeable = new List<MergeableSide>[BlockShape.SideCount * 16];
+		private readonly List<Quad> quads = new List<Quad>();
+		private readonly int[] mask = new int[16 * 16];
+
+		/// <summary>Meshes the chunk's slices on a thread: with studs if detailed, and colliders if asked (see Chunk.WithColliders).</summary>
+		public void RenderChunk(Chunk chunk, bool detailed, bool colliders)
 		{
 			WorldBehaviour world = chunk.World;
-
-			/*	Stopwatch watch = new Stopwatch();
-				watch.Start();
-			*/
+			int version = Volatile.Read(ref chunk.Version);
 
 			int minSliceIndex = chunk.MinSliceIndex;
-			int lowestY = chunk.LowestY;
-				
+
 			Chunk frontChunk = world.GetChunk(chunk.X, chunk.Z - 1);
 			Chunk backChunk = world.GetChunk(chunk.X, chunk.Z + 1);
 			Chunk leftChunk = world.GetChunk(chunk.X - 1, chunk.Z);
 			Chunk rightChunk = world.GetChunk(chunk.X + 1, chunk.Z);
-			
+
 			if(frontChunk != null && frontChunk.MinSliceIndex < minSliceIndex)
-			{
 				minSliceIndex = frontChunk.MinSliceIndex;
-				lowestY = frontChunk.LowestY;
-			}
-			
+
 			if(backChunk != null && backChunk.MinSliceIndex < minSliceIndex)
-			{
 				minSliceIndex = backChunk.MinSliceIndex;
-				lowestY = backChunk.LowestY;
-			}
-			
+
 			if(leftChunk != null && leftChunk.MinSliceIndex < minSliceIndex)
-			{
 				minSliceIndex = leftChunk.MinSliceIndex;
-				lowestY = leftChunk.MinSliceIndex;
-			}
-			
+
 			if(rightChunk != null && rightChunk.MinSliceIndex < minSliceIndex)
-			{
 				minSliceIndex = rightChunk.MinSliceIndex;
-				lowestY = rightChunk.MinSliceIndex;
-			}
-			
-			
+
 			for(int i = Chunk.NumSlices - 1; i >= 0; --i)
 			{
-				
-				ChunkSlice chunkSlice = chunk.Slices[i];				
-				
+				ChunkSlice chunkSlice = chunk.Slices[i];
+
+				// nothing below the lowest surface around can be seen
 				if(i < minSliceIndex)
-				{
-					for(int index = i; index >= 0; --index)
-						indexesToDelete.Add(index);
 					break;
-				}
-				
+
 				if(chunkSlice.IsEmpty)
-				{
-					indexesToDelete.Add(i);
 					continue;
-				}
-				
-				float epsilon = 0.00f;
-				
-				/*watch.Reset();
-				watch.Start();*/
-				
+
 				int minHeight = chunk.MinSliceIndex == chunkSlice.Index ? (chunk.LowestY & Chunk.SliceHeightLimit) : 0;
-				
-				for (int x = 0; x < 16; x++)
-				{
-					for (int z = 0; z < 16; z++)
-					{
-						for (int y = Chunk.SliceHeight - 1; y >= 0 && y >= minHeight; --y)
-						{					
-							byte block = chunkSlice[x, y, z];
-							int light = 0;
-							byte top;
-							
-							if(block == 0)
-								continue;
-							
-							if(y + 1 > Chunk.SliceHeightLimit)
-							{
-								if(i + 1 > Chunk.MaxSliceIndex)
-									top = 0;
-								else
-								{
-									ChunkSlice topSlice = chunk.Slices[i + 1];
-									top = topSlice[x, (y + 1) & Chunk.SliceHeightLimit, z];
-									light = topSlice.GetSkylight(x, (y + 1) & Chunk.SliceHeightLimit, z);
-								}
-							}
-							else
-							{
-								top = chunkSlice[x, y + 1, z];
-								light = chunkSlice.GetSkylight(x, y + 1, z);
-							}
-		
-							// we are checking the top face of the block, so see if the top is exposed
-							if (top == 0)
-							{
-								if (WorldBehaviour.mode == 2) {
-									spawnBrick(block, new Vector3(x, y, z));
-								} else if (WorldBehaviour.mode == 3) {
-									addBrickFace("top", block, x, y, z);
-								} else {
-									int vertexIndex = vertices.Count;
-									vertices.Add(new Vector3(x, y + 1, z));
-									vertices.Add(new Vector3(x, y + 1, z + 1));
-									vertices.Add(new Vector3(x + 1, y + 1, z + 1));
-									vertices.Add(new Vector3(x + 1, y + 1, z));
 
-									triangles.Add(vertexIndex);
-									triangles.Add(vertexIndex+1);
-									triangles.Add(vertexIndex+2);
-
-									triangles.Add(vertexIndex+2);
-									triangles.Add(vertexIndex+3);
-									triangles.Add(vertexIndex);
-								
-							
-									float attenuation = (light / 15.0f);
-									Color withLight = new Color(topColor.r * attenuation, topColor.g * attenuation, topColor.b * attenuation, 1);
-									colors.Add(withLight);
-									colors.Add(withLight);
-									colors.Add(withLight);
-									colors.Add(withLight);
-							
-									Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, BlockFace.Top);
-								
-									float yMax = coords.y + coords.height - epsilon;
-									float xMax = coords.x + coords.width - epsilon;
-									float xMin = coords.x + epsilon;
-									float yMin = coords.y + epsilon;
-
-									uvs.Add(new Vector2(xMax, yMax));
-									uvs.Add(new Vector2(xMin, yMax));
-									uvs.Add(new Vector2(xMin, yMin));
-									uvs.Add(new Vector2(xMax, yMin));
-
-								}
-							}
-						
-							int front;
-							if(z - 1 < 0)
-							{
-								int worldX = (chunk.X << 4) + x;
-								int worldZ = (chunk.Z << 4) - 1;
-								int worldY = (chunkSlice.Index * ChunkSlice.SizeY) + y;
-								
-								front = (byte)world.GetBlockType(worldX, worldY, worldZ);
-							}
-							else
-								front = chunkSlice[x, y, z - 1];
-						
-							if (front == 0)
-							{
-								if (WorldBehaviour.mode == 2) {
-									spawnBrick(block, new Vector3(x, y, z));
-								} else if (WorldBehaviour.mode == 3) {
-									addBrickFace("front", block, x, y, z);
-								} else {
-									int vertexIndex = vertices.Count;
-									vertices.Add(new Vector3(x, y, z));
-									vertices.Add(new Vector3(x, y + 1, z));
-									vertices.Add(new Vector3(x + 1, y + 1, z));
-									vertices.Add(new Vector3(x + 1, y, z));
-	
-									triangles.Add(vertexIndex);
-									triangles.Add(vertexIndex+1);
-									triangles.Add(vertexIndex+2);
-
-									triangles.Add(vertexIndex+2);
-									triangles.Add(vertexIndex+3);
-									triangles.Add(vertexIndex);
-									
-									colors.Add(firstSideColor);
-									colors.Add(firstSideColor);
-									colors.Add(firstSideColor);
-									colors.Add(firstSideColor);
-								
-									Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, BlockFace.Side);
-								
-									float yMax = coords.y + coords.height - epsilon;
-									float xMax = coords.x + coords.width - epsilon;
-									float xMin = coords.x + epsilon;
-									float yMin = coords.y + epsilon;
-								
-									uvs.Add(new Vector2(xMax, yMax));
-									uvs.Add(new Vector2(xMin, yMax));
-									uvs.Add(new Vector2(xMin, yMin));
-									uvs.Add(new Vector2(xMax, yMin));
-
-								}
-							}
-						
-							int right;
-							
-							if(x + 1 > 15)
-							{	
-								int worldX = (chunk.X << 4) + 16;
-								int worldZ = (chunk.Z << 4) + z;
-								int worldY = (chunkSlice.Index * ChunkSlice.SizeY) + y;
-								
-								right = (byte)world.GetBlockType(worldX, worldY, worldZ);
-							}
-							else
-								right = chunkSlice[x + 1, y, z];
-		
-							if (right == 0)
-							{
-								if (WorldBehaviour.mode == 2) {
-									spawnBrick(block, new Vector3(x, y, z));
-								} else if (WorldBehaviour.mode == 3) {
-									addBrickFace("right", block, x, y, z);
-								} else {
-									int vertexIndex = vertices.Count;
-									vertices.Add(new Vector3(x + 1, y, z));
-									vertices.Add(new Vector3(x + 1, y + 1, z));
-									vertices.Add(new Vector3(x + 1, y + 1, z + 1));
-									vertices.Add(new Vector3(x + 1, y, z + 1));
-
-									triangles.Add(vertexIndex);
-									triangles.Add(vertexIndex+1);
-									triangles.Add(vertexIndex+2);
-
-									triangles.Add(vertexIndex+2);
-									triangles.Add(vertexIndex+3);
-									triangles.Add(vertexIndex);
-							
-									colors.Add(secondSideColor);
-									colors.Add(secondSideColor);
-									colors.Add(secondSideColor);
-									colors.Add(secondSideColor);
-								
-									Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, BlockFace.Side);
-								
-									float yMax = coords.y + coords.height - epsilon;
-									float xMax = coords.x + coords.width - epsilon;
-									float xMin = coords.x + epsilon;
-									float yMin = coords.y + epsilon;
-
-									uvs.Add(new Vector2(xMax, yMax));
-									uvs.Add(new Vector2(xMin, yMax));
-									uvs.Add(new Vector2(xMin, yMin));
-									uvs.Add(new Vector2(xMax, yMin));
-								}
-							}
-						
-							int back;
-							
-							if(z + 1 > 15)
-							{
-								int worldX = (chunk.X << 4) + x;
-								int worldZ = (chunk.Z << 4) + 16;
-								int worldY = (chunkSlice.Index * ChunkSlice.SizeY) + y;
-								
-								back = (byte)world.GetBlockType(worldX, worldY, worldZ);
-							}
-							else
-								back = chunkSlice[x, y, z + 1];
-						
-							if (back == 0)
-							{
-								if (WorldBehaviour.mode == 2) {
-									spawnBrick(block, new Vector3(x, y, z));
-								} else if (WorldBehaviour.mode == 3) {
-									addBrickFace("back", block, x, y, z);
-								} else {
-									int vertexIndex = vertices.Count;
-									vertices.Add(new Vector3(x + 1, y, z + 1));
-									vertices.Add(new Vector3(x + 1, y + 1, z + 1));
-									vertices.Add(new Vector3(x, y + 1, z + 1));
-									vertices.Add(new Vector3(x, y, z + 1));
-
-									triangles.Add(vertexIndex);
-									triangles.Add(vertexIndex+1);
-									triangles.Add(vertexIndex+2);
-
-									triangles.Add(vertexIndex+2);
-									triangles.Add(vertexIndex+3);
-									triangles.Add(vertexIndex);
-							
-									colors.Add(firstSideColor);
-									colors.Add(firstSideColor);
-									colors.Add(firstSideColor);
-									colors.Add(firstSideColor);
-								
-									Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, BlockFace.Side);
-								
-									float yMax = coords.y + coords.height - epsilon;
-									float xMax = coords.x + coords.width - epsilon;
-									float xMin = coords.x + epsilon;
-									float yMin = coords.y + epsilon;
-									
-									uvs.Add(new Vector2(xMax, yMax));
-									uvs.Add(new Vector2(xMin, yMax));
-									uvs.Add(new Vector2(xMin, yMin));
-									uvs.Add(new Vector2(xMax, yMin));
-
-								}
-							}
-						
-							int left;
-							
-							if(x - 1 < 0)
-							{
-								int worldX = (chunk.X << 4) - 1;
-								int worldZ = (chunk.Z << 4) + z;
-								int worldY = (chunkSlice.Index * ChunkSlice.SizeY) + y;
-								
-								left = (byte)world.GetBlockType(worldX, worldY, worldZ);
-							}
-							else
-								left = chunkSlice[x - 1, y, z];
-						
-							if (left == 0)
-							{
-								if (WorldBehaviour.mode == 2) {
-									spawnBrick(block, new Vector3(x, y, z));
-								} else if (WorldBehaviour.mode == 3) {
-									addBrickFace("left", block, x, y, z);
-								} else {
-									int vertexIndex = vertices.Count;
-									vertices.Add(new Vector3(x, y, z + 1));
-									vertices.Add(new Vector3(x, y + 1, z + 1));
-									vertices.Add(new Vector3(x, y + 1, z));
-									vertices.Add(new Vector3(x, y, z));
-
-									triangles.Add(vertexIndex);
-									triangles.Add(vertexIndex+1);
-									triangles.Add(vertexIndex+2);
-
-									triangles.Add(vertexIndex+2);
-									triangles.Add(vertexIndex+3);
-									triangles.Add(vertexIndex);
-							
-									colors.Add(secondSideColor);
-									colors.Add(secondSideColor);
-									colors.Add(secondSideColor);
-									colors.Add(secondSideColor);
-								
-									Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, BlockFace.Side);
-								
-									float yMax = coords.y + coords.height - epsilon;
-									float xMax = coords.x + coords.width - epsilon;
-									float xMin = coords.x + epsilon;
-									float yMin = coords.y + epsilon;
-
-									uvs.Add(new Vector2(xMax, yMax));
-									uvs.Add(new Vector2(xMin, yMax));
-									uvs.Add(new Vector2(xMin, yMin));
-									uvs.Add(new Vector2(xMax, yMin));
-									
-								}
-							}
-						
-							byte bottom;
-							
-							if(y - 1 < 0)
-								bottom = 1;
-							else
-								bottom = chunkSlice[x, y - 1, z];
-						
-							if (bottom == 0)
-							{
-								if (WorldBehaviour.mode == 2) {
-									spawnBrick(block, new Vector3(x, y, z));
-								} else if (WorldBehaviour.mode == 3) {
-									addBrickFace("bottom", block, x, y, z);
-								} else {
-									int vertexIndex = vertices.Count;
-									vertices.Add(new Vector3(x, y, z + 1));
-									vertices.Add(new Vector3(x, y, z));
-									vertices.Add(new Vector3(x + 1, y, z));
-									vertices.Add(new Vector3(x + 1, y, z + 1));
-
-									triangles.Add(vertexIndex);
-									triangles.Add(vertexIndex+1);
-									triangles.Add(vertexIndex+2);
-
-									triangles.Add(vertexIndex+2);
-									triangles.Add(vertexIndex+3);
-									triangles.Add(vertexIndex);
-							
-									colors.Add(bottomColor);
-									colors.Add(bottomColor);
-									colors.Add(bottomColor);
-									colors.Add(bottomColor);
-								
-									Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, BlockFace.Bottom);
-									float yMax = coords.y + coords.height - epsilon;
-									float xMax = coords.x + coords.width - epsilon;
-									float xMin = coords.x + epsilon;
-									float yMin = coords.y + epsilon;
-								
-									uvs.Add(new Vector2(xMin, yMin));
-									uvs.Add(new Vector2(xMin, yMax));
-									uvs.Add(new Vector2(xMax, yMax));
-									uvs.Add(new Vector2(xMax, yMin));
-									
-								}
-							}
-						}
-					}
-				}
-				/*watch.Stop();
-				long elapsedPreMesh = watch.ElapsedMilliseconds;
-				watch.Start();*/
-
-
-				ChunkSliceBuildEntry chunkEntry = new ChunkSliceBuildEntry();
-				chunkEntry.Vertices = vertices.ToArray();
-				chunkEntry.Triangles = triangles.ToArray();
-				chunkEntry.Colors = colors.ToArray();
-				chunkEntry.Uvs = uvs.ToArray();
-				chunkEntry.ParentChunk = chunk;
-				chunkEntry.SliceIndex = i;
-
-				chunkEntry.ColliderVertices = colliderVertices.ToArray();
-				chunkEntry.ColliderTriangles = colliderTriangles.ToArray();
-
-				if (WorldBehaviour.mode == 2) {
-					Dictionary<byte, Vector3[]> meshList = new Dictionary<byte, Vector3[]>();
-					foreach (byte block in meshes.Keys) {
-						meshList.Add(block, meshes[block].ToArray());
-					}
-
-					chunkEntry.meshes = meshList;
-				}
-
-				vertices.Clear();
-				triangles.Clear();
-				colors.Clear();
-				uvs.Clear();
-				meshes.Clear();
-				added.Clear();
-
-				colliderVertices.Clear();
-				colliderTriangles.Clear();
+				ChunkSliceBuildEntry chunkEntry = RenderSlice(chunk, i, detailed, colliders, version, minHeight);
+				chunkEntry.CountsAsPending = true;
+				Interlocked.Increment(ref chunk.PendingSliceUploads);
 
 				lock (WorldBehaviour.ChunkQueueLock)
 					WorldBehaviour.ChunkSlicesToBuild.Enqueue(chunkEntry);
-				
-				//watch.Stop();
-				//elapsedPostSet = watch.ElapsedMilliseconds;
-				
-				/*UnityEngine.Debug.Log("Elapsed Mesh Prepare " + elapsedPreMesh + "ms");
-				UnityEngine.Debug.Log("Elapsed Mesh Build " + (elapsedPostMesh - elapsedPreMesh) + "ms");
-				UnityEngine.Debug.Log("Elapsed Mesh Set " + (elapsedPostSet - elapsedPostMesh) + "ms");
-				UnityEngine.Debug.Log("Total Elapsed " + (elapsedPostSet));*/
 			}
-			if(indexesToDelete.Count > 0)
+		}
+
+		/// <summary>
+		/// Builds the mesh data of a single slice. Used both by the initial world rendering
+		/// and to refresh a slice after one of its blocks changed.
+		/// </summary>
+		public ChunkSliceBuildEntry RenderSlice(Chunk chunk, int sliceIndex, bool detailed, bool colliders, int version, int minHeight = 0)
+		{
+			ChunkSlice chunkSlice = chunk.Slices[sliceIndex];
+			int vertexCount = 0;
+			int triangleCount = 0;
+			int translucentTriangleCount = 0;
+			int colliderVertexCount = 0;
+			int colliderTriangleCount = 0;
+
+			// first find what has to be drawn, so the mesh arrays can be allocated at their final size
+			visibleSides.Clear();
+			quads.Clear();
+			for (int i = 0; i < mergeable.Length; i++) {
+				if (mergeable[i] == null)
+					mergeable[i] = new List<MergeableSide>();
+				mergeable[i].Clear();
+			}
+
+			for (int x = 0; x < 16; x++)
 			{
-				lock(WorldBehaviour.SliceLock)
+				for (int z = 0; z < 16; z++)
 				{
-					ChunkSlicesDeleteEntry chunkSliceEntry = new ChunkSlicesDeleteEntry();
-					chunkSliceEntry.indexesToDelete = indexesToDelete.ToArray();
-					chunkSliceEntry.parentChunk = chunk;
-					
-					WorldBehaviour.SlicesToDelete.Enqueue(chunkSliceEntry);
+					for (int y = Chunk.SliceHeight - 1; y >= 0 && y >= minHeight; --y)
+					{
+						byte block = chunkSlice[x, y, z];
+
+						if(block == 0)
+							continue;
+
+						BlockDefinition definition = BlockDatabase.Get(block);
+						int color = chunk.GetColor(x, sliceIndex * Chunk.SliceHeight + y, z);
+						int colorLayer = color == Bricks.BrickColor.None ? -1 : BlockDatabase.ColorLayer(color);
+						bool translucent = definition.isTranslucent || (colorLayer >= 0 && BlockDatabase.IsTransparentColor(color));
+						Vector3 offset = new Vector3(x * Server.brickWidth, y * Server.brickHeight, z * Server.brickWidth);
+						// flowing fluid: sloped down toward the sides it's lower on (see Fluid.ShapeFor)
+						BlockShape fluidShape = detailed && definition.fluidShapes != null ? fluidShapeOf(chunk, sliceIndex, x, y, z, definition) : null;
+
+						// only sides that can be seen are rendered: the ones touching air, and for
+						// opaque blocks also the ones seen through translucent blocks (under water);
+						// fluids also where they're higher than the same fluid next to them
+						for (int side = 0; side < BlockShape.SideCount; side++)
+						{
+							Vector3Int direction = BlockShape.SideDirections[side];
+							byte neighbour = GetNeighbour(chunk, sliceIndex, x + direction.x, y + direction.y, z + direction.z);
+
+							if (neighbour != 0 && (translucent || !isTranslucent(chunk, sliceIndex, x + direction.x, y + direction.y, z + direction.z, neighbour))
+									&& !(direction.y == 0 && isLowerFluid(definition, neighbour)))
+								continue;
+
+							BlockShape shape = fluidShape ?? (detailed ? definition.shape : definition.colliderShape);
+							// far away, flat sides of boxes are merged with the ones beside them that look the same
+							bool merged = !detailed && shape.IsBox;
+							visibleSides.Add(new VisibleSide() { shape = shape, definition = definition, side = (BlockSide)side, offset = offset, translucent = translucent, colorLayer = colorLayer, merged = merged });
+
+							if (merged) {
+								int layer = colorLayer >= 0 ? colorLayer : definition.GetTextureLayer((BlockSide)side);
+								addMergeable((BlockSide)side, x, y, z, codeOf(layer, translucent));
+							} else {
+								FaceMap faceMap = shape.GetSide((BlockSide)side);
+								vertexCount += faceMap.vertices.Length;
+								triangleCount += faceMap.triangles.Length;
+								if (translucent)
+									translucentTriangleCount += faceMap.triangles.Length;
+							}
+
+							// liquids are drawn but don't collide: things go into them (see Water)
+							if (!colliders || definition.isFluid)
+								continue;
+							FaceMap colliderFaceMap = definition.colliderShape.GetSide((BlockSide)side);
+							colliderVertexCount += colliderFaceMap.vertices.Length;
+							colliderTriangleCount += colliderFaceMap.triangles.Length;
+						}
+					}
 				}
 			}
-			//watch.Stop();
-			//UnityEngine.Debug.Log ("Total Elapsed " + ((double)watch.ElapsedTicks / (double)Stopwatch.Frequency) + "ms");
+
+			mergeFaces();
+			foreach (Quad quad in quads) {
+				vertexCount += 4;
+				triangleCount += 6;
+				if (quad.translucent)
+					translucentTriangleCount += 6;
+			}
+
+			ChunkSliceBuildEntry chunkEntry = new ChunkSliceBuildEntry();
+			chunkEntry.ParentChunk = chunk;
+			chunkEntry.SliceIndex = sliceIndex;
+			chunkEntry.ChunkVersion = version;
+			chunkEntry.Vertices = new TerrainVertex[vertexCount];
+			chunkEntry.Triangles = new int[triangleCount];
+			chunkEntry.ColliderVertices = new Vector3[colliderVertexCount];
+			chunkEntry.ColliderTriangles = new int[colliderTriangleCount];
+
+			int vertex = 0;
+			int colliderVertex = 0;
+			int colliderTriangle = 0;
+
+			// opaque sides first and translucent ones after, they're drawn with different materials
+			chunkEntry.TranslucentStart = triangleCount - translucentTriangleCount;
+			int opaqueTriangle = 0;
+			int translucentTriangle = chunkEntry.TranslucentStart;
+
+			foreach (VisibleSide visible in visibleSides)
+			{
+				if (visible.translucent)
+					addBlockSide(chunkEntry, visible, colliders, ref vertex, ref translucentTriangle, ref colliderVertex, ref colliderTriangle);
+				else
+					addBlockSide(chunkEntry, visible, colliders, ref vertex, ref opaqueTriangle, ref colliderVertex, ref colliderTriangle);
+			}
+			foreach (Quad quad in quads)
+			{
+				if (quad.translucent)
+					addQuad(chunkEntry, quad, ref vertex, ref translucentTriangle);
+				else
+					addQuad(chunkEntry, quad, ref vertex, ref opaqueTriangle);
+			}
+
+			return chunkEntry;
 		}
 
-		void addBrickFace (string face, byte block, int x, int y, int z) {
-			int vertexIndex = vertices.Count;
-			FaceMap faceMap = WorldBehaviour.meshMap[face];
-			Color color;
+		// -------- merged sides (far chunks) --------
 
-			switch (face) {
-				case "top":
-					color = topColor;
-					break;
-				case "bottom":
-					color = bottomColor;
-					break;
-				case "front":
-				case "back":
-					color = firstSideColor;
-					break;
-				case "left":
-				case "right":
-					color = secondSideColor;
-					break;
-				default:
-					throw new System.Exception("wrong face name: " + face);
+		private static int codeOf(int layer, bool translucent)
+		{
+			return 1 + layer * 2 + (translucent ? 1 : 0); // 0: none
+		}
+
+		// on the side's plane: u and v along it, plane across it
+		private void addMergeable(BlockSide side, int x, int y, int z, int code)
+		{
+			int plane, u, v;
+			switch (side) {
+				case BlockSide.Top: case BlockSide.Bottom: plane = y; u = x; v = z; break;
+				case BlockSide.Front: case BlockSide.Back: plane = z; u = x; v = y; break;
+				default: plane = x; u = z; v = y; break;
 			}
+			mergeable[(int)side * 16 + plane].Add(new MergeableSide() { u = u, v = v, code = code });
+		}
 
-			// temporal | testing
-			Vector2 xt = new Vector2(0, 0);
-			Vector2 zt = new Vector2(0, 0);
+		// greedy meshing: on each plane, the biggest rectangles of sides that look the same
+		private void mergeFaces()
+		{
+			for (int side = 0; side < BlockShape.SideCount; side++) {
+				for (int plane = 0; plane < 16; plane++) {
+					List<MergeableSide> sides = mergeable[side * 16 + plane];
+					if (sides.Count == 0)
+						continue;
+					System.Array.Clear(mask, 0, mask.Length);
+					foreach (MergeableSide s in sides)
+						mask[s.v * 16 + s.u] = s.code;
 
-			foreach (Vector3 vertice in faceMap.vertices) {
-				if (vertice.x > xt.x) {
-					xt.x = vertice.x;
-				} else if (vertice.x < xt.y) {
-					xt.y = vertice.x;
+					for (int v = 0; v < 16; v++) {
+						for (int u = 0; u < 16; ) {
+							int code = mask[v * 16 + u];
+							if (code == 0) {
+								u++;
+								continue;
+							}
+							int width = 1;
+							while (u + width < 16 && mask[v * 16 + u + width] == code)
+								width++;
+							int height = 1;
+							while (v + height < 16 && sameRow(v + height, u, width, code))
+								height++;
+							for (int dv = 0; dv < height; dv++)
+								for (int du = 0; du < width; du++)
+									mask[(v + dv) * 16 + u + du] = 0;
+							quads.Add(quadOf((BlockSide)side, plane, u, v, width, height, code));
+							u += width;
+						}
+					}
 				}
-				if (vertice.z > zt.x) {
-					zt.x = vertice.z;
-				} else if (vertice.x < zt.y) {
-					zt.y = vertice.z;
-				}
-			}
-
-			foreach (Vector3 vertice in faceMap.vertices) {
-				Vector3 pos = new Vector3(
-					vertice.x + (x * Server.brickWidth),
-					vertice.y + (y * Server.brickHeight),
-					vertice.z + (z * Server.brickWidth)
-				);
-				vertices.Add(pos);
-				colors.Add(color);
-
-				// temporal | testing | dunno what im doing here
-				if (face == "top" || face == "bottom") {
-					Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, face == "top" ? BlockFace.Top : BlockFace.Bottom);
-
-					float yMax = (coords.y + coords.height) - 0.125f;
-					float xMax = (coords.x + coords.width) - 0.125f;
-					float xMin = coords.x + 0.125f;
-					float yMin = coords.y + 0.125f;
-
-					uvs.Add(new Vector2(vertice.x < xt.x ? xMin : xMax, vertice.z < zt.x ? yMin : yMax));
-				}
-			}
-			if (face != "top" && face != "bottom") {
-				Rect coords = BlockUVs.GetUVFromTypeAndFace((BlockType)block, BlockFace.Side);
-
-				float yMax = (coords.y + coords.height) - 0.125f;
-				float xMax = (coords.x + coords.width) - 0.125f;
-				float xMin = coords.x + 0.125f;
-				float yMin = coords.y + 0.125f;
-
-				uvs.Add(new Vector2(xMax, yMax));
-				uvs.Add(new Vector2(xMin, yMax));
-				uvs.Add(new Vector2(xMin, yMin));
-				uvs.Add(new Vector2(xMax, yMin));
-			}
-			foreach (int index in faceMap.triangles) {
-				triangles.Add(index + vertexIndex);
-			}
-
-			// Mesh collider, it is way more simple than the normal mesh, as it hasn't the studs
-			vertexIndex = colliderVertices.Count;
-			FaceMap colliderFaceMap = WorldBehaviour.colliderMeshMap[face];
-			foreach (Vector3 vertice in colliderFaceMap.vertices) {
-				Vector3 pos = new Vector3(
-					vertice.x + (x * Server.brickWidth),
-					vertice.y + (y * Server.brickHeight),
-					vertice.z + (z * Server.brickWidth)
-				);
-				colliderVertices.Add(pos);
-			}
-			foreach (int index in colliderFaceMap.triangles) {
-				colliderTriangles.Add(index + vertexIndex);
 			}
 		}
 
-		void spawnBrick (byte block, Vector3 pos) {
-			
-			if (added.ContainsKey(pos)) {
+		private bool sameRow(int v, int u, int width, int code)
+		{
+			for (int du = 0; du < width; du++) {
+				if (mask[v * 16 + u + du] != code)
+					return false;
+			}
+			return true;
+		}
+
+		private static Quad quadOf(BlockSide side, int plane, int u, int v, int width, int height, int code)
+		{
+			Quad quad = new Quad() {
+				side = side,
+				a = cornerOf(side, plane, u, v),
+				b = cornerOf(side, plane, u + width, v),
+				c = cornerOf(side, plane, u + width, v + height),
+				d = cornerOf(side, plane, u, v + height),
+				layer = (code - 1) / 2,
+				translucent = ((code - 1) & 1) == 1,
+			};
+			// clockwise seen from where it faces
+			if (Vector3.Dot(Vector3.Cross(quad.b - quad.a, quad.c - quad.a), BlockShape.SideDirections[(int)side]) < 0) {
+				Vector3 swap = quad.b;
+				quad.b = quad.d;
+				quad.d = swap;
+			}
+			return quad;
+		}
+
+		// a corner of the blocks' grid on a side's plane (blocks are centred on x and z, on their bottom)
+		private static Vector3 cornerOf(BlockSide side, int plane, int u, int v)
+		{
+			float width = Server.brickWidth, height = Server.brickHeight, half = width / 2;
+			switch (side) {
+				case BlockSide.Top: return new Vector3(u * width - half, (plane + 1) * height, v * width - half);
+				case BlockSide.Bottom: return new Vector3(u * width - half, plane * height, v * width - half);
+				case BlockSide.Front: return new Vector3(u * width - half, v * height, plane * width - half);
+				case BlockSide.Back: return new Vector3(u * width - half, v * height, plane * width + half);
+				case BlockSide.Left: return new Vector3(plane * width - half, v * height, u * width - half);
+				default: return new Vector3(plane * width + half, v * height, u * width - half);
+			}
+		}
+
+		void addQuad(ChunkSliceBuildEntry entry, Quad quad, ref int vertex, ref int triangle)
+		{
+			Color32 color = sideColors[(int)quad.side];
+			Vector2 uv = TerrainTextures.LayerToUV(quad.layer);
+			Vector3 normal = BlockShape.SideDirections[(int)quad.side];
+			TerrainVertex[] vertices = entry.Vertices;
+			int first = vertex;
+			Vector3[] corners = { quad.a, quad.b, quad.c, quad.d };
+			foreach (Vector3 corner in corners) {
+				vertices[vertex].position = corner;
+				vertices[vertex].normal = normal;
+				vertices[vertex].color = color;
+				vertices[vertex].uv = uv;
+				vertex++;
+			}
+			int[] triangles = entry.Triangles;
+			triangles[triangle++] = first;
+			triangles[triangle++] = first + 1;
+			triangles[triangle++] = first + 2;
+			triangles[triangle++] = first;
+			triangles[triangle++] = first + 2;
+			triangles[triangle++] = first + 3;
+		}
+
+		// a fluid's block next to the same fluid lower than it: its side there is seen
+		static bool isLowerFluid(BlockDefinition definition, byte neighbour)
+		{
+			if (definition.fluid == null)
+				return false;
+			BlockDefinition other = BlockDatabase.Get(neighbour);
+			return other.fluid == definition.fluid && Fluid.HeightOf(other.fluidLevel) < Fluid.HeightOf(definition.fluidLevel);
+		}
+
+		// the shape of a flowing level by the sides it's lower on: air, a replaceable block or a lower level there
+		BlockShape fluidShapeOf(Chunk chunk, int sliceIndex, int x, int y, int z, BlockDefinition definition)
+		{
+			bool front = isLowerSide(chunk, sliceIndex, x, y, z - 1, definition);
+			bool back = isLowerSide(chunk, sliceIndex, x, y, z + 1, definition);
+			bool left = isLowerSide(chunk, sliceIndex, x - 1, y, z, definition);
+			bool right = isLowerSide(chunk, sliceIndex, x + 1, y, z, definition);
+			return definition.fluidShapes[Fluid.ShapeFor(front, back, left, right)];
+		}
+
+		bool isLowerSide(Chunk chunk, int sliceIndex, int x, int y, int z, BlockDefinition definition)
+		{
+			byte neighbour = GetNeighbour(chunk, sliceIndex, x, y, z);
+			if (neighbour == 0)
+				return true;
+			BlockDefinition other = BlockDatabase.Get(neighbour);
+			return isLowerFluid(definition, neighbour) || (other.isReplaceable && !other.isFluid);
+		}
+
+		// Block type at slice local coords, which may fall into a neighbour slice or chunk
+		byte GetNeighbour(Chunk chunk, int sliceIndex, int x, int y, int z)
+		{
+			if (y > Chunk.SliceHeightLimit)
+			{
+				if (sliceIndex + 1 > Chunk.MaxSliceIndex)
+					return 0;
+				return chunk.Slices[sliceIndex + 1][x & 0xF, y & Chunk.SliceHeightLimit, z & 0xF];
+			}
+			if (y < 0)
+			{
+				if (sliceIndex == 0)
+					return 1; // nobody will ever see the bottom of the world
+				return chunk.Slices[sliceIndex - 1][x & 0xF, y & Chunk.SliceHeightLimit, z & 0xF];
+			}
+			if (x < 0 || x > 15 || z < 0 || z > 15)
+			{
+				int worldX = (chunk.X << 4) + x;
+				int worldZ = (chunk.Z << 4) + z;
+				int worldY = (sliceIndex * ChunkSlice.SizeY) + y;
+
+				return (byte)chunk.World.GetBlockType(worldX, worldY, worldZ);
+			}
+			return chunk.Slices[sliceIndex][x, y, z];
+		}
+
+		// drawn see-through: by its kind (water) or its colour (trans bricks)
+		bool isTranslucent(Chunk chunk, int sliceIndex, int x, int y, int z, byte block)
+		{
+			if (BlockDatabase.Get(block).isTranslucent)
+				return true;
+
+			int worldY = sliceIndex * Chunk.SliceHeight + y;
+			if (worldY < 0 || worldY >= Chunk.NumSlices * Chunk.SliceHeight)
+				return false;
+
+			int color = x < 0 || x > 15 || z < 0 || z > 15
+				? chunk.World.GetBlockColor((chunk.X << 4) + x, worldY, (chunk.Z << 4) + z)
+				: chunk.GetColor(x, worldY, z);
+
+			return color != Bricks.BrickColor.None && BlockDatabase.IsTransparentColor(color);
+		}
+
+		void addBlockSide (ChunkSliceBuildEntry entry, VisibleSide visible, bool colliders, ref int vertex, ref int triangle, ref int colliderVertex, ref int colliderTriangle) {
+			if (!visible.merged)
+				addRenderedSide(entry, visible, ref vertex, ref triangle);
+
+			// the collider is usually way simpler than the rendered mesh, as it hasn't the studs; liquids have none
+			if (!colliders || visible.definition.isFluid) {
 				return;
 			}
-			if (!meshes.ContainsKey(block)) {
-				meshes.Add(block, new List<Vector3>());
-			}
+			FaceMap colliderFaceMap = visible.definition.colliderShape.GetSide(visible.side);
+			Vector3[] colliderSideVertices = colliderFaceMap.vertices;
+			int[] colliderSideTriangles = colliderFaceMap.triangles;
+			int firstVertex = colliderVertex;
 
-			meshes[block].Add(pos);
+			for (int i = 0; i < colliderSideVertices.Length; i++, colliderVertex++) {
+				entry.ColliderVertices[colliderVertex] = colliderSideVertices[i] + visible.offset;
+			}
+			for (int i = 0; i < colliderSideTriangles.Length; i++, colliderTriangle++) {
+				entry.ColliderTriangles[colliderTriangle] = colliderSideTriangles[i] + firstVertex;
+			}
+		}
+
+		void addRenderedSide (ChunkSliceBuildEntry entry, VisibleSide visible, ref int vertex, ref int triangle) {
+			Color32 color = sideColors[(int)visible.side];
+			Vector2 uv = TerrainTextures.LayerToUV(visible.colorLayer >= 0 ? visible.colorLayer : visible.definition.GetTextureLayer(visible.side));
+
+			FaceMap faceMap = visible.shape.GetSide(visible.side);
+			Vector3[] sideVertices = faceMap.vertices;
+			Vector3[] sideNormals = faceMap.normals;
+			int[] sideTriangles = faceMap.triangles;
+			TerrainVertex[] vertices = entry.Vertices;
+			int[] triangles = entry.Triangles;
+			int firstVertex = vertex;
+
+			for (int i = 0; i < sideVertices.Length; i++, vertex++) {
+				vertices[vertex].position = sideVertices[i] + visible.offset;
+				vertices[vertex].normal = sideNormals[i];
+				vertices[vertex].color = color;
+				vertices[vertex].uv = uv;
+			}
+			for (int i = 0; i < sideTriangles.Length; i++, triangle++) {
+				triangles[triangle] = sideTriangles[i] + firstVertex;
+			}
 		}
 	}
 }

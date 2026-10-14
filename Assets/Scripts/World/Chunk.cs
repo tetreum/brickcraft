@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 // Highly based on https://github.com/chraft/chunk-light-tester
 namespace Brickcraft.World
@@ -20,6 +21,34 @@ namespace Brickcraft.World
 		public Color ChunkColor;
 		public int MinSliceIndex;
 		public int LowestY;
+
+		// level of detail: near the camera blocks are drawn with their studs, far away with a simple box
+		public bool IsDetailed;
+		public volatile bool IsRemeshing;
+
+		// bumped by every block change, so meshes computed from older data are thrown away
+		public int Version;
+
+		public enum ChunkState { Generating, Generated, Unloaded }
+
+		/// <summary>Set by the main thread; block data can only be read once Generated.</summary>
+		public volatile ChunkState State = ChunkState.Generating;
+
+		// meshing: a render job runs, then its slices are uploaded one by one
+		public bool HasMesh;
+		public volatile bool IsMeshJobDone;
+		public int PendingSliceUploads;
+
+		/// <summary>Its meshes are made with colliders: something that collides is near (see WorldBehaviour.ColliderRadius).</summary>
+		public bool WithColliders;
+
+		/// <summary>Set once a mesh with colliders is fully uploaded, stays while it's only being remeshed with them.</summary>
+		public bool HasColliders;
+
+		/// <summary>The current mesh job and all its slices are uploaded.</summary>
+		public bool IsMeshReady {
+			get { return HasMesh && IsMeshJobDone && Volatile.Read(ref PendingSliceUploads) == 0; }
+		}
 	
 		public bool ProcessingLight{
 			get;
@@ -44,9 +73,42 @@ namespace Brickcraft.World
 	
 		public void InitGameObject()
 		{
+			if (ChunkObject != null)
+				return;
+
+			// relative to the floating origin, subtracted while still integers
 			ChunkObject = new GameObject(String.Format("X {0} Z {1}", X, Z));
-		
-			ChunkObject.transform.position = new Vector3(X * 16, 0, Z * 16);
+			ChunkObject.transform.position = new Vector3(
+				(X - FloatingOrigin.Chunk.x) * 16 * Server.brickWidth,
+				0,
+				(Z - FloatingOrigin.Chunk.y) * 16 * Server.brickWidth
+			);
+		}
+
+		/// <summary>Destroys the chunk's game objects and meshes, its block data stays.</summary>
+		public void DestroyMesh()
+		{
+			for (int i = 0; i < NumSlices; ++i)
+			{
+				GameObject sliceObject = ChunkSliceObjects[i];
+
+				if (sliceObject == null)
+					continue;
+
+				UnityEngine.Object.Destroy(sliceObject.GetComponent<MeshFilter>().sharedMesh);
+				UnityEngine.Object.Destroy(sliceObject.GetComponent<MeshCollider>().sharedMesh);
+				UnityEngine.Object.Destroy(sliceObject);
+				ChunkSliceObjects[i] = null;
+				Slices[i].renderer = null;
+			}
+			if (ChunkObject != null)
+				UnityEngine.Object.Destroy(ChunkObject);
+
+			ChunkObject = null;
+			HasMesh = false;
+			HasColliders = false;
+			WithColliders = false;
+			IsMeshJobDone = false;
 		}
 	
 		public void InitRenderableSlices()
@@ -57,116 +119,32 @@ namespace Brickcraft.World
 				if(!slice.IsEmpty)
 				{
 					slice.ClearDirtyLight();
-					GameObject newObject = new GameObject("ChunkSlice#" + i);
-					ChunkSliceObjects[i] = newObject;			
-					MeshRenderer meshRenderer = newObject.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
-					meshRenderer.material = WorldBehaviour.BlockMaterial;
-					meshRenderer.material.mainTexture = WorldBehaviour.AtlasTexture;
-					meshRenderer.sharedMaterial = WorldBehaviour.BlockMaterial;
-					newObject.AddComponent(typeof(MeshFilter));
-					newObject.AddComponent<MeshCollider>();
-
-					Vector3 pos = new Vector3(ChunkObject.transform.position.x, ChunkObject.transform.position.y + (i * Chunk.SliceHeight), ChunkObject.transform.position.z);
-					if (WorldBehaviour.mode == 3) {
-						pos.x = pos.x * Server.brickWidth;
-						pos.y = pos.y * Server.brickHeight;
-						pos.z = pos.z * Server.brickWidth;
-					}
-					newObject.transform.position = pos;
-					newObject.transform.parent = ChunkObject.transform;
-
-					slice.renderer = meshRenderer;
-					slice.CreateBoundsBox(newObject.transform);
+					GetOrCreateSliceObject(i);
 				}
 			}
 		}
-	
-		private int Depth;
-		private const int MaxRecursionDepth = 100;
-		public Queue<BlockEntry> BlockToRecalculate = new Queue<BlockEntry>();
-	
-		public byte ChooseAndReturnNewLight(byte x, byte y, byte z, byte[] skylights, byte[] heights)
+
+		public GameObject GetOrCreateSliceObject(int i)
 		{
-			byte light = skylights[0];
-			if(x < 15)
-			{
-				skylights[1] = GetSkylight(x+1, y, z);
-				heights[1] = HeightMap[x+1,z];
-			}
-			else if((X << 4) + 16 <= WorldBehaviour.MapMaxCoords)
-			{
-				Chunk chunk = World.GetChunk(X + 1, Z);
-				skylights[1] = chunk.GetSkylight(0,y,z);
-				heights[1] = chunk.HeightMap[0,z];
-			}
-		
-			if(light < (skylights[1] - 1))
-				light = (byte)(skylights[1] - 1);
-		
-			if(x > 0)
-			{
-				skylights[2] = GetSkylight(x-1, y, z);
-				heights[2] = HeightMap[x-1,z];
-			}
-			else if((X << 4) - 1 >= WorldBehaviour.MapMinCoords)
-			{
-				Chunk chunk = World.GetChunk(X - 1, Z);
-				skylights[2] = chunk.GetSkylight(15,y,z);
-				heights[2] = chunk.HeightMap[15,z];
-			}
-		
-			if(light < (skylights[2] - 1))
-				light = (byte)(skylights[2] - 1);
-		
-			if(z < 15)
-			{
-				skylights[3] = GetSkylight(x, y, z+1);
-				heights[3] = HeightMap[x,z+1];
-			}
-			else if((Z << 4) + 16 <= WorldBehaviour.MapMaxCoords)
-			{
-				Chunk chunk = World.GetChunk(X, Z + 1);
-				skylights[3] = chunk.GetSkylight(x,y,0);
-				heights[3] = chunk.HeightMap[x,0];
-			}
-		
-			if(light < (skylights[3] - 1))
-				light = (byte)(skylights[3] - 1);
-		
-			if(z > 0)
-			{
-				skylights[4] = GetSkylight(x, y, z-1);
-				heights[4] = HeightMap[x,z-1];
-			}
-			else if((Z << 4) - 1 >= WorldBehaviour.MapMinCoords)
-			{
-				Chunk chunk = World.GetChunk(X, Z - 1);
-				skylights[4] = chunk.GetSkylight(x,y,15);
-				heights[4] = chunk.HeightMap[x,15];
-			}
-		
-			if(light < (skylights[4] - 1))
-				light = (byte)(skylights[4] - 1);
-		
-			if(y < 255)
-				skylights[5] = GetSkylight(x,y+1,z);
-			else
-				skylights[5] = 15;
-		
-			// We prefer vertical light because it doesn't diminish it's power
-			if(light < skylights[5])
-				light = skylights[5];
-		
-			if(y > 0)
-				skylights[6] = GetSkylight(x,y-1,z);
-			else
-				skylights[6] = 6;
-		
-			if(light < skylights[6])
-				light = skylights[6];
-		
-			return light;
+			if (ChunkSliceObjects[i] != null)
+				return ChunkSliceObjects[i];
+
+			ChunkSlice slice = Slices[i];
+			GameObject newObject = new GameObject("ChunkSlice#" + i);
+			ChunkSliceObjects[i] = newObject;
+			MeshRenderer meshRenderer = newObject.AddComponent<MeshRenderer>();
+			meshRenderer.sharedMaterials = new[] { WorldBehaviour.BlockMaterial, WorldBehaviour.TranslucentBlockMaterial };
+			newObject.AddComponent<MeshFilter>();
+			newObject.AddComponent<MeshCollider>();
+
+			newObject.transform.SetParent(ChunkObject.transform, false);
+			newObject.transform.localPosition = new Vector3(0, i * Chunk.SliceHeight * Server.brickHeight, 0);
+
+			slice.renderer = meshRenderer;
+
+			return newObject;
 		}
+	
 		public byte GetSkylight(int x, int y, int z)
 		{
 			ChunkSlice slice = Slices[y / Chunk.SliceHeight];
@@ -200,6 +178,33 @@ namespace Brickcraft.World
 			slice[x & 0xF, y & Chunk.SliceHeightLimit, z & 0xF] = (byte)type;
 		}
 	
+		// colours of the blocks players placed with one (see BrickColorPalette), by ChunkChanges.BlockIndex.
+		// Written by the main thread, read by the meshing threads.
+		private readonly Dictionary<ushort, int> colors = new Dictionary<ushort, int>();
+		private volatile bool hasColors;
+
+		/// <summary>Colour of a block (chunk local x and z), BrickColor.None when drawn with its own texture.</summary>
+		public int GetColor(int x, int y, int z)
+		{
+			if (!hasColors)
+				return Bricks.BrickColor.None;
+
+			lock (colors)
+				return colors.TryGetValue(ChunkChanges.BlockIndex(x, y, z), out int color) ? color : Bricks.BrickColor.None;
+		}
+
+		public void SetColor(int x, int y, int z, int color)
+		{
+			lock (colors)
+			{
+				if (color == Bricks.BrickColor.None)
+					colors.Remove(ChunkChanges.BlockIndex(x & 0xF, y, z & 0xF));
+				else
+					colors[ChunkChanges.BlockIndex(x & 0xF, y, z & 0xF)] = color;
+				hasColors = colors.Count > 0;
+			}
+		}
+
 		public void SetData(int x, int y, int z, byte data, bool unused)
 		{
 		
@@ -221,8 +226,7 @@ namespace Brickcraft.World
 		public void RecalculateHeight(int x, int z)
 		{
 			int height;
-			BlockType blockType;
-			for (height = 127; height > 0 && (GetBlockType(x, height - 1, z) == 0 || (blockType = GetBlockType(x, height - 1, z)) == BlockType.Leaves || blockType == BlockType.Water || blockType == BlockType.Still_Water); height--) ;
+			for (height = 127; height > 0 && BlockDatabase.Get(GetBlockType(x, height - 1, z)).isTransparent; height--) ;
 			HeightMap[x, z] = (byte)height;
 
 			if (height < LowestY)

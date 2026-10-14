@@ -1,0 +1,10 @@
+{
+    "id": "rose",
+    "name": "Rose 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "color": 4,
+    "block": {
+        "hardness": 0.5
+    }
+}

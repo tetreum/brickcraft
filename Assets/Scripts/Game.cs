@@ -18,24 +18,6 @@ namespace Brickcraft
             Water = 4
         }
 
-        public Recipe[] craftingRecipes = new Recipe[] {
-            new Recipe() {
-                itemId = 6,
-                ingredients = new Ingredient[] {
-                    new Ingredient() {
-                        itemId = 1,
-                        quantity = 1,
-                        slot = 1,
-                    },
-                    new Ingredient() {
-                        itemId = 1,
-                        quantity = 1,
-                        slot = 2,
-                    }
-                }
-            }
-        };
-
         private void Awake() {
             Instance = this;
 

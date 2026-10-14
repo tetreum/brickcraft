@@ -23,7 +23,6 @@ namespace Brickcraft.World
 
 		public static ChunkRenderer chunkRenderer = new ChunkRenderer();
 		public MeshRenderer renderer;
-		public Bounds bounds;
 
 		public bool IsEmpty {
 			get {return solidBlocks == 0; }
@@ -91,29 +90,6 @@ namespace Brickcraft.World
 		public byte GetSkylight(int bx, int by, int bz)
 		{
 			return (byte)_Skylight.getNibble(by << 8 | bz << 4 | bx);
-		}
-		public void CreateBoundsBox(Transform transform) {
-			var chunkSize = Chunk.SliceHeight;
-			var axis = chunkSize / 2.0f - 0.5f;
-
-			var center = new Vector3(axis, axis, axis) + transform.position;
-			var size = new Vector3(chunkSize, chunkSize, chunkSize);
-
-			bounds = new Bounds(center, size);
-		}
-
-		public void FrustrumCulling() {
-			if (!Camera.main) {
-				return;
-			}
-			var visible = Vector3.Distance(bounds.center, Camera.main.transform.position) <= (10 * Chunk.SliceHeight);
-
-            if (visible) {
-				Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
-				visible = GeometryUtility.TestPlanesAABB(planes, bounds);
-			}
-
-			renderer.enabled = visible;
 		}
 	}
 }

@@ -1,0 +1,8 @@
+{
+    "name": "HP Potion",
+    "type": "food",
+    "brickModel": "93549",
+    "bricklinkId": "93549pb01",
+    "maxStack": 16,
+    "heal": 10
+}

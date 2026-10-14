@@ -1,0 +1,9 @@
+{
+    "name": "Model Importer",
+    "type": "tool",
+    "brickModel": "14769d136uv",
+    "ldrawId": "14769",
+    "bricklinkId": "14769",
+    "maxStack": 1,
+    "tags": ["modelimporter"]
+}

@@ -1,0 +1,8 @@
+{
+    "name": "Shovel",
+    "type": "tool",
+    "brickModel": "3837",
+    "color": 72,
+    "digSpeed": 2,
+    "durability": 200
+}

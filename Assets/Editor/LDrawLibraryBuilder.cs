@@ -1,0 +1,315 @@
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Text.RegularExpressions;
+using Brickcraft;
+using Brickcraft.Bricks;
+using Brickcraft.Bricks.LDraw;
+using Newtonsoft.Json;
+using UnityEditor;
+using UnityEngine;
+
+/// <summary>
+/// Builds the game's LDraw library (StreamingAssets/LDraw) from an unpacked library.ldraw.org complete.zip: the
+/// catalogue (catalog.json: every part but subparts, primitives, aliases, moved and obsolete ones, printed parts,
+/// stickers, minifigs and other figures (but the minifig tools of KeptParts), sheets of fabric, cardboard or plastic, and other systems: Duplo, Quatro, Primo, Modulex, Znap, Scala, Homemaker, Belville, Fabuland, Clikits, Constraction), the files they use (subparts
+/// and primitives, low resolution where LDraw has them) in library.zip, in lowercase, and LDraw's license files.
+/// Run again with a newer library to update it.
+/// </summary>
+public static class LDrawLibraryBuilder
+{
+    // categories that aren't plastic bricks, or are minifigs'
+    private static readonly HashSet<string> SkippedCategories = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase) {
+        "Minifig", "Minifig Accessory", "Minifig Footwear", "Minifig Headwear", "Minifig Hipwear", "Minifig Neckwear",
+        "Figure", "Figure Accessory", "Sticker", "Sheet Fabric", "Sheet Cardboard", "Sheet Plastic",
+    };
+    // minifig parts kept anyway, as the game's tools: pickaxe, torch, handaxe, shovel, mallet, sledgehammer; the
+    // conical flask with its green fluid (LDraw's 93549, obsolete for being in two colours, BrickLink's 93549pb01, the HP
+    // Potion) and the paint palette with paint drops (printed, the Color Picker)
+    private static readonly HashSet<string> KeptParts = new HashSet<string>() { "3841", "3959", "3835", "3837", "4522b", "75904", "93549", "93551p01" };
+    // kept parts that would be left out otherwise (obsolete, printed), with their name
+    private static readonly Dictionary<string, string> KeptNames = new Dictionary<string, string>() {
+        { "93549", "Minifig Conical Flask with Trans-Bright Green Fluid" },
+        { "93551p01", "Minifig Paint Palette with Paint Drops" },
+    };
+    private static readonly Regex Printed = new Regex(@"\d[p]\w*$");
+    private static readonly Regex PrintedName = new Regex(@"(?i)pattern|print|sticker");
+    private static readonly Regex Composite = new Regex(@"c\d\d$");
+    private static readonly Regex Slug = new Regex("^[a-z0-9_]+$");
+    // other systems than the bricks (Duplo and its toddler lines, Modulex, Znap, Scala...) and their parts ("Wheel ... Znap"): whatever their category
+    private static readonly Regex OtherSystems = new Regex(@"(?i)\b(duplo|quatro|primo|modulex|znap|scala|homemaker|belville|fabuland|clikits|constraction)\b");
+
+    [MenuItem("Brickcraft/LDraw/Build library from complete.zip folder...")]
+    public static void BuildFromMenu() {
+        string folder = EditorUtility.OpenFolderPanel("The unpacked LDraw library (the folder with parts and p)", "", "");
+        if (!string.IsNullOrEmpty(folder)) {
+            Debug.Log(Build(folder));
+        }
+    }
+
+    /// <summary>Builds it from that library folder (the one with parts/ and p/); returns what it did.</summary>
+    public static string Build(string source) {
+        string target = LDrawLibrary.Root;
+        Directory.CreateDirectory(target);
+        LDrawLibrary.Reload(); // closes the archives
+        // what an older library had; icons stay (RenderMissingIcons drops those of parts no longer in it)
+        File.Delete(Path.Combine(target, LDrawLibrary.ZipFile));
+
+        List<LDrawPart> catalog = new List<LDrawPart>();
+        Dictionary<string, string> copied = new Dictionary<string, string>(); // target relative path -> source path
+        string parts = Path.Combine(source, "parts");
+        foreach (string file in Directory.GetFiles(parts, "*.dat")) {
+            string id = Path.GetFileNameWithoutExtension(file).ToLowerInvariant();
+            LDrawPart part = catalogPart(file, id);
+            if (part == null) {
+                continue;
+            }
+            catalog.Add(part);
+            include(source, id + ".dat", copied);
+        }
+        catalog.Sort((a, b) => string.CompareOrdinal(a.id, b.id));
+
+        using (ZipArchive zip = ZipFile.Open(Path.Combine(target, LDrawLibrary.ZipFile), ZipArchiveMode.Create)) {
+            foreach (KeyValuePair<string, string> file in copied) {
+                zip.CreateEntryFromFile(file.Value, file.Key, System.IO.Compression.CompressionLevel.Optimal);
+            }
+        }
+        foreach (string license in new[] { "CAreadme.txt", "CAlicense.txt", "CAlicense4.txt", "LDConfig.ldr" }) {
+            string from = Path.Combine(source, license);
+            if (File.Exists(from)) {
+                File.Copy(from, Path.Combine(target, license), true);
+            }
+        }
+        File.WriteAllText(Path.Combine(target, LDrawLibrary.CatalogFile), JsonConvert.SerializeObject(catalog, Formatting.Indented));
+        LDrawLibrary.Reload();
+        AssetDatabase.Refresh();
+        return "LDraw library: " + catalog.Count + " parts in the catalogue, " + copied.Count + " files in " + LDrawLibrary.ZipFile;
+    }
+
+    // the terrain's block: a 2x2 brick
+    private const string TerrainBrickPart = "3003";
+
+    [MenuItem("Brickcraft/LDraw/Make the terrain block model")]
+    public static void MakeTerrainBlockFromMenu() {
+        Debug.Log(MakeTerrainBlock());
+    }
+
+    /// <summary>
+    /// Writes the terrain's block model (BlockDatabase.DefaultModelFile) from LDraw's 2x2 brick, low resolution:
+    /// game units, the pivot in the middle of its footprint on its bottom. Returns what it did.
+    /// </summary>
+    public static string MakeTerrainBlock() {
+        string path = Path.Combine(Application.streamingAssetsPath, Brickcraft.World.BlockDatabase.DefaultModelFile);
+        return "Terrain block model: " + writePartObj(TerrainBrickPart, Quaternion.identity, path,
+            "Default terrain block model (2x2 brick, LDraw's " + TerrainBrickPart + " in low resolution: see LDrawLibraryBuilder)");
+    }
+
+    // LDraw parts the game uses turned, as file models of their own (StreamingAssets/BrickModels/[model]): a
+    // minifig's torch lies along its hand, but stands when placed
+    private static readonly (string model, string part, Vector3 rotation)[] TurnedParts = {
+        ("torch", "3959", new Vector3(90, 0, 0)),
+    };
+
+    [MenuItem("Brickcraft/LDraw/Make the turned part models")]
+    public static void MakeTurnedModelsFromMenu() {
+        Debug.Log(MakeTurnedModels());
+    }
+
+    /// <summary>Writes the models of TurnedParts (their model.obj, the brick's colour everywhere). Returns what it did.</summary>
+    public static string MakeTurnedModels() {
+        List<string> made = new List<string>();
+        foreach ((string model, string part, Vector3 rotation) in TurnedParts) {
+            string folder = Path.Combine(Application.streamingAssetsPath, BrickModels.Folder, model);
+            Directory.CreateDirectory(folder);
+            made.Add(model + ": " + writePartObj(part, Quaternion.Euler(rotation), Path.Combine(folder, "model.obj"),
+                model + " model: LDraw's " + part + " turned " + rotation + ", see LDrawLibraryBuilder.TurnedParts"));
+        }
+        return string.Join("; ", made);
+    }
+
+    // an LDraw part turned, as an OBJ in game units with the pivot in the middle of its footprint, on its bottom
+    private static string writePartObj(string part, Quaternion rotation, string path, string description) {
+        LDrawLibrary.Reload();
+        LDrawModelBuilder.ClearCache();
+        Mesh mesh = LDrawModelBuilder.Build(part, out _);
+        if (mesh == null) {
+            return "the LDraw library has no " + part;
+        }
+        Vector3[] vertices = mesh.vertices;
+        int[] triangles = mesh.triangles;
+        Object.DestroyImmediate(mesh);
+        Bounds bounds = new Bounds(rotation * vertices[0], Vector3.zero);
+        for (int i = 0; i < vertices.Length; i++) {
+            vertices[i] = rotation * vertices[i];
+            bounds.Encapsulate(vertices[i]);
+        }
+        Vector3 pivot = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+        System.Text.StringBuilder obj = new System.Text.StringBuilder();
+        obj.Append("# ").Append(description).Append('\n');
+        obj.Append("# Game units, pivot at the center of the footprint on the bottom face, +Y up.\n");
+        foreach (Vector3 vertex in vertices) {
+            Vector3 v = vertex - pivot;
+            // OBJ's X goes the other way (see ObjLoader)
+            obj.Append("v ").Append(number(-v.x)).Append(' ').Append(number(v.y)).Append(' ').Append(number(v.z)).Append('\n');
+        }
+        for (int i = 0; i + 2 < triangles.Length; i += 3) {
+            // and so does its winding
+            obj.Append("f ").Append(triangles[i] + 1).Append(' ').Append(triangles[i + 2] + 1).Append(' ').Append(triangles[i + 1] + 1).Append('\n');
+        }
+        File.WriteAllText(path, obj.ToString(), new System.Text.UTF8Encoding(false));
+        AssetDatabase.Refresh();
+        return path + ", " + triangles.Length / 3 + " triangles, " + vertices.Length + " vertices";
+    }
+
+    private static string number(float value) {
+        return value.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    [MenuItem("Brickcraft/LDraw/Render missing catalogue icons")]
+    public static void RenderIconsFromMenu() {
+        Debug.Log(RenderMissingIcons(int.MaxValue));
+    }
+
+    /// <summary>
+    /// Renders the icons the catalogue's parts don't have yet into icons.zip (in their item's colour, like
+    /// BrickIconRenderer's), at most that many (it takes a while: run it again to go on); returns what it did.
+    /// </summary>
+    public static string RenderMissingIcons(int max) {
+        string path = Path.Combine(LDrawLibrary.Root, LDrawLibrary.IconsFile);
+        LDrawLibrary.Reload(); // its icons archive is opened here
+        BrickColorPalette.Load();
+        BrickModels.Reload(Brickcraft.Mods.ModDatabase.Installed());
+        Material material = BrickColorPalette.Get(Brickcraft.ItemDatabase.LDrawItemColor).material;
+        int made = 0, failed = 0, left = 0;
+        using (ZipArchive zip = ZipFile.Open(path, File.Exists(path) ? ZipArchiveMode.Update : ZipArchiveMode.Create)) {
+            HashSet<string> done = new HashSet<string>();
+            HashSet<string> wanted = new HashSet<string>();
+            foreach (LDrawPart part in LDrawLibrary.Catalog) {
+                wanted.Add(part.id + ".png");
+            }
+            // icons of parts no longer in the catalogue go
+            foreach (ZipArchiveEntry entry in new List<ZipArchiveEntry>(zip.Entries)) {
+                if (wanted.Contains(entry.FullName)) {
+                    done.Add(entry.FullName);
+                } else if (zip.Mode == ZipArchiveMode.Update) {
+                    entry.Delete();
+                }
+            }
+            foreach (LDrawPart part in LDrawLibrary.Catalog) {
+                if (done.Contains(part.id + ".png")) {
+                    continue;
+                }
+                if (made + failed >= max) {
+                    left++;
+                    continue;
+                }
+                BrickModel model = BrickModels.Get(part.id);
+                if (model == null || model.prefab == null) {
+                    failed++;
+                    continue;
+                }
+                Texture2D icon = BrickIconRenderer.Render(model.prefab, material);
+                ZipArchiveEntry entry = zip.CreateEntry(part.id + ".png", System.IO.Compression.CompressionLevel.NoCompression);
+                using (Stream stream = entry.Open()) {
+                    byte[] png = icon.EncodeToPNG();
+                    stream.Write(png, 0, png.Length);
+                }
+                Object.DestroyImmediate(icon);
+                made++;
+                // models pile up in memory: let them go now and then
+                if (made % 200 == 0) {
+                    LDrawModelBuilder.ClearCache();
+                    BrickModels.Reload(Brickcraft.Mods.ModDatabase.Installed());
+                }
+            }
+        }
+        LDrawModelBuilder.ClearCache();
+        return "LDraw icons: " + made + " rendered, " + failed + " parts without a model, " + left + " left";
+    }
+
+    /// <summary>
+    /// A part's name as the game shows it: single spaces, and sizes without them ("Brick  2 x  4" is "Brick 2x4",
+    /// "Brick 1 x 1 x 2/3" "Brick 1x1x2/3"), so they're found by their studs.
+    /// </summary>
+    public static string CompactName(string description) {
+        string name = Regex.Replace(description.Trim(), @"\s+", " ");
+        return Regex.Replace(name, @"(?<=[0-9/.])\s*x\s*(?=[0-9.])", "x");
+    }
+
+    // the catalogue's entry of a part file, null if it isn't one (see the class)
+    private static LDrawPart catalogPart(string file, string id) {
+        if (!Slug.IsMatch(id) || (!KeptNames.ContainsKey(id) && (Printed.IsMatch(id) || Composite.IsMatch(id)))) {
+            return null;
+        }
+        string description = null, kind = null, category = null;
+        int read = 0;
+        foreach (string raw in File.ReadLines(file)) {
+            if (++read > 40) {
+                break;
+            }
+            string line = raw.Trim();
+            if (!line.StartsWith("0")) {
+                continue;
+            }
+            if (description == null) {
+                description = line.Length > 1 ? line.Substring(1).Trim() : "";
+            } else if (line.StartsWith("0 !LDRAW_ORG")) {
+                string[] words = line.Split((char[])null, System.StringSplitOptions.RemoveEmptyEntries);
+                kind = words.Length > 2 ? words[2] : "";
+            } else if (line.StartsWith("0 !CATEGORY")) {
+                category = line.Substring("0 !CATEGORY".Length).Trim();
+            }
+        }
+        if (string.IsNullOrEmpty(description) || (kind != "Part" && kind != "Unofficial_Part")) {
+            return null; // subparts, primitives, shortcuts, aliases...
+        }
+        if (KeptNames.TryGetValue(id, out string keptName)) {
+            return new LDrawPart() { id = id, name = keptName, category = "Minifig Accessory" };
+        }
+        if ("~=_|".IndexOf(description[0]) >= 0 || description.Contains("Moved to") || PrintedName.IsMatch(description)) {
+            return null;
+        }
+        if (category == null) {
+            string[] words = description.Split((char[])null, System.StringSplitOptions.RemoveEmptyEntries);
+            category = words.Length > 0 ? words[0] : "";
+        }
+        if (!KeptParts.Contains(id) && (SkippedCategories.Contains(category) || category.StartsWith("Minifig", System.StringComparison.OrdinalIgnoreCase)
+                || OtherSystems.IsMatch(description) || OtherSystems.IsMatch(category))) {
+            return null;
+        }
+        return new LDrawPart() { id = id, name = CompactName(description), category = category };
+    }
+
+    // a file and those it uses, found like the game finds them (see LDrawLibrary.FindFile), to copy
+    private static void include(string source, string reference, Dictionary<string, string> copied) {
+        string name = reference.Trim().Replace('\\', '/').ToLowerInvariant();
+        string plain = name.StartsWith("48/") ? name.Substring(3) : name;
+        foreach (string candidate in new[] { "parts/" + name, "p/8/" + plain, "p/" + name, "p/" + plain }) {
+            if (copied.ContainsKey(candidate)) {
+                return;
+            }
+            string from = findCaseless(source, candidate);
+            if (from == null) {
+                continue;
+            }
+            copied[candidate] = from;
+            foreach (string line in File.ReadLines(from)) {
+                string trimmed = line.TrimStart();
+                if (!trimmed.StartsWith("1 ") && !trimmed.StartsWith("1\t")) {
+                    continue;
+                }
+                string[] f = trimmed.Split((char[])null, System.StringSplitOptions.RemoveEmptyEntries);
+                if (f.Length >= 15) {
+                    include(source, string.Join(" ", f, 14, f.Length - 14), copied);
+                }
+            }
+            return;
+        }
+    }
+
+    // the library's file names have mixed case (on Windows any case finds it)
+    private static string findCaseless(string root, string relative) {
+        string path = Path.Combine(root, relative);
+        return File.Exists(path) ? path : null;
+    }
+}

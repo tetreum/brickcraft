@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using System.Runtime.InteropServices;
 using Brickcraft;
+using Brickcraft.Events;
 using Brickcraft.UI;
 
 public class Menu : MonoBehaviour {
 
 	public List<GameObject> Menus;
 
-	public GameObject ItemTooltipPanel;
 
 	public static Menu Instance;
 
@@ -24,25 +24,89 @@ public class Menu : MonoBehaviour {
         //DontDestroyOnLoad(GameObject.Find("EventSystem"));
 		
         SceneManager.sceneLoaded += OnLevelFinishedLoading;
+		EventManager.LocalPlayerStarted.Subscribe(onLocalPlayerStarted);
+		EventManager.WorldLoadingStarted.Subscribe(onWorldLoadingStarted);
 
 		InventoryPanel.Instance = getPanel("InventoryPanel").GetComponent<InventoryPanel>();
+		Brickcraft.Network.ClientStorage.Changed += onStorageChanged;
+		PartsListerView.Opened += PartsListerPanel.Show;
+		PartsListerView.Closed += PartsListerPanel.Hide;
+		ModelImporterView.WindowRequested += ModelImporterPanel.Open;
+		ColorPickerTool.WindowRequested += ColorPickerPanel.Open;
+		ModelImporterView.Opened += ModelImporterPanel.ShowHint;
+		ModelImporterView.Closed += ModelImporterPanel.HideHint;
     }
+
+	// a storage brick the server opened for us: its panel, over the others
+	private void onStorageChanged() {
+		if (Brickcraft.Network.ClientStorage.IsOpen && !getPanel(StoragePanel.PanelName).activeSelf) {
+			showPanel(StoragePanel.PanelName, false);
+		}
+	}
 	private void OnDestroy() {
 		SceneManager.sceneLoaded -= OnLevelFinishedLoading;
+		EventManager.LocalPlayerStarted.Unsubscribe(onLocalPlayerStarted);
+		EventManager.WorldLoadingStarted.Unsubscribe(onWorldLoadingStarted);
+		Brickcraft.Network.ClientStorage.Changed -= onStorageChanged;
+		PartsListerView.Opened -= PartsListerPanel.Show;
+		PartsListerView.Closed -= PartsListerPanel.Hide;
+		ModelImporterView.WindowRequested -= ModelImporterPanel.Open;
+		ColorPickerTool.WindowRequested -= ColorPickerPanel.Open;
+		ModelImporterView.Opened -= ModelImporterPanel.ShowHint;
+		ModelImporterView.Closed -= ModelImporterPanel.HideHint;
+	}
+
+	private void onLocalPlayerStarted(LocalPlayerStartedEvent e) {
+		showPanel("PlayerPanel");
+	}
+
+	private void onWorldLoadingStarted(WorldLoadingStartedEvent e) {
+		showPanel("LoadingPanel");
+	}
+
+	// the panels' shortcuts, while playing
+	private void Update() {
+		if (Player.Instance == null || GameInput.IsTyping || SettingsPanel.IsOpen || SettingsPanel.WasClosedThisFrame) {
+			return;
+		}
+		// looking with the parts lister: Escape cancels it, the inventory stays closed
+		if (PartsListerView.IsOpen) {
+			if (GameInput.GetButtonDown(GameInput.Menu)) {
+				PartsListerView.Current.Cancel();
+			}
+			return;
+		}
+		// placing an imported model: Escape gives up
+		if (ModelImporterView.IsOpen && GameInput.GetButtonDown(GameInput.Menu)) {
+			ModelImporterView.Current.Close();
+			return;
+		}
+		// a storage panel open: the inventory key and Escape close it
+		GameObject storage = getPanel(StoragePanel.PanelName);
+		if (storage.activeSelf) {
+			if (GameInput.GetButtonDown(GameInput.Inventory) || GameInput.GetButtonDown(GameInput.Menu)) {
+				storage.SetActive(false);
+			}
+			return;
+		}
+		// sleeping, the inventory stays closed (the chat and the player list work)
+		if (GameInput.GetButtonDown(GameInput.Inventory) && !Player.Instance.IsSleeping) {
+			togglePanel("InventoryPanel");
+		}
+		if (GameInput.GetButtonDown(GameInput.Menu)) {
+			togglePanel("ESCPanel");
+		}
 	}
 
 	public void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode) {
         switch (scene.name) {
 			case "Main":
+				Game.unlockMouse();
 				showPanel("MainPanel");
 				break;
 			case "IconGenerator":
 				hideAllPanels();
 				Game.unlockMouse();
-				break;
-			case "Test":
-				showPanel("PlayerPanel");
-				Server.Instance.spawnPlayer(new Vector3(1.480856f, 5, -0.7904243f), Quaternion.identity);
 				break;
 			default:
                 showPanel("LoadingPanel");
@@ -130,28 +194,5 @@ public class Menu : MonoBehaviour {
 		
 		Menu.Instance.showPanel("SmartphonePanel", false);
 		Menu.Instance.showPanel("PlayerPanel", false);
-	}
-
-	/**
-		Shows a tooltip near to item slot
-		@param Vector3 pos Position to show the tooltip
-		@param Item item Item which we want to show its information
-		@return void
-	 */
-	public void showTooltip (Vector3 pos) {
-		ItemTooltipPanel.SetActive (true);
-		ItemTooltipPanel.GetComponent<RectTransform> ().SetAsLastSibling ();
-		ItemTooltipPanel.transform.position = pos;
-		/*
-		ItemTooltipPanel.transform.Find("TitleLabel").GetComponent<Text>().text = item.name;
-		ItemTooltipPanel.transform.Find("TextLabel").GetComponent<Text>().text = item.description;*/
-	}
-	
-	/**
-		hides the tooltip
-		@return void
-	*/
-	public void hideTooltip () {
-		ItemTooltipPanel.SetActive (false);
 	}
 }

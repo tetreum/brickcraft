@@ -1,0 +1,10 @@
+{
+    "name": "Sturdy Brick 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "color": 72,
+    "colors": "all",
+    "block": {
+        "hardness": 2
+    }
+}

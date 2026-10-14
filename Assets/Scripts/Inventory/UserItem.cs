@@ -2,7 +2,9 @@ namespace Brickcraft
 {
     public class UserItem
     {
-        public int id;
+        public string id;
+        /// <summary>Its colour, see BrickColorPalette.</summary>
+        public int color;
         public int quantity;
         public int health;
         public int slot;

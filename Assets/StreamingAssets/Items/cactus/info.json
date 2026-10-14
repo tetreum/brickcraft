@@ -1,0 +1,10 @@
+{
+    "id": "cactus",
+    "name": "Cactus 2x2",
+    "type": "brick",
+    "brickModel": 3003,
+    "color": 10,
+    "block": {
+        "hardness": 2
+    }
+}

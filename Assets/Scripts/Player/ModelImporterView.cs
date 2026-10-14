@@ -136,10 +136,10 @@ namespace Brickcraft
             if (corner.HasValue && GameInput.GetButtonDown(GameInput.Place)) {
                 if (isValid) {
                     player.GetComponent<ModelImporter>().Place(model.Placed(corner.Value, turns), slot);
-                    ModelImporter.Chat("Placing " + modelName + "...");
+                    ModelImporter.Chat(Loc.Get(Loc.UI, "importer.placing", modelName));
                     Close();
                 } else {
-                    ModelImporter.Chat("The model can't go there");
+                    ModelImporter.Chat(Loc.Get(Loc.UI, "importer.the_model_cant_go_there"));
                 }
             }
         }

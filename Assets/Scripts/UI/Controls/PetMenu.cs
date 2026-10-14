@@ -12,8 +12,8 @@ namespace Brickcraft.UI
         /// <summary>The Prefabs/UI/Popup prefab.</summary>
         public Popup popupPrefab;
 
-        // what each attack mode is called (Npcs.NpcBrain.PetAttack)
-        private static readonly string[] AttackNames = { "nothing", "who hurts you or whom you hit", "that, and hostile NPCs", "that, hostile NPCs and players (with PvP)" };
+        // the keys of what each attack mode is called (Npcs.NpcBrain.PetAttack)
+        private static readonly string[] AttackKeys = { "pet.attacks_nothing", "pet.attacks_who_hurts_you", "pet.attacks_and_hostile_npcs", "pet.attacks_and_players" };
 
         private Popup popup;
 
@@ -32,15 +32,15 @@ namespace Brickcraft.UI
             }
             popup.transform.SetAsLastSibling();
             DialogMode.Enter();
-            string text = (pet.following ? "It follows you." : "It stays where it is.") + " It attacks: " + AttackNames[pet.attacks] + ".";
-            string[] buttons = { "Follow", "Stay", "Change attacks" };
+            string text = Loc.Get(Loc.UI, pet.following ? "pet.follows_attacks" : "pet.stays_attacks", Loc.Get(Loc.UI, AttackKeys[pet.attacks]));
+            string[] buttons = { Loc.Get(Loc.UI, "pet.follow"), Loc.Get(Loc.UI, "pet.stay"), Loc.Get(Loc.UI, "pet.change_attacks") };
             popup.Show(pet.name, text, buttons, false, null, null, (button, input) => {
                 DialogMode.Exit();
                 if (button < 0 || Player.Instance == null) {
                     return;
                 }
                 bool following = button == 2 ? pet.following : button == 0;
-                byte attacks = button == 2 ? (byte)((pet.attacks + 1) % AttackNames.Length) : pet.attacks;
+                byte attacks = button == 2 ? (byte)((pet.attacks + 1) % AttackKeys.Length) : pet.attacks;
                 Player.Instance.network.CmdPetOrders(pet.npcId, following, attacks);
                 if (button == 2) {
                     show(new PetMenuRequestedEvent() { npcId = pet.npcId, name = pet.name, following = following, attacks = attacks });

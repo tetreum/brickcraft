@@ -684,20 +684,20 @@ namespace Brickcraft.Network
         public static float GetLoadingProgress(out string status) {
             string server = BrickcraftAuthenticator.ServerName;
             if (isSpawnAreaReady) {
-                status = server.Length > 0 ? "Joining " + server + "..." : "Joining...";
+                status = server.Length > 0 ? Loc.Get(Loc.UI, "loading.joining_server", server) : Loc.Get(Loc.UI, "loading.joining");
                 return 1f;
             }
             if (!NetworkClient.isConnected) {
-                status = "Connecting...";
+                status = Loc.Get(Loc.UI, "loading.connecting");
                 return 0f;
             }
             if (NetworkManager.loadingSceneAsync != null) {
-                status = server.Length > 0 ? "Loading " + server + "..." : "Loading world...";
+                status = server.Length > 0 ? Loc.Get(Loc.UI, "loading.loading_server", server) : Loc.Get(Loc.UI, "loading.loading_world");
                 return 0.05f + 0.2f * NetworkManager.loadingSceneAsync.progress;
             }
             WorldBehaviour world = WorldBehaviour.Instance;
             if (!hasWorldInfo || world == null) {
-                status = "Waiting for the server...";
+                status = Loc.Get(Loc.UI, "loading.waiting_for_the_server");
                 return 0.25f;
             }
 
@@ -712,7 +712,7 @@ namespace Brickcraft.Network
                     total++;
                 }
             }
-            status = "Building terrain (" + ready + "/" + total + " chunks)";
+            status = Loc.Get(Loc.UI, "loading.building_terrain", ready, total);
             return 0.3f + 0.7f * done / total;
         }
 

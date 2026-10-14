@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Brickcraft.Bricks;
+using Brickcraft.Events;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -27,9 +28,6 @@ namespace Brickcraft.UI
         /// <summary>A colour, copied for each: a Button whose Image gets the colour, with an Image "Selected" inside.</summary>
         public GameObject swatchTemplate;
 
-        /// <summary>What the button says when no colour is chosen.</summary>
-        public string noneText = "Default colour";
-
         /// <summary>The chosen colour, BrickColor.None when none.</summary>
         public int Selected { get; private set; } = BrickColor.None;
 
@@ -45,12 +43,23 @@ namespace Brickcraft.UI
             button.onClick.AddListener(togglePopup);
             popup.onClick.AddListener(closePopup);
             noneButton.onClick.AddListener(() => Select(BrickColor.None, true));
-            addHover(noneButton.gameObject, () => noneText);
+            addHover(noneButton.gameObject, () => noneText());
+            showSelected();
+        }
+
+        // the label may be in an old language if it changed meanwhile
+        private void OnEnable() {
+            EventManager.LanguageChanged.Subscribe(onLanguageChanged);
             showSelected();
         }
 
         private void OnDisable() {
+            EventManager.LanguageChanged.Unsubscribe(onLanguageChanged);
             closePopup();
+        }
+
+        private void onLanguageChanged(LanguageChangedEvent e) {
+            showSelected();
         }
 
         /// <summary>Chooses a colour (BrickColor.None for none), telling the listeners if notify.</summary>
@@ -125,7 +134,12 @@ namespace Brickcraft.UI
 
         private string nameOf(int colorId) {
             BrickColor color = BrickColorPalette.Get(colorId);
-            return color != null ? color.name : noneText;
+            return color != null ? color.name : noneText();
+        }
+
+        // what the button says when no colour is chosen
+        private static string noneText() {
+            return Loc.Get(Loc.UI, "inventory.default_colour");
         }
 
         // see-through colours look see-through

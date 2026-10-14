@@ -48,9 +48,9 @@ namespace Brickcraft.UI
             PlayerName = player.playerName;
             bool isAdmin = player.role == PlayerRoles.Admin;
 
-            playerName.text = player.playerName + (player.isLocalPlayer ? " (you)" : "");
+            playerName.text = player.isLocalPlayer ? Loc.Get(Loc.UI, "player.name_you", player.playerName) : player.playerName;
             adminBadge.SetActive(isAdmin);
-            ping.text = player.pingMs + " ms";
+            ping.text = Loc.Get(Loc.UI, "player.ping_ms", player.pingMs);
             ping.color = player.pingMs >= BadPingMs ? badPing : player.pingMs >= MediumPingMs ? mediumPing : goodPing;
 
             // nobody acts on themselves, and admins can't be kicked or banned (the server checks it too);

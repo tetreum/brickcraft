@@ -39,18 +39,32 @@ namespace Brickcraft
         {
             /// <summary>Its name, what the game asks for (see GameInput.GetButton).</summary>
             public string button;
-            public string label;
-            /// <summary>To group them in the settings.</summary>
+            /// <summary>Its key in the Controls table (see Label).</summary>
+            public string labelKey;
+            /// <summary>The number in its label, like a hotbar slot's (0 if none).</summary>
+            public int labelNumber;
+            /// <summary>To group them in the settings: its id, "movement"... (see CategoryName).</summary>
             public string category;
             public KeyCode defaultKey;
             public KeyCode defaultAltKey;
 
-            public Binding(string category, string button, string label, KeyCode defaultKey, KeyCode defaultAltKey = KeyCode.None) {
+            public Binding(string category, string button, string labelKey, KeyCode defaultKey, KeyCode defaultAltKey = KeyCode.None, int labelNumber = 0) {
                 this.category = category;
                 this.button = button;
-                this.label = label;
+                this.labelKey = labelKey;
+                this.labelNumber = labelNumber;
                 this.defaultKey = defaultKey;
                 this.defaultAltKey = defaultAltKey;
+            }
+
+            /// <summary>What the action is called, in the player's language.</summary>
+            public string Label {
+                get { return labelNumber > 0 ? Loc.Get(Loc.Controls, labelKey, labelNumber) : Loc.Get(Loc.Controls, labelKey); }
+            }
+
+            /// <summary>Its category's name, in the player's language.</summary>
+            public string CategoryName {
+                get { return Loc.Get(Loc.Controls, "category." + category); }
             }
         }
 
@@ -70,25 +84,25 @@ namespace Brickcraft
 
         private static Binding[] createBindings() {
             List<Binding> bindings = new List<Binding>() {
-                new Binding("Movement", MoveForward, "Move forward", KeyCode.W, KeyCode.UpArrow),
-                new Binding("Movement", MoveBack, "Move back", KeyCode.S, KeyCode.DownArrow),
-                new Binding("Movement", MoveLeft, "Move left", KeyCode.A, KeyCode.LeftArrow),
-                new Binding("Movement", MoveRight, "Move right", KeyCode.D, KeyCode.RightArrow),
-                new Binding("Movement", Jump, "Jump", KeyCode.Space),
-                new Binding("Movement", Sprint, "Sprint", KeyCode.LeftShift),
-                new Binding("Building", Dig, "Dig or remove", KeyCode.Mouse0),
-                new Binding("Building", Place, "Place brick", KeyCode.Mouse1),
-                new Binding("Building", Rotate, "Rotate brick", KeyCode.R),
-                new Binding("Building", Interact, "Use brick", KeyCode.E),
-                new Binding("Building", Drop, "Drop item (with Ctrl, the stack)", KeyCode.Q),
-                new Binding("Building", FreePlacement, "Place on any stud (hold)", KeyCode.LeftShift, KeyCode.RightShift),
-                new Binding("Interface", Inventory, "Inventory", KeyCode.I),
-                new Binding("Interface", Chat, "Chat", KeyCode.Return, KeyCode.KeypadEnter),
-                new Binding("Interface", PlayerList, "Player list (hold)", KeyCode.Tab),
-                new Binding("Interface", Menu, "Menu", KeyCode.Escape),
+                new Binding("movement", MoveForward, "controls.move_forward", KeyCode.W, KeyCode.UpArrow),
+                new Binding("movement", MoveBack, "controls.move_back", KeyCode.S, KeyCode.DownArrow),
+                new Binding("movement", MoveLeft, "controls.move_left", KeyCode.A, KeyCode.LeftArrow),
+                new Binding("movement", MoveRight, "controls.move_right", KeyCode.D, KeyCode.RightArrow),
+                new Binding("movement", Jump, "controls.jump", KeyCode.Space),
+                new Binding("movement", Sprint, "controls.sprint", KeyCode.LeftShift),
+                new Binding("building", Dig, "controls.dig", KeyCode.Mouse0),
+                new Binding("building", Place, "controls.place", KeyCode.Mouse1),
+                new Binding("building", Rotate, "controls.rotate", KeyCode.R),
+                new Binding("building", Interact, "controls.interact", KeyCode.E),
+                new Binding("building", Drop, "controls.drop", KeyCode.Q),
+                new Binding("building", FreePlacement, "controls.free_placement", KeyCode.LeftShift, KeyCode.RightShift),
+                new Binding("interface", Inventory, "controls.inventory", KeyCode.I),
+                new Binding("interface", Chat, "controls.chat", KeyCode.Return, KeyCode.KeypadEnter),
+                new Binding("interface", PlayerList, "controls.player_list", KeyCode.Tab),
+                new Binding("interface", Menu, "controls.menu", KeyCode.Escape),
             };
             for (int i = 1; i <= 9; i++) {
-                bindings.Add(new Binding("Hotbar", SlotPrefix + i, "Hotbar slot " + i, KeyCode.Alpha0 + i));
+                bindings.Add(new Binding("hotbar", SlotPrefix + i, "controls.hotbar_slot", KeyCode.Alpha0 + i, KeyCode.None, i));
             }
             foreach (Binding binding in bindings) {
                 bindingsByButton[binding.button] = binding;
@@ -397,26 +411,18 @@ namespace Brickcraft
             }
         }
 
-        /// <summary>A key as players know it: "Left Click", "Left Shift", "1"...</summary>
+        /// <summary>A key as players know it, in their language: "Left Click", "Left Shift", "1"...</summary>
         public static string KeyName(KeyCode key) {
-            switch (key) {
-                case KeyCode.Mouse0: return "Left Click";
-                case KeyCode.Mouse1: return "Right Click";
-                case KeyCode.Mouse2: return "Middle Click";
-                case KeyCode.Return: return "Enter";
-                case KeyCode.KeypadEnter: return "Keypad Enter";
-                case KeyCode.Escape: return "Esc";
-                case KeyCode.UpArrow: return "Up";
-                case KeyCode.DownArrow: return "Down";
-                case KeyCode.LeftArrow: return "Left";
-                case KeyCode.RightArrow: return "Right";
+            string named = keyNameKey(key);
+            if (named != null) {
+                return Loc.Get(Loc.Controls, named);
             }
             string name = key.ToString();
             if (name.StartsWith("Alpha")) {
                 return name.Substring(5);
             }
             if (name.StartsWith("Mouse")) {
-                return "Mouse " + name.Substring(5);
+                return Loc.Get(Loc.Controls, "key.mouse", name.Substring(5));
             }
             // "LeftShift" -> "Left Shift"
             System.Text.StringBuilder spaced = new System.Text.StringBuilder();
@@ -427,6 +433,33 @@ namespace Brickcraft
                 spaced.Append(name[i]);
             }
             return spaced.ToString();
+        }
+
+        // the Controls table's key of the keys whose name isn't just their KeyCode's, null for the rest
+        private static string keyNameKey(KeyCode key) {
+            switch (key) {
+                case KeyCode.Mouse0: return "key.left_click";
+                case KeyCode.Mouse1: return "key.right_click";
+                case KeyCode.Mouse2: return "key.middle_click";
+                case KeyCode.Return: return "key.enter";
+                case KeyCode.KeypadEnter: return "key.keypad_enter";
+                case KeyCode.Escape: return "key.esc";
+                case KeyCode.UpArrow: return "key.up";
+                case KeyCode.DownArrow: return "key.down";
+                case KeyCode.LeftArrow: return "key.left";
+                case KeyCode.RightArrow: return "key.right";
+                case KeyCode.LeftShift: return "key.left_shift";
+                case KeyCode.RightShift: return "key.right_shift";
+                case KeyCode.LeftControl: return "key.left_ctrl";
+                case KeyCode.RightControl: return "key.right_ctrl";
+                case KeyCode.LeftAlt: return "key.left_alt";
+                case KeyCode.RightAlt: return "key.right_alt";
+                case KeyCode.Space: return "key.space";
+                case KeyCode.Backspace: return "key.backspace";
+                case KeyCode.Delete: return "key.delete";
+                case KeyCode.CapsLock: return "key.caps_lock";
+            }
+            return null;
         }
     }
 }

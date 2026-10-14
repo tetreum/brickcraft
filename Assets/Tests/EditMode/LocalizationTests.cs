@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
 using Brickcraft.Events;
 using Brickcraft.UI;
 using NUnit.Framework;
@@ -88,6 +90,62 @@ namespace Brickcraft.Tests
             }
             GameSettings.Language = "es";
             Assert.AreEqual("Ajustes", Loc.Get(Loc.UI, "main.settings"));
+        }
+
+        private static readonly string[] Tables = { Loc.UI, Loc.Game, Loc.Controls, Loc.Items };
+
+        // a key in a table: its area (the part before the dot) is one of a table's
+        private static string tableOf(string key) {
+            foreach (string table in Tables) {
+                if (Loc.Has(table, key)) {
+                    return table;
+                }
+            }
+            return null;
+        }
+
+        [Test]
+        public void EveryKeyInTheScriptsIsInEveryLanguage() {
+            // the areas keys use, from the tables' keys
+            HashSet<string> areas = new HashSet<string>();
+            foreach (string guid in AssetDatabase.FindAssets("t:SharedTableData", new[] { "Assets/Localization" })) {
+                string text = File.ReadAllText(AssetDatabase.GUIDToAssetPath(guid));
+                foreach (Match key in Regex.Matches(text, @"m_Key: ([a-z]+)\.")) {
+                    areas.Add(key.Groups[1].Value);
+                }
+            }
+            Assert.Greater(areas.Count, 5);
+
+            // every literal like "area.words" of those areas, wherever it's used (Loc.Get, arrays of keys...)
+            int found = 0;
+            foreach (string script in Directory.GetFiles(Path.Combine(Application.dataPath, "Scripts"), "*.cs", SearchOption.AllDirectories)) {
+                foreach (Match literal in Regex.Matches(File.ReadAllText(script), "\"([a-z]+)\\.([a-z0-9_]+)\"")) {
+                    if (!areas.Contains(literal.Groups[1].Value)) {
+                        continue;
+                    }
+                    string key = literal.Groups[1].Value + "." + literal.Groups[2].Value;
+                    string table = tableOf(key);
+                    Assert.IsNotNull(table, key + " (" + Path.GetFileName(script) + ") isn't in any table");
+                    foreach (string language in GameSettings.LanguageCodes) {
+                        Assert.IsTrue(Loc.Has(table, key, language), key + " in " + language);
+                    }
+                    found++;
+                }
+            }
+            Assert.Greater(found, 100, "the scripts' texts are localized");
+        }
+
+        [Test]
+        public void EveryControlHasItsNamesInEveryLanguage() {
+            foreach (string language in GameSettings.LanguageCodes) {
+                GameSettings.Language = language;
+                foreach (GameInput.Binding binding in GameInput.Bindings) {
+                    Assert.IsFalse(binding.Label.Contains(".") && !binding.Label.Contains(" "), binding.button + "'s label in " + language + ": " + binding.Label);
+                    Assert.IsFalse(binding.CategoryName.StartsWith("category."), binding.button + "'s category in " + language);
+                }
+            }
+            GameSettings.Language = "es";
+            Assert.AreEqual("Clic izquierdo", GameInput.KeyName(KeyCode.Mouse0));
         }
 
         [Test]

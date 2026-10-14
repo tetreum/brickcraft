@@ -140,8 +140,8 @@ namespace Brickcraft.UI
             }
 
             pageText.text = matches.Count == 0
-                ? "No items found"
-                : "Page " + (page + 1) + " / " + pages + "  (" + matches.Count + " items)";
+                ? Loc.Get(Loc.UI, "inventory.no_items_found")
+                : Loc.Get(Loc.UI, "inventory.page", page + 1, pages, matches.Count);
             previousPage.interactable = page > 0;
             nextPage.interactable = page < pages - 1;
         }

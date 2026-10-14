@@ -17,7 +17,175 @@ MonoBehaviour:
   m_SharedData: {fileID: 11400000, guid: 015b3d855d3f785439d147774e3965ad, type: 2}
   m_Metadata:
     m_Items: []
-  m_TableData: []
+  m_TableData:
+  - m_Id: 5707672576000
+    m_Localized: Movement
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707697741824
+    m_Localized: Building
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936128
+    m_Localized: Interface
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936129
+    m_Localized: Hotbar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936130
+    m_Localized: Move forward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936131
+    m_Localized: Move back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936132
+    m_Localized: Move left
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936133
+    m_Localized: Move right
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936134
+    m_Localized: Jump
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936135
+    m_Localized: Sprint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936136
+    m_Localized: Dig or remove
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936137
+    m_Localized: Place brick
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936138
+    m_Localized: Rotate brick
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936139
+    m_Localized: Use brick
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936140
+    m_Localized: Drop item (with Ctrl, the stack)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936141
+    m_Localized: Place on any stud (hold)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936142
+    m_Localized: Inventory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936143
+    m_Localized: Chat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936144
+    m_Localized: Player list (hold)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936145
+    m_Localized: Menu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936146
+    m_Localized: Hotbar slot {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936147
+    m_Localized: Left Click
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936148
+    m_Localized: Right Click
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936149
+    m_Localized: Middle Click
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936150
+    m_Localized: Mouse {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936151
+    m_Localized: Enter
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936152
+    m_Localized: Keypad Enter
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936153
+    m_Localized: Esc
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936154
+    m_Localized: Up
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936155
+    m_Localized: Down
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936156
+    m_Localized: Left
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936157
+    m_Localized: Right
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936158
+    m_Localized: Left Shift
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936159
+    m_Localized: Right Shift
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936160
+    m_Localized: Left Control
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936161
+    m_Localized: Right Control
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936162
+    m_Localized: Left Alt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936163
+    m_Localized: Right Alt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936164
+    m_Localized: Space
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936165
+    m_Localized: Backspace
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936166
+    m_Localized: Delete
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936167
+    m_Localized: Caps Lock
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

@@ -1,3 +1,4 @@
+using Brickcraft.Events;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,10 +12,19 @@ namespace Brickcraft.UI
     public class PartsListerPanel : MonoBehaviour
     {
         private static PartsListerPanel instance;
+        // the faces' names, in PartsListerView.FaceNames' order
+        private static readonly string[] FaceKeys = {
+            "partslister.west", "partslister.east", "partslister.bottom", "partslister.top", "partslister.south", "partslister.north"
+        };
 
         private Text size;
         private InputField listName;
         private Button save;
+        private Text heading;
+        private Text help;
+        private readonly Text[] faceLabels = new Text[FaceKeys.Length];
+        private Text saveLabel;
+        private Text cancelLabel;
 
         public static void Show() {
             if (instance == null) {
@@ -26,6 +36,7 @@ namespace Brickcraft.UI
             instance.transform.SetAsLastSibling();
             instance.gameObject.SetActive(true);
             instance.listName.text = "";
+            instance.relabel();
             instance.refresh();
         }
 
@@ -37,17 +48,36 @@ namespace Brickcraft.UI
 
         private void OnEnable() {
             PartsListerView.BoxChanged += refresh;
+            EventManager.LanguageChanged.Subscribe(onLanguageChanged);
         }
 
         private void OnDisable() {
             PartsListerView.BoxChanged -= refresh;
+            EventManager.LanguageChanged.Unsubscribe(onLanguageChanged);
+        }
+
+        private void onLanguageChanged(LanguageChangedEvent e) {
+            relabel();
+            refresh();
+        }
+
+        // its texts in the player's language
+        private void relabel() {
+            heading.text = Loc.Get(Loc.UI, "partslister.parts_list");
+            help.text = Loc.Get(Loc.UI, "partslister.help");
+            for (int face = 0; face < faceLabels.Length; face++) {
+                faceLabels[face].text = Loc.Get(Loc.UI, FaceKeys[face]);
+            }
+            ((Text)listName.placeholder).text = Loc.Get(Loc.UI, "partslister.name_of_the_list_required");
+            saveLabel.text = Loc.Get(Loc.UI, "partslister.save_parts_list");
+            cancelLabel.text = Loc.Get(Loc.UI, "partslister.cancel");
         }
 
         private void refresh() {
             PartsListerView view = PartsListerView.Current;
             if (view != null) {
                 Vector3Int cells = view.Size;
-                size.text = cells.x + " x " + cells.z + " studs, " + cells.y + " plates high";
+                size.text = Loc.Get(Loc.UI, "partslister.size", cells.x, cells.z, cells.y);
             }
             save.interactable = !string.IsNullOrWhiteSpace(listName.text);
         }
@@ -71,10 +101,8 @@ namespace Brickcraft.UI
             panel.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             PartsListerPanel parts = panel.AddComponent<PartsListerPanel>();
-            CodeUi.Label(panel.transform, font, "PARTS LIST", 20, FontStyle.Bold, Color.white);
-            CodeUi.Label(panel.transform, font,
-                "Right mouse: look around\nMove keys, jump, Ctrl: fly\nWheel or drag on a face: resize it (Shift: x4)",
-                14, FontStyle.Normal, CodeUi.HintColor);
+            parts.heading = CodeUi.Label(panel.transform, font, "", 20, FontStyle.Bold, Color.white);
+            parts.help = CodeUi.Label(panel.transform, font, "", 14, FontStyle.Normal, CodeUi.HintColor);
             parts.size = CodeUi.Label(panel.transform, font, "", 15, FontStyle.Normal, CodeUi.TextColor);
 
             for (int face = 0; face < PartsListerView.FaceNames.Length; face++) {
@@ -87,14 +115,14 @@ namespace Brickcraft.UI
                 line.childControlWidth = line.childControlHeight = true;
                 line.childForceExpandWidth = false;
                 line.childForceExpandHeight = true;
-                Text label = CodeUi.Label(row.transform, font, PartsListerView.FaceNames[face], 15, FontStyle.Normal, CodeUi.TextColor);
+                Text label = parts.faceLabels[face] = CodeUi.Label(row.transform, font, "", 15, FontStyle.Normal, CodeUi.TextColor);
                 label.alignment = TextAnchor.MiddleLeft;
                 label.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
                 CodeUi.Clickable(row.transform, font, "−", CodeUi.ButtonColor, 40, () => grow(which, -1));
                 CodeUi.Clickable(row.transform, font, "+", CodeUi.ButtonColor, 40, () => grow(which, 1));
             }
 
-            parts.listName = CodeUi.Field(panel.transform, font, "Name of the list (required)");
+            parts.listName = CodeUi.Field(panel.transform, font, "");
             parts.listName.characterLimit = Network.PartsLister.MaxNameLength;
             parts.listName.onValueChanged.AddListener(value => parts.refresh());
             GameObject saveButton = CodeUi.Clickable(panel.transform, font, "Save parts list", CodeUi.ActionColor, 0, () => {
@@ -104,11 +132,14 @@ namespace Brickcraft.UI
             });
             saveButton.GetComponent<LayoutElement>().preferredHeight = 40;
             parts.save = saveButton.GetComponent<Button>();
-            CodeUi.Clickable(panel.transform, font, "Cancel", CodeUi.ButtonColor, 0, () => {
+            parts.saveLabel = saveButton.GetComponentInChildren<Text>();
+            GameObject cancelButton = CodeUi.Clickable(panel.transform, font, "Cancel", CodeUi.ButtonColor, 0, () => {
                 if (PartsListerView.Current != null) {
                     PartsListerView.Current.Cancel();
                 }
-            }).GetComponent<LayoutElement>().preferredHeight = 36;
+            });
+            cancelButton.GetComponent<LayoutElement>().preferredHeight = 36;
+            parts.cancelLabel = cancelButton.GetComponentInChildren<Text>();
             panel.SetActive(false);
             return parts;
         }

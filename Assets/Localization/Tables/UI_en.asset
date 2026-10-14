@@ -16,7 +16,8 @@ MonoBehaviour:
     m_Code: en
   m_SharedData: {fileID: 11400000, guid: aa8fd92a18fabda428a97bb6493b108f, type: 2}
   m_Metadata:
-    m_Items: []
+    m_Items:
+    - rid: 8627787809188479010
   m_TableData:
   - m_Id: 520962695168
     m_Localized: Language
@@ -319,6 +320,472 @@ MonoBehaviour:
     m_Localized: Quit
     m_Metadata:
       m_Items: []
+  - m_Id: 5709509681152
+    m_Localized: Singleplayer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681153
+    m_Localized: Pick a world or create a new one.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681154
+    m_Localized: Seed {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681155
+    m_Localized: Played {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681156
+    m_Localized: just now
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681157
+    m_Localized: '{0} min ago'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681158
+    m_Localized: '{0} h ago'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681159
+    m_Localized: '{0} {0:plural:day|days} ago'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479010
+  - m_Id: 5709513875456
+    m_Localized: '{0} {0:plural:mod|mods}'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479010
+  - m_Id: 5709513875457
+    m_Localized: Sure?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875458
+    m_Localized: Delete
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875459
+    m_Localized: 'Can''t be played: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875460
+    m_Localized: '{0}, {1} and {2} more'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875461
+    m_Localized: 'Missing mods: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875462
+    m_Localized: Older save, upgraded when played
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875463
+    m_Localized: New world
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875464
+    m_Localized: Leave the seed empty for a random one.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875465
+    m_Localized: by {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875466
+    m_Localized: 'Couldn''t create the world: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875467
+    m_Localized: Adjust your game preferences.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875468
+    m_Localized: Change how the game is displayed.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875469
+    m_Localized: Click a key to change it, Esc cancels.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875470
+    m_Localized: Set the volume of the game.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875471
+    m_Localized: Fullscreen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875472
+    m_Localized: Borderless window
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875473
+    m_Localized: Windowed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875474
+    m_Localized: '{0} {0:plural:chunk|chunks}'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479010
+  - m_Id: 5709513875475
+    m_Localized: (server allows {0})
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875476
+    m_Localized: All keys are back to their defaults.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875477
+    m_Localized: Keys can't be changed without a keyboard or mouse.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875478
+    m_Localized: Press a key...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875479
+    m_Localized: '{0} is also used by {1}.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585600
+    m_Localized: Players
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585601
+    m_Localized: '{0} online'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585602
+    m_Localized: '{0} / {1} online'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585603
+    m_Localized: Kick {0}?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585604
+    m_Localized: Ban {0}?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585605
+    m_Localized: '{0} will leave the game, they can join again.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585606
+    m_Localized: '{0} and their machine won''t be able to join again, until /unban
+      {0}.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585607
+    m_Localized: Cancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585608
+    m_Localized: Reason (optional)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585609
+    m_Localized: '{0} (you)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585610
+    m_Localized: '{0} ms'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585611
+    m_Localized: Air {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585612
+    m_Localized: Drowning!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585613
+    m_Localized: Sleeping through the night...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585614
+    m_Localized: '{0} of {1} {1:plural:player|players} asleep, {2} needed to skip
+      the night'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479010
+  - m_Id: 5709874585615
+    m_Localized: 'It follows you. It attacks: {0}.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585616
+    m_Localized: 'It stays where it is. It attacks: {0}.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585617
+    m_Localized: nothing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585618
+    m_Localized: who hurts you or whom you hit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585619
+    m_Localized: that, and hostile NPCs
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585620
+    m_Localized: that, hostile NPCs and players (with PvP)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585621
+    m_Localized: Follow
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585622
+    m_Localized: Stay
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585623
+    m_Localized: Change attacks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585624
+    m_Localized: You died
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585625
+    m_Localized: '{0} killed you.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585626
+    m_Localized: Respawn
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585627
+    m_Localized: Damage {0}, shoots {1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585628
+    m_Localized: Damage {0}, {1} hits a second
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585629
+    m_Localized: Armor {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585630
+    m_Localized: Durability {0} / {1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585631
+    m_Localized: No items found
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585632
+    m_Localized: Page {0} / {1}  ({2} {2:plural:item|items})
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479010
+  - m_Id: 5709874585633
+    m_Localized: Default colour
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712832
+    m_Localized: MODEL IMPORTER
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712833
+    m_Localized: LDraw models (.ldr, .mpd) in {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712834
+    m_Localized: 'No LDraw models (.ldr, .mpd) in the folder yet: put some there
+      and refresh.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712835
+    m_Localized: 'Can''t read {0}: {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712836
+    m_Localized: None of {0}'s parts can be placed{1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712837
+    m_Localized: '{0} has {1} bricks, the most is {2}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712838
+    m_Localized: '{0}: {1} {1:plural:brick|bricks}, {2} x {3} studs, {4} {4:plural:plate|plates}
+      high{5}'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479010
+  - m_Id: 5710222712839
+    m_Localized: '{0} the game hasn''t ({1})'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712840
+    m_Localized: '{0} doors or glass'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712841
+    m_Localized: '{0} turned or moved off the studs'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712842
+    m_Localized: '{0} where another part already is'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712843
+    m_Localized: '{0} {0:plural:part|parts} left out: {1}'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479010
+  - m_Id: 5710222712844
+    m_Localized: Open folder
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712845
+    m_Localized: Refresh
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712846
+    m_Localized: Close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712847
+    m_Localized: 'Right click: place   R: turn   Shift: any stud   Esc: cancel'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712848
+    m_Localized: Placing {0}...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712849
+    m_Localized: The model can't go there
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712850
+    m_Localized: PARTS LIST
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712851
+    m_Localized: 'Right mouse: look around
+
+      Move keys, jump, Ctrl: fly
+
+      Wheel
+      or drag on a face: resize it (Shift: x4)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712852
+    m_Localized: '{0} x {1} studs, {2} {2:plural:plate|plates} high'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479010
+  - m_Id: 5710222712853
+    m_Localized: West
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712854
+    m_Localized: East
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712855
+    m_Localized: Bottom
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712856
+    m_Localized: Top
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712857
+    m_Localized: South
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712858
+    m_Localized: North
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712859
+    m_Localized: Name of the list (required)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712860
+    m_Localized: Save parts list
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712861
+    m_Localized: Cancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712862
+    m_Localized: COLOR PICKER
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712863
+    m_Localized: Pick a colour
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712864
+    m_Localized: Close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712865
+    m_Localized: OK
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712866
+    m_Localized: 'Couldn''t open the world {0}: {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712867
+    m_Localized: Couldn't join {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712868
+    m_Localized: Joining {0}...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712869
+    m_Localized: Joining...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712870
+    m_Localized: Connecting...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712871
+    m_Localized: Loading {0}...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712872
+    m_Localized: Loading world...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712873
+    m_Localized: Waiting for the server...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712874
+    m_Localized: Building terrain ({0}/{1} chunks)
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 8627787809188479010
+      type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
+      data:
+        m_Entries: 
+        m_SharedEntries:
+        - id: 5709509681159
+        - id: 5709513875456
+        - id: 5709513875474
+        - id: 5709874585614
+        - id: 5709874585632
+        - id: 5710222712838
+        - id: 5710222712843
+        - id: 5710222712852

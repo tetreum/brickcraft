@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Brickcraft.Bricks;
+using Brickcraft.Events;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -17,6 +18,8 @@ namespace Brickcraft.UI
         private static readonly Color OutlineColor = new Color(1, 1, 1, 0.9f);
 
         private Text title;
+        private Text heading;
+        private Text closeLabel;
         private readonly Dictionary<int, Outline> outlines = new Dictionary<int, Outline>();
         private int slot;
         private bool isOpen;
@@ -32,6 +35,7 @@ namespace Brickcraft.UI
             window.slot = slot;
             window.transform.SetAsLastSibling();
             window.gameObject.SetActive(true);
+            window.relabel();
             window.showCurrent();
             if (!window.isOpen) {
                 window.isOpen = true;
@@ -59,6 +63,25 @@ namespace Brickcraft.UI
             }
         }
 
+        private void OnEnable() {
+            EventManager.LanguageChanged.Subscribe(onLanguageChanged);
+        }
+
+        private void OnDisable() {
+            EventManager.LanguageChanged.Unsubscribe(onLanguageChanged);
+        }
+
+        private void onLanguageChanged(LanguageChangedEvent e) {
+            relabel();
+            showCurrent();
+        }
+
+        // its texts in the player's language (the colours' names aren't translated)
+        private void relabel() {
+            heading.text = Loc.Get(Loc.UI, "colorpicker.color_picker");
+            closeLabel.text = Loc.Get(Loc.UI, "colorpicker.close");
+        }
+
         private void OnDestroy() {
             if (isOpen) {
                 isOpen = false;
@@ -77,7 +100,7 @@ namespace Brickcraft.UI
 
         private static string nameOf(int colorId) {
             BrickColor color = BrickColorPalette.Get(colorId);
-            return color != null ? color.name : "Pick a colour";
+            return color != null ? color.name : Loc.Get(Loc.UI, "colorpicker.pick_a_colour");
         }
 
         private void pick(int colorId) {
@@ -110,7 +133,7 @@ namespace Brickcraft.UI
             layout.childForceExpandHeight = false;
 
             ColorPickerPanel picker = panel.AddComponent<ColorPickerPanel>();
-            CodeUi.Label(panel.transform, font, "COLOR PICKER", 20, FontStyle.Bold, Color.white);
+            picker.heading = CodeUi.Label(panel.transform, font, "", 20, FontStyle.Bold, Color.white);
             picker.title = CodeUi.Label(panel.transform, font, "", 15, FontStyle.Normal, CodeUi.TextColor);
 
             // the swatches, scrolling
@@ -157,6 +180,7 @@ namespace Brickcraft.UI
 
             GameObject close = CodeUi.Clickable(panel.transform, font, "Close", CodeUi.ButtonColor, 0, Close);
             close.GetComponent<LayoutElement>().preferredHeight = 36;
+            picker.closeLabel = close.GetComponentInChildren<Text>();
             panel.SetActive(false);
             return picker;
         }

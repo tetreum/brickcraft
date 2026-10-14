@@ -1,6 +1,7 @@
 using System.Collections;
 using Brickcraft.Bricks;
 using Brickcraft.Network;
+using Brickcraft.Npcs;
 using Brickcraft.World;
 using NUnit.Framework;
 using UnityEngine;
@@ -169,6 +170,44 @@ namespace Brickcraft.Tests
                 Assert.AreEqual("A dragon was seen near spawn", lines[1].text, "one line");
             } finally {
                 Events.EventManager.ChatLineReceived.Unsubscribe(received);
+            }
+        }
+
+        // the middle of a block's top, where an NPC stands on it
+        private static Vector3 onTop(Vector3Int block) {
+            return BrickGrid.CellToWorld(BrickGrid.BlockToCell(block + Vector3Int.up), new Vector3(BrickGrid.StudsPerBlock / 2f, 0.05f, BrickGrid.StudsPerBlock / 2f));
+        }
+
+        [UnityTest]
+        public IEnumerator NpcsDontWalkIntoTheTerrainsWater() {
+            BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
+            BlockType water = (BlockType)BlockDatabase.IdOf("still_water");
+            // a stone floor two blocks thick, a pool sunk in it: the water has no collider, its bottom has
+            Vector3Int floor = above(20);
+            TestGame.Floor(floor + Vector3Int.down, 4, stone);
+            TestGame.Floor(floor, 4, stone);
+            Vector3Int pool = floor + new Vector3Int(1, 0, 0);
+            Assert.IsTrue(WorldNetwork.ServerSetBlock(pool, water, Placer.Now(0)));
+            Vector3 poolTop = onTop(pool);
+            yield return TestGame.WaitUntil(() => Physics.Raycast(poolTop + Vector3.up * 3, Vector3.down, out RaycastHit hit, 6f)
+                && hit.point.y < poolTop.y - 0.1f, 10, "the pool's bottom under its water");
+
+            Npc golem = NpcSystem.ServerSpawn(NpcDatabase.Get("golem"), onTop(floor), 0);
+            Assert.IsNotNull(golem);
+            try {
+                yield return null;
+                System.Reflection.MethodInfo isWalkable = typeof(Npc).GetMethod("isWalkable", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                CapsuleCollider body = golem.GetComponent<CapsuleCollider>();
+                Vector3 standing = onTop(floor);
+                // its capsule off, as when it checks (see Npc.canWalk)
+                body.enabled = false;
+                bool intoWater = (bool)isWalkable.Invoke(golem, new object[] { standing, poolTop - standing });
+                bool ontoStone = (bool)isWalkable.Invoke(golem, new object[] { standing, onTop(floor - new Vector3Int(1, 0, 0)) - standing });
+                body.enabled = true;
+                Assert.IsFalse(intoWater, "the water isn't walked into");
+                Assert.IsTrue(ontoStone, "the stone is");
+            } finally {
+                Mirror.NetworkServer.Destroy(golem.gameObject);
             }
         }
 

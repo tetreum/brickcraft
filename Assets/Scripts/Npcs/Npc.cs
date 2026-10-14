@@ -645,8 +645,12 @@ namespace Brickcraft.Npcs
             }
             Vector3 from = position + step + Vector3.up * (Info.stepHeight + 0.05f);
             // water bricks are on the Water layer, which it otherwise walks through
-            return !(Physics.Raycast(from, Vector3.down, out RaycastHit below, DropCheck, SolidLayers | (1 << (int)Game.Layers.Water), QueryTriggerInteraction.Ignore)
-                && isFluid(below));
+            if (!Physics.Raycast(from, Vector3.down, out RaycastHit below, DropCheck, SolidLayers | (1 << (int)Game.Layers.Water), QueryTriggerInteraction.Ignore)) {
+                return true;
+            }
+            // the terrain's fluids have no collider (players swim in them): the ray goes through a lake to its
+            // bottom, so where its feet would be is checked too
+            return !isFluid(below) && !isFluidAt(below.point + Vector3.up * 0.05f);
         }
 
         // what a ray hit is a fluid: a fluid block of the terrain, or a water (or other fluid) brick

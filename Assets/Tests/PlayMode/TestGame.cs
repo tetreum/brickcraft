@@ -13,17 +13,23 @@ namespace Brickcraft.Tests
 {
     /// <summary>
     /// The game played alone on a world of its own (a save named zz_test_..., with the game's usual seed), as a
-    /// player would: the world scene loads, the spawn area is built and the player appears. Delete removes the save.
+    /// player would: the world scene loads, the spawn area is built and the player appears. Delete removes the save;
+    /// a test that's stopped before it can (timed out) leaves it, so starting removes the ones left before.
     /// </summary>
     public class TestGame
     {
         private const float StartTimeout = 30;
         private const float StopTimeout = 30;
+        private const string SavePrefix = "zz_test_";
 
-        public readonly string saveName = "zz_test_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+        public readonly string saveName = SavePrefix + Guid.NewGuid().ToString("N").Substring(0, 8);
+
+        private static string SavesFolder {
+            get { return Path.Combine(Application.persistentDataPath, "saves"); }
+        }
 
         public string SaveFolder {
-            get { return Path.Combine(Application.persistentDataPath, "saves", saveName); }
+            get { return Path.Combine(SavesFolder, saveName); }
         }
 
         public static GameObject Player {
@@ -37,6 +43,7 @@ namespace Brickcraft.Tests
 
         /// <summary>Plays its world until the player is in it, drawing it as near as the game allows (fewer chunks to load).</summary>
         public IEnumerator Start() {
+            deleteLeftovers();
             GameSettings.RenderDistanceOverride = GameSettings.MinRenderDistance;
             GameSettings.MasterVolumeOverride = 0; // silent (a test about sound sets its own)
             BrickcraftNetworkManager.GetOrCreate().PlayWorld(saveName);
@@ -45,6 +52,25 @@ namespace Brickcraft.Tests
                 Assert.Less(Time.realtimeSinceStartup, end, "the player didn't appear in " + StartTimeout + " seconds");
                 Assert.IsFalse(BrickcraftNetworkManager.Instance.HasFailedToStart, "the server didn't start");
                 yield return null;
+            }
+        }
+
+        // the saves of tests stopped before deleting theirs (no game is on while another starts)
+        private void deleteLeftovers() {
+            if (!Directory.Exists(SavesFolder)) {
+                return;
+            }
+            foreach (string folder in Directory.GetDirectories(SavesFolder, SavePrefix + "*")) {
+                if (Path.GetFileName(folder) == saveName) {
+                    continue;
+                }
+                try {
+                    Directory.Delete(folder, true);
+                } catch (IOException e) {
+                    Debug.LogWarning("A test's save couldn't be deleted: " + folder + " (" + e.Message + ")");
+                } catch (UnauthorizedAccessException e) {
+                    Debug.LogWarning("A test's save couldn't be deleted: " + folder + " (" + e.Message + ")");
+                }
             }
         }
 

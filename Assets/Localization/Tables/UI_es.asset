@@ -22,6 +22,303 @@ MonoBehaviour:
     m_Localized: Idioma
     m_Metadata:
       m_Items: []
+  - m_Id: 3441272020998
+    m_Localized: TODO
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603915
+    m_Localized: Salir
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603914
+    m_Localized: Ajustes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826693
+    m_Localized: ARMADURA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020993
+    m_Localized: PECHO
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272021000
+    m_Localized: Por defecto
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020995
+    m_Localized: PIES
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020992
+    m_Localized: CABEZA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020997
+    m_Localized: INVENTARIO
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020994
+    m_Localized: PIERNAS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020999
+    m_Localized: Buscar por nombre o id...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020996
+    m_Localized: ESCUDO
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603917
+    m_Localized: Crear partida
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603918
+    m_Localized: Unirse a partida
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215296
+    m_Localized: "Contrase\xF1a (si la hay)"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603920
+    m_Localized: Salir
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603919
+    m_Localized: Ajustes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603916
+    m_Localized: Un jugador
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272021001
+    m_Localized: Tu nombre
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826688
+    m_Localized: ADMIN
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826690
+    m_Localized: Banear
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826689
+    m_Localized: Echar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826692
+    m_Localized: "Clic derecho para usar el rat\xF3n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441234272256
+    m_Localized: Durmiendo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603913
+    m_Localized: Dejar de dormir
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826691
+    m_Localized: TP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215300
+    m_Localized: Audio
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215301
+    m_Localized: Cambia el idioma del juego.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215299
+    m_Localized: Controles
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215304
+    m_Localized: Punto de mira
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409606
+    m_Localized: Excavar, colocar, pasos...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215310
+    m_Localized: Modo de pantalla
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215303
+    m_Localized: "Muestra tu posici\xF3n actual (X, Y, Z)."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409605
+    m_Localized: Efectos
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215311
+    m_Localized: Pantalla completa, ventana sin bordes o ventana.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215297
+    m_Localized: General
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215298
+    m_Localized: "Gr\xE1ficos"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215313
+    m_Localized: "Hasta d\xF3nde se dibuja el mundo, en chunks."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409602
+    m_Localized: El volumen de todo el juego.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409601
+    m_Localized: Volumen general
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409603
+    m_Localized: "M\xFAsica"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215312
+    m_Localized: Distancia de dibujado
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409600
+    m_Localized: Restablecer valores
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215308
+    m_Localized: "Resoluci\xF3n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215305
+    m_Localized: Muestra un punto de mira en el centro.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215302
+    m_Localized: Mostrar coordenadas
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215307
+    m_Localized: "Muestra consejos \xFAtiles mientras juegas."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215309
+    m_Localized: "El tama\xF1o de la imagen del juego."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215306
+    m_Localized: Consejos del tutorial
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409604
+    m_Localized: "El volumen de la m\xFAsica."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603905
+    m_Localized: 10 min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603906
+    m_Localized: 20 min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603907
+    m_Localized: 30 min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603908
+    m_Localized: 60 min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603909
+    m_Localized: Volver
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603910
+    m_Localized: Crear y jugar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409609
+    m_Localized: Crear mundo nuevo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409621
+    m_Localized: "Duraci\xF3n del d\xEDa"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409614
+    m_Localized: Dificultad
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409618
+    m_Localized: "Dif\xEDcil"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409615
+    m_Localized: "Lo dif\xEDcil que es el mundo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603904
+    m_Localized: "Lo que duran un d\xEDa y su noche."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603911
+    m_Localized: Mods
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603912
+    m_Localized: No hay mods instalados. Los mods son carpetas dentro de la carpeta
+      Mods, junto al juego.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409608
+    m_Localized: "A\xFAn no hay mundos, \xA1crea uno!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409617
+    m_Localized: Normal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409616
+    m_Localized: "Pac\xEDfico"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409607
+    m_Localized: Jugar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409620
+    m_Localized: "Los jugadores pueden hacerse da\xF1o entre ellos."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409619
+    m_Localized: PvP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409612
+    m_Localized: Semilla
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409613
+    m_Localized: Misma semilla, mismo terreno.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409611
+    m_Localized: "C\xF3mo se llama en la lista."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409610
+    m_Localized: Nombre del mundo
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

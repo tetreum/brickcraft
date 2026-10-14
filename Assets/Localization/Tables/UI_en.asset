@@ -22,6 +22,303 @@ MonoBehaviour:
     m_Localized: Language
     m_Metadata:
       m_Items: []
+  - m_Id: 3441234272256
+    m_Localized: Sleeping
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826688
+    m_Localized: ADMIN
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826689
+    m_Localized: Kick
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826690
+    m_Localized: Ban
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826691
+    m_Localized: TP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826692
+    m_Localized: Right-click to use the mouse
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826693
+    m_Localized: ARMOR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020992
+    m_Localized: HEAD
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020993
+    m_Localized: CHEST
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020994
+    m_Localized: LEGS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020995
+    m_Localized: FEET
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020996
+    m_Localized: SHIELD
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020997
+    m_Localized: INVENTORY
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020998
+    m_Localized: ALL
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020999
+    m_Localized: Search by name or id...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272021000
+    m_Localized: Default
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272021001
+    m_Localized: Your name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215296
+    m_Localized: Password (if any)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215297
+    m_Localized: General
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215298
+    m_Localized: Graphics
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215299
+    m_Localized: Controls
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215300
+    m_Localized: Audio
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215301
+    m_Localized: Change the language of the game.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215302
+    m_Localized: Show Coordinates
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215303
+    m_Localized: Display your current position (X, Y, Z).
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215304
+    m_Localized: Crosshair
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215305
+    m_Localized: Show a center crosshair.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215306
+    m_Localized: Tutorial Hints
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215307
+    m_Localized: Show helpful tips while playing.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215308
+    m_Localized: Resolution
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215309
+    m_Localized: The size of the game's picture.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215310
+    m_Localized: Display Mode
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215311
+    m_Localized: Fullscreen, a borderless window or a window.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215312
+    m_Localized: Render Distance
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215313
+    m_Localized: How far the world is drawn, in chunks.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409600
+    m_Localized: Reset to defaults
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409601
+    m_Localized: Master Volume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409602
+    m_Localized: How loud the whole game is.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409603
+    m_Localized: Music
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409604
+    m_Localized: Volume of the music.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409605
+    m_Localized: Effects
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409606
+    m_Localized: Digging, placing, steps...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409607
+    m_Localized: Play
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409608
+    m_Localized: No worlds yet, create one!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409609
+    m_Localized: Create new world
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409610
+    m_Localized: World name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409611
+    m_Localized: What it's called in the list.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409612
+    m_Localized: Seed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409613
+    m_Localized: The same seed, the same terrain.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409614
+    m_Localized: Difficulty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409615
+    m_Localized: How hard the world is.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409616
+    m_Localized: Peaceful
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409617
+    m_Localized: Normal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409618
+    m_Localized: Hard
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409619
+    m_Localized: PvP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409620
+    m_Localized: Players can hurt each other.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409621
+    m_Localized: Day Length
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603904
+    m_Localized: How long a day and its night last.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603905
+    m_Localized: 10 min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603906
+    m_Localized: 20 min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603907
+    m_Localized: 30 min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603908
+    m_Localized: 60 min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603909
+    m_Localized: Back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603910
+    m_Localized: Create and play
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603911
+    m_Localized: Mods
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603912
+    m_Localized: No mods installed. Mods are folders in the Mods folder next to the
+      game.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603913
+    m_Localized: Stop sleeping
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603914
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603915
+    m_Localized: Leave
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603916
+    m_Localized: Singleplayer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603917
+    m_Localized: Host game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603918
+    m_Localized: Join game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603919
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603920
+    m_Localized: Quit
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

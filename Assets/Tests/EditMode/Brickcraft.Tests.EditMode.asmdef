@@ -4,6 +4,7 @@
     "references": [
         "Brickcraft",
         "Brickcraft.Events",
+        "Brickcraft.UI",
         "Unity.InputSystem",
         "Gilzoide.SqliteNet",
         "UnityEngine.TestRunner",

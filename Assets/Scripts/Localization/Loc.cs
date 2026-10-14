@@ -107,6 +107,15 @@ namespace Brickcraft
             return strings != null && strings.SharedData.GetEntry(key) != null;
         }
 
+        /// <summary>That language's table has the key, with a text (it isn't left to fall back on English).</summary>
+        public static bool Has(string table, string key, string language) {
+            start();
+            Locale locale = LocalizationSettings.AvailableLocales.GetLocale(new LocaleIdentifier(language));
+            StringTable strings = locale != null ? LocalizationSettings.StringDatabase.GetTable(table, locale) : null;
+            StringTableEntry entry = strings != null ? strings.GetEntry(key) : null;
+            return entry != null && !string.IsNullOrEmpty(entry.Value);
+        }
+
         private static string get(string table, string key, object[] arguments) {
             if (!Has(table, key)) {
                 if (warned.Add(table + "/" + key)) {

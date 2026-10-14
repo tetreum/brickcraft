@@ -1,5 +1,8 @@
+using System.Collections.Generic;
 using Brickcraft.Events;
+using Brickcraft.UI;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -51,6 +54,40 @@ namespace Brickcraft.Tests
             } finally {
                 EventManager.LanguageChanged.Unsubscribe(changed);
             }
+        }
+
+        // the keys the UI prefabs say their texts with: LocalizedTexts and menu buttons
+        private static List<string> prefabKeys() {
+            List<string> keys = new List<string>();
+            List<string> prefabs = new List<string>() { "Assets/Prefabs/Canvas.prefab" };
+            foreach (string guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Prefabs/UI" })) {
+                prefabs.Add(AssetDatabase.GUIDToAssetPath(guid));
+            }
+            foreach (string path in prefabs) {
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                foreach (LocalizedText text in prefab.GetComponentsInChildren<LocalizedText>(true)) {
+                    keys.Add(text.key);
+                }
+                foreach (MenuButton button in prefab.GetComponentsInChildren<MenuButton>(true)) {
+                    if (!string.IsNullOrEmpty(button.labelKey)) {
+                        keys.Add(button.labelKey);
+                    }
+                }
+            }
+            return keys;
+        }
+
+        [Test]
+        public void EveryUiTextIsInEnglishAndSpanish() {
+            List<string> keys = prefabKeys();
+            Assert.Greater(keys.Count, 50, "the menus are localized");
+            foreach (string key in keys) {
+                foreach (string language in GameSettings.LanguageCodes) {
+                    Assert.IsTrue(Loc.Has(Loc.UI, key, language), key + " in " + language);
+                }
+            }
+            GameSettings.Language = "es";
+            Assert.AreEqual("Ajustes", Loc.Get(Loc.UI, "main.settings"));
         }
 
         [Test]

@@ -260,6 +260,7 @@ namespace Brickcraft.Network
 
         public override void OnStopClient() {
             health.DeadChanged -= showBody;
+            EventManager.LanguageChanged.Unsubscribe(onLanguageChanged);
         }
 
         public override void OnStartLocalPlayer() {
@@ -271,6 +272,19 @@ namespace Brickcraft.Network
 
             GetComponent<Player>().onStartLocalPlayer();
             heldItems = HeldItems.FirstPerson(this, GetComponentInChildren<Camera>());
+            EventManager.LanguageChanged.Subscribe(onLanguageChanged);
+        }
+
+        // the server tells it what mods' scripts say in its language (see ConnectedPlayer.language)
+        private void onLanguageChanged(Events.LanguageChangedEvent e) {
+            CmdSetLanguage(e.language);
+        }
+
+        [Command]
+        private void CmdSetLanguage(string language) {
+            if (connectionToClient.authenticationData is ConnectedPlayer player && !string.IsNullOrEmpty(language) && language.Length <= 16) {
+                player.language = language;
+            }
         }
 
         [Server]
@@ -501,14 +515,14 @@ namespace Brickcraft.Network
                 return;
             }
             if (npc.Brain.Owner == player.record.Id) {
-                TargetPetMenu(npc.netId, npc.Info.name, npc.Brain.IsFollowing, (byte)npc.Brain.Attacks);
+                TargetPetMenu(npc.netId, GameText.Reference(npc.Info), npc.Brain.IsFollowing, (byte)npc.Brain.Attacks);
                 return;
             }
             InventoryItem? held = inventory.ServerGetSlot(slot);
             if (npc.Brain.Owner == 0 && !string.IsNullOrEmpty(npc.Info.tameWith) && held.HasValue && held.Value.itemId == npc.Info.tameWith) {
                 inventory.ServerRemoveFromSlot(slot, 1);
                 npc.Brain.Tame(player.record.Id, player.record.Name);
-                GameTexts.Send(connectionToClient, "pet.tamed", npc.Info.name);
+                GameTexts.Send(connectionToClient, "pet.tamed", npc.Info);
             }
         }
 
@@ -525,7 +539,7 @@ namespace Brickcraft.Network
 
         [TargetRpc]
         private void TargetPetMenu(uint npcId, string name, bool following, byte attacks) {
-            EventManager.PetMenuRequested.Raise(new PetMenuRequestedEvent() { npcId = npcId, name = name, following = following, attacks = attacks });
+            EventManager.PetMenuRequested.Raise(new PetMenuRequestedEvent() { npcId = npcId, name = GameText.Resolve(name), following = following, attacks = attacks });
         }
 
         /// <summary>A dead player comes back beside the bed it last slept in, or at the world's spawn, with all its health and air (and its inventory).</summary>

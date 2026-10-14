@@ -710,7 +710,7 @@ namespace Brickcraft.Npcs
                 amount = damage,
                 kind = DamageInfo.Kind.Melee,
                 attacker = gameObject,
-                attackerName = Info.name,
+                attackerName = Network.GameText.Reference(Info), // named by each player, see GameText
             });
             NpcPerception.MakeNoise(transform.position, 8, Health, Noise.Fight);
             if (hurt) {

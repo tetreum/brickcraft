@@ -63,7 +63,7 @@ namespace Brickcraft.Network
             }
             foreach (Npcs.Npc npc in Npcs.NpcSystem.All) {
                 if (npc.isLying && npc.BedId == bed.id) {
-                    return GameText.Of("sleep.bed_taken_by", npc.Info.name);
+                    return GameText.Of("sleep.bed_taken_by", npc.Info);
                 }
                 if (npc.Brain != null && npc.Brain.Target == player.GetComponent<Health>()
                         && Vector3.Distance(npc.transform.position, player.transform.position) <= DangerDistance) {

@@ -59,7 +59,7 @@ namespace Brickcraft.Network
                 case ChatEventType.Died:
                     return string.IsNullOrEmpty(message.by)
                         ? Loc.Get(Loc.Game, "event.died", message.player)
-                        : Loc.Get(Loc.Game, "event.killed", message.player, message.by);
+                        : Loc.Get(Loc.Game, "event.killed", message.player, GameText.Resolve(message.by));
                 case ChatEventType.Drowned:
                     return Loc.Get(Loc.Game, "event.drowned", message.player);
                 case ChatEventType.Mod:

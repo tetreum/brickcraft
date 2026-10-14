@@ -17,7 +17,255 @@ MonoBehaviour:
   m_SharedData: {fileID: 11400000, guid: 87ee949cf5d49e44b9741c46b920eaad, type: 2}
   m_Metadata:
     m_Items: []
-  m_TableData: []
+  m_TableData:
+  - m_Id: 9597931479040
+    m_Localized: Flecha
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839168
+    m_Localized: Cama
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839169
+    m_Localized: Roca madre 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839170
+    m_Localized: Arco
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839171
+    m_Localized: Una pieza
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839172
+    m_Localized: Ladrillo 1x6
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839173
+    m_Localized: Ladrillo 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839174
+    m_Localized: Cubo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839175
+    m_Localized: Cactus 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839176
+    m_Localized: Cofre
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839177
+    m_Localized: Tapa de cofre
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839178
+    m_Localized: "Mena de carb\xF3n 2x2"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839179
+    m_Localized: Roca 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839180
+    m_Localized: Paleta de colores
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839181
+    m_Localized: Mena de diamante 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839182
+    m_Localized: Tierra 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839183
+    m_Localized: Tierra 2x4
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839184
+    m_Localized: Tierra 48x48
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839185
+    m_Localized: Puerta 1x4x6
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839186
+    m_Localized: Marco de puerta 1x4x6
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839187
+    m_Localized: Cristal 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839188
+    m_Localized: Mena de oro 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839189
+    m_Localized: Hierba 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839190
+    m_Localized: Grava 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839191
+    m_Localized: Hacha de mano
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839192
+    m_Localized: Casco
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839193
+    m_Localized: "Poci\xF3n de vida"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839194
+    m_Localized: Hielo 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839195
+    m_Localized: Lingote de hierro
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839196
+    m_Localized: Mena de hierro 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839197
+    m_Localized: "Mena de lapisl\xE1zuli 2x2"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839198
+    m_Localized: Lava 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839199
+    m_Localized: Hojas 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839200
+    m_Localized: Mazo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839201
+    m_Localized: Importador de modelos
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839202
+    m_Localized: Obsidiana 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839203
+    m_Localized: Lista de piezas
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839204
+    m_Localized: Pico
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839205
+    m_Localized: Una pieza
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839206
+    m_Localized: Una pieza
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839207
+    m_Localized: Mena de piedra roja 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839208
+    m_Localized: Mena de piedra roja brillante 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839209
+    m_Localized: Rosa 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839210
+    m_Localized: Arena 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839211
+    m_Localized: Escudo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839212
+    m_Localized: Pala
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839213
+    m_Localized: "Alm\xE1dena"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839214
+    m_Localized: Nieve 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839215
+    m_Localized: Bloque de nieve 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839216
+    m_Localized: Lava quieta 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839217
+    m_Localized: Agua quieta 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839218
+    m_Localized: Piedra 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839219
+    m_Localized: Espada
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839220
+    m_Localized: Hierba alta 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839221
+    m_Localized: Antorcha
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839222
+    m_Localized: Agua 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839223
+    m_Localized: Agua 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839224
+    m_Localized: Cubo de agua
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839225
+    m_Localized: Madera 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839226
+    m_Localized: Tablones de madera 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839227
+    m_Localized: Flor amarilla 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839228
+    m_Localized: "G\xF3lem"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

@@ -45,7 +45,7 @@ namespace Brickcraft
 
         /// <summary>Its name in the player's language (see Loc).</summary>
         public string DisplayName {
-            get { return name; }
+            get { return Names.Item(id, name); }
         }
         /// <summary>Its folder, StreamingAssets/Items/[item] (see ItemDatabase).</summary>
         public string folder;

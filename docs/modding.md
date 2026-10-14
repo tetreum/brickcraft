@@ -14,6 +14,8 @@ Mods/
     npcs/
       wolf/           an NPC: info.json, optionally model.glb or model.gltf and script.lua (see How can i add an NPC?)
       beasts.bundle   optional: an AssetBundle with NPC model prefabs, each named after it
+    lang/
+      es.json         optional: its texts in a language, { "key": "text" } (see Languages below)
 ```
 
 `name` and `version` are required. `Mods/example` is a small mod to start from: a sturdy brick that takes three hits, a launcher that shoots plates up when used, a moss golem (an NPC with its own glTF model and script, that appears on grass and is tamed with leaves) and a welcome message. Builds don't copy the `Mods` folder, it's put next to the game by hand. Mod items are named after their mod: `items/catapult` is `my_castle:catapult` (their `info.json` can't set a prefix). Item ids in a mod's `info.json` (recipe ingredients, block drops) are first looked for in the mod, so `"gear"` means `my_castle:gear` if the mod has it and the game's `gear` otherwise; `"other_mod:gear"` names any other loaded item.
@@ -22,7 +24,16 @@ Mods' brick models are `[mod]:[name]`, and their items use them like the game's 
 
 Each world has its own mods, chosen when it's created (New world → Mods). They're saved in its `world.dat` (with the version it was last played with) and loaded when it's played, besides the game's own items. A world whose mods aren't installed shows them as missing in the list; it can still be played, but their items are unknown and their blocks become air.
 
-Players joining a server need its world's mods: the same version with the same files (the server compares a SHA-256 of each mod's files). Otherwise they're refused and told which ones, like *"This server needs the mod My Castle 1.2 (you have 1.0)"*. Once accepted they play with the server's mods only, whatever else they have installed.
+Players joining a server need its world's mods: the same version with the same files (the server compares a SHA-256 of each mod's files). Otherwise they're refused and told which ones, like *"This server needs the mod My Castle 1.2"*. Once accepted they play with the server's mods only, whatever else they have installed.
+
+### Languages
+
+The game is played in English or Spanish (Settings → Language). A mod can have its names and texts in each language in `lang/[language].json` (`en.json`, `es.json`), `{ "key": "text" }`:
+
+- `item.[id]` and `npc.[id]` name its items and NPCs (their ids without the mod's prefix: `item.catapult`). Without one, players see the `name` of their `info.json`.
+- Any other key is for its scripts: `text(player, "welcome", player.name)` is that text in the player's language, `{0}`, `{1}`... filled in (see the Lua reference's Globals). A language the file hasn't falls back to `en.json`, and then to the key itself.
+
+`Mods/example` has both files.
 
 ### Scripts
 

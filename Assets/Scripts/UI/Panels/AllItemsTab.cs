@@ -114,6 +114,7 @@ namespace Brickcraft.UI
                 return true;
             }
             return (item.name != null && item.name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+                || item.DisplayName.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0
                 || item.id.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
@@ -135,7 +136,7 @@ namespace Brickcraft.UI
                 entry.item = matches[index];
                 entry.icon.texture = entry.item.icon;
                 ItemColorSwatch.Set(entry.icon, entry.item, colorOf(entry.item));
-                entry.name.text = entry.item.name + "\n" + entry.item.id;
+                entry.name.text = entry.item.DisplayName + "\n" + entry.item.id;
                 entry.gameObject.SetActive(true);
             }
 

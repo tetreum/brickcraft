@@ -2,19 +2,21 @@ function onLoad()
   log("Example mod loaded")
 end
 
+-- Texts come from the mod's lang/[language].json, in each player's language (English if it has no translation).
 function onPlayerJoined(player)
-  ui.title(player, "Example mod", "Bricks with scripts", 4)
+  ui.title(player, text(player, "welcome.title"), text(player, "welcome.subtitle"), 4)
 
+  local yes = text(player, "welcome.yes")
   ui.popup(player, {
-    title = "Welcome, " .. player.name .. "!",
-    text = "This world has the Example mod. The Launcher shoots plates up into the air when you use it (E). Want one?",
-    buttons = {"Yes please", "No thanks"},
+    title = text(player, "welcome.popup_title", player.name),
+    text = text(player, "welcome.popup_text"),
+    buttons = {yes, text(player, "welcome.no")},
   }, function(button)
-    if button == "Yes please" then
+    if button == yes then
       if player:give("example:launcher", 1) then
-        ui.toast(player, "There's a Launcher in your inventory")
+        ui.toast(player, text(player, "welcome.given"))
       else
-        ui.toast(player, "Your inventory is full")
+        ui.toast(player, text(player, "welcome.full"))
       end
     end
   end)
@@ -24,7 +26,7 @@ end
 function onChat(player, text)
   if text == "!where" then
     local p = player.position
-    player:message("You're at " .. p.x .. ", " .. p.y .. ", " .. p.z)
+    player:message(text(player, "where", p.x, p.y, p.z))
     return false
   end
 
@@ -54,7 +56,7 @@ end
 function onHour(hour, day)
   if hour == 20 then
     for _, player in ipairs(world.players()) do
-      player:message("Night is falling on day " .. day .. ". Golems are about.")
+      player:message(text(player, "night", day))
     end
   end
 end

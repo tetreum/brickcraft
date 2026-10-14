@@ -16,6 +16,8 @@ namespace Brickcraft.Network
         public ModEntry[] mods;
         /// <summary>The server's password as typed, hashed (see ServerConfig.HashPassword), empty if none.</summary>
         public string passwordHash;
+        /// <summary>The player's language (see Loc), for what mods' scripts tell it (see ConnectedPlayer.language).</summary>
+        public string language;
     }
 
     public struct AuthResponseMessage : NetworkMessage
@@ -40,6 +42,8 @@ namespace Brickcraft.Network
         public bool hasJoined;
         /// <summary>The others were already told why it's leaving (kicked, banned).</summary>
         public bool leaveAnnounced;
+        /// <summary>The language it plays in, like "es" (sent when joining and when it changes, see PlayerNetwork).</summary>
+        public string language = "en";
     }
 
     /// <summary>
@@ -135,6 +139,7 @@ namespace Brickcraft.Network
             conn.authenticationData = new ConnectedPlayer() {
                 record = player,
                 session = database.StartSession(player, conn.address),
+                language = string.IsNullOrEmpty(request.language) ? "en" : request.language,
             };
 
             conn.Send(new AuthResponseMessage() {
@@ -192,6 +197,7 @@ namespace Brickcraft.Network
                 machineId = PlayerIdentity.MachineId,
                 mods = ModDatabase.InstalledEntries(),
                 passwordHash = ServerConfig.HashPassword(Password),
+                language = Loc.Language,
             });
         }
 

@@ -8,8 +8,8 @@ namespace Brickcraft.Network
     /// <summary>
     /// A text for players that each one reads in its own language: a key of the Game string table (see Loc) and its
     /// arguments. The server sends these instead of finished sentences, so a Spanish player on an English host reads
-    /// Spanish. Arguments are kept as text, tagged when the client words them itself: numbers (for plurals), items
-    /// and colours (their names in the reader's language) and other texts (on/off, roles).
+    /// Spanish. Arguments are kept as text, tagged when the client words them itself: numbers (for plurals), items,
+    /// NPCs and colours (their names in the reader's language) and other texts (on/off, roles).
     /// </summary>
     public struct GameText
     {
@@ -19,6 +19,7 @@ namespace Brickcraft.Network
         private const string ItemTag = "\u0001i:";
         private const string ColorTag = "\u0001c:";
         private const string TextTag = "\u0001t:";
+        private const string NpcTag = "\u0001p:";
 
         public string key;
         public string[] args;
@@ -49,6 +50,8 @@ namespace Brickcraft.Network
                     return ColorTag + color.id.ToString(CultureInfo.InvariantCulture);
                 case GameText text:
                     return TextTag + text.key;
+                case Npcs.NpcInfo npc:
+                    return NpcTag + npc.id;
                 case int _:
                 case long _:
                 case float _:
@@ -76,6 +79,17 @@ namespace Brickcraft.Network
             return key + (args != null && args.Length > 0 ? "(" + string.Join(", ", args).Replace(Tag, '#') + ")" : "");
         }
 
+        /// <summary>A name or value sent as text that the reader words itself, like an NPC killer's (see Resolve).</summary>
+        public static string Reference(object value) {
+            return argument(value);
+        }
+
+        /// <summary>A Reference (or plain text) as the player reads it (main thread).</summary>
+        public static string Resolve(string arg) {
+            object word = GameText.word(arg);
+            return word is string text ? text : Convert.ToString(word, CultureInfo.CurrentCulture);
+        }
+
         private static object word(string arg) {
             if (string.IsNullOrEmpty(arg) || arg[0] != Tag) {
                 return arg ?? "";
@@ -96,6 +110,10 @@ namespace Brickcraft.Network
             }
             if (arg.StartsWith(TextTag)) {
                 return Loc.Get(Loc.Game, value);
+            }
+            if (arg.StartsWith(NpcTag)) {
+                Npcs.NpcInfo npc = Npcs.NpcDatabase.Get(value);
+                return npc != null ? npc.DisplayName : value;
             }
             return value;
         }

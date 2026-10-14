@@ -248,7 +248,7 @@ namespace Brickcraft.Network
                     }
                 }
             }
-            reply(sender, spawned < count ? "cmd.spawned_npcs_too_many" : "cmd.spawned_npcs", spawned, info.name);
+            reply(sender, spawned < count ? "cmd.spawned_npcs_too_many" : "cmd.spawned_npcs", spawned, info);
         }
 
         private static void pvp(NetworkConnectionToClient sender, ConnectedPlayer admin, string value) {

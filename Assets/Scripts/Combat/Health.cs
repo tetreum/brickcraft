@@ -143,7 +143,7 @@ namespace Brickcraft.Combat
                 return;
             }
             if (dead) {
-                EventManager.LocalPlayerDied.Raise(new LocalPlayerDiedEvent() { killedBy = killedBy });
+                EventManager.LocalPlayerDied.Raise(new LocalPlayerDiedEvent() { killedBy = string.IsNullOrEmpty(killedBy) ? killedBy : Network.GameText.Resolve(killedBy) });
             } else {
                 EventManager.LocalPlayerRespawned.Raise(new LocalPlayerRespawnedEvent());
             }

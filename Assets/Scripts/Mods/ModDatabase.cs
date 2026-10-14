@@ -127,6 +127,7 @@ namespace Brickcraft.Mods
                     active.Add(mod);
                 }
             }
+            ModTexts.Clear();
             ItemDatabase.Load(active);
 
             if (active.Count > 0) {

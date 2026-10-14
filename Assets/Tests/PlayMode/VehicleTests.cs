@@ -148,5 +148,41 @@ namespace Brickcraft.Tests
             Assert.IsNotNull(vehicle.grid.GetBrickAt(new Vector3Int(4, 0, 0)), "the end in its cells");
             Assert.AreEqual(3, vehicle.parts.Count);
         }
+
+        [UnityTest]
+        public IEnumerator AVehicleIsSavedWhereItWas() {
+            Vehicle vehicle = VehicleSystem.ServerCreate(brick2x2, 4, at(high()));
+            Brick top = VehicleSystem.ServerPlace(vehicle, brick2x2, 1, at(new Vector3Int(1, 3, 0)));
+            // moved and turned (its body too: it's interpolated)
+            vehicle.transform.SetPositionAndRotation(vehicle.transform.position + new Vector3(0.3f, 0.5f, 0), Quaternion.Euler(0, 30, 0));
+            vehicle.Body.position = vehicle.transform.position;
+            vehicle.Body.rotation = vehicle.transform.rotation;
+            string id = vehicle.vehicleId, topId = top.id;
+            Vector3 position = FloatingOrigin.ToAbsolute(vehicle.transform.position);
+            // saved with its chunk once it's loaded (like what's on the ground)
+            yield return TestGame.WaitUntil(() => Npcs.NpcSystem.IsLoaded(vehicle.transform.position), 30, "its chunk loaded");
+
+            yield return game.Stop();
+            Assert.AreEqual(0, Vehicle.All.Count, "gone with the game");
+            yield return game.Start();
+            Vehicle back = null;
+            yield return TestGame.WaitUntil(() => {
+                foreach (Vehicle v in Vehicle.All) {
+                    if (v.vehicleId == id) {
+                        back = v;
+                    }
+                }
+                return back != null;
+            }, 10, "the vehicle coming back");
+
+            near(position, FloatingOrigin.ToAbsolute(back.transform.position), "where it was");
+            Assert.Less(Quaternion.Angle(Quaternion.Euler(0, 30, 0), back.transform.rotation), 0.01f, "turned as it was");
+            Assert.AreEqual(2, back.grid.Count);
+            Brick saved = back.grid.GetBrickAt(new Vector3Int(1, 3, 0));
+            Assert.IsNotNull(saved, "its bricks in their cells");
+            Assert.AreEqual(topId, saved.id, "the same brick");
+            Assert.AreEqual(1, saved.color);
+            Assert.AreEqual(2, back.parts.Count, "its parts, for the clients");
+        }
     }
 }

@@ -34,6 +34,14 @@ namespace Brickcraft.Tests
             changes.storage[brick.id] = new List<InventoryItem>() { new InventoryItem() { slot = 2, itemId = "pickaxe", color = 72, quantity = 1, health = 12 } };
             changes.npcs.Add(new SavedNpc() { type = "wolf", x = 1.5, y = 70, z = -2.25, yaw = 90, health = 8, owner = 2, ownerName = "Me", pack = Guid.NewGuid() });
             changes.drops.Add(new SavedDrop() { itemId = "stone", color = 72, quantity = 3, x = 4, y = 71, z = 5, lifetime = 120 });
+            changes.vehicles.Add(new SavedVehicle() {
+                id = Guid.NewGuid(), x = 1e7 + 0.5, y = 68.25, z = -3, rotation = Quaternion.Euler(0, 90, 5),
+                parts = new List<SavedVehiclePart>() {
+                    new SavedVehiclePart() { id = Guid.NewGuid(), itemId = "brick_2x2", color = 4, origin = Vector3Int.zero, rotation = 1 },
+                    new SavedVehiclePart() { id = Guid.NewGuid(), itemId = "seat", color = 72, origin = new Vector3Int(-2, 3, 1), state = 2 },
+                    new SavedVehiclePart() { id = Guid.NewGuid(), itemId = "no_such_item", origin = new Vector3Int(0, 6, 0) },
+                },
+            });
         }
 
         [Test]
@@ -55,6 +63,13 @@ namespace Brickcraft.Tests
             CollectionAssert.AreEqual(changes.storage[brick.id], loaded.storage[brick.id]);
             CollectionAssert.AreEqual(changes.npcs, loaded.npcs);
             CollectionAssert.AreEqual(changes.drops, loaded.drops);
+
+            Assert.AreEqual(1, loaded.vehicles.Count);
+            SavedVehicle vehicle = changes.vehicles[0], back = loaded.vehicles[0];
+            Assert.AreEqual(vehicle.id, back.id);
+            Assert.AreEqual(new[] { vehicle.x, vehicle.y, vehicle.z }, new[] { back.x, back.y, back.z });
+            Assert.AreEqual(vehicle.rotation, back.rotation);
+            CollectionAssert.AreEqual(vehicle.parts.GetRange(0, 2), back.parts, "the parts of items that aren't there are lost");
         }
 
         [Test]
@@ -67,6 +82,7 @@ namespace Brickcraft.Tests
             Assert.AreEqual(0, loaded.npcs.Count);
             Assert.AreEqual(0, loaded.storage.Count);
             Assert.AreEqual(0, loaded.drops.Count);
+            Assert.AreEqual(0, loaded.vehicles.Count);
         }
 
         [Test]

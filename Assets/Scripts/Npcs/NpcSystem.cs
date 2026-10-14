@@ -327,6 +327,7 @@ namespace Brickcraft.Npcs
                 foreach (Vector2Int coords in populated) {
                     changes.SetNpcs(coords, byChunk.TryGetValue(coords, out List<SavedNpc> list) ? list : none);
                     changes.SetDrops(coords, DroppedItems.SavedIn(coords, false)); // items on the ground go with the chunks too
+                    changes.SetVehicles(coords, Vehicles.VehicleSystem.SavedIn(coords, false)); // and vehicles
                 }
             }
             foreach (int owner in petsBack) {
@@ -411,6 +412,7 @@ namespace Brickcraft.Npcs
                         restore(saved);
                     }
                     DroppedItems.Restore(changes.GetDrops(coords));
+                    Vehicles.VehicleSystem.Restore(changes.GetVehicles(coords));
                 }
             }
         }
@@ -439,9 +441,11 @@ namespace Brickcraft.Npcs
             }
             WorldChanges changes = savedChanges;
             List<SavedDrop> drops = DroppedItems.SavedIn(coords, true);
+            List<SavedVehicle> vehicles = Vehicles.VehicleSystem.SavedIn(coords, true);
             if (wasPopulated && !isStopped && changes != null) {
                 changes.SetNpcs(coords, left);
                 changes.SetDrops(coords, drops);
+                changes.SetVehicles(coords, vehicles);
             }
         }
 

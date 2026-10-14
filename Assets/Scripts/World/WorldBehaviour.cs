@@ -350,6 +350,10 @@ namespace Brickcraft.World
 				if (shot != null)
 					addColliderChunks(ChunkAt(shot.transform.position), ColliderRadius);
 			}
+			foreach (Vehicles.Vehicle vehicle in Vehicles.Vehicle.All) {
+				if (vehicle != null)
+					addColliderChunks(ChunkAt(vehicle.transform.position), ColliderRadius);
+			}
 		}
 
 		private void addColliderChunks(Vector2Int around, int radius)

@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using Brickcraft.Bricks;
+using Brickcraft.World;
 using Mirror;
 using UnityEngine;
 
@@ -11,6 +13,8 @@ namespace Brickcraft.Vehicles
     /// stays, the others become vehicles of their own where they are. A brick placed that also touches another vehicle
     /// lined up with this one (a whole number of cells away, quarter turns apart: like the halves of a split one) merges
     /// them: the other's bricks join this one.
+    ///
+    /// They're saved with the chunk they're in, like items on the ground (see NpcSystem, which saves and loads both).
     /// </summary>
     public static class VehicleSystem
     {
@@ -64,13 +68,71 @@ namespace Brickcraft.Vehicles
             return false;
         }
 
+        /// <summary>The vehicles in a chunk, to save with it; with remove, they go (the chunk is unloaded).</summary>
+        public static List<SavedVehicle> SavedIn(Vector2Int coords, bool remove) {
+            List<SavedVehicle> saved = new List<SavedVehicle>();
+            foreach (Vehicle vehicle in new List<Vehicle>(Vehicle.All)) {
+                if (vehicle == null || !vehicle.isServer || vehicle.grid.Count == 0 || WorldBehaviour.ChunkAt(vehicle.transform.position) != coords) {
+                    continue;
+                }
+                saved.Add(toSaved(vehicle));
+                if (remove) {
+                    NetworkServer.Destroy(vehicle.gameObject);
+                }
+            }
+            return saved;
+        }
+
+        /// <summary>Puts back the vehicles saved in a chunk.</summary>
+        public static void Restore(IEnumerable<SavedVehicle> saved) {
+            foreach (SavedVehicle s in saved) {
+                Vehicle vehicle = create(FloatingOrigin.ToLocal(s.x, s.y, s.z), s.rotation);
+                vehicle.vehicleId = s.id.ToString();
+                foreach (SavedVehiclePart part in s.parts) {
+                    if (Server.items.TryGetValue(part.itemId, out Item item) && item.brickModel != null) {
+                        vehicle.ServerAdd(item, part.color, new BrickPlacement(item.brickModel, part.origin, part.rotation), part.id.ToString(), part.state);
+                    }
+                }
+                if (vehicle.grid.Count == 0) {
+                    UnityEngine.Object.Destroy(vehicle.gameObject);
+                    continue;
+                }
+                NetworkServer.Spawn(vehicle.gameObject);
+            }
+        }
+
+        private static SavedVehicle toSaved(Vehicle vehicle) {
+            FloatingOrigin.ToAbsolute(vehicle.transform.position, out double x, out double y, out double z);
+            SavedVehicle saved = new SavedVehicle() {
+                id = guidOf(vehicle.vehicleId),
+                x = x, y = y, z = z,
+                rotation = vehicle.transform.rotation,
+                parts = new List<SavedVehiclePart>(),
+            };
+            foreach (Brick brick in vehicle.grid.Bricks) {
+                saved.parts.Add(new SavedVehiclePart() {
+                    id = guidOf(brick.id),
+                    itemId = brick.itemId,
+                    color = brick.color,
+                    origin = brick.placement.origin,
+                    rotation = (byte)brick.placement.rotation,
+                    state = brick.state,
+                });
+            }
+            return saved;
+        }
+
+        private static Guid guidOf(string id) {
+            return Guid.TryParse(id, out Guid guid) ? guid : Guid.NewGuid();
+        }
+
         // a vehicle not spawned yet: its parts go in first, so the spawn message has them (a host applies that message a
         // frame later, over what changed since; see Vehicle.OnStartClient)
         private static Vehicle create(Vector3 position, Quaternion rotation) {
-            GameObject go = Object.Instantiate(Resources.Load<GameObject>(Vehicle.PrefabPath), position, rotation);
+            GameObject go = UnityEngine.Object.Instantiate(Resources.Load<GameObject>(Vehicle.PrefabPath), position, rotation);
             go.name = "Vehicle";
             Vehicle vehicle = go.GetComponent<Vehicle>();
-            vehicle.vehicleId = System.Guid.NewGuid().ToString();
+            vehicle.vehicleId = Guid.NewGuid().ToString();
             return vehicle;
         }
 

@@ -119,8 +119,9 @@ namespace Brickcraft.Tests
         [UnityTest]
         public IEnumerator HoldingForwardWalksButNotWhileChatting() {
             Vector3 start = player.transform.position;
+            // game time: frames go by faster or slower
             input.Press(keyboard.wKey);
-            yield return frames(30);
+            yield return seconds(0.5f);
             input.Release(keyboard.wKey);
             Assert.Greater(Vector3.Distance(start, player.transform.position), 0.3f, "walked");
 
@@ -129,7 +130,7 @@ namespace Brickcraft.Tests
             Assert.IsTrue(GameInput.IsTyping, "the chat is open");
             start = player.transform.position;
             input.Press(keyboard.wKey);
-            yield return frames(30);
+            yield return seconds(0.5f);
             input.Release(keyboard.wKey);
             Vector3 moved = player.transform.position - start;
             Assert.Less(new Vector2(moved.x, moved.z).magnitude, 0.05f, "typing a w doesn't walk");

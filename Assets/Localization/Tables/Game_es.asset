@@ -551,6 +551,28 @@ MonoBehaviour:
     m_Localized: "Ya hay alguien sentado ah\xED."
     m_Metadata:
       m_Items: []
+  - m_Id: 50431938781184
+    m_Localized: "Asiento elegido: haz clic en las ruedas para conectarlas (otra
+      vez para desconectarlas), o clic derecho en \xE9l para sus controles."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918528
+    m_Localized: "Haz clic primero en un asiento de este veh\xEDculo, y luego en
+      las piezas que conectar."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918529
+    m_Localized: Por ahora solo se pueden conectar ruedas.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918530
+    m_Localized: '{0}: conectada al asiento.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918531
+    m_Localized: '{0}: desconectada.'
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

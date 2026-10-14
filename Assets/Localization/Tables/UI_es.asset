@@ -769,6 +769,68 @@ MonoBehaviour:
     m_Localized: Generando el terreno ({0}/{1} chunks)
     m_Metadata:
       m_Items: []
+  - m_Id: 50433624891392
+    m_Localized: Controles del asiento
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474304
+    m_Localized: "No hay nada conectado a este asiento, as\xED que mueve todas las
+      ruedas. Conecta ruedas con la herramienta de cableado para elegir qu\xE9 hace
+      cada una."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474305
+    m_Localized: "Qu\xE9 hace cada pieza conectada. Haz clic para cambiarlo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474306
+    m_Localized: "Tracci\xF3n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474307
+    m_Localized: "Direcci\xF3n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474308
+    m_Localized: "Teclas adelante/atr\xE1s"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474309
+    m_Localized: Teclas izquierda/derecha
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474310
+    m_Localized: 'Tecla: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474311
+    m_Localized: Pulsa una tecla...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474312
+    m_Localized: Invertir
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474313
+    m_Localized: Cerrar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474314
+    m_Localized: delante
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474315
+    m_Localized: "detr\xE1s"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474316
+    m_Localized: izquierda
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474317
+    m_Localized: derecha
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

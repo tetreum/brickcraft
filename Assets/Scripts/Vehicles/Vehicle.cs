@@ -39,6 +39,9 @@ namespace Brickcraft.Vehicles
 
         public readonly SyncList<VehiclePart> parts = new SyncList<VehiclePart>();
 
+        /// <summary>Its seats' wires to its parts (see VehicleWire, WiringTool).</summary>
+        public readonly SyncList<VehicleWire> wires = new SyncList<VehicleWire>();
+
         public readonly VehicleGrid grid = new VehicleGrid();
 
         /// <summary>The player driving it (its netId), 0 if nobody is.</summary>
@@ -64,6 +67,7 @@ namespace Brickcraft.Vehicles
             netTransform = GetComponent<NetworkTransformBase>();
             Drive = new VehicleDrive(this);
             grid.Changed += () => physicsDirty = true;
+            wires.OnChange += (op, index, old) => physicsDirty = true;
             All.Add(this);
         }
 
@@ -141,7 +145,10 @@ namespace Brickcraft.Vehicles
         private void FixedUpdate() {
             if (physicsDirty) {
                 physicsDirty = false;
-                Drive.Rebuild(driveForward());
+                PlayerNetwork driver = Driver;
+                Brick seat = driver != null ? SeatOf(driver) : null;
+                Drive.Rebuild(seat != null ? VehicleShape.Seat(seat, transform).forward : Vector3.forward,
+                    seat != null ? WiresOf(seat.id) : new List<VehicleWire>());
             }
             if (!IsSimulated) {
                 return;
@@ -160,11 +167,63 @@ namespace Brickcraft.Vehicles
             }
         }
 
-        // the way its driver faces, in its space (forward if nobody drives it)
-        private Vector3 driveForward() {
-            PlayerNetwork driver = Driver;
-            Brick seat = driver != null ? SeatOf(driver) : null;
-            return seat != null ? VehicleShape.Seat(seat, transform).forward : Vector3.forward;
+        /// <summary>The wires from that seat.</summary>
+        public List<VehicleWire> WiresOf(string seatId) {
+            List<VehicleWire> from = new List<VehicleWire>();
+            foreach (VehicleWire wire in wires) {
+                if (wire.seat == seatId) {
+                    from.Add(wire);
+                }
+            }
+            return from;
+        }
+
+        /// <summary>The part is wired to that seat.</summary>
+        public bool IsWired(string seatId, string partId) {
+            foreach (VehicleWire wire in wires) {
+                if (wire.seat == seatId && wire.part == partId) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>The seat's wires are these now (the ones that aren't valid left out, see VehicleWires.IsValid).</summary>
+        [Server]
+        public void ServerSetWires(string seatId, IEnumerable<VehicleWire> seatWires) {
+            for (int i = wires.Count - 1; i >= 0; i--) {
+                if (wires[i].seat == seatId) {
+                    wires.RemoveAt(i);
+                }
+            }
+            foreach (VehicleWire wire in seatWires) {
+                if (wire.seat == seatId && wires.Count < VehicleWires.MaxPerVehicle && VehicleWires.IsValid(this, wire)) {
+                    wires.Add(wire);
+                }
+            }
+            physicsDirty = true;
+        }
+
+        /// <summary>Wires the part to the seat, as parts are by default (see VehicleWires.Defaults); or unwires it if it was.</summary>
+        [Server]
+        public void ServerToggleWire(Brick seat, Brick part) {
+            List<VehicleWire> seatWires = WiresOf(seat.id);
+            if (IsWired(seat.id, part.id)) {
+                seatWires.RemoveAll(wire => wire.part == part.id);
+            } else {
+                seatWires.AddRange(VehicleWires.Defaults(this, seat, part));
+            }
+            ServerSetWires(seat.id, seatWires);
+        }
+
+        /// <summary>Wires go with their ends: the ones whose seat or part isn't one of its bricks any more.</summary>
+        [Server]
+        public void ServerCleanWires() {
+            for (int i = wires.Count - 1; i >= 0; i--) {
+                if (!VehicleWires.IsValid(this, wires[i])) {
+                    wires.RemoveAt(i);
+                }
+            }
         }
 
         /// <summary>The seat of this vehicle the player is in, null if it isn't in one.</summary>

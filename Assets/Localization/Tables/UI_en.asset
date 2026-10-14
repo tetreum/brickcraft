@@ -773,6 +773,67 @@ MonoBehaviour:
     m_Localized: Building terrain ({0}/{1} chunks)
     m_Metadata:
       m_Items: []
+  - m_Id: 50433624891392
+    m_Localized: Seat controls
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474304
+    m_Localized: Nothing is wired to this seat, so it drives every wheel. Wire wheels
+      to it with the wiring tool to choose what each does.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474305
+    m_Localized: What each wired part does. Click to change it.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474306
+    m_Localized: Drive
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474307
+    m_Localized: Steer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474308
+    m_Localized: Forward/back keys
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474309
+    m_Localized: Left/right keys
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474310
+    m_Localized: 'Key: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474311
+    m_Localized: Press a key...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474312
+    m_Localized: Invert
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474313
+    m_Localized: Close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474314
+    m_Localized: front
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474315
+    m_Localized: back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474316
+    m_Localized: left
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474317
+    m_Localized: right
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

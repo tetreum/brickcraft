@@ -6,9 +6,12 @@ namespace Brickcraft.Vehicles
 {
     /// <summary>
     /// How a vehicle moves when it's simulated (see Vehicle.IsSimulated): its mass and centre of mass by its parts'
-    /// (see Item.Mass), and a WheelCollider for each wheel, its size and axle by the wheel's mesh. Wheels that roll the
-    /// way the driver faces are driven, the ones ahead of the centre of mass steer. Its suspension carries its weight
-    /// halfway down, whatever it weighs.
+    /// (see Item.Mass), and a WheelCollider for each wheel, its size and axle by the wheel's mesh. Its suspension carries
+    /// its weight halfway down, whatever it weighs.
+    ///
+    /// The wheels wired to the driver's seat do what their wires say (see VehicleWire), and brake with the brake key. With
+    /// no wires from that seat, every wheel that rolls the way the driver faces is driven and the ones ahead of the centre
+    /// of mass steer, so a simple car drives as it's built.
     /// </summary>
     public class VehicleDrive
     {
@@ -32,15 +35,21 @@ namespace Brickcraft.Vehicles
             // a wheel goes the way its body points (whatever its own transform's turned): one that rolls along the
             // body's X is steered a quarter turn
             public float heading;
-            // 1 if it rolls forward the way the driver faces, -1 backwards, 0 across (not driven)
+            // 1 if it rolls forward the way the driver faces, -1 backwards, 0 across
             public float motor;
+            // with no wires: it's ahead of the centre of mass, it steers
             public bool steers;
+            // the driver's seat's wires to it
+            public readonly List<VehicleWire> wires = new List<VehicleWire>();
+            public bool isDriven;
         }
 
         private readonly Vehicle vehicle;
         private readonly List<Wheel> wheels = new List<Wheel>();
         private Vector3 forward = Vector3.forward;
         private bool isSimulated;
+        private bool isWired;
+        private int driven;
 
         public VehicleDrive(Vehicle vehicle) {
             this.vehicle = vehicle;
@@ -50,22 +59,21 @@ namespace Brickcraft.Vehicles
             get { return wheels.Count; }
         }
 
-        /// <summary>Its parts changed, or who drives it (the way they face, in the vehicle's space).</summary>
-        public void Rebuild(Vector3 forward) {
+        /// <summary>
+        /// Its parts changed, or who drives it: the way they face (in the vehicle's space) and their seat's wires (none if
+        /// nobody drives it).
+        /// </summary>
+        public void Rebuild(Vector3 forward, List<VehicleWire> seatWires) {
             this.forward = forward;
             Rigidbody body = vehicle.Body;
             Transform tr = vehicle.transform;
 
             float mass = 0;
-            Vector3 centre = Vector3.zero;
             foreach (Brick brick in vehicle.grid.Bricks) {
-                float part = brick.item != null ? brick.item.Mass : VehicleParts.MassPerCell;
-                mass += part;
-                centre += brick.placement.LocalBounds.center * part;
+                mass += Server.items.TryGetValue(brick.itemId, out Item item) ? item.Mass : VehicleParts.MassPerCell;
             }
-            mass = Mathf.Max(mass, 0.1f);
-            body.mass = mass;
-            body.centerOfMass = centre / mass;
+            body.mass = Mathf.Max(mass, 0.1f);
+            body.centerOfMass = vehicle.grid.CentreOfMass;
 
             // the physics engine takes convex shapes only on bodies that move
             foreach (MeshCollider mesh in tr.GetComponentsInChildren<MeshCollider>()) {
@@ -78,19 +86,35 @@ namespace Brickcraft.Vehicles
                 }
             }
             wheels.Clear();
+            isWired = seatWires.Count > 0;
+            driven = 0;
             foreach (Brick brick in vehicle.grid.Bricks) {
-                if (brick.item != null && brick.item.VehicleRole == VehicleRole.Wheel && brick.gameObject != null) {
-                    wheels.Add(addWheel(brick, body.centerOfMass));
+                if (!Server.items.TryGetValue(brick.itemId, out Item item) || item.VehicleRole != VehicleRole.Wheel || brick.gameObject == null) {
+                    continue;
                 }
+                Wheel wheel = addWheel(brick, item, body.centerOfMass);
+                foreach (VehicleWire wire in seatWires) {
+                    if (wire.part == brick.id) {
+                        wheel.wires.Add(wire);
+                        wheel.isDriven |= wire.action == WireAction.Drive;
+                    }
+                }
+                if (!isWired) {
+                    wheel.isDriven = wheel.motor != 0;
+                }
+                if (wheel.isDriven) {
+                    driven++;
+                }
+                wheels.Add(wheel);
             }
-            float load = mass * -Physics.gravity.y / Mathf.Max(1, wheels.Count);
+            float load = body.mass * -Physics.gravity.y / Mathf.Max(1, wheels.Count);
             foreach (Wheel wheel in wheels) {
                 tune(wheel, load);
             }
             SetSimulated(isSimulated);
         }
 
-        private Wheel addWheel(Brick brick, Vector3 centreOfMass) {
+        private Wheel addWheel(Brick brick, Item item, Vector3 centreOfMass) {
             Bounds bounds = VehicleShape.MeshBounds(brick, vehicle.transform);
             bool axleAlongX = bounds.size.x <= bounds.size.z;
             float radius = Mathf.Max(0.05f, bounds.extents.y);
@@ -104,10 +128,9 @@ namespace Brickcraft.Vehicles
             WheelCollider collider = go.AddComponent<WheelCollider>();
             collider.radius = radius;
             collider.suspensionDistance = travel;
-            collider.mass = Mathf.Max(0.5f, brick.item.Mass);
+            collider.mass = Mathf.Max(0.5f, item.Mass);
 
-            Vector3 rolls = Quaternion.Euler(0, heading, 0) * Vector3.forward;
-            float along = Vector3.Dot(rolls, forward);
+            float along = Vector3.Dot(Quaternion.Euler(0, heading, 0) * Vector3.forward, forward);
             return new Wheel() {
                 collider = collider,
                 brick = brick,
@@ -151,30 +174,46 @@ namespace Brickcraft.Vehicles
         public void Apply(VehicleInput input) {
             Rigidbody body = vehicle.Body;
             float speed = Vector3.Dot(body.velocity, vehicle.transform.TransformDirection(forward));
-            float throttle = Mathf.Clamp(input.throttle, -1, 1);
-            float brake = Mathf.Clamp01(input.brake);
-            // the other way while moving brakes first
-            if (throttle * speed < -0.5f) {
-                brake = Mathf.Max(brake, Mathf.Abs(throttle));
-                throttle = 0;
-            }
-            if (Mathf.Abs(speed) > MaxSpeed && throttle * speed > 0) {
-                throttle = 0;
-            }
-
-            int driven = 0;
-            foreach (Wheel wheel in wheels) {
-                if (wheel.motor != 0) {
-                    driven++;
-                }
-            }
             float g = -Physics.gravity.y;
             float count = Mathf.Max(1, wheels.Count);
+            float brakeKey = Mathf.Clamp01(input.brake);
+
             foreach (Wheel wheel in wheels) {
+                float drive = 0, steer = 0;
+                bool brakes = true;
+                if (isWired) {
+                    foreach (VehicleWire wire in wheel.wires) {
+                        if (wire.action == WireAction.Drive) {
+                            drive += VehicleWires.Value(wire, input);
+                        } else {
+                            steer += VehicleWires.Value(wire, input);
+                        }
+                    }
+                    brakes = wheel.wires.Count > 0;
+                } else {
+                    drive = wheel.isDriven ? input.throttle : 0;
+                    steer = wheel.steers ? input.steer : 0;
+                }
+                drive = Mathf.Clamp(drive, -1, 1);
+                steer = Mathf.Clamp(steer, -1, 1);
+
+                // forward for the driver: the way the wheel rolls (its own way, if it rolls across)
+                float direction = wheel.motor != 0 ? wheel.motor : 1;
+                float brake = brakes ? brakeKey : 0;
+                // the other way while moving brakes first
+                float rolling = speed * direction;
+                if (drive * rolling < -0.5f) {
+                    brake = Mathf.Max(brake, Mathf.Abs(drive));
+                    drive = 0;
+                }
+                if (Mathf.Abs(speed) > MaxSpeed && drive * rolling > 0) {
+                    drive = 0;
+                }
+
                 WheelCollider collider = wheel.collider;
-                collider.motorTorque = wheel.motor != 0 ? wheel.motor * throttle * body.mass * Acceleration * wheel.radius / driven : 0;
-                collider.brakeTorque = body.mass * g * wheel.radius / count * (brake > 0 ? brake * Braking : throttle == 0 ? Rolling : 0);
-                collider.steerAngle = wheel.heading + (wheel.steers ? Mathf.Clamp(input.steer, -1, 1) * MaxSteer : 0);
+                collider.motorTorque = wheel.isDriven ? direction * drive * body.mass * Acceleration * wheel.radius / Mathf.Max(1, driven) : 0;
+                collider.brakeTorque = body.mass * g * wheel.radius / count * (brake > 0 ? brake * Braking : drive == 0 ? Rolling : 0);
+                collider.steerAngle = wheel.heading + steer * MaxSteer;
             }
         }
     }

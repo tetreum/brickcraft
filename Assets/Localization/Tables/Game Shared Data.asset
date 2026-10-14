@@ -519,6 +519,26 @@ MonoBehaviour:
     m_Key: vehicle.seat_taken
     m_Metadata:
       m_Items: []
+  - m_Id: 50431938781184
+    m_Key: vehicle.seat_selected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918528
+    m_Key: vehicle.select_seat_first
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918529
+    m_Key: vehicle.cannot_wire
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918530
+    m_Key: vehicle.wired
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918531
+    m_Key: vehicle.unwired
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

@@ -751,6 +751,66 @@ MonoBehaviour:
     m_Key: loading.building_terrain
     m_Metadata:
       m_Items: []
+  - m_Id: 50433624891392
+    m_Key: wiring.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474304
+    m_Key: wiring.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474305
+    m_Key: wiring.hint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474306
+    m_Key: wiring.action.drive
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474307
+    m_Key: wiring.action.steer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474308
+    m_Key: wiring.source.throttle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474309
+    m_Key: wiring.source.steering
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474310
+    m_Key: wiring.source.key
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474311
+    m_Key: wiring.press_key
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474312
+    m_Key: wiring.invert
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474313
+    m_Key: wiring.close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474314
+    m_Key: wiring.front
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474315
+    m_Key: wiring.back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474316
+    m_Key: wiring.left
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50433637474317
+    m_Key: wiring.right
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

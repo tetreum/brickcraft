@@ -548,6 +548,27 @@ MonoBehaviour:
     m_Localized: Someone is already sitting there.
     m_Metadata:
       m_Items: []
+  - m_Id: 50431938781184
+    m_Localized: 'Seat picked: click wheels to wire them to it (again to unwire them),
+      or right-click it for its controls.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918528
+    m_Localized: Click a seat of this vehicle first, then the parts to wire to it.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918529
+    m_Localized: Only wheels can be wired, for now.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918530
+    m_Localized: '{0} wired to the seat.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918531
+    m_Localized: '{0} unwired.'
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

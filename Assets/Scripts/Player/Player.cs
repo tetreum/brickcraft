@@ -152,6 +152,7 @@ namespace Brickcraft
         public void onStartLocalPlayer() {
             Instance = this;
             brickPlacer = gameObject.AddComponent<BrickPlacer>();
+            gameObject.AddComponent<Vehicles.WiringView>();
             health.DeadChanged += onDeadChanged;
             EventManager.LocalPlayerStarted.Raise(new LocalPlayerStartedEvent());
         }
@@ -198,7 +199,8 @@ namespace Brickcraft
                 // with a ranged weapon (and its ammo) the dig button draws it instead; with a color picker it paints
                 bool isDrawing = updateDrawing();
                 bool isPainting = SelectedItem != null && SelectedItem.item.IsColorPicker;
-                bool isDigHeld = !isDrawing && !isPainting && GameInput.GetButton(GameInput.Dig);
+                bool isWiring = SelectedItem != null && SelectedItem.item.IsWiringTool;
+                bool isDigHeld = !isDrawing && !isPainting && !isWiring && GameInput.GetButton(GameInput.Dig);
                 bool isClickingDoor = clickDoors(isDigHeld);
 
                 // the server checks it can be hit (PvP for players...)
@@ -237,6 +239,14 @@ namespace Brickcraft
                 if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Place) && SelectedItem != null && SelectedItem.item.IsModelImporter
                         && !ModelImporterView.IsOpen && ModelImporterView.ClosedFrame != Time.frameCount) {
                     ModelImporterView.RequestWindow(SelectedSlot);
+                }
+
+                // the wiring tool picks a seat and wires parts to it, or opens a seat's controls
+                if (isWiring && !GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Dig)) {
+                    Vehicles.WiringTool.Click(SelectedSlot, lookedBrick);
+                }
+                if (isWiring && !GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Place)) {
+                    Vehicles.WiringTool.Use(SelectedSlot, lookedBrick);
                 }
 
                 // a color picker opens its window, to pick its colour

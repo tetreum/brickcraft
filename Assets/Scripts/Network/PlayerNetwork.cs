@@ -793,6 +793,39 @@ namespace Brickcraft.Network
             Vehicles.VehicleSystem.ServerSit(this, seat);
         }
 
+        // the wiring tool's in that slot
+        private bool holdsWiringTool(int slot) {
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            return !health.isDead && held.HasValue && Server.items.TryGetValue(held.Value.itemId, out Item item) && item.IsWiringTool;
+        }
+
+        /// <summary>The wiring tool on a vehicle's part, its seat picked: wires it to the seat, or unwires it (see Vehicles.WiringTool).</summary>
+        [Command]
+        public void CmdWire(int slot, string seatId, string partId) {
+            if (!holdsWiringTool(slot) || seatId == null || partId == null || !Server.bricks.TryGetValue(seatId, out Brick seat)
+                    || !Server.bricks.TryGetValue(partId, out Brick part) || part.vehicle == null || seat.vehicle != part.vehicle
+                    || !Vehicles.WiringTool.IsSeat(seat) || !isInReach(part.WorldBounds.center)) {
+                return;
+            }
+            if (!Vehicles.VehicleWires.CanWire(part)) {
+                GameTexts.Send(connectionToClient, "vehicle.cannot_wire");
+                return;
+            }
+            bool wired = part.vehicle.IsWired(seat.id, part.id);
+            part.vehicle.ServerToggleWire(seat, part);
+            GameTexts.Send(connectionToClient, wired ? "vehicle.unwired" : "vehicle.wired", part.item);
+        }
+
+        /// <summary>A seat's controls, changed in its panel (see UI.WiringPanel): its wires are these now.</summary>
+        [Command]
+        public void CmdSetWires(int slot, string seatId, Vehicles.VehicleWire[] wires) {
+            if (!holdsWiringTool(slot) || seatId == null || wires == null || wires.Length > Vehicles.VehicleWires.MaxPerVehicle
+                    || !Server.bricks.TryGetValue(seatId, out Brick seat) || !Vehicles.WiringTool.IsSeat(seat) || !isInReach(seat.WorldBounds.center)) {
+                return;
+            }
+            seat.vehicle.ServerSetWires(seat.id, wires);
+        }
+
         /// <summary>Gets up from its seat; the vehicle goes on as its client had it moving, if it drove it.</summary>
         [Command]
         public void CmdStandUp(Vector3 velocity, Vector3 angularVelocity) {

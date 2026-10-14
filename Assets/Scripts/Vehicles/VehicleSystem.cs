@@ -51,6 +51,7 @@ namespace Brickcraft.Vehicles
             if (vehicle.grid.Count == 0) {
                 NetworkServer.Destroy(vehicle.gameObject);
             } else {
+                vehicle.ServerCleanWires();
                 split(vehicle);
             }
             return new List<Brick>() { brick };
@@ -177,6 +178,17 @@ namespace Brickcraft.Vehicles
                     UnityEngine.Object.Destroy(vehicle.gameObject);
                     continue;
                 }
+                if (s.wires != null) {
+                    foreach (SavedWire wire in s.wires) {
+                        VehicleWire restored = new VehicleWire() {
+                            seat = wire.seat.ToString(), part = wire.part.ToString(),
+                            action = (WireAction)wire.action, source = (WireSource)wire.source, key = wire.key, invert = wire.invert,
+                        };
+                        if (vehicle.wires.Count < VehicleWires.MaxPerVehicle && VehicleWires.IsValid(vehicle, restored)) {
+                            vehicle.wires.Add(restored);
+                        }
+                    }
+                }
                 NetworkServer.Spawn(vehicle.gameObject);
             }
         }
@@ -188,7 +200,14 @@ namespace Brickcraft.Vehicles
                 x = x, y = y, z = z,
                 rotation = vehicle.transform.rotation,
                 parts = new List<SavedVehiclePart>(),
+                wires = new List<SavedWire>(),
             };
+            foreach (VehicleWire wire in vehicle.wires) {
+                saved.wires.Add(new SavedWire() {
+                    seat = guidOf(wire.seat), part = guidOf(wire.part),
+                    action = (byte)wire.action, source = (byte)wire.source, key = wire.key, invert = wire.invert,
+                });
+            }
             foreach (Brick brick in vehicle.grid.Bricks) {
                 saved.parts.Add(new SavedVehiclePart() {
                     id = guidOf(brick.id),
@@ -258,8 +277,19 @@ namespace Brickcraft.Vehicles
             refreshDriver(vehicle);
         }
 
-        // bricks from one vehicle to another (keeping their ids), their placements turned and moved into its cells
+        // bricks from one vehicle to another (keeping their ids), their placements turned and moved into its cells; the
+        // wires between them go too, the ones to bricks left behind are cut
         private static void move(List<Brick> bricks, Vehicle from, Vehicle to, int turns, Vector3Int offset) {
+            HashSet<string> moving = new HashSet<string>();
+            foreach (Brick brick in bricks) {
+                moving.Add(brick.id);
+            }
+            List<VehicleWire> wires = new List<VehicleWire>();
+            foreach (VehicleWire wire in from.wires) {
+                if (moving.Contains(wire.seat) && moving.Contains(wire.part)) {
+                    wires.Add(wire);
+                }
+            }
             foreach (Brick brick in bricks) {
                 Item item = brick.item;
                 int color = brick.color, state = brick.state;
@@ -267,6 +297,12 @@ namespace Brickcraft.Vehicles
                 BrickPlacement placement = VehicleGrid.Map(brick.placement, turns, offset);
                 from.ServerRemove(brick);
                 to.ServerAdd(item, color, placement, id, state);
+            }
+            from.ServerCleanWires();
+            foreach (VehicleWire wire in wires) {
+                if (to.wires.Count < VehicleWires.MaxPerVehicle) {
+                    to.wires.Add(wire);
+                }
             }
         }
     }

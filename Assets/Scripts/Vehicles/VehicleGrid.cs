@@ -25,6 +25,20 @@ namespace Brickcraft.Vehicles
             get { return bricks; }
         }
 
+        /// <summary>Where its weight is, in its space: its bricks' middles, by their mass (see Item.Mass).</summary>
+        public Vector3 CentreOfMass {
+            get {
+                float mass = 0;
+                Vector3 centre = Vector3.zero;
+                foreach (Brick brick in bricks) {
+                    float part = Server.items.TryGetValue(brick.itemId ?? "", out Item item) ? item.Mass : VehicleParts.MassPerCell;
+                    mass += part;
+                    centre += brick.placement.LocalBounds.center * part;
+                }
+                return mass > 0 ? centre / mass : Vector3.zero;
+            }
+        }
+
         /// <summary>A brick went in or out.</summary>
         public event System.Action Changed;
 

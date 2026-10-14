@@ -219,15 +219,89 @@ namespace Brickcraft.Tests
             return vehicle;
         }
 
-        [UnityTest]
-        public IEnumerator ADriverDrivesItAndItComesToRestWhenLeft() {
-            Item wheelItem = wheel();
-            Assume.That(wheelItem, Is.Not.Null, "a small wheel in the catalogue");
+        // a floor high up, its colliders there
+        private static IEnumerator floorUp(System.Action<Vector3Int> done) {
             BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
             Vector3Int floor = TestGame.PlayerBlock + new Vector3Int(0, 12, 0);
             TestGame.Floor(floor, 14, stone);
             Vector3 top = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + Vector3Int.up));
             yield return TestGame.WaitUntil(() => Physics.Raycast(top + Vector3.up, Vector3.down, 2), 10, "the floor solid");
+            done(floor);
+        }
+
+        [UnityTest]
+        public IEnumerator ASeatsWiresSayWhatDrivesIt() {
+            Item wheelItem = wheel();
+            Assume.That(wheelItem, Is.Not.Null, "a small wheel in the catalogue");
+            Vector3Int floor = Vector3Int.zero;
+            yield return floorUp(f => floor = f);
+            Vehicle vehicle = car(floor, wheelItem, out Brick seat);
+            List<Brick> wheels = new List<Brick>();
+            foreach (Brick brick in vehicle.grid.Bricks) {
+                if (brick.itemId == wheelItem.id) {
+                    wheels.Add(brick);
+                }
+            }
+            yield return null;
+
+            // wired as they come: all drive with the throttle, the front ones steer
+            foreach (Brick w in wheels) {
+                vehicle.ServerToggleWire(seat, w);
+            }
+            List<VehicleWire> wires = vehicle.WiresOf(seat.id);
+            Assert.AreEqual(4, wires.FindAll(w => w.action == WireAction.Drive && w.source == WireSource.Throttle).Count, "every wheel drives");
+            Assert.AreEqual(2, wires.FindAll(w => w.action == WireAction.Steer && w.source == WireSource.Steering).Count, "the front ones steer");
+            vehicle.ServerToggleWire(seat, wheels[0]);
+            Assert.IsFalse(vehicle.IsWired(seat.id, wheels[0].id), "clicked again: unwired");
+            vehicle.ServerToggleWire(seat, wheels[0]);
+
+            // the wheels driven by a key of their own
+            List<VehicleWire> keyed = new List<VehicleWire>();
+            foreach (VehicleWire w in vehicle.WiresOf(seat.id)) {
+                VehicleWire changed = w;
+                if (changed.action == WireAction.Drive) {
+                    changed.source = WireSource.Key;
+                    changed.key = (int)KeyCode.G;
+                }
+                keyed.Add(changed);
+            }
+            vehicle.ServerSetWires(seat.id, keyed);
+            Assert.AreEqual(4, vehicle.WiresOf(seat.id).FindAll(w => w.source == WireSource.Key).Count);
+
+            Network.PlayerNetwork player = TestGame.Player.GetComponent<Network.PlayerNetwork>();
+            VehicleSystem.ServerSit(player, seat);
+            yield return null;
+            yield return null;
+            Vector3 forward = vehicle.transform.TransformDirection(VehicleShape.Seat(seat, vehicle.transform).forward);
+            Vector3 start = vehicle.transform.position;
+            try {
+                VehicleControls.Override = new VehicleInput() { throttle = 1, keys = new int[0] };
+                yield return TestGame.Wait(0.75f);
+                Assert.Less(Vector3.Dot(vehicle.transform.position - start, forward), 0.2f, "the throttle isn't wired");
+                start = vehicle.transform.position;
+                VehicleControls.Override = new VehicleInput() { keys = new[] { (int)KeyCode.G } };
+                yield return TestGame.Wait(1.5f);
+                Assert.Greater(Vector3.Dot(vehicle.transform.position - start, forward), 0.5f, "its key drives it");
+            } finally {
+                VehicleControls.Override = null;
+            }
+            VehicleSystem.ServerStandUp(player, Vector3.zero, Vector3.zero);
+            yield return null;
+
+            // a wheel gone takes its wires
+            VehicleSystem.ServerRemove(wheels[1]);
+            foreach (VehicleWire w in vehicle.wires) {
+                Assert.AreNotEqual(wheels[1].id, w.part);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator ADriverDrivesItAndItComesToRestWhenLeft() {
+            Item wheelItem = wheel();
+            Assume.That(wheelItem, Is.Not.Null, "a small wheel in the catalogue");
+            Vector3Int floor = Vector3Int.zero;
+            yield return floorUp(f => floor = f);
+            Vector3 top = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + Vector3Int.up));
 
             Vehicle vehicle = car(floor, wheelItem, out Brick seat);
             Network.PlayerNetwork player = TestGame.Player.GetComponent<Network.PlayerNetwork>();

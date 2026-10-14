@@ -84,6 +84,19 @@ namespace Brickcraft.World
         public double x, y, z;
         public Quaternion rotation;
         public List<SavedVehiclePart> parts;
+        /// <summary>Its seats' wires (see Vehicles.VehicleWire); null or empty if none.</summary>
+        public List<SavedWire> wires;
+    }
+
+    /// <summary>A seat of a saved vehicle wired to one of its parts (see Vehicles.VehicleWire).</summary>
+    public struct SavedWire
+    {
+        public Guid seat;
+        public Guid part;
+        public byte action;
+        public byte source;
+        public int key;
+        public bool invert;
     }
 
     /// <summary>A brick of a saved vehicle, in its cells (see Vehicles.VehicleGrid).</summary>
@@ -455,6 +468,8 @@ namespace Brickcraft.World
     ///   varint count of vehicles (always 0 to clients), then per one: 16 bytes id, double x y z (absolute), float
     ///     rotation x y z w, varint part count, per part: 16 bytes id, string item, zigzag varint colour, zigzag varint
     ///     x y z (its cells), u8 rotation, zigzag varint state
+    ///   varint count of the vehicles' wire lists: 0, or one for each vehicle above, in order: varint count, per wire: 16
+    ///     bytes seat id, 16 bytes part id, u8 action, u8 source, zigzag varint key, bool invert
     /// where placer is a varint player id (0 when no player placed it) followed, when not 0, by varint unix seconds.
     /// Blocks are saved by name, the numbers chunks use are only valid in the game that gave them (see
     /// BlockDatabase).
@@ -462,7 +477,7 @@ namespace Brickcraft.World
     public static class ChunkChangesSerializer
     {
         // change it when the format changes, records of other versions are rejected
-        public const byte Version = 10;
+        public const byte Version = 11;
 
         // pages keep network messages small, even for heavily modified chunks
         private const int BlocksPerPage = 8192;
@@ -623,6 +638,7 @@ namespace Brickcraft.World
                 }
 
                 int vehicles = (int)readVarUInt(reader);
+                List<SavedVehicle> read = new List<SavedVehicle>();
                 for (int i = 0; i < vehicles; i++) {
                     SavedVehicle vehicle = new SavedVehicle() {
                         id = new Guid(reader.ReadBytes(16)),
@@ -647,6 +663,30 @@ namespace Brickcraft.World
                             vehicle.parts.Add(part);
                         }
                     }
+                    read.Add(vehicle);
+                }
+
+                int wireLists = (int)readVarUInt(reader);
+                for (int i = 0; i < wireLists; i++) {
+                    List<SavedWire> wires = new List<SavedWire>();
+                    int count = (int)readVarUInt(reader);
+                    for (int w = 0; w < count; w++) {
+                        wires.Add(new SavedWire() {
+                            seat = new Guid(reader.ReadBytes(16)),
+                            part = new Guid(reader.ReadBytes(16)),
+                            action = reader.ReadByte(),
+                            source = reader.ReadByte(),
+                            key = readVarInt(reader),
+                            invert = reader.ReadBoolean(),
+                        });
+                    }
+                    if (i < read.Count) {
+                        SavedVehicle vehicle = read[i];
+                        vehicle.wires = wires;
+                        read[i] = vehicle;
+                    }
+                }
+                foreach (SavedVehicle vehicle in read) {
                     if (vehicle.parts.Count > 0) {
                         changes.vehicles.Add(vehicle);
                     }
@@ -783,6 +823,22 @@ namespace Brickcraft.World
                             writeVarInt(writer, part.origin.z);
                             writer.Write(part.rotation);
                             writeVarInt(writer, part.state);
+                        }
+                    }
+
+                    writeVarUInt(writer, (uint)vehicles.Count);
+                    foreach (SavedVehicle vehicle in vehicles) {
+                        writeVarUInt(writer, (uint)(vehicle.wires != null ? vehicle.wires.Count : 0));
+                        if (vehicle.wires == null) {
+                            continue;
+                        }
+                        foreach (SavedWire wire in vehicle.wires) {
+                            writer.Write(wire.seat.ToByteArray());
+                            writer.Write(wire.part.ToByteArray());
+                            writer.Write(wire.action);
+                            writer.Write(wire.source);
+                            writeVarInt(writer, wire.key);
+                            writer.Write(wire.invert);
                         }
                     }
                 }

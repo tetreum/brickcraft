@@ -41,6 +41,10 @@ namespace Brickcraft.Tests
                     new SavedVehiclePart() { id = Guid.NewGuid(), itemId = "seat", color = 72, origin = new Vector3Int(-2, 3, 1), state = 2 },
                     new SavedVehiclePart() { id = Guid.NewGuid(), itemId = "no_such_item", origin = new Vector3Int(0, 6, 0) },
                 },
+                wires = new List<SavedWire>() {
+                    new SavedWire() { seat = Guid.NewGuid(), part = Guid.NewGuid(), action = 1, source = 2, key = (int)KeyCode.W, invert = true },
+                    new SavedWire() { seat = Guid.NewGuid(), part = Guid.NewGuid() },
+                },
             });
         }
 
@@ -70,6 +74,7 @@ namespace Brickcraft.Tests
             Assert.AreEqual(new[] { vehicle.x, vehicle.y, vehicle.z }, new[] { back.x, back.y, back.z });
             Assert.AreEqual(vehicle.rotation, back.rotation);
             CollectionAssert.AreEqual(vehicle.parts.GetRange(0, 2), back.parts, "the parts of items that aren't there are lost");
+            CollectionAssert.AreEqual(vehicle.wires, back.wires);
         }
 
         [Test]

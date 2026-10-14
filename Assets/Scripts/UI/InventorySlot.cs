@@ -96,15 +96,12 @@ namespace Brickcraft.UI
             if (!isDragging) {
                 return;
             }
-            BaseInput input = EventSystem.current != null && EventSystem.current.currentInputModule != null
-                ? EventSystem.current.currentInputModule.input
-                : null;
-            if (input == null || !input.GetMouseButtonDown(1)) {
+            if (!GameInput.KeyDown(KeyCode.Mouse1)) {
                 return;
             }
 
             Component target;
-            Transform cell = findCell(input.mousePosition, out target);
+            Transform cell = findCell(GameInput.PointerPosition, out target);
             if (cell == null || !(target is InventorySlot) || (int.Parse(cell.name) == sourceSlot && SlotGroup.IsStorage(cell) == sourceIsStorage)) {
                 return;
             }

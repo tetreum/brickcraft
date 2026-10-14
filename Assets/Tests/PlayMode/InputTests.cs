@@ -4,6 +4,7 @@ using Brickcraft.Network;
 using Brickcraft.World;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.TestTools;
@@ -73,6 +74,43 @@ namespace Brickcraft.Tests
             }
         }
 
+        // the player still (landed after spawning), so what's placed in front stays in front
+        private static IEnumerator standStill() {
+            Vector3 last = player.transform.position;
+            int still = 0;
+            float end = Time.realtimeSinceStartup + 10;
+            while (still < 10) {
+                Assert.Less(Time.realtimeSinceStartup, end, "the player didn't stand still in 10 seconds");
+                yield return null;
+                still = Vector3.Distance(last, player.transform.position) < 0.001f ? still + 1 : 0;
+                last = player.transform.position;
+            }
+        }
+
+        // what the crosshair is on: a brick, or a terrain mesh
+        private static Collider underCrosshair() {
+            Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0));
+            return Physics.Raycast(ray, out RaycastHit hit, 8f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) ? hit.collider : null;
+        }
+
+        // a brick placed right in front of the crosshair, once it's under it
+        private static IEnumerator placeInFront(string itemId, int color, System.Action<Brick> placed) {
+            yield return standStill();
+            Transform eye = Camera.main.transform;
+            Item brickItem = Server.items[itemId];
+            Vector3Int cell = BrickGrid.WorldToCell(eye.position + eye.forward * 2) - new Vector3Int(1, 1, 1);
+            BrickPlacement placement = new BrickPlacement(brickItem.brickModel, cell);
+            Assume.That(BrickGrid.IsFree(placement), "room in front of the player");
+            Brick brick = WorldNetwork.ServerPlaceBrick(brickItem, color, placement, Placer.Now(0));
+            yield return TestGame.WaitUntil(() => underCrosshair() != null && Server.findBrick(underCrosshair()) == brick, 5, "the brick under the crosshair");
+            placed(brick);
+        }
+
+        private static int quantityOf(int slot) {
+            InventoryItem? there = player.GetComponent<PlayerInventory>().ServerGetSlot(slot);
+            return there.HasValue ? there.Value.quantity : 0;
+        }
+
         private static int quantityIn(int index) {
             InventoryItem? there = player.GetComponent<PlayerInventory>().ServerGetSlot(Player.FirstFastSlot + index);
             return there.HasValue ? there.Value.quantity : 0;
@@ -140,13 +178,8 @@ namespace Brickcraft.Tests
         [UnityTest]
         public IEnumerator TheColorPickerOpensItsWindowAndPaintsWhatItsAimedAt() {
             const int Blue = 1;
-            // a brick right in front of the crosshair
-            Transform eye = Camera.main.transform;
-            Item brickItem = Server.items["brick_2x2"];
-            Vector3Int cell = BrickGrid.WorldToCell(eye.position + eye.forward * 2) - new Vector3Int(1, 1, 1);
-            BrickPlacement placement = new BrickPlacement(brickItem.brickModel, cell);
-            Assume.That(BrickGrid.IsFree(placement), "room in front of the player");
-            Brick brick = WorldNetwork.ServerPlaceBrick(brickItem, 4, placement, Placer.Now(0));
+            Brick brick = null;
+            yield return placeInFront("brick_2x2", 4, placed => brick = placed);
 
             hold(5, "color_picker", 1);
             player.network.CmdSetToolColor(Player.FirstFastSlot + 5, Blue);
@@ -173,12 +206,8 @@ namespace Brickcraft.Tests
         [UnityTest]
         public IEnumerator ClickingABrickWithTheWindowOpenPicksItsColour() {
             const int Blue = 1, Green = 2;
-            Transform eye = Camera.main.transform;
-            Item brickItem = Server.items["brick_2x2"];
-            Vector3Int cell = BrickGrid.WorldToCell(eye.position + eye.forward * 2) - new Vector3Int(1, 1, 1);
-            BrickPlacement placement = new BrickPlacement(brickItem.brickModel, cell);
-            Assume.That(BrickGrid.IsFree(placement), "room in front of the player");
-            Brick brick = WorldNetwork.ServerPlaceBrick(brickItem, Green, placement, Placer.Now(0));
+            Brick brick = null;
+            yield return placeInFront("brick_2x2", Green, placed => brick = placed);
 
             hold(5, "color_picker", 1);
             player.network.CmdSetToolColor(Player.FirstFastSlot + 5, Blue);
@@ -199,13 +228,13 @@ namespace Brickcraft.Tests
         [UnityTest]
         public IEnumerator ClickingTerrainWithTheWindowOpenPicksItsBricksColour() {
             const int Blue = 1;
+            yield return standStill();
             Transform eye = Camera.main.transform;
             Vector3Int block = BrickGrid.CellToBlock(BrickGrid.WorldToCell(eye.position + eye.forward * 2.5f));
             BlockType dirt = (BlockType)BlockDatabase.IdOf("dirt");
             Assert.IsTrue(WorldNetwork.ServerSetBlock(block, dirt, Placer.Now(0)));
             // its chunk's mesh rebuilt: something solid right in front
-            yield return TestGame.WaitUntil(() => Physics.Raycast(eye.position, eye.forward, out RaycastHit hit, 4f)
-                && hit.collider.name.StartsWith("ChunkSlice"), 10, "the dirt in front");
+            yield return TestGame.WaitUntil(() => underCrosshair() != null && underCrosshair().name.StartsWith("ChunkSlice"), 10, "the dirt in front");
 
             hold(5, "color_picker", 1);
             player.network.CmdSetToolColor(Player.FirstFastSlot + 5, Blue);
@@ -217,6 +246,60 @@ namespace Brickcraft.Tests
             input.PressAndRelease(mouse.leftButton);
             yield return frames(5);
             Assert.AreEqual(Server.items["dirt"].color, ColorPickerTool.HeldColor, "the dirt brick's colour picked");
+        }
+
+        // the centre of an inventory cell on the screen
+        private static Vector2 cellOnScreen(int slot) {
+            UI.InventorySlot shown = UI.InventoryPanel.Instance.inventorySlots[slot - 1];
+            Transform cell = shown.originalParent != null ? shown.originalParent : shown.transform.parent;
+            RectTransform rect = (RectTransform)cell;
+            Canvas canvas = cell.GetComponentInParent<Canvas>().rootCanvas;
+            Camera eye = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+            return RectTransformUtility.WorldToScreenPoint(eye, rect.TransformPoint(rect.rect.center));
+        }
+
+        [UnityTest]
+        public IEnumerator RightClickingASlotWhileDraggingAStackDropsOneThere() {
+            const int From = 1, To = 2; // the inventory's first slots
+            PlayerInventory inventory = player.GetComponent<PlayerInventory>();
+            foreach (int slot in new[] { From, To }) {
+                InventoryItem? there = inventory.ServerGetSlot(slot);
+                if (there.HasValue) {
+                    inventory.ServerRemoveFromSlot(slot, there.Value.quantity);
+                }
+            }
+            Assert.IsTrue(inventory.ServerAdd("stone", Server.items["stone"].color, 5, 0, From));
+            yield return frames(2);
+            input.PressAndRelease(keyboard.iKey);
+            yield return frames(3);
+            Assert.IsTrue(UI.InventoryPanel.Instance != null && UI.InventoryPanel.Instance.gameObject.activeInHierarchy, "the inventory is open");
+
+            // the drag through the interface's events (its input module reads the real mouse, not the test one),
+            // the right click pressed: the slot reads that itself
+            GameObject dragged = UI.InventoryPanel.Instance.inventorySlots[From - 1].gameObject;
+            Vector2 start = cellOnScreen(From), end = cellOnScreen(To);
+            PointerEventData drag = new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left, position = start };
+            input.Set(mouse.position, start);
+            ExecuteEvents.Execute(dragged, drag, ExecuteEvents.beginDragHandler);
+            yield return frames(1);
+            input.Set(mouse.position, end);
+            drag.position = end;
+            ExecuteEvents.Execute(dragged, drag, ExecuteEvents.dragHandler);
+            yield return frames(1);
+            input.PressAndRelease(mouse.rightButton);
+            yield return frames(3);
+            Assert.AreEqual(1, quantityOf(To), "one dropped there");
+            Assert.AreEqual(4, quantityOf(From));
+
+            // let go back where it started: the rest stays there
+            input.Set(mouse.position, start);
+            drag.position = start;
+            ExecuteEvents.Execute(dragged, drag, ExecuteEvents.endDragHandler);
+            yield return frames(3);
+            Assert.AreEqual(1, quantityOf(To));
+            Assert.AreEqual(4, quantityOf(From));
+            input.PressAndRelease(keyboard.iKey);
+            yield return frames(2);
         }
 
         [UnityTest]

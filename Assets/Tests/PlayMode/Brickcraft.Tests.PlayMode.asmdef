@@ -3,6 +3,7 @@
     "rootNamespace": "Brickcraft.Tests",
     "references": [
         "Brickcraft",
+        "Brickcraft.UI",
         "Mirror",
         "Unity.InputSystem.TestFramework",
         "Unity.InputSystem",

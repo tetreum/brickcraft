@@ -525,6 +525,24 @@ MonoBehaviour:
     m_Metadata:
       m_Items:
       - rid: 8627787809188479013
+  - m_Id: 10995846864896
+    m_Localized: "No se ha podido crear el modelo de la creaci\xF3n: {0}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10995880419328
+    m_Localized: "No se ha podido crear el modelo de la creaci\xF3n: sus piezas no
+      tienen forma"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10995880419329
+    m_Localized: "No se ha podido guardar el modelo de la creaci\xF3n: {0}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10995880419330
+    m_Localized: "Modelo guardado como el mod \"{0}\" (copia {1} en Mods/ y a\xF1\xE1delo
+      a un mundo) (se ven {2} de sus {3} tri\xE1ngulos)"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

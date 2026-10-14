@@ -523,6 +523,23 @@ MonoBehaviour:
     m_Metadata:
       m_Items:
       - rid: 8627787809188479012
+  - m_Id: 10995846864896
+    m_Localized: 'The creation''s model couldn''t be made: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10995880419328
+    m_Localized: 'The creation''s model couldn''t be made: its parts have no shape'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10995880419329
+    m_Localized: 'The creation''s model couldn''t be saved: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10995880419330
+    m_Localized: Model saved as the mod "{0}" (copy {1} into Mods/, then add it to
+      a world) ({2} of its {3} triangles are seen)
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

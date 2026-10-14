@@ -495,6 +495,22 @@ MonoBehaviour:
     m_Key: importer.placed
     m_Metadata:
       m_Items: []
+  - m_Id: 10995846864896
+    m_Key: partslister.model_failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10995880419328
+    m_Key: partslister.model_no_shape
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10995880419329
+    m_Key: partslister.model_not_saved
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10995880419330
+    m_Key: partslister.model_saved
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

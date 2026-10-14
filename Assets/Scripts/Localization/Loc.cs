@@ -109,11 +109,16 @@ namespace Brickcraft
 
         /// <summary>That language's table has the key, with a text (it isn't left to fall back on English).</summary>
         public static bool Has(string table, string key, string language) {
+            return !string.IsNullOrEmpty(Template(table, key, language));
+        }
+
+        /// <summary>A key's text as it's written in that language's table, its placeholders unfilled; null if it has none.</summary>
+        public static string Template(string table, string key, string language) {
             start();
             Locale locale = LocalizationSettings.AvailableLocales.GetLocale(new LocaleIdentifier(language));
             StringTable strings = locale != null ? LocalizationSettings.StringDatabase.GetTable(table, locale) : null;
             StringTableEntry entry = strings != null ? strings.GetEntry(key) : null;
-            return entry != null && !string.IsNullOrEmpty(entry.Value);
+            return entry != null ? entry.Value : null;
         }
 
         private static string get(string table, string key, object[] arguments) {

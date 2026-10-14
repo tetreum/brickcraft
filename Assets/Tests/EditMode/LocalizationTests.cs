@@ -153,6 +153,57 @@ namespace Brickcraft.Tests
             Assert.AreEqual("Clic izquierdo", GameInput.KeyName(KeyCode.Mouse0));
         }
 
+        // every key of a table (its shared data's)
+        private static List<string> keysOf(string table) {
+            string path = "Assets/Localization/Tables/" + table + " Shared Data.asset";
+            List<string> keys = new List<string>();
+            foreach (Match key in Regex.Matches(File.ReadAllText(path), @"m_Key: (.+)")) {
+                keys.Add(key.Groups[1].Value.Trim().Trim('\'', '"'));
+            }
+            return keys;
+        }
+
+        [Test]
+        public void EveryTextIsInEveryLanguage() {
+            int count = 0;
+            foreach (string table in Tables) {
+                foreach (string key in keysOf(table)) {
+                    foreach (string language in GameSettings.LanguageCodes) {
+                        Assert.IsTrue(Loc.Has(table, key, language), table + "/" + key + " has no text in " + language);
+                    }
+                    count++;
+                }
+            }
+            Assert.Greater(count, 400);
+        }
+
+        [Test]
+        public void EveryTextWithArgumentsSaysThemInEveryLanguage() {
+            foreach (string language in GameSettings.LanguageCodes) {
+                GameSettings.Language = language;
+                foreach (string table in Tables) {
+                    foreach (string key in keysOf(table)) {
+                        // as many numbers as its English has placeholders (numbers: plurals need them)
+                        string english = Loc.Template(table, key, "en");
+                        int arguments = 0;
+                        foreach (Match placeholder in Regex.Matches(english, @"\{(\d+)")) {
+                            arguments = Mathf.Max(arguments, int.Parse(placeholder.Groups[1].Value) + 1);
+                        }
+                        if (arguments == 0) {
+                            continue;
+                        }
+                        object[] values = new object[arguments];
+                        for (int i = 0; i < arguments; i++) {
+                            values[i] = i + 2;
+                        }
+                        string said = Loc.Get(table, key, values);
+                        Assert.IsFalse(string.IsNullOrEmpty(said), table + "/" + key + " in " + language + " says nothing");
+                        StringAssert.DoesNotContain("{", said, table + "/" + key + " in " + language + ": " + said);
+                    }
+                }
+            }
+        }
+
         [Test]
         public void AMissingKeyShowsItself() {
             LogAssert.Expect(LogType.Warning, "The UI table has no no.such.key");

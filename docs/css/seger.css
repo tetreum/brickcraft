@@ -8,6 +8,10 @@ a:hover {
 .btn-link {
     text-decoration: none;
 }
+.navbar-brand img {
+    max-height: 60px;
+    width: auto;
+}
 h1 {
     font-weight: 800;
     line-height: 1.1;
@@ -76,4 +80,12 @@ pre {
     padding: 1em 1.5em;
     display: block;
     word-wrap: break-word;
+}
+#language-selector .nav-link {
+    padding-left: .4rem;
+    padding-right: .4rem;
+}
+#language-selector .nav-link.active {
+    font-weight: bold;
+    color: #404040;
 }

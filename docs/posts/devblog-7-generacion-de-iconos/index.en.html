@@ -1,0 +1,39 @@
+<p>Since progress on generating the map via chunks is zero, I've decided to move forward on this front instead.<br>
+    As I mentioned in previous posts, we need a system to generate the icons for every item in the game, so we don't have to do it by hand.<br>
+
+    </p><p>For that we'll use the green screen technique. We'll put 1 brick in the center of the scene against a green background and center the camera on it to take a picture.<br>
+
+    </p><p>We start by setting the camera background to a garish green and removing visual effects like eye adaptation (because otherwise the green will get shadows and won't be the same green).</p><p><img src="https://i.imgur.com/HrF33jX.png" alt="" style=""></p><p>
+
+
+    Next, instead of showing the camera output on screen, we send it to a texture and crop that texture to the size we want. In the resulting texture, to turn the green transparent, we grab the very first pixel (which will be on an edge of the image) and then go through aaaaall the pixels of the texture to find which ones are equal to it and make them transparent:</p><p><img src="https://i.imgur.com/qcfaJsr.png" alt="" style="width: 466px; height: 261px;"></p><p>
+
+
+    With this, we're left with the other tricky part: centering the camera on the object so it's always fully visible.<br>
+    Lego has very long bricks and very small ones, so we can't use the same camera position in every case. We have to calculate the size of the brick, the camera's "field of view" and apply an offset.</p><p><img src="https://i.imgur.com/p0nzEow.png" alt="" style="width: 514px; height: 326px;"></p><p>
+
+
+    It was coming out like crap for me, so I had to look up how to calculate it properly.</p><p><img src="https://i.imgur.com/Cmq8g5M.png" alt="" style="width: 847px; height: 121px;"></p><p>
+
+
+    The result is almost perfect:</p><p><img src="https://i.imgur.com/a93o4w0.png" alt="" style="width: 705px; height: 120px;"></p><p>
+
+
+    And I say almost because of 2 things:<br>
+    - Brick 4 has one face with more studs. You'd expect that to be the one we see in the icon:</p><p><img src="https://i.imgur.com/K14ieSf.png" alt="" style="width: 300px;"></p><p>
+
+
+    - Brick 7, the radioactive green one, is water. Since it's super transparent, the chroma plays a nasty trick on us. The same happens with 5, which is glass.<br>
+
+    </p><p>We'll have to add an is water/glass kind of check to change the chroma color to blue:</p><p><img src="https://i.imgur.com/FlsSQkg.png" alt="" style="width: 663px; height: 104px;"></p><p>
+
+
+    It's not very pretty, but it works for me. It wouldn't stand out as much if we changed it to a less garish color, but then we'd be risking it if the brick's texture looked too similar to it.<br>
+
+
+    </p><p><img src="https://i.imgur.com/eto9I6s.png" alt="" style="width: 907px; height: 508px;"></p><p>The in-game result looks acceptable to me.<br></p>
+    <p style="text-align: center;">
+        <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+            <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+            https://github.com/tetreum/brickcraft</a>
+    </p>

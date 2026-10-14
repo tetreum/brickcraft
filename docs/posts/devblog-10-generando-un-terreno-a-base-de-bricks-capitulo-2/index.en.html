@@ -1,0 +1,89 @@
+<p>We left off with the model being way too detailed for a game.<br>
+    Like I said, I have no idea how to model (nor do I want to), so I took the easy way out -> Sketchup.<br>
+    Sketchup is probably the worst tool to use for this, proof of which is that after reducing the number of triangles and vertices, the model file got bigger....... Anyway.<br>
+    With the liposuction we went from:<br>
+    - Edges: 1136<br>
+    - Faces: 624<br>
+    to:<br>
+    - Edges: 800<br>
+    - Faces: 420</p>
+<p><img src="https://i.imgur.com/s9Dg3Rz.png" alt="" style="width: 675px; height: 468px;"></p>
+<p>
+
+    You can tell visually. Oh well.<br>
+
+    Another pain in the ass with Sketchup is that no matter what you tell it, it wrecks the model's scale.<br>
+    Every model I imported from mecabricks always got scaled the same way:</p>
+<p><img src="https://i.imgur.com/ht5Ujkb.png" alt="" style="width: 489px; height: 91px;"></p>
+<p>
+
+
+    I had to keep fiddling with the new model until it looked more or less the same:</p>
+<p><img src="https://i.imgur.com/Hwsfpbq.png" alt="" style="width: 487px; height: 86px;"><br>
+
+    God, I hate Sketchup.<br>
+
+    </p><p>Anyway, the reduction wasn't very big, but I don't know where else to squeeze more little triangles from.<br>
+    Moment of truth.<br>
+    Will all the faces have the same number of triangles (except the top and bottom ones)?<br>
+    Top face: 570<br>
+    Bottom face: 72<br>
+    Remaining faces: 2<br>
+
+    </p><p>Hell yeah! The sides are no longer a waste!</p><p><br>
+
+    If we generate the world now we get this:</p>
+<p><img src="https://i.imgur.com/ubdj5Q3.png" alt="" style="width: 1168px; height: 818px;"></p>
+<p><img src="https://i.imgur.com/iTYCjkL.png" alt="" style="width: 1170px; height: 800px;"></p>
+<p>
+
+
+
+    A world of bricks, but with a few problems:<br>
+    - There are gaps between the bricks<br>
+    - If you look at the bottom right of the image, you'll see the sides of the bricks aren't being rendered<br>
+    - Some triangles are broken/out of place<br>
+
+    </p><p>The first bug is because the matrix we created is based on integers and the brick dimensions aren't integers.<br>
+    If we multiply the placement position by the brick's width / height, we'll get the adjusted position.<br>
+
+    </p><p>The second bug is because of how I assigned each face. I was following the top|bottom|left|right|front|back logic. But that's not really how it works, instead we start with face 0, then 1, 2...Long story short, it gets fixed by tweaking the FaceMapper I made.<br>
+
+    </p><p>As for the third bug........ I have no fucking idea why it happens. I did check that if I cut the top face higher up, so that there are only studs, everything renders fine. So there's some problem with the model:</p>
+<p><img src="https://i.imgur.com/tMR1Baz.png" alt="" style="width: 1008px; height: 659px;"></p>
+<p><img src="https://i.imgur.com/sq0JkHU.png" alt="" style="width: 836px; height: 468px;"></p>
+<p>
+
+
+
+    We fix what can be fixed and try our luck again:</p>
+<p><iframe width="560" height="315" src="https://www.youtube.com/embed/qblDKO3d3EY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""><br></iframe><p><img src="https://i.imgur.com/79dmcRo.png" alt="" style="width: 533px; height: 279px;"></p></p>
+<p>
+
+
+
+
+
+    The next thing I should do is focus on painting the blocks.<br>
+    Remember we merged the blocks into a single mesh/model. So we only have 1 texture.<br>
+    This texture will have aaaaall the possible colors and we'll have to tweak the material so it shows the right surface's color in each case.<br>
+    See:</p><p><img src="https://i.imgur.com/Wa8vsAh.png" alt="" style="width: 245px; height: 245px;"></p><p>
+
+
+    How? I don't know. If I normally have no idea what I'm doing, with this part I have even less.<br>
+    I messed with it a bit and managed to get some color showing, not the right one, but at least it's not the default gray.</p><p><img src="https://i.imgur.com/3wsCiBn.png" alt="" style="width: 701px; height: 400px;"></p><p>
+
+
+    (If you look closely, the sides are blue or green and the top is brown, when it should all be the same color).<br>
+
+
+    </p><p>Skipping this part, it's time to get on with the hardest part of all: Hooking up the building system I made with the generated world.<br>
+
+    </p><p>Oh, the other day I saw this:</p><p><img src="https://i.imgur.com/oK5wyhY.png" alt="" style="width: 745px; height: 496px;"><br>
+
+    And I think I'll use it as inspiration for the player models. It's not the Lego minifigure, so it's not copyrighted, and it has the brick style.</p>
+    <p style="text-align: center;">
+        <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+            <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+            https://github.com/tetreum/brickcraft</a>
+    </p>

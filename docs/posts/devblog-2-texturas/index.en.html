@@ -1,0 +1,85 @@
+<p style="text-align: center;">
+    <strong><a href="https://www.indiedb.com/games/brickcraft/news/devblog-2-textures" rel="nofollow">ENGLISH VERSION</a></strong>
+</p>
+<h2>Back to the damn inventory system</h2>
+<p>In the end, to move between the different slots of the fast inventory I went with the TAB key.<br>
+
+    I made the background of the selected item change so it's clear. And also made the previewer of the brick to place update according to the new selection.</p><p><img src="https://i.imgur.com/Zyeiuzq.gif" alt="" style="width: 765px; height: 612px;"></p><p>
+
+
+
+    I also took the chance to refactor the bricks that were in the scene. Until now they were literally placed there, which isn't how it should be. It's supposed to be the server that takes care of spawning the bricks. And that's what I did.</p><p><img src="https://i.imgur.com/NcaWuJT.png" alt="" style="width: 706px; height: 179px;"></p>
+
+
+    <h2>Breaking blocks and block types</h2>
+    <p>Now that I have an inventory system (although not with all the features I listed at the start), I'll probably start adding color to the blocks, making them imply a different type just like in minecraft. That is, brown would be dirt and take less time to remove than a metal one, for example.</p><p><br>
+
+    Checking how minecraft does it (<a href="https://minecraft.gamepedia.com/Breaking" rel="nofollow">https://minecraft.gamepedia.com/Breaking</a>), they give each block a value called "hardness", which goes from 0 to 100. And depending on that value and the tool in your hand, it takes more or less time to mine the blocks.</p><p><br>
+
+    Once again I couldn't be bothered, so instead of using that same scale, I created a hardness value for each brick, which is directly the number of seconds it takes to mine it by hand. If the game ever gets tools, I'd just knock some seconds off.<br>
+
+    I also wanted to add the breaking effect minecraft does:</p><p><img src="https://i.imgur.com/qbynSAu.gif" alt="" style="width: 507px; height: 284px;"><br>
+
+
+    But I think that's going off on a tangent given the current state.</p><br>
+    <h2>Textures</h2><p>I made it so blocks can have their own texture. The bummer is that by doing this, I now need an icon for each block instead of the generic ones I already had.<br>
+    My first approach was to grab the generic brick image and slap the matching paint on it. As you can see, it was a fiasco.</p><p><img src="https://i.imgur.com/FF6yncT.png" alt="" style=""><br>
+
+
+
+    Time to generate an ingame render, which is a real pain in the ass. So I've only done it for the first one.</p><p><img src="https://i.imgur.com/IlExufv.png" alt="" style=""><br>
+
+
+
+    When I want to add all the blocks, I'll make a small scene where each item appears in the center and a screenshot gets taken automatically. <br>Then I'll just need to figure out how to remove the background or whether I can use a solid color and tell it that's the alpha.<br>
+
+    </p><h2>Revisiting the building system</h2><p>After this I couldn't help building a little house and............. it turned out awful.</p><p><img src="https://i.imgur.com/ImNf25h.png" alt="" style="width: 1152px; height: 757px;"><br>
+
+
+
+    </p><p>The pattern of 1 stud of space between brick and brick wasn't on purpose, it just flat out wouldn't let me put anything there. It also seems that, depending on how, it adds a lot of space between stacked blocks, enough to be noticeable and look bad :S<br>
+    Dammit, we're back to the foundation of the game, the building system.</p><p><br>
+
+    I think the first problem is because the blocks fill their space perfectly, so they touch each other and the system detects it as a collision.</p><p><img src="https://i.imgur.com/Ck9yE0K.png" alt="" style="width: 1157px; height: 964px;"><br>
+
+
+    Megazoom of 2 bricks to show the problem visually.<br>
+
+    </p><p>- One hack would be to tweak the blocks' collider so it's slightly smaller than the model.<br>
+    - Another hack would be to make the preview's scale smaller than the final model.<br>
+    - And the proper way (I guess) would be, when detecting a collision, to check what % of the surface is inside the other block and discard the ones that go in less than 1%.<br>
+
+    </p><p>Obviously the proper way involves doing calculations and blah blah blah, so I'll do the second hack and cross my fingers that it has no long-term consequences.</p><p><img src="https://i.imgur.com/W3v0Sc5.png" alt="" style="width: 1631px; height: 783px;"><br>
+
+
+
+    </p><p>HehehehehehehhehehehehHEHEHEHEHEHE. It's starting to take shape.</p><p><br>
+
+
+    After doing this I noticed that for glass I used a 2x2 brick, which makes no sense at all because you can see its inside. And while looking for a window model on mecabricks.com (where I grab the models from) I saw something else I like even less.<br>
+    For the model name, I'd been using the one shown on the website, thinking it was the standard:</p><p><img src="https://i.imgur.com/v6Qo68H.png" alt="" style="width: 391px; height: 130px;"><br>
+
+
+
+    </p><p>However, for the windows this showed up as the name:</p><p><img src="https://i.imgur.com/uAwx265.png" alt="" style="width: 391px; height: 202px;"><br>
+
+
+    </p><p>And google didn't return any results... I kept searching and my conclusion is that when the name is numeric they have it right, and when crap like the one in the example shows up, I have to search google for another source like <a href="https://www.bricklink.com/v2/catalog/catalogitem.page?P=60593#T=C" rel="nofollow">https://www.bricklink.com/v2/catalog...ge?P=60593#T=C</a><br>
+    to get its correct id.</p><p><br>
+
+
+    You're probably wondering, "And what does it matter whether it's one number or another if you don't see it during the game?"<br>
+    In a way, yeah, it doesn't matter. Buuuuuuuuuuuuut, if I keep the correct identifiers, I leave room for doing things like:<br>
+    - Building X Lego set virtually, you just need the ids of the bricks (which websites like bricklink have for every set), the amount needed and you can get right to it!<br>
+    - Exporting M.O.Cs. MOCs are "My Own Creation". Creations users make online and sell you the instructions on how to build them. Here you can see what I'm talking about <a href="https://rebrickable.com/mocs/#hottest" rel="nofollow">https://rebrickable.com/mocs/#hottest</a><br>
+
+    </p><p>And going back to the image, let's recall:</p><p><img src="https://i.imgur.com/W3v0Sc5.png" alt="" style="width: 1388px; height: 666px;"><br>
+
+
+    </p><p>If you look closely, I didn't close off the top of the door. The reason is simple: in Minecraft you can place blocks to the left or right of others, and they magically hold up and still make sense. But in Lego?... I can't enable this magic because it would break all the stud logic.<br>
+    What needs to happen is for the janky rotation I made to stop being janky.</p>
+    <p style="text-align: center;">
+        <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+            <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+            https://github.com/tetreum/brickcraft</a>
+    </p>

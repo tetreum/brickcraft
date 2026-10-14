@@ -1,0 +1,45 @@
+<p>I've added a new block, water. It doesn't spread progressively, but it is "liquid" for the player.<br>
+    To make that possible, we have to play with the physics, since when you're underwater you move slower and you can float.<br>
+
+    </p><p>We need a block that doesn't collide with the player, while at the same time colliding with the player so we know they're inside it.<br>
+    How do we solve this contradiction? Using different physics layers.<br>
+    In Unity, physics work on multiple layers and we can check/uncheck which ones collide with each other:</p>
+<p><img src="https://i.imgur.com/0Da1Pvw.png" alt="" style="width: 401px; height: 322px;"></p>
+<p>
+
+
+    The player is on the Default layer, which we've set to not collide with objects on the water layer. With this we can now go through/be inside the water.<br>
+    Now it's time to detect that we're in it. To do that we'll create an object inside the player with the same shape, but we'll change the collider and put it on another layer.<br>
+
+    </p><p>In Unity you can make a collider collide or not with other colliders and, through events, you can know when another object is passing through it. <br>Example of a normal collider switching to trigger mode:</p>
+<p><img src="https://i.imgur.com/iOCz1Kr.gif" alt="" style="width: 512px; height: 382px;"></p>
+<p>
+
+
+    With the collider in trigger mode, we'll check every object that goes into the player to see if it's a water brick, and we'll write it down in a list. It's important to keep the list and not just note whether they're in the water or not, because the water is made up of multiple blocks, which means the player keeps "going in and out" while actually still being in the water.</p>
+<p><img src="https://i.imgur.com/bPwehCh.png" alt="" style="width: 628px; height: 492px;"></p>
+<p>
+
+
+    And based on how many blocks we know they're touching at that moment, we can get an idea of whether they're fully submerged or just have their little feet in.<br>
+
+    </p><p>Now that we can go through the water and know we're inside it, all that's left is to change the player's physics/gravity.<br>
+
+    </p><p>When they're in the water, gravity will be reduced to 1/4 and they'll also be able to hold the SPACE key to float up. We'll also change the gravity depending on whether they're pressing the SPACE key or not, so they can rise easily, but if they let go of it, they sink to the bottom.</p><p><img src="https://i.imgur.com/4czZq4X.png" alt="" style="width: 464px; height: 255px;"></p><p>
+
+
+    With this we get behavior similar to Minecraft, where if you hold SPACE in the water, you rise until only your little feet are in and you keep sinking back down a bit constantly.</p><p><img src="https://i.imgur.com/LNn0FSU.gif" alt="" style="width: 688px; height: 351px;"></p><p>
+
+
+    With a shader you could get a more animated surface, something like:</p><p><img src="https://i.imgur.com/s8LdHMl.gif" alt="" style="width: 627px; height: 491px;"></p><p>
+
+    But that's not my turf.<br>
+
+    </p><p>There probably won't be any updates for quite a while.<br>
+    I want to try loading the map using chunks and make sure only what's shown on screen gets rendered.<br>
+    Doesn't look like it'll be a matter of a couple of days :(</p>
+    <p style="text-align: center;">
+        <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+            <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+            https://github.com/tetreum/brickcraft</a>
+    </p>

@@ -1,0 +1,234 @@
+<p>Hace mucho tiempo que tenía el desarrollo de este juego abandonado y he aprovechado la aparición de la IA para darle un buen empujón al tema.</p>
+<h2>Lavado de cara</h2>
+<p>Ya que además de programar también sabe dibujar, qué menos que deshacerse del aborto de logotipo que hice y generar uno nuevo.</p>
+<p>Pasamos de:<br>
+<img src="https://i.imgur.com/Ns1x0fQ.png" alt=""></p>
+<p>a:<br>
+<img src="https://i.imgur.com/wJ9hujO.png" alt=""></p>
+<p>Lo mismo con la UI, de mi horroroso diseño:<br>
+<img src="https://i.imgur.com/fe2SbmZ.gif" alt=""></p>
+<p>Cambiamos a:<br>
+<img src="https://i.imgur.com/HCAcG7J.png" alt=""></p>
+<p>Ya de paso es un poquiiito más responsive que antes (es decir, que debería adaptarse mejor a distintos tamaños de pantalla), pero no mucho. Unity tiene un sistema de UI que entiendo poco y preferiría poder hacerlo todo con CSS. Pero de me momento nos vamos a quedar con esta iteración.</p>
+<p>Ahora que ya no nos sangran los ojos nada más abrir el juego, podemos pasar a hacer limpieza de código.</p>
+<h2>Sistema de eventos interno</h2>
+<p>Hasta ahora Brickcraft sólo tenía 1 AssemblyFile. Dicho de otra manera, toooodo el código se juntaba en un único fichero.<br>
+Lo que se traduce en que caaaaaaaaaaada vez que por ejemplo se editaba la UI, el código de las mecánicas del juego se recompilaba. Daba igual lo que tocases que había que recompilar todo.</p>
+<p>La forma de evitar que esto ocurra es dividiendo el código en múltiples AssemblyFiles: La UI por un sitio, la IA por otro, las mecánicas por otro, etc.. Pero claro, estas secciones siguen necesitando hablar entre ellas.</p>
+<p>La solución es crear un sistema de eventos, de manera que un lado emita y el otro esté a la escucha.<br>
+De nuevo no es algo que me interesara hacer a manija, así que la IA se ha comido el refactor.</p>
+<p>Ahora ya podemos empezar a focalizarnos en tareas más complicadas.</p>
+<h2>Multiplayer</h2>
+<p>Dado que me había centrado de lleno en las mecánicas de construcción, el juego era singleplayer y poco más.<br>
+Cuando quieres hacer un juego multijugador el proceso, aún usando librerías de terceros, es un coñazo.<br>
+El motivo es que en este tipo de juegos, quieres evitar que el jugador haga trampas y ello significa que el servidor debe validar todas y cada una de las acciones sensibles.</p>
+<p>Si por ejemplo quieres poner un bloque, donde antes tendríamos algo tan simple como:</p>
+<pre><code>void addBlock(Vector3 position, string type) {
+ if (!IsValidPlacement(position)) return;
+   return;
+ }
+ Instantiate("prefabs/type", position);
+}</code></pre>
+<p>Para hacerlo seguro quedaría MÍNIMO en esto:</p>
+<pre><code>public void RequestAddBlock(Vector3 position, string type)
+    {
+        if (IsServer)
+        {
+            AddBlockServerInternal(position, type);
+        }
+        else
+        {
+            AddBlockServerRpc(position, type);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void AddBlockServerRpc(Vector3 position, string type)
+    {
+        if (!IsValidPlacement(position)) return;
+
+        AddBlockServerInternal(position, type);
+    }
+
+    private void AddBlockServerInternal(Vector3 position, string type)
+    {
+        GameObject prefabToSpawn = GetPrefabForType(type);
+
+        GameObject blockInstance = Instantiate(prefabToSpawn, position, Quaternion.identity);
+
+        NetworkObject netObj = blockInstance.GetComponent&lt;NetworkObject&gt;();
+        netObj.Spawn();
+    }</code></pre>
+<p>Un ping pong constante entre cliente y servidor, lo que se conoce como authoritative multiplayer.<br>
+Gracias a la IA, la migración del código existente a esta parrafada ha sido automática y para ello me he valido de la librería  Mirror (porque es gratis y opensource).<br>
+Dicho esto la parte de auth es un poco chuchurría en cuanto a la facilidad de impersonar a otros usuarios. La única forma buena que veo para evitar esto, sería publicar el juego en Steam para poder usar su auth. Cosa que se queda para otra iteración. Por el mismo motivo no he habilitado la creación de servidores dedicados. Por ahora no vale la pena.</p>
+<p>El siguiente marrón del multijugador es mostrar a los demás usuarios en pantalla, por lo que necesitamos tener un modelo.<br>
+Si recordáis el primer blog, las minifigures de LEGO aún tienen copyright por lo que usar dichos muñecos no es una opción.<br>
+En su lugar he optado por iterar el diseño mediante la IA, haciendo una versión que entre otras cosas tenga rodillas.<br>
+<img src="https://i.imgur.com/Gzqs4A3.png" alt=""><br>
+Con otra IA he podido obtener un modelo 3d en base a dicha imagen, pero no voy a poner fotos para no spoilearos del resultado final. Simplemente daremos como completada esta parte xD</p>
+<p>Obviamente tiene que haber algún sistema de comunicación entre jugadores, así que también se ha introducido el chat.</p>
+<h2>Chat</h2>
+<p>Que a su vez, nos servirá como canal al que mandarle ciertos mensajes al jugador. Como por ejemplo notificar cuando un jugador se conecta:<br>
+<img src="https://i.imgur.com/mc1jIbJ.png" alt=""></p>
+<p>Hay un par de acciones básicas que todo multijugador necesita: echar y banear usuarios. Aprovechando la introducción del chat, se han añadido estos y varios comandos más (como darle el rol de admin a alguien) que pueden verse mediante /help.<br>
+Para trackear los usuarios que acceden a un servidor, el rol que tienen, si están baneados y demás hay que tener una base de datos. Aquí la elección era simple porque no veo más que 1 solo candidato: sqlite. Es compatible con todas las plataformas y hasta hay package en Unity.</p>
+<p>No podemos olvidarnos del listado de jugadores. Ya puestos se han habilitado botones para realizar las mismas tareas administrativas con total comodidad.<br>
+<img src="https://i.imgur.com/dbmXpKz.png" alt=""></p>
+<p>Para terminar, añadir multijugador tiene un último gran marrón: el versionado.<br>
+Ya no es sólo que cliente y servidor deban tener versiones para que este último sólo permita el paso a los que estén a la par, sino que tras cada actualización, tanto la base de datos como el mundo generado deben poder recibir cambios.<br>
+Es decir, que hay que montar un sistema de migraciones.<br>
+<img src="https://i.imgur.com/WM935uh.png" alt=""></p>
+<p>Cuando actualices el juego y vayas a tu listado de partidas, aquellas que fueran jugadas por última vez en una versión anterior, serán marcadas y actualizadas automáticamente sín que (con suerte) se note cambio alguno.<br>
+<img src="https://i.imgur.com/snV4WFD.png" alt=""></p>
+<p>Con la parte de multijugador lista, podemos pasar al siguiente gran marrón: tener tooooooooooooooooooooooooodas las piezas oficiales.</p>
+<h2>Añadiendo todas las piezas</h2>
+<p>Al iniciar este proyecto apenas añadí un par de piezas. La más importante para mi era la de 2x2 porque era la más cercana a un cubo de minecraft, lo que facilitaba enormemente el poder reusar generadores de mundos de minecraft.<br>
+<img src="https://i.imgur.com/xJ8AM9b.png" alt=""></p>
+<p>Sin embargo Lego tiene un par de piezas más, unas 4.000 más...<br>
+Es obvio que añadirlas debía ser una operación que se hiciera en bulk y que por ende fuera automática.<br>
+Por suerte existen varias opciones, siendo la más interesante para mi LDraw. Una librería open source que atesora un modelo tridimensional de cada pieza.<br>
+Con ello "sólo era cuestión" de descargarse los 180 y pico MBs que ocupaba y poner montar un interprete que pudiera usar el formato custom de dicha librería. Luego también habría que mejorar el generador de icons para poder ejecutarlo indiscriminadamente en masa.</p>
+<p>Y así es como pasamos a tener en el inventario la pestaña de ALL para los admins:<br>
+<img src="https://i.imgur.com/DdJfL2s.png" alt=""></p>
+<p>Peroooooooooooooo...... No es suficiente con tener todos los modelos... También necesitamos tener todos los colores.<br>
+Por suerte hay webs como Rebrickable donde uno puede descargarse dicho listado con total comodidad: <a href="https://rebrickable.com/downloads/" target="_blank" rel="nofollow">https://rebrickable.com/downloads/</a></p>
+<p>Ahora sólo quedaba un detallito: combinar ambos listados.<br>
+Normalmente todas estas webs lo que hacen es generar un icono para cada pieza, en cada color disponible.<br>
+Yo no quiero tener mi PC con 99999 imágenes repetidas cuyo único cambio es el color, de modo que opté por hacer una guarradilla: tintar las imágenes.<br>
+Sabemos cual es el color estándar del modelo, de modo que con sólo generar el icono en ese color y luego reemplazarlo ya lo tendríamos.<br>
+<img src="https://i.imgur.com/A9VbZmD.png" alt=""><br>
+No quedará bien en todos los casos pero en la inmensa mayoría da el pego y con eso me basta.</p>
+<p>¡Muy bien! ¡Perfecto! Ya no nos tenemos que preocupar más por el tema piezas/modelos. ¿Verdad?<br>
+Qué equivocado estás amigo mío. Quiero más. Mucho más.</p>
+<p>La gracia de Lego es que no hay modelos prefabricados de cosas como las camas porque la expectativa es que lo hagas mediante piezas.<br>
+Eso significa que debemos tener un modo de cargar modelos que sean una combinación de múltiples piezas. Y aquí es cuando entra la siguiente novedad.</p>
+<h2>Importación y exportación de modelos</h2>
+<p>La necesidad está clara: se tiene que poder montar lo que sea ingame y luego exportarlo de manera que el propio juego pueda usarlo.<br>
+Para ello se ha montado un objeto que al hacer clic derecho sobre un bloque, se pone a buscar todos los bloques que conecten con este a fin de determinar la bounding box del modelo, que no es más que una caja que representa los límites de este. Como hay margen de cagarla (imagina que has cambiado el suelo sobre el que has construído pero no quieres que forme parte del modelo), se ha incluído la opción de editar la bounding box manualmente antes de generar el modelo.<br>
+<img src="https://i.imgur.com/Zs365Lh.png" alt=""><br>
+Ya que estamos, el optimizaremos el modelo generado a base de hacer cosas como eliminar los studs que aquellas piezas que tengan otra pieza encima. Pues no se ven y por tanto nos las podemos ahorrar.</p>
+<p>Hacer el exportador también ha desbloqueado el principal motivo por el que empecé este juego: poder montar modelos de manera intuitiva aka a lo minecraft, para luego comprar las piezas físicas que lo componen y construirlo en la vida real.<br>
+Inicialmente estuve mirando e implementando el formato en el que páginas como BrickLink permiten importar un listado de piezas que se quiere comprar. (<a href="https://www.bricklink.com/help.asp?helpID=2567" target="_blank" rel="nofollow">https://www.bricklink.com/help.asp?helpID=2567</a>)</p>
+<pre><code>&lt;INVENTORY&gt;
+&lt;ITEM&gt;
+&lt;ITEMTYPE&gt;P&lt;/ITEMTYPE&gt;
+&lt;ITEMID&gt;6260&lt;/ITEMID&gt;
+&lt;COLOR&gt;1&lt;/COLOR&gt;
+&lt;QTY&gt;1&lt;/QTY&gt;
+&lt;CONDITION&gt;N&lt;/CONDITION&gt;
+&lt;/ITEM&gt;</code></pre>
+<p>Después de montar dicho formato, me encontré con que BrickLink también acepta ficheros de LDraw... Así que opté por añadir la generación de dicho fichero de modo que no sólo puedas obtener el listado de piezas, sino que puedas importar los modelos que crees a otras herramientas de montaje de Lego:<br>
+<img src="https://i.imgur.com/1xITxtz.png" alt=""></p>
+<p>Ahora sí que sí, ya estamos servidos en cuanto a modelos ¿no? Pues no.<br>
+El siguiente gran problema a resolver relacionado con los modelos es mi falta de creatividad. ¿Y como resolvemos eso? Usando la de otros.</p>
+<p>Para ello el juego debería tener soporte para mods, de modo que cualquier usuario pueda meter nuevos items/models al juego y ya puestos hacer mucho más que eso.</p>
+<h2>Añadido soporte para mods</h2>
+<p>Los mods suelen requerir de 3 cosas: poder ejecutar código, poder crear UIs y poder meter modelos.<br>
+No me hace ni puta gracia que se ejecute código de terceros en mi PC, así que tiene que ser algo que sepa que estará capado a la mínima expresión. La elección por tanto es obvia: Lua.<br>
+Lua es un lenguaje embebible. A diferencia de por ejemplo C#, las funciones a las que un script de lua pueda acceder están exactamente limitadas a las que el programador habilite. Un script lua difícilmente podrá descargarse y ejecutar un .exe de internet. Y encima no pesa ni 1MB.<br>
+<img src="https://i.imgur.com/HUcfj6M.png" alt=""></p>
+<p>Meter mods trae una fila de cambios en los sistemas que ya teníamos: el servidor ya no sólo debe validar la versión del cliente sino que este tenga además los debidos mods, en la versión esperada.<br>
+Hay que también crear los componentes más típicos de UI (botón, alerta, panel,..) de modo que desde lua puedan tirar de presets.<br>
+Y poco a poco cablear todos los sistemas a los que se quiere que puedan acceder: como leer los bloques que hay en determinadas coordinadas o spawnear bichos allí o realizar alguna acción a determinada hora del día.</p>
+<p>Aunque claro, para muchas de estas funciones antes deberíamos de tener NPCs y ciclo de día/noche.</p>
+<h2>Ciclo diario</h2>
+<p>Para meter un ciclo de días hay que pensar cuánto tiempo de la vida real durará cada día ingame y hay que trackearlo a nivel servidor para poder saber a qué "número de día" estamos ingame.<br>
+Luego es cuestión de representarlo visualmente a base de rotar el punto de luz que hace de Sol a una velocidad que complete el ciclo en el tiempo indicado y hay que meter la luna.<br>
+<img src="https://i.imgur.com/34dQkEs.png" alt=""></p>
+<p>Estamos en un mundo de bloques, así que si haces zoom a la luna verás que está también es de bloques :p<br>
+<img src="https://i.imgur.com/5GOetDC.png" alt=""></p>
+<p>Pero claro, no a todos nos gusta jugar de noche. Hay que poder avanzar el tiempo.<br>
+Aquí es donde entra en juego el sistema que nos permite crear nuevos items en base a múltiples piezas. Gracias a él tenemos una cama que scriptear para que al hacer click sobre ella, el personaje duerma y la noche pase más rápidamente.<br>
+<img src="https://i.imgur.com/cMNaIP1.png" alt=""><br>
+Y como no, se han añadido comandos para cambiar al estado del día que se quiera si eres admin.</p>
+<p>Se ha hecho además que las camas sean el punto de respawn en caso de palmar.</p>
+<p>¿Y quién podría hacerte daño? Los NPCs...</p>
+<h2>NPCs</h2>
+<p>Meterle IA a un juego es una matada, hacerlo en un multijugador lo es x2.<br>
+Lo primero que hay que considerar es cuál será el sistema de navegación que estos usarán. Unity tiene navmesh pero como todo lo que hace Unity, tiene sus problemas.</p>
+<p><img src="https://i.imgur.com/Byi1awB.png" alt=""></p>
+<p>Imagina que quieres hacer que el usuario sea atacado por un grupo de enemigos. Unity no contempla esa posibilidad, lo que significa que los enemigos no se ven entre si y por tanto todos eligen la misma ruta (la más corta). Conformando una cola que no tiene el más mínimo sentido porque lo normal es que cada uno busque mantener la visión con su objetivo (para poder pegarle un tiro por ejemplo).<br>
+<img src="https://i.imgur.com/TC0NlC1.png" alt=""></p>
+<p>El apaño que suele hacerse es añadirle a cada enemigo un componente llamado NavMeshObstacle y que como puedes ver en una de las imágenes previas, lo que hace es quitar el espacio que ocupe del sistema de navegación (que es el área de color azul). De ese modo se marca el espacio como ocupado y el siguiente enemigo ni contempla la posibilidad de andar por ahí.<br>
+Pero claro, los elementos que tengan NavMeshObstacle NO pueden moverse. Así que lo que se hace es activar el componente, recalcular la ruta y desactivarlo constantemente.<br>
+Extraordinariamente asqueroso.</p>
+<p>Otro detalle es que el cálculo de rutas de Unity es monothread, tiene que correr en el hilo principal.</p>
+<p>Sabiendo que la solución oficial es una mierda pinchada en un palo he obtado por crear una que haga uso del grid generado al crear el mundo en bloques. Total, en el peor escenario será igual de mala que la oficial.</p>
+<p>Lo siguiente necesario es tener un modelo. En esta ocasión he tirado de uno creado por un tercero y que ni siquiera está hecho de bricks. Es uno de los puntos a mejorar.</p>
+<p><img src="https://i.imgur.com/6lufmON.png" alt=""><br>
+El resultado ha quedado a la altura de un package oficial de unity: tiene bugs y necesita mejorar.<br>
+Se puede ver como los NPCs de tierra caminan alegramente por el agua en vez de evitarla.<br>
+El origen de este problema recae en varias de las optimizaciones aplicadas al terreno.</p>
+<h2>Incrementando los FPS</h2>
+<p>Cuando pululabas por el mundo, no solían superarse los 30fps. Es más, solían caer a 10.<br>
+El modelo de brick 2x2 que usé como base para crear el mundo tenía muchíiiiiiisimos triángulos por culpa de los esféricos studs.<br>
+<img src="https://i.imgur.com/h3fu88Q.png" alt=""></p>
+<p>Lo que derivaba en más de 16 millones de triángulos cuando se renderizaban varios chunks a la vez.<br>
+De nuevo entra LDraw al rescate. Esta librería tiene una versión lowpoly de cada modelo en la que básicamente ratean en los studs:<br>
+<img src="https://i.imgur.com/MucQkyv.png" alt=""></p>
+<p>Si bien visualmente ha empeorado mucho, el resultado de aplicar este modelo está claro:<br>
+<img src="https://i.imgur.com/Xi4jO9E.png" alt=""><br>
+Ahora ya "sólo" son 3 millones de píxeles y nos hemos ido a 140fps.</p>
+<p>No ha sido el único cambio implementado para llegar a esos frames. Todos los chunks generaban su collider aún estando lejos del jugador. Hacer que no todos tengan collider es lo que ha provocado que los NPCs puedan caminar por el agua.</p>
+<p>Bien, tenemos un juego en el que ya puedes quedarte cierto rato absorto construyendo. El problema es que le sigue faltando algo. Está todo muy silencioso.</p>
+<h2>Añadiendo musiquita</h2>
+<p>Para crear algo de ambiente habría que ponerle algo de musiquita de fondo. El estilo más adecuado para este caso me ha parecido que era de 8-bit. Así que he cargado el juego de varias canciones que tienen licencia comercial.</p>
+<p>No a todo el mundo le va a gustar, así que hay que meter una sección de settings donde, entre otras cosas, se pueda cambiar el volumen de la música.<br>
+<img src="https://i.imgur.com/pH2XCqR.png" alt=""></p>
+<p>El panel de configuración es el que menos me apasiona cuando se trata de hacer juegos, por lo que poder haberselo dado de comer la IA para que sea su problema ha sido un gustazo.<br>
+Hacerlo también me ha obligado a dar otro gran paso: migrar al nuevo sistema de inputs de Unity.</p>
+<h2>Facilitando el remapeado de teclas</h2>
+<p>En Unity, si quieres saber si el jugador está pulsando determinada tecla, sólo tienes que hacer:</p>
+<pre><code>if (Input.GetKeyDown(KeyCode.Space)) {
+  // está pulsando el Espaciador
+}</code></pre>
+<p>Simple y cómodo, pero con un problema. La tecla está hardcodeada. El jugador no podrá cambiarla a otra.<br>
+El apaño que se hacía para solventarlo era meter una class de por medio que guardara la relación entre una acción y una tecla, de modo que el código quedara:</p>
+<pre><code>if (Input.GetKeyDown(GameInput.keyFor("Jump"))) {
+  // está pulsando el Espaciador
+}</code></pre>
+<p>Pues eso mismo hace el InputSystem de Unity pero de manera oficial y con más mejoras que también te permitan falsear las teclas que se pican. ¿Y por qué querría uno falsear las teclas que se pulsan? Para poder meter tests.</p>
+<h2>¿Estabilizando el juego?</h2>
+<p>Normalmente validar un flujo en una aplicación suele ser relativamente sencillo.<br>
+¿Quieres probar que el registro va automáticamente? Sólo tienes que seguir unos pasos:</p>
+<ol>
+<li>Ir a ejemplo.com/signup</li>
+<li>Rellenar el campo de email y de contraseña</li>
+<li>Pulsar el botón de enviar</li>
+<li>Revisar que en la base de datos esté el nuevo registro.</li>
+</ol>
+<p><img src="https://i.imgur.com/zqUVQUn.png" alt=""></p>
+<p>Cuando se trata de videojuegos sin embargo, la trama se complica. Pasamos a estar en un entorno 3D y si encima es un sandbox, hay mecánicas que pueden jugarte una mala pasada y hacer que una validación falle de manera intermitente.</p>
+<ul>
+<li>¿Y si cuando estás probando a poner un bloque encima de otro aparece un bicho por detrás y le da una hostia al jugador y lo desplaza antes de que ponga el bloque?</li>
+<li>¿Y si estás probando a darle un golpe a un árbol pero el juego tiene una mecánica de aleatoriedad que hace que falle?</li>
+</ul>
+<p>Tienes que tratar de hacer que todo sea lo más determinístico posible. Todo random tiene que estar seedeado. Toda mecánica que pueda interferir tiene que estar controlada.<br>
+Aún así, suele ser la combinación de múltiples mecánicas la que provoca un bug.<br>
+Por ejemplo: Metí que al hacer clic derecho cuando no estuvieras sujetando nada hiciera zoom. Ahora cada vez que te bebías una poción el sistema te hacía zoom. Porque inicialmente la poción sí estaba, pero luego ya no.</p>
+<p><img src="https://i.imgur.com/FwPrOoz.png" alt=""></p>
+<p>No sé la forma perfecta de arreglar esto, pero he hecho he intentado que el juego tenga un mínimo de checks para evitar liadas en las mecánicas más básicas.<br>
+Lo suyo es que corrieran en cada PR, pero es algo que tengo que ver si se puede hacer porque sé que a Unity le gusta denunciar si su runtime se ejecuta de manera incorrecta.<br>
+Veremos, de momento tenemos tests hasta para los fluídos.</p>
+<h2>Haciendo fluir el agua</h2>
+<p>En su momento hice que los bloques pudieran tener físicas distintas, de modo que un bloquea de agua tuviera una gravedad distinta. Pero el agua no sólo trata de eso, también debería de poder fluir.<br>
+Igual que ocurre en Minecraft, pillar un bloque de agua y tirarlo al suelo provoca ahora su propagación en los bloques colindantes.</p>
+<p><img src="https://i.imgur.com/w1JebeE.png" alt=""><br>
+La primera iteración no ha quedado muy bien.</p>
+<p><img src="https://i.imgur.com/Zk1fpJ3.png" alt=""><br>
+En la siguiente ha mejorado un poco el tema al no eliminarse polys de más. Seguramente el modelo de brick que he elegido para simular el agua inclinada no es el mejor.</p>
+<p>Todas estas pruebas han hecho que poco a poco mi inventario se llenara de mierda. Era hora de meter la opción de tirar objetos.</p>
+<h2>Mejorando la calidad de vida</h2>
+<p>Había 2 formas de arreglar el problema y he optado por implementar ambas.<br>
+Por un lado, ahora se puede pulsar la Q y tirar el objeto que sea que estés sujetando en ese momento.<br>
+Ya que estamos, se ha reaprovechado dicha funcionalidad para que al matar a un NPC este escupa también su loot.</p>
+<p><img src="https://i.imgur.com/Rx41fPA.gif" alt=""><br>
+Que bonico ahí flotando y dando vueltas.<br>
+Acercarte a dichos objetos te permite recuperarlos.</p>
+<p>La otra forma de arreglar el problema era metiendo sistema de cofres.<br>
+De nuevo el comportamiento es el que todos esperamos: Haciendo clic lo abres y puedes meter y sacar cosas. Sólo 1 jugador a la vez. Romper el cofre hace que escupa todo lo que tuviera almacenado.</p>
+<p>La única novedad que le he metido es que en Lego, los cofres son 2 piezas: la cubierta y la caja.<br>
+<img src="https://i.imgur.com/pcXf4WX.png" alt=""><br>
+Si no metes la cubierta, cualquier jugador podrá acceder a su contenido.</p>
+<p>Y esto sería gran parte del último update.</p>

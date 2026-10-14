@@ -1,0 +1,58 @@
+<p><br>
+
+    As I said before, the next improvement is for the system to tell you visually when you place a brick wrong.<br>
+    There's not much mystery to it, I swap the preview's texture for a red one when there's a collision and done:</p><p><img src="https://i.imgur.com/oo8iv0i.gif" alt="" style="width: 546px; height: 304px;"></p><p>
+
+
+    Much better, it's perfectly clear what's happening.</p><p><br>
+
+    After this we can focus on the main course: Being able to place blocks underneath others.</p><p><br>
+
+    If we wanted to do it 100% right, covering every case, we'd have to take into account the connectors both blocks have to know whether one has a bottom and the other a top.<br>
+    That looks like a real grind, so we'll go for something that will work for at least the simplest ones.<br>
+
+    The current structure of a block is:</p><p><img src="https://i.imgur.com/LCuuVUH.png" alt="" style="width: 206px; height: 49px;"></p><p>
+
+
+    The model and, as children, the GridStuds it has.<br>
+    To save myself a component on each GridStud telling me its dimensions, I put them in its name and then parse it.<br>
+    Since at most you'll always interact with 1 block (as far as figuring out its studs/using them goes), I think it's a very efficient approach even if it makes that data a bit harder to access.<br>
+
+    </p><p>So, how do we make the GridStuds system we already have compatible with bricks that plug in from the butt?<br>
+
+    </p><p>I already mentioned the perfect way to do it, now I'll explain the one I did:<br>
+
+    </p><p>The only difference between connecting a block from above or from below is the height of the pivot point.<br>
+    We just need to subtract the height of the block we want to connect underneath and voilà.<br>
+    To know when this subtraction has to be done, we need to be able to tell a top GridStud from a bottom one. Extending the name with Bottom will do:</p><p><img src="https://i.imgur.com/PfJV4xd.png" alt="" style="width: 255px; height: 82px;"></p><p>
+
+
+    Lucky that when we made the data model for each brick we wrote down their height :)</p><p><img src="https://i.imgur.com/CvhRgEk.png" alt="" style="width: 855px; height: 94px;"></p><p>
+
+
+    Thanks to the naming scheme followed so far, we only need to fix 1 line of code; since everywhere studs were detected by checking whether the object's name started with GridStud. Something that hasn't changed:</p><p><img src="https://i.imgur.com/iZjSboo.png" alt="" style="width: 575px; height: 31px;"></p><p>
+
+
+    We fix the spot where the stud's name was parsed and we'd be done:</p><p><img src="https://i.imgur.com/l98dJOZ.png" alt="" style="width: 873px; height: 76px;"></p><p>
+
+
+    Quick test:</p><p><img src="https://i.imgur.com/ooEb282.gif" alt="" style="width: 718px; height: 534px;"></p><p><img src="https://i.imgur.com/XjAM0zg.png" alt="" style="width: 1322px; height: 798px;"></p><p>
+
+
+
+    HEHEHEHE<br>
+
+    At this point I'm not really sure which way to go.<br>
+    - Look into how to do the brick-breaking detail when you break it<br>
+    - Look at the graphics thing, to see if I can make them more cartoony and whether it looks good<br>
+    - Look at the lighting thing, I honestly don't know if it's the graphics or the lighting that gives it a gloomy look instead of a "lively"/"alive" one.<br>
+    - Add a gazillion brick models<br>
+    - Make it multiplayer.</p><p><br>
+
+    Before adding a gazillion bricks I think multiplayer has to be implemented, since it'll surely mean reworking the ones we already have one way or another.</p><p>That's enough for today.<br>
+</p>
+<p style="text-align: center;">
+    <a href="https://github.com/tetreum/brickcraft" rel="nofollow">
+        <img src="https://i.imgur.com/zRrABr3.png" alt="" style=""><br>
+        https://github.com/tetreum/brickcraft</a>
+</p>

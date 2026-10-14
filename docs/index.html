@@ -23,10 +23,12 @@
                 <div id="top-menu" class="collapse navbar-collapse">
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
-                            <a class="nav-link" href="?/help">HELP WANTED</a>
+                            <a class="nav-link" href="?/help" data-i18n="helpWanted">HELP WANTED</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="?">Home</a>
+                            <a class="nav-link" href="?" data-i18n="home">Home</a>
+                        </li>
+                        <li class="nav-item d-flex" id="language-selector" role="group" aria-label="Language">
                         </li>
                     </ul>
                 </div>
@@ -49,14 +51,14 @@
                     <% entries.forEach(entry => { %>
                         <article>
                             <a href="<%= entry.url %>" class="post-title">
-                                <h2><%= entry.title %></h2>
+                                <h2><%= seger.text(entry.title) %></h2>
                             </a>
                             <p class="post-meta">
-                                Posted on <%= seger.formatDate(entry.date) %>
+                                <%= seger.t("postedOn") %> <%= seger.formatDate(entry.date) %>
                             </p>
                             <div class="post-entry">
-                                <%= entry.preview %>
-                                <a href="<%= entry.url %>" class="post-read-more">Read More</a>
+                                <%= seger.text(entry.preview) %>
+                                <a href="<%= entry.url %>" class="post-read-more"><%= seger.t("readMore") %></a>
                             </div>
                         </article>
                     <% }) %>
@@ -69,28 +71,31 @@
                 <header>
                     <div class="container-md">
                         <div class="row text-center mt-3">
-                            <h1><%= entry.title %></h1>
+                            <h1><%= title %></h1>
                         </div>
                     </div>
                 </header>
                 <div class="container-md">
+                    <% if (untranslated) { %>
+                        <p class="alert alert-secondary mt-3"><%= seger.t("untranslated") %></p>
+                    <% } %>
                     <article>
                     <%= entry.html %>
                     </article>
                     <div class="row">
                         <div class="col-6">
                         <% if (relatedPosts.previous) { %>
-                            <a href="<%= relatedPosts.previous.url %>" class="btn btn-link bi bi-arrow-left"> Previous entry: <%= relatedPosts.previous.title %></a>
+                            <a href="<%= relatedPosts.previous.url %>" class="btn btn-link bi bi-arrow-left"> <%= seger.t("previousEntry") %> <%= seger.text(relatedPosts.previous.title) %></a>
                         <% } %>
                         </div>
                         <div class="col-6">
                         <% if (relatedPosts.next) { %>
-                            <a href="<%= relatedPosts.next.url %>" class="float-end btn btn-link bi bi-arrow-right"> Next entry: <%= relatedPosts.next.title %></a>
+                            <a href="<%= relatedPosts.next.url %>" class="float-end btn btn-link bi bi-arrow-right"> <%= seger.t("nextEntry") %> <%= seger.text(relatedPosts.next.title) %></a>
                         <% } %>
                         </div>
                     </div>
                     <section class="social-share-section text-center">
-                        <a href="https://twitter.com/intent/tweet?text=<%= encodeURIComponent(entry.title) %>&amp;url=<%= encodeURIComponent(location.href) %>" class="btn bi-twitter" title="Share on Twitter" target="_blank"></a>
+                        <a href="https://twitter.com/intent/tweet?text=<%= encodeURIComponent(title) %>&amp;url=<%= encodeURIComponent(location.href) %>" class="btn bi-twitter" title="Share on Twitter" target="_blank"></a>
                         <a href="https://www.facebook.com/sharer/sharer.php?u=<%= encodeURIComponent(location.href) %>" class="btn bi-facebook" title="Share on Facebook" target="_blank"></a>
                         <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=<%= encodeURIComponent(location.href) %>" class="btn bi-linkedin" title="Share on LinkedIn" target="_blank"></a>
                         <a href="whatsapp://send?text=<%= encodeURIComponent(location.href) %>" data-action="share/whatsapp/share" class="btn bi-whatsapp" title="Share on Whatsapp" target="_blank"></a>
@@ -103,9 +108,9 @@
         <script type="text/template" id="tpl-404">
             <div class="container-md text-center align-middle">
                 <div class="row">
-                    <h2>404 - Page not found</h2>
-                    <p>The requested page could not be found.</p>
-                    <p><a href="?/">Head to homepage</a></p>
+                    <h2>404 - <%= seger.t("notFoundTitle") %></h2>
+                    <p><%= seger.t("notFoundText") %></p>
+                    <p><a href="?/"><%= seger.t("backHome") %></a></p>
                 </div>
             </div>
         </script>

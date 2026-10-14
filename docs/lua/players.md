@@ -12,6 +12,7 @@ Events and `world.players()` give scripts players. Use `:` to call their methods
 | `health` | Its health, 0 while it's dead. `nil` once it left. |
 | `maxHealth` | Its health when full (20). `nil` once it left. |
 | `language` | The language it plays in, like `"en"` or `"es"`. See [`text`](globals.md#textplayer-key-). |
+| `vehicle` | The [vehicle](vehicles.md) it sits in, `nil` if it isn't in one. |
 
 ## player:message(text)
 

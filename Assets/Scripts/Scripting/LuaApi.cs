@@ -225,6 +225,16 @@ namespace Brickcraft.Scripting
                 return DynValue.NewTable(players);
             });
 
+            world["vehicles"] = DynValue.NewCallback((context, args) => {
+                Table vehicles = new Table(script);
+                foreach (Vehicles.Vehicle vehicle in Vehicles.Vehicle.All) {
+                    if (vehicle != null && vehicle.isServer && vehicle.grid.Count > 0) {
+                        vehicles.Append(DynValue.FromObject(script, VehicleHandle.For(vehicle)));
+                    }
+                }
+                return DynValue.NewTable(vehicles);
+            });
+
             // items on the ground there, picked up by players walking onto them (see Network.DroppedItems)
             world["dropItem"] = DynValue.NewCallback((context, args) => {
                 Item item = ItemOf(args.AsType(0, "dropItem", DataType.String).String);

@@ -115,6 +115,19 @@ namespace Brickcraft.Vehicles
             get { return wings.Count; }
         }
 
+        /// <summary>How hard its propellers push, -1 to 1 (on average, the last physics step).</summary>
+        public float Power { get; private set; }
+
+        /// <summary>How far a wheel is steered now, in degrees (0 if it isn't one, or it isn't simulated here).</summary>
+        public float SteerOf(Brick brick) {
+            foreach (Wheel wheel in wheels) {
+                if (wheel.brick == brick && wheel.collider != null) {
+                    return wheel.collider.steerAngle - wheel.heading;
+                }
+            }
+            return 0;
+        }
+
         /// <summary>
         /// Its parts changed, or who drives it: the way they face (in the vehicle's space) and their seat's wires (none if
         /// nobody drives it).
@@ -338,18 +351,21 @@ namespace Brickcraft.Vehicles
         private void applyPropellers(VehicleInput input) {
             Rigidbody body = vehicle.Body;
             Transform tr = vehicle.transform;
+            float power = 0;
             foreach (Propeller propeller in propellers) {
                 float drive = wired(propeller.wires, WireAction.Drive, input);
                 float steer = wired(propeller.wires, WireAction.Steer, input);
                 if (!propeller.isDriven || drive == 0) {
                     continue;
                 }
+                power += drive / drivenPropellers;
                 Vector3 push = tr.TransformDirection(Quaternion.AngleAxis(steer * MaxSteer * propeller.steerSign, Vector3.up) * propeller.axis);
                 if (Vector3.Dot(body.velocity, push) * Mathf.Sign(drive) > MaxSpeed) {
                     continue;
                 }
                 body.AddForceAtPosition(push * drive * body.mass * PropellerAcceleration / drivenPropellers, tr.TransformPoint(propeller.centre));
             }
+            Power = power;
         }
 
         // each brick under water is pushed up by the water it moves, and slowed by it

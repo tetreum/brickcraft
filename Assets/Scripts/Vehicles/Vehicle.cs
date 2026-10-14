@@ -47,12 +47,21 @@ namespace Brickcraft.Vehicles
         /// <summary>The player driving it (its netId), 0 if nobody is.</summary>
         [SyncVar(hook = nameof(onDriverChanged))] public uint driverId;
 
+        /// <summary>How hard its propellers push, -100 to 100, from its driver: they spin with it (see VehicleVisuals).</summary>
+        [SyncVar] public sbyte power;
+
         public Rigidbody Body { get; private set; }
 
         /// <summary>It moves by physics on this peer: its driver's, or the server's while it comes to rest.</summary>
         public bool IsSimulated { get; private set; }
 
         public VehicleDrive Drive { get; private set; }
+
+        public VehicleVisuals Visuals { get; private set; }
+
+        /// <summary>How fast it goes, by how it moved the last physics step (on every peer, whoever moves it).</summary>
+        public Vector3 Velocity { get; private set; }
+        private Vector3 lastPosition;
 
         // with nobody driving it the server lets it come to rest, for at most this long
         private const float MaxSettleTime = 60;
@@ -66,6 +75,8 @@ namespace Brickcraft.Vehicles
             Body = GetComponent<Rigidbody>();
             netTransform = GetComponent<NetworkTransformBase>();
             Drive = new VehicleDrive(this);
+            Visuals = new VehicleVisuals(this);
+            lastPosition = transform.position;
             grid.Changed += () => physicsDirty = true;
             wires.OnChange += (op, index, old) => physicsDirty = true;
             All.Add(this);
@@ -116,6 +127,7 @@ namespace Brickcraft.Vehicles
                     netIdentity.RemoveClientAuthority();
                 }
                 driverId = 0;
+                power = 0;
                 settling = true;
                 settleTime = restTime = 0;
             }
@@ -143,15 +155,20 @@ namespace Brickcraft.Vehicles
         }
 
         private void FixedUpdate() {
+            Velocity = (transform.position - lastPosition) / Time.fixedDeltaTime;
+            lastPosition = transform.position;
             if (physicsDirty) {
                 physicsDirty = false;
                 PlayerNetwork driver = Driver;
                 Brick seat = driver != null ? SeatOf(driver) : null;
                 List<VehicleWire> seatWires = seat != null ? WiresOf(seat.id) : new List<VehicleWire>();
+                // its shape, as it was built (not with its wheels half turned)
+                Visuals.Reset();
                 if (seat != null && seatWires.Count == 0) {
                     seatWires = VehicleWires.AllDefaults(this, seat);
                 }
                 Drive.Rebuild(seat != null ? VehicleShape.Seat(seat, transform).forward : Vector3.forward, seatWires);
+                Visuals.Rebuild();
             }
             if (!IsSimulated) {
                 return;
@@ -293,6 +310,26 @@ namespace Brickcraft.Vehicles
                     wires.RemoveAt(i);
                 }
             }
+        }
+
+        private void LateUpdate() {
+            bool driving = IsSimulated && driverId != 0;
+            if (driving && isOwned) {
+                // the others see its propellers spin too, a tenth at a time
+                sbyte shown = (sbyte)(Mathf.RoundToInt(Mathf.Clamp(Drive.Power, -1, 1) * 10) * 10);
+                if (shown != power && !isServer) {
+                    CmdSetPower(shown);
+                }
+                if (isServer) {
+                    power = shown;
+                }
+            }
+            Visuals.Update(driving ? Drive.Power : power / 100f);
+        }
+
+        [Command]
+        private void CmdSetPower(sbyte value) {
+            power = (sbyte)Mathf.Clamp(value, -100, 100);
         }
 
         /// <summary>The seat of this vehicle the player is in, null if it isn't in one.</summary>

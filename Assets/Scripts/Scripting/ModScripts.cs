@@ -16,7 +16,8 @@ namespace Brickcraft.Scripting
     /// Its scripts are:
     ///   items/[item]/script.lua   the item's events: onPlaced, onHit, onBroken, onInteract
     ///   npcs/[npc]/script.lua     the NPC's events: onSpawn, onThink, onDamaged, onDeath, onTargetLost, onInteract
-    ///   scripts/*.lua             the mod's events: onLoad, onPlayerJoined, onPlayerLeft, onChat, onPlayerDamaged, onPlayerDied
+    ///   scripts/*.lua             the mod's events: onLoad, onPlayerJoined, onPlayerLeft, onChat, onPlayerDamaged, onPlayerDied,
+    ///                             onVehicleEnter, onVehicleLeave
     /// Each file has its own globals (so two items can both have an onPlaced); the mod's shared ones,
     /// like the table "shared" and the API (see LuaApi), are read through them.
     ///

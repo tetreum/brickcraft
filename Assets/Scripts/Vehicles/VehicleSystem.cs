@@ -72,11 +72,18 @@ namespace Brickcraft.Vehicles
             return new GameText();
         }
 
-        /// <summary>Sits the player on a vehicle's seat (see WhyNotSit); if nobody drives it, it does.</summary>
-        public static void ServerSit(PlayerNetwork player, Brick seat) {
+        /// <summary>
+        /// Sits the player on a vehicle's seat (see WhyNotSit); if nobody drives it, it does. False if a mod's
+        /// onVehicleEnter said no.
+        /// </summary>
+        public static bool ServerSit(PlayerNetwork player, Brick seat) {
+            if (!Scripting.ModScripts.ModEvent("onVehicleEnter", Scripting.PlayerHandle.For(player.connectionToClient), Scripting.VehicleHandle.For(seat.vehicle))) {
+                return false;
+            }
             player.seatedIn = seat.id;
             refreshDriver(seat.vehicle);
             GameTexts.Send(player.connectionToClient, "vehicle.reposition_hint");
+            return true;
         }
 
         /// <summary>
@@ -87,14 +94,18 @@ namespace Brickcraft.Vehicles
             if (string.IsNullOrEmpty(player.seatedIn) || !Server.bricks.TryGetValue(player.seatedIn, out Brick seat) || seat.vehicle == null) {
                 return false;
             }
-            Vehicle vehicle = seat.vehicle;
+            ServerReposition(seat.vehicle);
+            return true;
+        }
+
+        /// <summary>The vehicle back on its wheels, by whoever moves it.</summary>
+        public static void ServerReposition(Vehicle vehicle) {
             PlayerNetwork driver = vehicle.Driver;
             if (driver != null && driver.connectionToClient != null) {
                 vehicle.TargetReposition(driver.connectionToClient);
             } else {
                 vehicle.Reposition();
             }
-            return true;
         }
 
         /// <summary>
@@ -115,6 +126,7 @@ namespace Brickcraft.Vehicles
                 vehicle.ServerSetDriver(null, velocity, angularVelocity);
             }
             refreshDriver(vehicle);
+            Scripting.ModScripts.ModEvent("onVehicleLeave", Scripting.PlayerHandle.For(player.connectionToClient), Scripting.VehicleHandle.For(vehicle));
         }
 
         // the vehicle's driver is in one of its seats, else the first player in one (else nobody)

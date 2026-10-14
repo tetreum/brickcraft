@@ -63,6 +63,16 @@ for _, player in ipairs(world.players()) do
 end
 ```
 
+## world.vehicles()
+
+A list of the [vehicles](vehicles.md) in the loaded parts of the world.
+
+```lua
+for _, vehicle in ipairs(world.vehicles()) do
+  log(vehicle.id .. " goes at " .. vehicle.speed .. " m/s")
+end
+```
+
 ## world.dropItem(item, position, count, color)
 
 Puts items on the ground at `position` (`count` 1 and the item's own colour by default): players pick them up by walking onto them, and they go after 5 minutes. Returns `false` if that part of the world isn't loaded. It's an error if there's no such item.

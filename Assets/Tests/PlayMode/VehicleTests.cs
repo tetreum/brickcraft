@@ -437,6 +437,33 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator ScriptsSeeVehiclesAndWhoDrivesThem() {
+            Item wheelItem = wheel();
+            Assume.That(wheelItem, Is.Not.Null, "a small wheel in the catalogue");
+            Vector3Int floor = Vector3Int.zero;
+            yield return floorUp(f => floor = f);
+            Vehicle vehicle = car(floor, wheelItem, out Brick seat);
+            yield return null; // a host applies the spawn message a frame later
+            Network.PlayerNetwork player = TestGame.Player.GetComponent<Network.PlayerNetwork>();
+            VehicleSystem.ServerSit(player, seat);
+            yield return null;
+
+            MoonSharp.Interpreter.Script script = new MoonSharp.Interpreter.Script(MoonSharp.Interpreter.CoreModules.Preset_SoftSandbox);
+            Scripting.LuaApi.Install(script, new Mods.ModInfo() { id = "test_mod", name = "Test mod" });
+            MoonSharp.Interpreter.DynValue result = script.DoString(@"
+                local vehicles = world.vehicles()
+                local me = world.players()[1]
+                return #vehicles, vehicles[1].parts, vehicles[1].driver.name, me.vehicle.id == vehicles[1].id, vehicles[1].exists");
+            Assert.AreEqual(1, result.Tuple[0].Number, "one vehicle");
+            Assert.AreEqual(vehicle.grid.Count, result.Tuple[1].Number, "its parts");
+            Assert.AreEqual(Player.Instance.network.playerName, result.Tuple[2].String, "its driver");
+            Assert.IsTrue(result.Tuple[3].Boolean, "the player's vehicle is it");
+            Assert.IsTrue(result.Tuple[4].Boolean);
+            VehicleSystem.ServerStandUp(player, Vector3.zero, Vector3.zero);
+            Assert.IsTrue(script.DoString("return world.players()[1].vehicle == nil").Boolean, "up: in no vehicle");
+        }
+
+        [UnityTest]
         public IEnumerator ADriverDrivesItAndItComesToRestWhenLeft() {
             Item wheelItem = wheel();
             Assume.That(wheelItem, Is.Not.Null, "a small wheel in the catalogue");
@@ -460,9 +487,12 @@ namespace Brickcraft.Tests
 
             Vector3 forward = vehicle.transform.TransformDirection(VehicleShape.Seat(seat, vehicle.transform).forward);
             Vector3 start = vehicle.transform.position;
+            Brick aWheel = vehicle.grid.GetBrickAt(Vector3Int.zero);
+            Quaternion built = aWheel.gameObject.transform.localRotation;
             VehicleControls.Override = new VehicleInput() { throttle = 0.5f };
             try {
                 yield return TestGame.Wait(1.5f);
+                Assert.Greater(Quaternion.Angle(built, aWheel.gameObject.transform.localRotation), 1, "its wheels turn");
             } finally {
                 VehicleControls.Override = null;
             }
@@ -495,6 +525,8 @@ namespace Brickcraft.Tests
                 yield return null;
             }
             Assert.IsFalse(vehicle.IsSimulated, "the vehicle coming to rest: " + vehicle.Body.velocity + " " + vehicle.Body.angularVelocity + " at " + vehicle.transform.position + " floor " + top);
+            yield return TestGame.Wait(1);
+            Assert.Less(Quaternion.Angle(built, aWheel.gameObject.transform.localRotation), 0.01f, "stopped, its wheels as they were built");
         }
     }
 }

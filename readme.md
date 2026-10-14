@@ -38,6 +38,10 @@ Servers are configured in `server.json`, next to the game (next to `Mods/`: the 
 
 The first player to join a save without admins (the host, starting singleplayer or a server) becomes its admin; everyone else joins as a `user`. There are several commands available for actions like role changing, kicking, banning, etc.. Check `/help` in chat.
 
+## Vehicles
+
+Cars, boats and planes, built from bricks starting with a wheel, driven from a seat and wired with a screwdriver: see `docs/vehicles.md`.
+
 ## Documentation about modding, npcs and more
 
 Check the docs/ directory.

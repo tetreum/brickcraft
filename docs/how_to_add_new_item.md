@@ -73,6 +73,7 @@ Items/marble/
   - `drop`: id of the item given when dug, like `"stone"`. The item itself if missing.
   - `digSound`: the sound effect played while it's dug, a file of `Resources/Sound/Effects` without its extension (`"PickaxeDig"` for stone and ores, `"HitTree"` for wood). `"Dig"` if missing.
 - `tags`: what it is to the game besides its type, like `["bed"]`: NPCs sleep in placed bricks of items tagged `bed` (see How can i add an NPC?), players sleep in them, bricks of items tagged `storage` keep items (see Storage), tools tagged `partslister` list the LEGO parts of a creation (see Parts lists), and flowing water washes away bricks tagged `washable` (the torch).
+- `vehicle`: what it is on a vehicle (see docs/vehicles.md), `{ "role": "wheel", "mass": 24 }`: `role` is `seat`, `wheel`, `propeller` or `wing` (by default, by its tags: `seat`, and LDraw's categories `wheel`, `propeller`, `wing`), `mass` its kilograms (by default 2 for each of its cells, studs x studs x plates). Tools tagged `wiring` (the screwdriver) wire a vehicle's parts to its seats.
 - `storageSlots`: items tagged `storage`: how many slots a placed one has, 1 to 54, 27 by default (the storage panel scrolls past 27). Lowering it, what a placed one kept past its slots falls out the next time it's opened.
 - `recipes`: ways to craft the item. Each makes `quantity` of it (1 by default) from its `ingredients`, each one an item `id`, a `quantity` (1 by default) and a crafting `slot`, 1 to 4 (left to right, top to bottom). Recipes are identified as `<item>#<number>`, like `dirt_2x4#1`.
 

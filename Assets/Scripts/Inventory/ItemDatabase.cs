@@ -235,6 +235,20 @@ namespace Brickcraft
                     item.tags.Add(tag.Trim().ToLowerInvariant());
                 }
             }
+            if (info.vehicle != null) {
+                item.vehicleRole = Vehicles.VehicleParts.Parse(info.vehicle.role);
+                if (!string.IsNullOrEmpty(info.vehicle.role) && item.vehicleRole == Vehicles.VehicleRole.None) {
+                    Debug.LogError("Item file " + file + " has the vehicle role " + info.vehicle.role + ": it's wheel, seat, propeller, wing or rudder");
+                    return;
+                }
+                if (info.vehicle.mass.HasValue) {
+                    if (info.vehicle.mass.Value <= 0) {
+                        Debug.LogError("Item file " + file + " has the vehicle mass " + info.vehicle.mass.Value + ": more than 0");
+                        return;
+                    }
+                    item.mass = info.vehicle.mass.Value;
+                }
+            }
             if (item.iconTexture == null && item.color != BrickColor.None) {
                 item.iconTexture = colorIcon(BrickColorPalette.Get(item.color));
             }

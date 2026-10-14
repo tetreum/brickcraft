@@ -266,6 +266,14 @@ MonoBehaviour:
     m_Localized: Golem
     m_Metadata:
       m_Items: []
+  - m_Id: 34247155638272
+    m_Localized: Seat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 34247193387008
+    m_Localized: Wiring Tool
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

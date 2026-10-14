@@ -8810,6 +8810,11 @@
     "category": "Door"
   },
   {
+    "id": "4079",
+    "name": "Minifig Seat 2x2",
+    "category": "Minifig Accessory"
+  },
+  {
     "id": "4080",
     "name": "Tipper Bucket 4x6 with Open Studs Front Lip",
     "category": "Tipper"
@@ -12743,6 +12748,11 @@
     "id": "55236",
     "name": "Technic Bionicle Barraki Spines",
     "category": "Technic"
+  },
+  {
+    "id": "55298",
+    "name": "Minifig Tool Screwdriver",
+    "category": "Minifig Accessory"
   },
   {
     "id": "5540",

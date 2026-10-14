@@ -266,6 +266,14 @@ MonoBehaviour:
     m_Localized: "G\xF3lem"
     m_Metadata:
       m_Items: []
+  - m_Id: 34247155638272
+    m_Localized: Asiento
+    m_Metadata:
+      m_Items: []
+  - m_Id: 34247193387008
+    m_Localized: Herramienta de cableado
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

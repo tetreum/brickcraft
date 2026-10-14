@@ -74,9 +74,20 @@ namespace Brickcraft
         public int heal;
         /// <summary>Degrees its model is turned around its up axis for its icon (see BrickIconRenderer), for those seen end-on.</summary>
         public float iconTurn;
+        /// <summary>What it is on a vehicle, see VehicleInfo.</summary>
+        public VehicleInfo vehicle;
     }
 
     /// <summary>The light an item gives, the "light" of its info.json.</summary>
+    /// <summary>A part of vehicles: "vehicle": { "role": "wheel", "mass": 1.5 }; both optional (see Vehicles.VehicleParts).</summary>
+    public class VehicleInfo
+    {
+        /// <summary>wheel, seat, propeller, wing or rudder; by its LDraw category if missing.</summary>
+        public string role;
+        /// <summary>What it weighs; by its model's size if missing.</summary>
+        public float? mass;
+    }
+
     public class LightInfo
     {
         /// <summary>How far it reaches, in meters.</summary>

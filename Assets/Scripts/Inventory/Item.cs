@@ -204,6 +204,7 @@ namespace Brickcraft
         /// PlayerNetwork.CmdPaintBrick).
         /// </summary>
         public const string ColorPickerTag = "colorpicker";
+        public const string WiringTag = "wiring";
 
         public bool IsColorPicker {
             get { return type == Type.Tool && tags.Contains(ColorPickerTag); }
@@ -250,6 +251,33 @@ namespace Brickcraft
             get {
                 return BrickModels.Get(brickModelId);
             }
+        }
+
+        /// <summary>What it is on a vehicle as its info.json says, None to go by its tags (see VehicleRole).</summary>
+        public Vehicles.VehicleRole vehicleRole;
+        /// <summary>What it weighs on a vehicle as its info.json says, null to go by its model's size (see Mass).</summary>
+        public float? mass;
+
+        /// <summary>What it is on a vehicle: its info.json's role, or its LDraw category's (wheels, propellers, wings) and the seat tag.</summary>
+        public Vehicles.VehicleRole VehicleRole {
+            get { return vehicleRole != Vehicles.VehicleRole.None ? vehicleRole : Vehicles.VehicleParts.ByTags(tags); }
+        }
+
+        /// <summary>What it weighs on a vehicle: its info.json's mass, or by the cells its model takes.</summary>
+        public float Mass {
+            get {
+                if (mass.HasValue) {
+                    return mass.Value;
+                }
+                BrickModel model = brickModel;
+                int cells = model != null ? Mathf.Max(1, model.width * model.depth * model.heightInPlates) : 1;
+                return cells * Vehicles.VehicleParts.MassPerCell;
+            }
+        }
+
+        /// <summary>The wiring tool: it wires a seat to the parts it controls, and opens the seat's controls.</summary>
+        public bool IsWiringTool {
+            get { return type == Type.Tool && tags.Contains(WiringTag); }
         }
 
         /// <summary>It can have colours other than its default one.</summary>

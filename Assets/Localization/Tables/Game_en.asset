@@ -16,8 +16,530 @@ MonoBehaviour:
     m_Code: en
   m_SharedData: {fileID: 11400000, guid: af39fcb827ecbbb48a62cc057bfd7b10, type: 2}
   m_Metadata:
-    m_Items: []
-  m_TableData: []
+    m_Items:
+    - rid: 8627787809188479012
+  m_TableData:
+  - m_Id: 8269561847808
+    m_Localized: '{0} joined the game'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269591207936
+    m_Localized: '{0} left the game'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269595402240
+    m_Localized: '{0} was kicked by {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269595402241
+    m_Localized: '{0} was kicked by {1}: {2}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269595402242
+    m_Localized: '{0} was banned by {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269595402243
+    m_Localized: '{0} was banned by {1}: {2}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269595402244
+    m_Localized: '{0} died'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269595402245
+    m_Localized: '{0} was killed by {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269595402246
+    m_Localized: '{0} drowned'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993408
+    m_Localized: Only admins can use commands
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993409
+    m_Localized: 'Usage: /kick NICK|ID [reason]'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993410
+    m_Localized: 'Usage: /ban NICK|ID [reason]'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993411
+    m_Localized: 'Usage: /unban NICK|ID'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993412
+    m_Localized: 'Usage: /role NICK|ID [{0}|{1}]'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993413
+    m_Localized: 'Usage: /additem ITEM[@COLOR] [count] [NICK|ID]'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993414
+    m_Localized: 'Usage: /tp NICK|ID'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993415
+    m_Localized: 'Usage: /spawnnpc NPC [count]'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993416
+    m_Localized: 'Usage: /pvp [on|off]'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993417
+    m_Localized: 'Usage: /time [day|noon|night|midnight|HH:MM]'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993418
+    m_Localized: 'Usage: /daylength [minutes], from 1 to 1440'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993419
+    m_Localized: 'Unknown command. Commands: /players, /kick NICK|ID [reason], /ban
+      NICK|ID [reason], /unban NICK|ID, /tp NICK|ID, /pvp [on|off], /time [day|noon|night|midnight|HH:MM],
+      /daylength [minutes], /spawnnpc NPC [count], /removenpcs, /navdebug, /role
+      NICK|ID [role], /additem ITEM[@COLOR] [count] [NICK|ID]'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993420
+    m_Localized: 'Online: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993421
+    m_Localized: Nobody called {0} is online
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993422
+    m_Localized: There's no player called {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993423
+    m_Localized: You can't do that to yourself
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993424
+    m_Localized: '{0} is an admin'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993425
+    m_Localized: '{0} is hosting the game'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993426
+    m_Localized: You were kicked by {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993427
+    m_Localized: 'You were kicked by {0}: {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993428
+    m_Localized: You were banned by {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993429
+    m_Localized: 'You were banned by {0}: {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993430
+    m_Localized: '{0} plays from your machine, banning it would ban you too'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993431
+    m_Localized: '{0} is already banned'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993432
+    m_Localized: '{0} isn''t banned'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993433
+    m_Localized: '{0} can join again'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993434
+    m_Localized: Removed {0} {0:plural:NPC|NPCs}
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479012
+  - m_Id: 8270195187712
+    m_Localized: NPC navigation is drawn in the scene view
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187713
+    m_Localized: NPC navigation is not drawn anymore
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187714
+    m_Localized: 'There''s no NPC {0}. NPCs: {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187715
+    m_Localized: The count must be a number from 1 to {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187716
+    m_Localized: Spawned {0} {1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187717
+    m_Localized: Spawned {0} {1} (there are too many NPCs for more)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187718
+    m_Localized: PvP is {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187719
+    m_Localized: '{0} turned PvP on'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187720
+    m_Localized: '{0} turned PvP off'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187721
+    m_Localized: It's day {0}, {1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187722
+    m_Localized: It's day {0}, {1} (paused)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187723
+    m_Localized: '{0} set the time to day {1}, {2}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187724
+    m_Localized: A day lasts {0} {0:plural:minute|minutes}
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479012
+  - m_Id: 8270195187725
+    m_Localized: '{0} made days last {1} {1:plural:minute|minutes}'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479012
+  - m_Id: 8270195187726
+    m_Localized: You're already there
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187727
+    m_Localized: Still joining, try again in a moment
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187728
+    m_Localized: Teleported to {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187729
+    m_Localized: '{0} is {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187730
+    m_Localized: Unknown role {0}, roles are {1} and {2}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187731
+    m_Localized: You can't change your own role
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187732
+    m_Localized: '{0} is already {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187733
+    m_Localized: '{0} is now {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187734
+    m_Localized: '{0} made you {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187735
+    m_Localized: There's no item {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187736
+    m_Localized: There's no colour {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187737
+    m_Localized: '{0} can''t be {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187738
+    m_Localized: '{0} is still joining, try again in a moment'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187739
+    m_Localized: There's no room for {0} x {1} in {2}'s inventory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187740
+    m_Localized: There's no room for {0} x {1} ({2}) in {3}'s inventory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187741
+    m_Localized: Gave {0} x {1} to {2}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187742
+    m_Localized: Gave {0} x {1} ({2}) to {3}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187743
+    m_Localized: '{0} gave you {1} x {2}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187744
+    m_Localized: '{0} gave you {1} x {2} ({3})'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187745
+    m_Localized: on
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187746
+    m_Localized: off
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452288
+    m_Localized: The server runs version {0}, you have an unknown version
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452289
+    m_Localized: The server runs version {0}, you have {1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452290
+    m_Localized: This server needs a password
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452291
+    m_Localized: Wrong password
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452292
+    m_Localized: The server is full ({0} {0:plural:player|players})
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479012
+  - m_Id: 8270589452293
+    m_Localized: You are banned from this server
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452294
+    m_Localized: 'You are banned from this server: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452295
+    m_Localized: The name {0} belongs to someone else
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452296
+    m_Localized: '{0} is already playing'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452297
+    m_Localized: 'This server needs {0:plural:a mod you don''t have|mods you don''t
+      have}: {1}. Mods go in the Mods folder next to the game.'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479012
+  - m_Id: 8270589452298
+    m_Localized: 'This server needs {0:plural:another version of this mod|other versions
+      of these mods}: {1}. Mods go in the Mods folder next to the game.'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479012
+  - m_Id: 8270589452299
+    m_Localized: 'This server needs {0:plural:this mod, and your copy is different|these
+      mods, and your copies are different}: {1}. Mods go in the Mods folder next
+      to the game.'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479012
+  - m_Id: 8270589452300
+    m_Localized: 'This server needs {0:plural:the mod|these mods}: {1}. Mods go in
+      the Mods folder next to the game.'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479012
+  - m_Id: 8270589452301
+    m_Localized: Names must have between {0} and {1} characters
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452302
+    m_Localized: Names can only have letters, numbers, - and _
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452303
+    m_Localized: Give the world a name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452304
+    m_Localized: World names are up to {0} characters
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452305
+    m_Localized: That isn't a bed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452306
+    m_Localized: You can only sleep at night
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452307
+    m_Localized: Someone is sleeping in this bed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452308
+    m_Localized: '{0} is sleeping in this bed'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452309
+    m_Localized: You can't sleep now, something is after you
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452310
+    m_Localized: 'Spawn point set: you''ll come back to this bed'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452311
+    m_Localized: 'Your bed is gone: you lost your spawn point'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452312
+    m_Localized: The night was slept through. Good morning!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452313
+    m_Localized: The {0} is yours now. Use it again for its orders.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452314
+    m_Localized: 'It''s locked: only its owner can open it'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452315
+    m_Localized: Someone else is looking inside
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452316
+    m_Localized: '{0} can''t be {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452317
+    m_Localized: '{0} can''t be that colour'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452318
+    m_Localized: Your {0} broke
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452319
+    m_Localized: There's no room for {0} x {1} in your inventory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452320
+    m_Localized: 'You were hurt: the parts lister closed'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452321
+    m_Localized: The parts lister only works on bricks you placed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452322
+    m_Localized: That box is too far from your creation
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452323
+    m_Localized: There are no LEGO parts of yours in that box
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452324
+    m_Localized: 'The parts list couldn''t be saved: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452325
+    m_Localized: 'Parts list saved ({0} {0:plural:part|parts}), its folder copied
+      to the clipboard: {1}'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479012
+  - m_Id: 8270589452326
+    m_Localized: '{0}.csv: the parts; {0}.xml: a BrickLink wanted list{1}; {0}.ldr:
+      the LDraw model{2}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452327
+    m_Localized: '({0} of its {0:plural:lines has a colour BrickLink doesn''t have:
+      it''s|lines have a colour BrickLink doesn''t have: they''re} in any colour)'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479012
+  - m_Id: 8270589452328
+    m_Localized: '({0} {0:plural:part has a colour LDraw doesn''t have: it''s|parts
+      have a colour LDraw doesn''t have: they''re} uncoloured)'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479012
+  - m_Id: 8270589452329
+    m_Localized: Making the creation's model...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452330
+    m_Localized: The model didn't arrive whole, try again
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452331
+    m_Localized: The model has parts that can't be placed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452332
+    m_Localized: The model goes where the world isn't loaded
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452333
+    m_Localized: Something is in the way of the model
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452334
+    m_Localized: Someone is in the way of the model
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452335
+    m_Localized: The model is too far away
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452336
+    m_Localized: 'Model placed: {0} {0:plural:brick|bricks}'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479012
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 8627787809188479012
+      type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
+      data:
+        m_Entries: 
+        m_SharedEntries:
+        - id: 8270190993434
+        - id: 8270195187724
+        - id: 8270195187725
+        - id: 8270589452292
+        - id: 8270589452297
+        - id: 8270589452298
+        - id: 8270589452299
+        - id: 8270589452300
+        - id: 8270589452325
+        - id: 8270589452327
+        - id: 8270589452328
+        - id: 8270589452336

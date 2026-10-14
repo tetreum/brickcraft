@@ -65,11 +65,11 @@ namespace Brickcraft.Network
                 return;
             }
             if (bricks.Count == 0 || bricks.Count != expected) {
-                TargetPlaced(0, "The model didn't arrive whole, try again");
+                TargetPlaced(0, GameText.Of("importer.incomplete"));
                 return;
             }
-            string refusal = check(bricks, out List<Item> items, out List<BrickPlacement> placements);
-            if (refusal != null) {
+            GameText refusal = check(bricks, out List<Item> items, out List<BrickPlacement> placements);
+            if (!refusal.IsEmpty) {
                 TargetPlaced(0, refusal);
                 return;
             }
@@ -93,12 +93,12 @@ namespace Brickcraft.Network
                     count++;
                 }
             }
-            TargetPlaced(count, null);
+            TargetPlaced(count, new GameText());
         }
 
-        // why they can't all be placed, null if they can
+        // why they can't all be placed, empty if they can
         [Server]
-        private string check(List<ImportedBrick> bricks, out List<Item> items, out List<BrickPlacement> placements) {
+        private GameText check(List<ImportedBrick> bricks, out List<Item> items, out List<BrickPlacement> placements) {
             items = new List<Item>(bricks.Count);
             placements = new List<BrickPlacement>(bricks.Count);
             HashSet<Vector3Int> cells = new HashSet<Vector3Int>();
@@ -106,12 +106,12 @@ namespace Brickcraft.Network
             foreach (ImportedBrick brick in bricks) {
                 if (brick.itemId == null || !Server.items.TryGetValue(brick.itemId, out Item item) || item.type != Item.Type.Brick
                         || item.brickModel == null || item.brickModel.IsAttachment != brick.IsAttachment) {
-                    return "The model has parts that can't be placed";
+                    return GameText.Of("importer.bad_parts");
                 }
                 // attachments go in a brick of the model that comes before (checked once it's placed)
                 if (brick.IsAttachment) {
                     if (brick.attachedTo > items.Count || bricks[brick.attachedTo - 1].IsAttachment) {
-                        return "The model has parts that can't be placed";
+                        return GameText.Of("importer.bad_parts");
                     }
                     items.Add(item);
                     placements.Add(placements[brick.attachedTo - 1]);
@@ -119,15 +119,15 @@ namespace Brickcraft.Network
                 }
                 BrickPlacement placement = new BrickPlacement(item.brickModel, brick.origin, brick.rotation);
                 if (WorldBehaviour.Instance != null && !WorldBehaviour.Instance.IsGenerated(WorldChanges.ChunkOfBrick(brick.origin))) {
-                    return "The model goes where the world isn't loaded";
+                    return GameText.Of("importer.not_loaded");
                 }
                 foreach (Vector3Int cell in placement.Cells) {
                     if (!cells.Add(cell) || !BrickGrid.IsCellFree(cell)) {
-                        return "Something is in the way of the model";
+                        return GameText.Of("importer.blocked");
                     }
                 }
                 if (BrickPlacer.overlapsPlayer(placement)) {
-                    return "Someone is in the way of the model";
+                    return GameText.Of("importer.player_in_way");
                 }
                 if (placements.Count == 0) {
                     box = placement.WorldBounds;
@@ -138,16 +138,16 @@ namespace Brickcraft.Network
                 placements.Add(placement);
             }
             if (Vector3.Distance(transform.position, box.center) > MaxDistance) {
-                return "The model is too far away";
+                return GameText.Of("importer.too_far");
             }
-            return null;
+            return new GameText();
         }
 
         // -------- server to client --------
 
         [TargetRpc]
-        private void TargetPlaced(int count, string refusal) {
-            Chat(refusal ?? "Model placed: " + count + " bricks");
+        private void TargetPlaced(int count, GameText refusal) {
+            Chat(refusal.IsEmpty ? Loc.Get(Loc.Game, "importer.placed", count) : refusal.Say());
         }
 
         // -------- client --------

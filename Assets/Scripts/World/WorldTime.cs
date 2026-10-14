@@ -71,10 +71,26 @@ namespace Brickcraft.World
 
         /// <summary>"Day 3, 07:12".</summary>
         public static string Describe() {
-            // to the nearest minute (20:00 set as days is a hair under it), the day it rounds into
-            double rounded = Math.Round(Time * 24 * 60) / (24 * 60);
-            int minutes = (int)Math.Round((rounded - Math.Floor(rounded)) * 24 * 60) % (24 * 60);
-            return "Day " + ((int)Math.Floor(rounded) + 1) + ", " + (minutes / 60).ToString("00") + ":" + (minutes % 60).ToString("00");
+            return "Day " + DayNumber + ", " + Clock;
+        }
+
+        // to the nearest minute (20:00 set as days is a hair under it), the day it rounds into
+        private static double rounded {
+            get { return Math.Round(Time * 24 * 60) / (24 * 60); }
+        }
+
+        /// <summary>The day it is, from 1, to the nearest minute (see Describe).</summary>
+        public static int DayNumber {
+            get { return (int)Math.Floor(rounded) + 1; }
+        }
+
+        /// <summary>The time of day as HH:MM, to the nearest minute.</summary>
+        public static string Clock {
+            get {
+                double now = rounded;
+                int minutes = (int)Math.Round((now - Math.Floor(now)) * 24 * 60) % (24 * 60);
+                return (minutes / 60).ToString("00") + ":" + (minutes % 60).ToString("00");
+            }
         }
     }
 }

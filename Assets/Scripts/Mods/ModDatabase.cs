@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Brickcraft.Network;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -146,10 +147,12 @@ namespace Brickcraft.Mods
 
         /// <summary>
         /// Server: whether a joining player has every active mod, the same version with the same files.
-        /// Null if so, otherwise what's missing, to show the player.
+        /// Empty if so, otherwise what's missing, to show the player.
         /// </summary>
-        public static string CheckPlayerMods(ModEntry[] playerMods) {
+        public static GameText CheckPlayerMods(ModEntry[] playerMods) {
             List<string> problems = new List<string>();
+            // all missing, all of other versions, all different copies, or some of each
+            string kind = null;
 
             foreach (ModInfo mod in active) {
                 ModEntry? theirs = null;
@@ -158,20 +161,18 @@ namespace Brickcraft.Mods
                         theirs = entry;
                     }
                 }
-                string name = mod.name + " " + mod.version;
-                if (!theirs.HasValue) {
-                    problems.Add(name + " (you don't have it)");
-                } else if (theirs.Value.version != mod.version) {
-                    problems.Add(name + " (you have " + theirs.Value.version + ")");
-                } else if (theirs.Value.hash != mod.Hash) {
-                    problems.Add(name + " (your copy is different)");
+                string problem = !theirs.HasValue ? "mods.missing"
+                    : theirs.Value.version != mod.version ? "mods.other_version"
+                    : theirs.Value.hash != mod.Hash ? "mods.different" : null;
+                if (problem != null) {
+                    problems.Add(mod.name + " " + mod.version);
+                    kind = kind == null || kind == problem ? problem : "mods.needed";
                 }
             }
             if (problems.Count == 0) {
-                return null;
+                return new GameText();
             }
-            return "This server needs " + (problems.Count == 1 ? "the mod " : "these mods: ") + string.Join(", ", problems)
-                + ". Mods go in the Mods folder next to the game.";
+            return GameText.Of(kind, problems.Count, string.Join(", ", problems));
         }
 
         /// <summary>SHA-256 of the files of a folder: each relative path (with / separators) and contents, sorted by path.</summary>

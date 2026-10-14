@@ -291,9 +291,9 @@ namespace Brickcraft.UI
 
         private void create() {
             string name = nameInput.text.Trim();
-            string problem = SavedWorlds.ValidateName(name);
-            if (problem != null) {
-                error.text = problem;
+            GameText problem = SavedWorlds.ValidateName(name);
+            if (!problem.IsEmpty) {
+                error.text = problem.Say();
                 return;
             }
 

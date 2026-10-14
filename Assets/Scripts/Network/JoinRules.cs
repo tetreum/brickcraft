@@ -13,8 +13,8 @@ namespace Brickcraft.Network
     {
         public struct Decision
         {
-            /// <summary>Why it can't join, null if it can.</summary>
-            public string error;
+            /// <summary>Why it can't join, empty if it can.</summary>
+            public GameText error;
             /// <summary>The player it joins as, null for a new one (create it).</summary>
             public PlayerRecord player;
             /// <summary>Its player has another name: it's renamed to the one asked for.</summary>
@@ -37,20 +37,19 @@ namespace Brickcraft.Network
             bool isAdmin = player != null && player.IsAdmin && player.TokenHash == machineIdHash;
 
             if ((player != null && player.Banned) || (!isAdmin && machineBanned)) {
-                string error = "You are banned from this server";
                 if (player != null && !string.IsNullOrEmpty(player.BanReason)) {
-                    error += ": " + player.BanReason;
+                    return new Decision() { error = GameText.Of("join.banned_reason", player.BanReason) };
                 }
-                return new Decision() { error = error };
+                return new Decision() { error = GameText.Of("join.banned") };
             }
             if (player == null) {
                 return new Decision();
             }
             if (player.TokenHash != machineIdHash) {
-                return new Decision() { error = "The name " + player.Name + " belongs to someone else" };
+                return new Decision() { error = GameText.Of("join.name_taken", player.Name) };
             }
             if (isOnline(player.Id)) {
-                return new Decision() { error = player.Name + " is already playing" };
+                return new Decision() { error = GameText.Of("join.already_playing", player.Name) };
             }
             Decision decision = new Decision() { player = player };
             if (player.Name != name) {

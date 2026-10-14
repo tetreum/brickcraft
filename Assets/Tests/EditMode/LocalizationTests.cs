@@ -94,6 +94,11 @@ namespace Brickcraft.Tests
 
         private static readonly string[] Tables = { Loc.UI, Loc.Game, Loc.Controls, Loc.Items };
 
+        // file names look like keys ("world.dat")
+        private static readonly HashSet<string> FileExtensions = new HashSet<string>() {
+            "dat", "db", "json", "png", "txt", "csv", "xml", "ldr", "mpd", "obj", "glb", "gltf", "lua", "zip", "bundle", "asset", "wav", "ogg", "mp3", "mp4"
+        };
+
         // a key in a table: its area (the part before the dot) is one of a table's
         private static string tableOf(string key) {
             foreach (string table in Tables) {
@@ -120,7 +125,7 @@ namespace Brickcraft.Tests
             int found = 0;
             foreach (string script in Directory.GetFiles(Path.Combine(Application.dataPath, "Scripts"), "*.cs", SearchOption.AllDirectories)) {
                 foreach (Match literal in Regex.Matches(File.ReadAllText(script), "\"([a-z]+)\\.([a-z0-9_]+)\"")) {
-                    if (!areas.Contains(literal.Groups[1].Value)) {
+                    if (!areas.Contains(literal.Groups[1].Value) || FileExtensions.Contains(literal.Groups[2].Value)) {
                         continue;
                     }
                     string key = literal.Groups[1].Value + "." + literal.Groups[2].Value;

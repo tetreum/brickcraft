@@ -92,16 +92,16 @@ namespace Brickcraft.World
             return (long)hash;
         }
 
-        /// <summary>Null if the name is fine, otherwise what's wrong with it.</summary>
-        public static string ValidateName(string name) {
+        /// <summary>Empty if the name is fine, otherwise what's wrong with it.</summary>
+        public static Network.GameText ValidateName(string name) {
             name = name == null ? "" : name.Trim();
             if (name.Length == 0) {
-                return "Give the world a name";
+                return Network.GameText.Of("world.name_empty");
             }
             if (name.Length > MaxNameLength) {
-                return "World names are up to " + MaxNameLength + " characters";
+                return Network.GameText.Of("world.name_length", MaxNameLength);
             }
-            return null;
+            return new Network.GameText();
         }
 
         // a folder named after the world, "my_world", "my_world_2"... if taken

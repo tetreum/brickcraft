@@ -508,7 +508,7 @@ namespace Brickcraft.Network
             if (npc.Brain.Owner == 0 && !string.IsNullOrEmpty(npc.Info.tameWith) && held.HasValue && held.Value.itemId == npc.Info.tameWith) {
                 inventory.ServerRemoveFromSlot(slot, 1);
                 npc.Brain.Tame(player.record.Id, player.record.Name);
-                connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "The " + npc.Info.name + " is yours now. Use it again for its orders." });
+                GameTexts.Send(connectionToClient, "pet.tamed", npc.Info.name);
             }
         }
 
@@ -639,11 +639,11 @@ namespace Brickcraft.Network
                 return;
             }
             if (!BrickStorage.CanOpen(connectionToClient, storage)) {
-                connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "It's locked: only its owner can open it" });
+                GameTexts.Send(connectionToClient, "storage.locked");
                 return;
             }
             if (BrickStorage.IsInUse(storage, connectionToClient)) {
-                connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "Someone else is looking inside" });
+                GameTexts.Send(connectionToClient, "storage.in_use");
                 return;
             }
             // a mod can keep it closed
@@ -683,9 +683,9 @@ namespace Brickcraft.Network
             if (Npcs.NpcBeds.IsBed(bed)) {
                 PlayerSleep.SetSpawn(this, bed);
             }
-            string problem = PlayerSleep.WhyNot(this, bed);
-            if (problem != null) {
-                connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = problem });
+            GameText problem = PlayerSleep.WhyNot(this, bed);
+            if (!problem.IsEmpty) {
+                GameTexts.Send(connectionToClient, problem);
                 return;
             }
             PlayerSleep.Sleep(this, bed);
@@ -842,8 +842,11 @@ namespace Brickcraft.Network
             int color = held.Value.color;
             if (!brick.item.AllowsColor(color)) {
                 BrickColor named = BrickColorPalette.Get(color);
-                connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName,
-                    text = brick.item.name + " can't be " + (named != null ? named.name : "that colour") });
+                if (named != null) {
+                    GameTexts.Send(connectionToClient, "paint.not_allowed", brick.item, named);
+                } else {
+                    GameTexts.Send(connectionToClient, "paint.not_allowed_any", brick.item);
+                }
                 return;
             }
             WorldNetwork.ServerSetBrickColor(brick, color);

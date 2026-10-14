@@ -54,7 +54,7 @@ namespace Brickcraft.Network
         private void onServerDamaged(DamageInfo damage) {
             if (active) {
                 active = false;
-                TargetEnd("You were hurt: the parts lister closed");
+                TargetEnd(GameText.Of("partslister.hurt"));
             }
         }
 
@@ -75,7 +75,7 @@ namespace Brickcraft.Network
                 brick = holder;
             }
             if (WorldNetwork.ServerPlacerOf(brick).playerId != playerId || playerId == 0) {
-                tell("The parts lister only works on bricks you placed");
+                tell("partslister.not_yours");
                 return;
             }
             if (Vector3.Distance(transform.position, brick.placement.WorldBounds.center) > MaxDistance) {
@@ -92,7 +92,7 @@ namespace Brickcraft.Network
                 return;
             }
             if (!PartsList.IsPlacedBlock(playerId, block) || playerId == 0) {
-                tell("The parts lister only works on bricks you placed");
+                tell("partslister.not_yours");
                 return;
             }
             Vector3 center = BrickGrid.CellToWorld(BrickGrid.BlockToCell(block), new Vector3(1, 1.5f, 1));
@@ -127,7 +127,7 @@ namespace Brickcraft.Network
             Vector3Int highest = startMax + Vector3Int.one * MaxGrowth;
             if (min.x >= max.x || min.y >= max.y || min.z >= max.z
                     || min.x < lowest.x || min.y < lowest.y || min.z < lowest.z || max.x > highest.x || max.y > highest.y || max.z > highest.z) {
-                TargetEnd("That box is too far from your creation");
+                TargetEnd(GameText.Of("partslister.too_far"));
                 return;
             }
             // the LDraw model's parts first (in batches: big creations are bigger than a message), then the list
@@ -151,8 +151,8 @@ namespace Brickcraft.Network
         }
 
         [Server]
-        private void tell(string text) {
-            connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = text });
+        private void tell(string key) {
+            GameTexts.Send(connectionToClient, key);
         }
 
         // -------- server to client --------
@@ -163,11 +163,11 @@ namespace Brickcraft.Network
         }
 
         [TargetRpc]
-        private void TargetEnd(string reason) {
+        private void TargetEnd(GameText reason) {
             if (PartsListerView.Current != null) {
                 PartsListerView.Current.Close();
             }
-            chat(reason);
+            chat(reason.Say());
         }
 
         // client: the LDraw model's parts received so far (see CmdSave), written with the list
@@ -197,7 +197,7 @@ namespace Brickcraft.Network
                 PartsListerView.Current.Close();
             }
             if (rows.Length == 0) {
-                chat("There are no LEGO parts of yours in that box");
+                chat(Loc.Get(Loc.Game, "partslister.empty"));
                 return;
             }
             string path;
@@ -208,7 +208,7 @@ namespace Brickcraft.Network
                 colorless = WriteXml(rows, Path.ChangeExtension(path, ".xml"));
                 ldrawColorless = LDrawWriter.Write(Path.ChangeExtension(path, ".ldr"), pendingName, placements);
             } catch (Exception e) {
-                chat("The parts list couldn't be saved: " + e.Message);
+                chat(Loc.Get(Loc.Game, "partslister.save_failed", e.Message));
                 return;
             }
             string folder = Path.GetDirectoryName(path);
@@ -218,15 +218,14 @@ namespace Brickcraft.Network
                 parts += row.count;
             }
             string file = Path.GetFileNameWithoutExtension(path);
-            chat("Parts list saved (" + parts + " parts), its folder copied to the clipboard: " + folder);
-            chat(file + ".csv: the parts; " + file + ".xml: a BrickLink wanted list"
-                + (colorless > 0 ? " (" + colorless + " of its lines have a colour BrickLink doesn't have: they're in any colour)" : "")
-                + "; " + file + ".ldr: the LDraw model"
-                + (ldrawColorless > 0 ? " (" + ldrawColorless + " parts have a colour LDraw doesn't have: they're uncoloured)" : ""));
+            chat(Loc.Get(Loc.Game, "partslister.saved", parts, folder));
+            chat(Loc.Get(Loc.Game, "partslister.files", file,
+                colorless > 0 ? " " + Loc.Get(Loc.Game, "partslister.bricklink_colorless", colorless) : "",
+                ldrawColorless > 0 ? " " + Loc.Get(Loc.Game, "partslister.ldraw_colorless", ldrawColorless) : ""));
 
             // the creation as a model of its own, a mod ready to copy (it takes a moment: hidden faces are looked for)
             if (creation.Count > 0) {
-                chat("Making the creation's model...");
+                chat(Loc.Get(Loc.Game, "partslister.making_model"));
                 StartCoroutine(Bricks.CreationModel.Make(creation, placements, pendingName, GetComponent<PlayerNetwork>().playerName, Path.Combine(folder, "mod"), result => chat(result)));
             }
         }

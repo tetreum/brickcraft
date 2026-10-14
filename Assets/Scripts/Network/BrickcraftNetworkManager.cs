@@ -370,7 +370,11 @@ namespace Brickcraft.Network
             });
 
             disconnectReason = null;
-            NetworkClient.RegisterHandler<DisconnectReasonMessage>(message => disconnectReason = message.reason);
+            NetworkClient.RegisterHandler<DisconnectReasonMessage>(message => disconnectReason = message.reason.Say());
+            NetworkClient.RegisterHandler<GameTextMessage>(message => Events.EventManager.ChatLineReceived.Raise(new Events.ChatLineReceivedEvent() {
+                sender = message.isEvent ? null : ChatCommands.ServerName,
+                text = message.text.Say(),
+            }));
         }
 
         public override void OnStopClient() {

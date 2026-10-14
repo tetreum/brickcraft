@@ -50,27 +50,27 @@ namespace Brickcraft.Network
             return Mathf.Max(1, Mathf.CeilToInt(players * RequiredShare));
         }
 
-        /// <summary>Why the player can't sleep in that bed now, null if it can.</summary>
-        public static string WhyNot(PlayerNetwork player, Brick bed) {
+        /// <summary>Why the player can't sleep in that bed now, empty if it can.</summary>
+        public static GameText WhyNot(PlayerNetwork player, Brick bed) {
             if (!Npcs.NpcBeds.IsBed(bed)) {
-                return "That isn't a bed";
+                return GameText.Of("sleep.not_bed");
             }
             if (WorldTime.IsDay) {
-                return "You can only sleep at night";
+                return GameText.Of("sleep.only_night");
             }
             if (IsTakenByPlayer(bed.id, player)) {
-                return "Someone is sleeping in this bed";
+                return GameText.Of("sleep.bed_taken");
             }
             foreach (Npcs.Npc npc in Npcs.NpcSystem.All) {
                 if (npc.isLying && npc.BedId == bed.id) {
-                    return npc.Info.name + " is sleeping in this bed";
+                    return GameText.Of("sleep.bed_taken_by", npc.Info.name);
                 }
                 if (npc.Brain != null && npc.Brain.Target == player.GetComponent<Health>()
                         && Vector3.Distance(npc.transform.position, player.transform.position) <= DangerDistance) {
-                    return "You can't sleep now, something is after you";
+                    return GameText.Of("sleep.danger");
                 }
             }
-            return null;
+            return new GameText();
         }
 
         /// <summary>Another player sleeps in that bed.</summary>
@@ -101,7 +101,7 @@ namespace Brickcraft.Network
             FloatingOrigin.ToAbsolute(spot + Vector3.up * 0.9f, out double x, out double y, out double z); // the player's position is its middle
             BrickcraftNetworkManager.Instance.Database.SetSpawnBed(connected.record, bed.id, x, y, z);
             if (isNew) {
-                player.connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "Spawn point set: you'll come back to this bed" });
+                GameTexts.Send(player.connectionToClient, "sleep.spawn_set");
             }
         }
 
@@ -114,7 +114,7 @@ namespace Brickcraft.Network
                 if (connected.record.SpawnBed == bed.id) {
                     connected.record.SpawnBed = null;
                     connected.record.SpawnX = connected.record.SpawnY = connected.record.SpawnZ = null;
-                    player.connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "Your bed is gone: you lost your spawn point" });
+                    GameTexts.Send(player.connectionToClient, "sleep.bed_gone");
                 }
             }
         }
@@ -175,7 +175,7 @@ namespace Brickcraft.Network
                 foreach (PlayerNetwork player in players()) {
                     Wake(player);
                 }
-                NetworkServer.SendToReady(new ChatMessage() { sender = ChatCommands.ServerName, text = "The night was slept through. Good morning!" });
+                GameTexts.SendToAll("sleep.night_skipped");
                 sleeping = 0;
             }
 

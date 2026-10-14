@@ -217,6 +217,35 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator TheServerTellsEachPlayerInItsLanguage() {
+            string languageKey = "settings." + GameSettings.LanguageSetting;
+            string saved = PlayerPrefs.HasKey(languageKey) ? PlayerPrefs.GetString(languageKey) : null;
+            System.Collections.Generic.List<Events.ChatLineReceivedEvent> lines = new System.Collections.Generic.List<Events.ChatLineReceivedEvent>();
+            System.Action<Events.ChatLineReceivedEvent> received = line => lines.Add(line);
+            Events.EventManager.ChatLineReceived.Subscribe(received);
+            try {
+                GameSettings.Language = "es";
+                // the host is the save's admin: a command's answer comes back as a key, worded here
+                ChatCommands.Run(Mirror.NetworkServer.localConnection, "/pvp");
+                yield return TestGame.WaitUntil(() => lines.Count > 0, 5, "the answer");
+                Assert.AreEqual(ChatCommands.ServerName, lines[0].sender);
+                StringAssert.StartsWith("El PvP está ", lines[0].text);
+
+                GameSettings.Language = "en";
+                ChatCommands.Run(Mirror.NetworkServer.localConnection, "/pvp");
+                yield return TestGame.WaitUntil(() => lines.Count > 1, 5, "the second answer");
+                StringAssert.StartsWith("PvP is ", lines[1].text);
+            } finally {
+                Events.EventManager.ChatLineReceived.Unsubscribe(received);
+                GameSettings.Language = saved ?? GameSettings.SystemLanguage;
+                if (saved == null) {
+                    PlayerPrefs.DeleteKey(languageKey);
+                    PlayerPrefs.Save();
+                }
+            }
+        }
+
+        [UnityTest]
         public IEnumerator WaterPouredOnAFloorSpreads() {
             BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
             BlockType water = (BlockType)BlockDatabase.IdOf("water");

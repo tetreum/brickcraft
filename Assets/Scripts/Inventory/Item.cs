@@ -42,6 +42,11 @@ namespace Brickcraft
         public int layer;
         public Type type;
         public string name;
+
+        /// <summary>Its name in the player's language (see Loc).</summary>
+        public string DisplayName {
+            get { return name; }
+        }
         /// <summary>Its folder, StreamingAssets/Items/[item] (see ItemDatabase).</summary>
         public string folder;
 

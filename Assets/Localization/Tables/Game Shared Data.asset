@@ -14,7 +14,487 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_TableCollectionName: Game
   m_TableCollectionNameGuidString: af39fcb827ecbbb48a62cc057bfd7b10
-  m_Entries: []
+  m_Entries:
+  - m_Id: 8269561847808
+    m_Key: event.joined
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269591207936
+    m_Key: event.left
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269595402240
+    m_Key: event.kicked
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269595402241
+    m_Key: event.kicked_reason
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269595402242
+    m_Key: event.banned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269595402243
+    m_Key: event.banned_reason
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269595402244
+    m_Key: event.died
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269595402245
+    m_Key: event.killed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8269595402246
+    m_Key: event.drowned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993408
+    m_Key: cmd.only_admins
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993409
+    m_Key: cmd.usage_kick
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993410
+    m_Key: cmd.usage_ban
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993411
+    m_Key: cmd.usage_unban
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993412
+    m_Key: cmd.usage_role
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993413
+    m_Key: cmd.usage_additem
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993414
+    m_Key: cmd.usage_tp
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993415
+    m_Key: cmd.usage_spawnnpc
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993416
+    m_Key: cmd.usage_pvp
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993417
+    m_Key: cmd.usage_time
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993418
+    m_Key: cmd.usage_daylength
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993419
+    m_Key: cmd.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993420
+    m_Key: cmd.online
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993421
+    m_Key: cmd.nobody_online
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993422
+    m_Key: cmd.no_player
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993423
+    m_Key: cmd.not_yourself
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993424
+    m_Key: cmd.is_admin
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993425
+    m_Key: cmd.is_hosting
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993426
+    m_Key: cmd.kicked_you
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993427
+    m_Key: cmd.kicked_you_reason
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993428
+    m_Key: cmd.banned_you
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993429
+    m_Key: cmd.banned_you_reason
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993430
+    m_Key: cmd.same_machine
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993431
+    m_Key: cmd.already_banned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993432
+    m_Key: cmd.not_banned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993433
+    m_Key: cmd.unbanned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270190993434
+    m_Key: cmd.removed_npcs
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187712
+    m_Key: cmd.navdebug_on
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187713
+    m_Key: cmd.navdebug_off
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187714
+    m_Key: cmd.no_npc
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187715
+    m_Key: cmd.count_range
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187716
+    m_Key: cmd.spawned_npcs
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187717
+    m_Key: cmd.spawned_npcs_too_many
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187718
+    m_Key: cmd.pvp_is
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187719
+    m_Key: cmd.pvp_turned_on
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187720
+    m_Key: cmd.pvp_turned_off
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187721
+    m_Key: cmd.time_is
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187722
+    m_Key: cmd.time_is_paused
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187723
+    m_Key: cmd.time_set
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187724
+    m_Key: cmd.day_lasts
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187725
+    m_Key: cmd.day_length_set
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187726
+    m_Key: cmd.already_there
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187727
+    m_Key: cmd.still_joining
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187728
+    m_Key: cmd.teleported
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187729
+    m_Key: cmd.role_is
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187730
+    m_Key: cmd.unknown_role
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187731
+    m_Key: cmd.own_role
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187732
+    m_Key: cmd.role_already
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187733
+    m_Key: cmd.role_now
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187734
+    m_Key: cmd.role_made_you
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187735
+    m_Key: cmd.no_item
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187736
+    m_Key: cmd.no_colour
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187737
+    m_Key: cmd.cant_be_colour
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187738
+    m_Key: cmd.player_still_joining
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187739
+    m_Key: cmd.no_room
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187740
+    m_Key: cmd.no_room_colour
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187741
+    m_Key: cmd.gave
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187742
+    m_Key: cmd.gave_colour
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187743
+    m_Key: cmd.gave_you
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187744
+    m_Key: cmd.gave_you_colour
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187745
+    m_Key: word.on
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270195187746
+    m_Key: word.off
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452288
+    m_Key: join.version_unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452289
+    m_Key: join.version
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452290
+    m_Key: join.password_needed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452291
+    m_Key: join.wrong_password
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452292
+    m_Key: join.full
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452293
+    m_Key: join.banned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452294
+    m_Key: join.banned_reason
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452295
+    m_Key: join.name_taken
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452296
+    m_Key: join.already_playing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452297
+    m_Key: mods.missing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452298
+    m_Key: mods.other_version
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452299
+    m_Key: mods.different
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452300
+    m_Key: mods.needed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452301
+    m_Key: name.length
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452302
+    m_Key: name.characters
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452303
+    m_Key: world.name_empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452304
+    m_Key: world.name_length
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452305
+    m_Key: sleep.not_bed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452306
+    m_Key: sleep.only_night
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452307
+    m_Key: sleep.bed_taken
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452308
+    m_Key: sleep.bed_taken_by
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452309
+    m_Key: sleep.danger
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452310
+    m_Key: sleep.spawn_set
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452311
+    m_Key: sleep.bed_gone
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452312
+    m_Key: sleep.night_skipped
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452313
+    m_Key: pet.tamed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452314
+    m_Key: storage.locked
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452315
+    m_Key: storage.in_use
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452316
+    m_Key: paint.not_allowed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452317
+    m_Key: paint.not_allowed_any
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452318
+    m_Key: inventory.broke
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452319
+    m_Key: inventory.no_room
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452320
+    m_Key: partslister.hurt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452321
+    m_Key: partslister.not_yours
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452322
+    m_Key: partslister.too_far
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452323
+    m_Key: partslister.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452324
+    m_Key: partslister.save_failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452325
+    m_Key: partslister.saved
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452326
+    m_Key: partslister.files
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452327
+    m_Key: partslister.bricklink_colorless
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452328
+    m_Key: partslister.ldraw_colorless
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452329
+    m_Key: partslister.making_model
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452330
+    m_Key: importer.incomplete
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452331
+    m_Key: importer.bad_parts
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452332
+    m_Key: importer.not_loaded
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452333
+    m_Key: importer.blocked
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452334
+    m_Key: importer.player_in_way
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452335
+    m_Key: importer.too_far
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8270589452336
+    m_Key: importer.placed
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

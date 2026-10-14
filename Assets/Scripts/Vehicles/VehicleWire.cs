@@ -47,21 +47,28 @@ namespace Brickcraft.Vehicles
         /// <summary>A vehicle has no more than this many wires.</summary>
         public const int MaxPerVehicle = 256;
 
-        /// <summary>A part that can be wired to a seat: one that does something (a wheel, for now).</summary>
+        /// <summary>A part that can be wired to a seat: one that does something (a wheel, a propeller).</summary>
         public static bool CanWire(Brick part) {
-            return part != null && part.vehicle != null && Server.items.TryGetValue(part.itemId, out Item item) && item.VehicleRole == VehicleRole.Wheel;
+            if (part == null || part.vehicle == null || !Server.items.TryGetValue(part.itemId, out Item item)) {
+                return false;
+            }
+            VehicleRole role = item.VehicleRole;
+            return role == VehicleRole.Wheel || role == VehicleRole.Propeller;
         }
 
         /// <summary>
-        /// The wires a part gets when it's wired to a seat: a wheel goes forward and back with the throttle; one ahead of the
-        /// vehicle's middle (for whoever sits there) also steers.
+        /// The wires a part gets when it's wired to a seat: it goes forward and back with the throttle; a wheel ahead of the
+        /// vehicle's middle (for whoever sits there) also steers, and so does an upright propeller.
         /// </summary>
         public static List<VehicleWire> Defaults(Vehicle vehicle, Brick seat, Brick part) {
             List<VehicleWire> wires = new List<VehicleWire>() {
                 new VehicleWire() { seat = seat.id, part = part.id, action = WireAction.Drive, source = WireSource.Throttle },
             };
             Vector3 forward = VehicleShape.Seat(seat, vehicle.transform).forward;
-            if (Vector3.Dot(part.placement.LocalBounds.center - vehicle.grid.CentreOfMass, forward) > Server.studSize * 0.5f) {
+            bool steers = part.item.VehicleRole == VehicleRole.Propeller
+                ? VehicleDrive.PropellerAxis(VehicleShape.MeshBounds(part, vehicle.transform), forward) != Vector3.up
+                : Vector3.Dot(part.placement.LocalBounds.center - vehicle.grid.CentreOfMass, forward) > Server.studSize * 0.5f;
+            if (steers) {
                 wires.Add(new VehicleWire() { seat = seat.id, part = part.id, action = WireAction.Steer, source = WireSource.Steering });
             }
             return wires;

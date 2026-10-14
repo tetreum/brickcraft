@@ -12,6 +12,10 @@ namespace Brickcraft.Vehicles
     /// The wheels wired to the driver's seat do what their wires say (see VehicleWire), and brake with the brake key. With
     /// no wires from that seat, every wheel that rolls the way the driver faces is driven and the ones ahead of the centre
     /// of mass steer, so a simple car drives as it's built.
+    ///
+    /// In water its bricks float: each is pushed up by the water it's under (bricks are hollow: they all float) and slowed
+    /// by it. Propellers push along their axis (the thin one of their mesh), the way the driver faces, or up if they lie
+    /// flat; the ones behind the centre of mass steer by turning their push, like an outboard motor.
     /// </summary>
     public class VehicleDrive
     {
@@ -26,6 +30,13 @@ namespace Brickcraft.Vehicles
         private const float Braking = 1.2f;
         // a little braking with no throttle, so it doesn't roll forever
         private const float Rolling = 0.05f;
+        /// <summary>Full throttle on a vehicle's propellers, metres per second each second.</summary>
+        public const float PropellerAcceleration = 4;
+        // kilograms a cubic metre, and how much a brick in it is slowed (of the water it moves, each second)
+        private const float WaterDensity = 1000;
+        private const float WaterDrag = 0.8f;
+        // a brick's part under water, found to a sixteenth
+        private const int SurfaceSteps = 4;
 
         private class Wheel
         {
@@ -44,8 +55,30 @@ namespace Brickcraft.Vehicles
             public bool isDriven;
         }
 
+        // a brick that floats: where it is in the vehicle, how much water it moves under
+        private struct Floater
+        {
+            public Vector3 bottom;
+            public Vector3 top;
+            public float volume;
+        }
+
+        private class Propeller
+        {
+            public Vector3 centre;
+            // the way it pushes, forward
+            public Vector3 axis;
+            // it lies upright: its push turns to steer (the other way if it's ahead of the centre of mass)
+            public float steerSign;
+            public readonly List<VehicleWire> wires = new List<VehicleWire>();
+            public bool isDriven;
+        }
+
         private readonly Vehicle vehicle;
         private readonly List<Wheel> wheels = new List<Wheel>();
+        private readonly List<Floater> floaters = new List<Floater>();
+        private readonly List<Propeller> propellers = new List<Propeller>();
+        private int drivenPropellers;
         private Vector3 forward = Vector3.forward;
         private bool isSimulated;
         private bool isWired;
@@ -57,6 +90,10 @@ namespace Brickcraft.Vehicles
 
         public int WheelCount {
             get { return wheels.Count; }
+        }
+
+        public int PropellerCount {
+            get { return propellers.Count; }
         }
 
         /// <summary>
@@ -111,7 +148,70 @@ namespace Brickcraft.Vehicles
             foreach (Wheel wheel in wheels) {
                 tune(wheel, load);
             }
+
+            floaters.Clear();
+            float cell = Server.studSize * Server.studSize * Server.plateHeight;
+            foreach (Brick brick in vehicle.grid.Bricks) {
+                Bounds bounds = brick.placement.LocalBounds;
+                Vector3Int size = brick.placement.Size;
+                floaters.Add(new Floater() {
+                    bottom = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z),
+                    top = new Vector3(bounds.center.x, bounds.max.y, bounds.center.z),
+                    volume = size.x * size.y * size.z * cell,
+                });
+            }
+
+            propellers.Clear();
+            drivenPropellers = 0;
+            foreach (Brick brick in vehicle.grid.Bricks) {
+                if (!Server.items.TryGetValue(brick.itemId, out Item item) || item.VehicleRole != VehicleRole.Propeller || brick.gameObject == null) {
+                    continue;
+                }
+                Propeller propeller = addPropeller(brick, body.centerOfMass);
+                foreach (VehicleWire wire in seatWires) {
+                    if (wire.part == brick.id) {
+                        propeller.wires.Add(wire);
+                        propeller.isDriven |= wire.action == WireAction.Drive;
+                    }
+                }
+                if (!isWired) {
+                    propeller.isDriven = Vector3.Dot(propeller.axis, forward) > 0.5f;
+                }
+                if (propeller.isDriven) {
+                    drivenPropellers++;
+                }
+                propellers.Add(propeller);
+            }
             SetSimulated(isSimulated);
+        }
+
+        /// <summary>
+        /// The way a propeller pushes, in the vehicle's space: along the thin axis of its mesh, forward for the driver (or
+        /// up, lying flat; or to the driver's right, across).
+        /// </summary>
+        public static Vector3 PropellerAxis(Bounds mesh, Vector3 forward) {
+            Vector3 size = mesh.size;
+            Vector3 axis = size.y <= size.x && size.y <= size.z ? Vector3.up : size.x <= size.z ? Vector3.right : Vector3.forward;
+            if (axis == Vector3.up) {
+                return axis;
+            }
+            Vector3 right = Vector3.Cross(Vector3.up, forward);
+            float along = Vector3.Dot(axis, forward);
+            if (Mathf.Abs(along) > 0.5f) {
+                return axis * Mathf.Sign(along);
+            }
+            return Vector3.Dot(axis, right) >= 0 ? axis : -axis;
+        }
+
+        private Propeller addPropeller(Brick brick, Vector3 centreOfMass) {
+            Bounds bounds = VehicleShape.MeshBounds(brick, vehicle.transform);
+            Vector3 axis = PropellerAxis(bounds, forward);
+            float ahead = Vector3.Dot(bounds.center - centreOfMass, forward);
+            return new Propeller() {
+                centre = bounds.center,
+                axis = axis,
+                steerSign = axis == Vector3.up ? 0 : ahead > 0 ? 1 : -1,
+            };
         }
 
         private Wheel addWheel(Brick brick, Item item, Vector3 centreOfMass) {
@@ -170,8 +270,79 @@ namespace Brickcraft.Vehicles
             }
         }
 
-        /// <summary>Drives it for a physics step.</summary>
+        /// <summary>Drives it for a physics step, and floats it.</summary>
         public void Apply(VehicleInput input) {
+            applyWheels(input);
+            applyPropellers(input);
+            applyWater();
+        }
+
+        // what the part's wires add up to, for an action
+        private static float wired(List<VehicleWire> wires, WireAction action, VehicleInput input) {
+            float value = 0;
+            foreach (VehicleWire wire in wires) {
+                if (wire.action == action) {
+                    value += VehicleWires.Value(wire, input);
+                }
+            }
+            return Mathf.Clamp(value, -1, 1);
+        }
+
+        private void applyPropellers(VehicleInput input) {
+            Rigidbody body = vehicle.Body;
+            Transform tr = vehicle.transform;
+            foreach (Propeller propeller in propellers) {
+                float drive, steer;
+                if (isWired) {
+                    drive = wired(propeller.wires, WireAction.Drive, input);
+                    steer = wired(propeller.wires, WireAction.Steer, input);
+                } else {
+                    drive = propeller.isDriven ? Mathf.Clamp(input.throttle, -1, 1) : 0;
+                    steer = Mathf.Clamp(input.steer, -1, 1);
+                }
+                if (!propeller.isDriven || drive == 0) {
+                    continue;
+                }
+                Vector3 push = tr.TransformDirection(Quaternion.AngleAxis(steer * MaxSteer * propeller.steerSign, Vector3.up) * propeller.axis);
+                if (Vector3.Dot(body.velocity, push) * Mathf.Sign(drive) > MaxSpeed) {
+                    continue;
+                }
+                body.AddForceAtPosition(push * drive * body.mass * PropellerAcceleration / drivenPropellers, tr.TransformPoint(propeller.centre));
+            }
+        }
+
+        // each brick under water is pushed up by the water it moves, and slowed by it
+        private void applyWater() {
+            Rigidbody body = vehicle.Body;
+            Transform tr = vehicle.transform;
+            float g = -Physics.gravity.y;
+            foreach (Floater floater in floaters) {
+                Vector3 bottom = tr.TransformPoint(floater.bottom);
+                if (!World.Water.IsAt(bottom)) {
+                    continue;
+                }
+                Vector3 top = tr.TransformPoint(floater.top);
+                float under = 1;
+                if (!World.Water.IsAt(top)) {
+                    // where the surface is, between its bottom and its top
+                    float low = 0, high = 1;
+                    for (int step = 0; step < SurfaceSteps; step++) {
+                        float middle = (low + high) / 2;
+                        if (World.Water.IsAt(Vector3.Lerp(bottom, top, middle))) {
+                            low = middle;
+                        } else {
+                            high = middle;
+                        }
+                    }
+                    under = (low + high) / 2;
+                }
+                Vector3 centre = Vector3.Lerp(bottom, top, under / 2);
+                float water = under * floater.volume * WaterDensity;
+                body.AddForceAtPosition(Vector3.up * water * g - body.GetPointVelocity(centre) * water * WaterDrag, centre);
+            }
+        }
+
+        private void applyWheels(VehicleInput input) {
             Rigidbody body = vehicle.Body;
             float speed = Vector3.Dot(body.velocity, vehicle.transform.TransformDirection(forward));
             float g = -Physics.gravity.y;
@@ -182,13 +353,8 @@ namespace Brickcraft.Vehicles
                 float drive = 0, steer = 0;
                 bool brakes = true;
                 if (isWired) {
-                    foreach (VehicleWire wire in wheel.wires) {
-                        if (wire.action == WireAction.Drive) {
-                            drive += VehicleWires.Value(wire, input);
-                        } else {
-                            steer += VehicleWires.Value(wire, input);
-                        }
-                    }
+                    drive = wired(wheel.wires, WireAction.Drive, input);
+                    steer = wired(wheel.wires, WireAction.Steer, input);
                     brakes = wheel.wires.Count > 0;
                 } else {
                     drive = wheel.isDriven ? input.throttle : 0;

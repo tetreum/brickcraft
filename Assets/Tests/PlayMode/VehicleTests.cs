@@ -296,6 +296,78 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator ABoatFloatsAndItsPropellerPushesIt() {
+            Assume.That(Server.items.ContainsKey("part_41530"), "an upright propeller in the catalogue");
+            BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
+            BlockType water = (BlockType)BlockDatabase.IdOf("water");
+            // a basin, two blocks of water deep
+            Vector3Int floor = TestGame.PlayerBlock + new Vector3Int(0, 12, 0);
+            const int Size = 9;
+            TestGame.Floor(floor, Size + 1, stone);
+            for (int y = 1; y <= 3; y++) {
+                for (int x = -Size - 1; x <= Size + 1; x++) {
+                    for (int z = -Size - 1; z <= Size + 1; z++) {
+                        bool wall = Mathf.Max(Mathf.Abs(x), Mathf.Abs(z)) == Size + 1;
+                        if (wall || y <= 2) {
+                            Assert.IsTrue(Network.WorldNetwork.ServerSetBlock(floor + new Vector3Int(x, y, z), wall ? stone : water, Placer.Now(0)));
+                        }
+                    }
+                }
+            }
+            float surface = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + new Vector3Int(0, 3, 0))).y;
+            Vector3 wallTop = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + new Vector3Int(Size + 1, 4, 0)));
+            yield return TestGame.WaitUntil(() => Physics.Raycast(wallTop + Vector3.up, Vector3.down, 2), 10, "the basin solid");
+
+            // a raft of 2x2 bricks above the water, a propeller behind (-Z), a seat facing away from it
+            Vector3Int start = BrickGrid.BlockToCell(floor + new Vector3Int(0, 4, -6));
+            Vehicle boat = VehicleSystem.ServerCreate(brick2x2, 4, at(start));
+            for (int x = 0; x < 8; x += 2) {
+                for (int z = 0; z < 8; z += 2) {
+                    if (x != 0 || z != 0) {
+                        VehicleSystem.ServerPlace(boat, brick2x2, 4, at(new Vector3Int(x, 0, z)));
+                    }
+                }
+            }
+            Item propellerItem = Server.items["part_41530"];
+            Brick propeller = VehicleSystem.ServerPlace(boat, propellerItem, propellerItem.color,
+                new BrickPlacement(propellerItem.brickModel, new Vector3Int(2, 0, -1)));
+            Assert.AreEqual(Vector3.forward, VehicleDrive.PropellerAxis(VehicleShape.MeshBounds(propeller, boat.transform), Vector3.forward),
+                "it pushes along its thin side");
+            Item seatItem = Server.items["seat"];
+            Brick seat = null;
+            for (int rotation = 0; rotation < 4 && seat == null; rotation++) {
+                Brick placed = VehicleSystem.ServerPlace(boat, seatItem, 4, new BrickPlacement(seatItem.brickModel, new Vector3Int(3, 3, 3), rotation));
+                if (VehicleShape.Seat(placed, boat.transform).forward == Vector3.forward) {
+                    seat = placed;
+                } else {
+                    VehicleSystem.ServerRemove(placed);
+                }
+            }
+            Assert.IsNotNull(seat, "a seat facing forward");
+            yield return null;
+
+            Network.PlayerNetwork player = TestGame.Player.GetComponent<Network.PlayerNetwork>();
+            VehicleSystem.ServerSit(player, seat);
+            yield return TestGame.Wait(3);
+            Assert.AreEqual(1, boat.Drive.PropellerCount);
+            float bottom = boat.transform.position.y;
+            Assert.Greater(bottom, surface - 0.5f, "it floats");
+            Assert.Less(bottom, surface + 0.1f, "in the water");
+
+            Vector3 from = boat.transform.position;
+            Vector3 forward = boat.transform.forward;
+            try {
+                VehicleControls.Override = new VehicleInput() { throttle = 1 };
+                yield return TestGame.Wait(2);
+            } finally {
+                VehicleControls.Override = null;
+            }
+            Assert.Greater(Vector3.Dot(boat.transform.position - from, forward), 1, "its propeller pushed it forward");
+            Assert.Greater(boat.transform.position.y, surface - 0.5f, "still afloat");
+            VehicleSystem.ServerStandUp(player, Vector3.zero, Vector3.zero);
+        }
+
+        [UnityTest]
         public IEnumerator ADriverDrivesItAndItComesToRestWhenLeft() {
             Item wheelItem = wheel();
             Assume.That(wheelItem, Is.Not.Null, "a small wheel in the catalogue");

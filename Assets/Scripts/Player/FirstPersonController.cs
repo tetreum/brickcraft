@@ -428,6 +428,15 @@ namespace Brickcraft
         }
 
 
+        /// <summary>It looks where its body and camera point now (after something else turned them: a vehicle's seat).</summary>
+        public void ResetLook()
+        {
+            if (m_Camera != null) // started
+            {
+                m_MouseLook.Init(transform, m_Camera.transform);
+            }
+        }
+
         private void RotateView()
         {
             m_MouseLook.LookRotation (transform, m_Camera.transform);

@@ -324,6 +324,8 @@ namespace Brickcraft
                 if (isQuick && lookedBrick == clickedDoor) {
                     if (isBed(clickedDoor)) {
                         network.CmdSleep(clickedDoor.id);
+                    } else if (isSeat(clickedDoor)) {
+                        network.CmdSit(clickedDoor.id);
                     } else if (BrickStorage.StorageOf(clickedDoor) != null) {
                         network.CmdOpenStorage(clickedDoor.id);
                     } else {
@@ -336,9 +338,14 @@ namespace Brickcraft
             return isQuick;
         }
 
-        // a click uses it: a door, a bed, a chest
+        // a click uses it: a door, a bed, a chest, a vehicle's seat
         private static bool isUsable(Brick brick) {
-            return brick.gameObject != null && (brick.gameObject.GetComponentInChildren<BrickDoor>() != null || isBed(brick) || BrickStorage.StorageOf(brick) != null);
+            return brick.gameObject != null && (brick.gameObject.GetComponentInChildren<BrickDoor>() != null || isBed(brick) || isSeat(brick)
+                || BrickStorage.StorageOf(brick) != null);
+        }
+
+        private static bool isSeat(Brick brick) {
+            return brick.vehicle != null && Server.items.TryGetValue(brick.itemId, out Item item) && item.VehicleRole == Vehicles.VehicleRole.Seat;
         }
 
         private static bool isBed(Brick brick) {

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Brickcraft.Bricks;
+using Brickcraft.Network;
 using Mirror;
 using UnityEngine;
 
@@ -21,6 +22,10 @@ namespace Brickcraft.Vehicles
     /// ground, and bricks placed on its bricks are its own (see VehicleSystem). They're placed like the world's, studs
     /// and plates, but on its own grid (VehicleGrid), so it can move and turn. Its parts are synced with it: every peer
     /// makes their bricks under it (Server.spawnBrick with the vehicle).
+    ///
+    /// It's driven from a seat (see VehicleSystem.ServerSit): the driver's client simulates it then (it owns it, and
+    /// sends where it is), the others follow. Left, the server simulates it until it comes to rest (a plane falls...),
+    /// then it stays where it is, solid to build on. See VehicleDrive for how it moves.
     /// </summary>
     public class Vehicle : NetworkBehaviour
     {
@@ -36,11 +41,135 @@ namespace Brickcraft.Vehicles
 
         public readonly VehicleGrid grid = new VehicleGrid();
 
+        /// <summary>The player driving it (its netId), 0 if nobody is.</summary>
+        [SyncVar(hook = nameof(onDriverChanged))] public uint driverId;
+
         public Rigidbody Body { get; private set; }
+
+        /// <summary>It moves by physics on this peer: its driver's, or the server's while it comes to rest.</summary>
+        public bool IsSimulated { get; private set; }
+
+        public VehicleDrive Drive { get; private set; }
+
+        // with nobody driving it the server lets it come to rest, for at most this long
+        private const float MaxSettleTime = 60;
+        private const float RestTime = 1;
+        private bool settling;
+        private float settleTime, restTime;
+        private bool physicsDirty = true;
+        private NetworkTransformBase netTransform;
 
         private void Awake() {
             Body = GetComponent<Rigidbody>();
+            netTransform = GetComponent<NetworkTransformBase>();
+            Drive = new VehicleDrive(this);
+            grid.Changed += () => physicsDirty = true;
             All.Add(this);
+        }
+
+        public override void OnStartServer() {
+            updateSimulation();
+        }
+
+        public override void OnStartAuthority() {
+            updateSimulation();
+        }
+
+        public override void OnStopAuthority() {
+            updateSimulation();
+        }
+
+        private void onDriverChanged(uint oldDriver, uint newDriver) {
+            updateSimulation();
+        }
+
+        /// <summary>The player driving it, null if nobody is.</summary>
+        public PlayerNetwork Driver {
+            get {
+                if (driverId == 0) {
+                    return null;
+                }
+                NetworkIdentity identity;
+                bool found = isServer ? NetworkServer.spawned.TryGetValue(driverId, out identity) : NetworkClient.spawned.TryGetValue(driverId, out identity);
+                return found && identity != null ? identity.GetComponent<PlayerNetwork>() : null;
+            }
+        }
+
+        /// <summary>Someone sat at its wheel (or nobody, with how it was moving: it goes on like that).</summary>
+        [Server]
+        public void ServerSetDriver(PlayerNetwork driver, Vector3 velocity, Vector3 angularVelocity) {
+            if (driver != null) {
+                if (connectionToClient != driver.connectionToClient) {
+                    if (connectionToClient != null) {
+                        netIdentity.RemoveClientAuthority();
+                    }
+                    netIdentity.AssignClientAuthority(driver.connectionToClient);
+                }
+                settling = false;
+                driverId = driver.netId;
+            } else {
+                if (connectionToClient != null) {
+                    netIdentity.RemoveClientAuthority();
+                }
+                driverId = 0;
+                settling = true;
+                settleTime = restTime = 0;
+            }
+            updateSimulation();
+            if (driver == null && IsSimulated) {
+                Body.velocity = Vector3.ClampMagnitude(velocity, VehicleDrive.MaxSpeed * 2);
+                Body.angularVelocity = Vector3.ClampMagnitude(angularVelocity, 10);
+            }
+        }
+
+        // who moves it: its driver sends where it is, or the server does
+        private void updateSimulation() {
+            bool driven = driverId != 0;
+            SyncDirection direction = driven ? SyncDirection.ClientToServer : SyncDirection.ServerToClient;
+            if (netTransform != null && netTransform.syncDirection != direction) {
+                netTransform.syncDirection = direction;
+                netTransform.ResetState();
+            }
+            IsSimulated = driven ? isOwned : isServer && settling;
+            Body.isKinematic = !IsSimulated;
+            // followed, it's moved by the network, not its body
+            Body.interpolation = IsSimulated ? RigidbodyInterpolation.Interpolate : RigidbodyInterpolation.None;
+            Drive.SetSimulated(IsSimulated);
+            physicsDirty = true;
+        }
+
+        private void FixedUpdate() {
+            if (physicsDirty) {
+                physicsDirty = false;
+                Drive.Rebuild(driveForward());
+            }
+            if (!IsSimulated) {
+                return;
+            }
+            if (driverId != 0) {
+                Drive.Apply(VehicleControls.Read());
+                return;
+            }
+            Drive.Apply(VehicleInput.Parked);
+            settleTime += Time.fixedDeltaTime;
+            bool still = Body.velocity.sqrMagnitude < 0.04f && Body.angularVelocity.sqrMagnitude < 0.04f;
+            restTime = still ? restTime + Time.fixedDeltaTime : 0;
+            if (restTime >= RestTime || settleTime >= MaxSettleTime) {
+                settling = false;
+                updateSimulation();
+            }
+        }
+
+        // the way its driver faces, in its space (forward if nobody drives it)
+        private Vector3 driveForward() {
+            PlayerNetwork driver = Driver;
+            Brick seat = driver != null ? SeatOf(driver) : null;
+            return seat != null ? VehicleShape.Seat(seat, transform).forward : Vector3.forward;
+        }
+
+        /// <summary>The seat of this vehicle the player is in, null if it isn't in one.</summary>
+        public Brick SeatOf(PlayerNetwork player) {
+            return !string.IsNullOrEmpty(player.seatedIn) && Server.bricks.TryGetValue(player.seatedIn, out Brick seat) && seat.vehicle == this ? seat : null;
         }
 
         private void OnDestroy() {
@@ -59,6 +188,7 @@ namespace Brickcraft.Vehicles
                 repair();
                 return;
             }
+            updateSimulation();
             foreach (VehiclePart part in parts) {
                 spawn(part);
             }

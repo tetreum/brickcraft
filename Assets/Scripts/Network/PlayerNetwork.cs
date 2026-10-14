@@ -30,6 +30,9 @@ namespace Brickcraft.Network
 
         // shown in the player list; changes raise EventManager.PlayerRoleChanged
         [SyncVar(hook = nameof(onRoleChanged))] public string role;
+        /// <summary>The vehicle's seat it's on (a brick id), empty if it isn't on one, see Vehicles.VehicleSystem.ServerSit.</summary>
+        [SyncVar(hook = nameof(onSeatChanged))] public string seatedIn = "";
+
         /// <summary>The bed it sleeps in (a brick id), empty when awake, see PlayerSleep.</summary>
         [SyncVar(hook = nameof(onSleepingChanged))] public string sleepingIn = "";
         [SyncVar] public int pingMs;
@@ -89,6 +92,13 @@ namespace Brickcraft.Network
         private void Awake() {
             inventory = GetComponent<PlayerInventory>();
             health = GetComponent<Health>();
+            seat = gameObject.AddComponent<Vehicles.PlayerSeat>();
+        }
+
+        private Vehicles.PlayerSeat seat;
+
+        private void onSeatChanged(string oldSeat, string newSeat) {
+            seat.Changed();
         }
 
         public override void OnStartServer() {
@@ -101,6 +111,7 @@ namespace Brickcraft.Network
 
         public override void OnStopServer() {
             inventory.ServerChanged -= refreshHeld;
+            Vehicles.VehicleSystem.ServerStandUp(this, Vector3.zero, Vector3.zero);
         }
 
         // a hit it takes: blocked by its shield (which wears), or eased by what it wears
@@ -173,6 +184,7 @@ namespace Brickcraft.Network
         [Server]
         private void onServerDied(DamageInfo damage) {
             blocking = false;
+            Vehicles.VehicleSystem.ServerStandUp(this, Vector3.zero, Vector3.zero);
             ChatEventType type = damage.kind == DamageInfo.Kind.Drowning ? ChatEventType.Drowned : ChatEventType.Died;
             ChatEvents.Send(new ChatEventMessage() { type = type, player = playerName, by = damage.attackerName });
             ModScripts.ModEvent("onPlayerDied", PlayerHandle.For(connectionToClient), attackerHandle(damage));
@@ -745,7 +757,7 @@ namespace Brickcraft.Network
         /// <summary>A click on a bed: sleeps in it (see PlayerSleep), or hears why not.</summary>
         [Command]
         public void CmdSleep(string brickId) {
-            if (health.isDead || !string.IsNullOrEmpty(sleepingIn) || !Server.bricks.TryGetValue(brickId, out Brick bed)
+            if (health.isDead || !string.IsNullOrEmpty(sleepingIn) || !string.IsNullOrEmpty(seatedIn) || !Server.bricks.TryGetValue(brickId, out Brick bed)
                     || bed.vehicle != null || !isInReach(bed.WorldBounds.center)) {
                 return;
             }
@@ -764,6 +776,27 @@ namespace Brickcraft.Network
         [Command]
         public void CmdStopSleeping() {
             PlayerSleep.Wake(this);
+        }
+
+        /// <summary>A click on a vehicle's seat: sits on it (see Vehicles.VehicleSystem.ServerSit), or hears why not.</summary>
+        [Command]
+        public void CmdSit(string brickId) {
+            if (health.isDead || !string.IsNullOrEmpty(sleepingIn) || !string.IsNullOrEmpty(seatedIn) || !Server.bricks.TryGetValue(brickId, out Brick seat)
+                    || !isInReach(seat.WorldBounds.center)) {
+                return;
+            }
+            GameText problem = Vehicles.VehicleSystem.WhyNotSit(this, seat);
+            if (!problem.IsEmpty) {
+                GameTexts.Send(connectionToClient, problem);
+                return;
+            }
+            Vehicles.VehicleSystem.ServerSit(this, seat);
+        }
+
+        /// <summary>Gets up from its seat; the vehicle goes on as its client had it moving, if it drove it.</summary>
+        [Command]
+        public void CmdStandUp(Vector3 velocity, Vector3 angularVelocity) {
+            Vehicles.VehicleSystem.ServerStandUp(this, velocity, angularVelocity);
         }
 
         /// <summary>Puts the player lying in a bed: feet on the point, head the other way from where it faces.</summary>

@@ -540,6 +540,14 @@ MonoBehaviour:
       a world) ({2} of its {3} triangles are seen)
     m_Metadata:
       m_Items: []
+  - m_Id: 42835332816896
+    m_Localized: That isn't a vehicle's seat.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 42835374759936
+    m_Localized: Someone is already sitting there.
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

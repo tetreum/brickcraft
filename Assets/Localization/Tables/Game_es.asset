@@ -543,6 +543,14 @@ MonoBehaviour:
       a un mundo) (se ven {2} de sus {3} tri\xE1ngulos)"
     m_Metadata:
       m_Items: []
+  - m_Id: 42835332816896
+    m_Localized: "Eso no es el asiento de un veh\xEDculo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 42835374759936
+    m_Localized: "Ya hay alguien sentado ah\xED."
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

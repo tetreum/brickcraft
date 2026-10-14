@@ -23,9 +23,9 @@ namespace Brickcraft.Vehicles
     {
         /// <summary>
         /// A part's mass when its item doesn't say: by the cells its model takes (studs x studs x plates), so a 2x4 brick
-        /// weighs 24 times a 1x1 plate.
+        /// weighs 24 times a 1x1 plate. In kilograms: a 2x2 brick (80 cm wide in the game) weighs 24.
         /// </summary>
-        public const float MassPerCell = 0.05f;
+        public const float MassPerCell = 2f;
 
         /// <summary>The role named in an item's info.json ("wheel", "seat"...), None if it isn't one.</summary>
         public static VehicleRole Parse(string role) {

@@ -25,8 +25,12 @@ namespace Brickcraft.Vehicles
             get { return bricks; }
         }
 
+        /// <summary>A brick went in or out.</summary>
+        public event System.Action Changed;
+
         public void Register(Brick brick) {
             bricks.Add(brick);
+            Changed?.Invoke();
             foreach (Vector3Int cell in brick.placement.Cells) {
                 cells[cell] = brick;
             }
@@ -36,6 +40,7 @@ namespace Brickcraft.Vehicles
             if (!bricks.Remove(brick)) {
                 return;
             }
+            Changed?.Invoke();
             foreach (Vector3Int cell in brick.placement.Cells) {
                 if (cells.TryGetValue(cell, out Brick there) && there == brick) {
                     cells.Remove(cell);

@@ -511,6 +511,14 @@ MonoBehaviour:
     m_Key: partslister.model_saved
     m_Metadata:
       m_Items: []
+  - m_Id: 42835332816896
+    m_Key: vehicle.not_seat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 42835374759936
+    m_Key: vehicle.seat_taken
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

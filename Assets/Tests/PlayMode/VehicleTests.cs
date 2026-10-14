@@ -153,7 +153,8 @@ namespace Brickcraft.Tests
         public IEnumerator AVehicleIsSavedWhereItWas() {
             Vehicle vehicle = VehicleSystem.ServerCreate(brick2x2, 4, at(high()));
             Brick top = VehicleSystem.ServerPlace(vehicle, brick2x2, 1, at(new Vector3Int(1, 3, 0)));
-            // moved and turned (its body too: it's interpolated)
+            yield return null; // a host applies the spawn message (where it was made) a frame later
+            // moved and turned (its body too)
             vehicle.transform.SetPositionAndRotation(vehicle.transform.position + new Vector3(0.3f, 0.5f, 0), Quaternion.Euler(0, 30, 0));
             vehicle.Body.position = vehicle.transform.position;
             vehicle.Body.rotation = vehicle.transform.rotation;
@@ -162,6 +163,7 @@ namespace Brickcraft.Tests
             // saved with its chunk once it's loaded (like what's on the ground)
             yield return TestGame.WaitUntil(() => Npcs.NpcSystem.IsLoaded(vehicle.transform.position), 30, "its chunk loaded");
 
+            near(position, FloatingOrigin.ToAbsolute(vehicle.transform.position), "still where it was moved, saved");
             yield return game.Stop();
             Assert.AreEqual(0, Vehicle.All.Count, "gone with the game");
             yield return game.Start();
@@ -183,6 +185,90 @@ namespace Brickcraft.Tests
             Assert.AreEqual(topId, saved.id, "the same brick");
             Assert.AreEqual(1, saved.color);
             Assert.AreEqual(2, back.parts.Count, "its parts, for the clients");
+        }
+
+        // a car on a floor: four wheels under a chassis of 2x2 bricks, a seat on it facing the way the wheels roll
+        private static Vehicle car(Vector3Int floor, Item wheelItem, out Brick seat) {
+            BrickModel model = wheelItem.brickModel;
+            Vector3Int cell = BrickGrid.BlockToCell(floor + Vector3Int.up);
+            Vehicle vehicle = VehicleSystem.ServerCreate(wheelItem, wheelItem.color, new BrickPlacement(model, cell));
+            int right = model.width + 4, back = model.depth + 6;
+            foreach (Vector3Int wheelAt in new[] { new Vector3Int(right, 0, 0), new Vector3Int(0, 0, back), new Vector3Int(right, 0, back) }) {
+                VehicleSystem.ServerPlace(vehicle, wheelItem, wheelItem.color, new BrickPlacement(model, wheelAt));
+            }
+            Item brick = Server.items["brick_2x2"];
+            for (int x = 0; x < right + model.width; x += 2) {
+                for (int z = 0; z < back + model.depth; z += 2) {
+                    VehicleSystem.ServerPlace(vehicle, brick, 4, new BrickPlacement(brick.brickModel, new Vector3Int(x, model.heightInPlates, z)));
+                }
+            }
+            // the wheels roll along the shorter side of their axle's
+            Bounds wheel = VehicleShape.MeshBounds(vehicle.grid.GetBrickAt(Vector3Int.zero), vehicle.transform);
+            Vector3 rolls = wheel.size.x <= wheel.size.z ? Vector3.forward : Vector3.right;
+            Item seatItem = Server.items["seat"];
+            Vector3Int seatAt = new Vector3Int((right + model.width) / 2 - 1, model.heightInPlates + 3, (back + model.depth) / 2 - 1);
+            for (int rotation = 0; rotation < 4; rotation++) {
+                seat = VehicleSystem.ServerPlace(vehicle, seatItem, 4, new BrickPlacement(seatItem.brickModel, seatAt, rotation));
+                if (Mathf.Abs(Vector3.Dot(VehicleShape.Seat(seat, vehicle.transform).forward, rolls)) > 0.5f) {
+                    return vehicle;
+                }
+                VehicleSystem.ServerRemove(seat);
+            }
+            Assert.Fail("a seat facing the way the wheels roll");
+            seat = null;
+            return vehicle;
+        }
+
+        [UnityTest]
+        public IEnumerator ADriverDrivesItAndItComesToRestWhenLeft() {
+            Item wheelItem = wheel();
+            Assume.That(wheelItem, Is.Not.Null, "a small wheel in the catalogue");
+            BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
+            Vector3Int floor = TestGame.PlayerBlock + new Vector3Int(0, 12, 0);
+            TestGame.Floor(floor, 14, stone);
+            Vector3 top = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + Vector3Int.up));
+            yield return TestGame.WaitUntil(() => Physics.Raycast(top + Vector3.up, Vector3.down, 2), 10, "the floor solid");
+
+            Vehicle vehicle = car(floor, wheelItem, out Brick seat);
+            Network.PlayerNetwork player = TestGame.Player.GetComponent<Network.PlayerNetwork>();
+            yield return null;
+            Assert.IsFalse(vehicle.IsSimulated, "parked: it stays where it was built");
+
+            VehicleSystem.ServerSit(player, seat);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(seat.id, player.seatedIn);
+            Assert.AreEqual(player.netId, vehicle.driverId, "the one in its seat drives it");
+            Assert.IsTrue(vehicle.IsSimulated, "its driver moves it");
+            Assert.AreEqual(Player.FreezeReason.Driving, Player.Instance.freezeReason, "the driver doesn't walk");
+            Assert.AreEqual(4, vehicle.Drive.WheelCount);
+
+            Vector3 forward = vehicle.transform.TransformDirection(VehicleShape.Seat(seat, vehicle.transform).forward);
+            Vector3 start = vehicle.transform.position;
+            VehicleControls.Override = new VehicleInput() { throttle = 0.5f };
+            try {
+                yield return TestGame.Wait(1.5f);
+            } finally {
+                VehicleControls.Override = null;
+            }
+            float moved = Vector3.Dot(vehicle.transform.position - start, forward);
+            Assert.Greater(moved, 1, "it went forward");
+            Assert.Less(Vector3.Distance(vehicle.transform.TransformPoint(VehicleShape.Seat(seat, vehicle.transform).sitPoint), player.transform.position), 1,
+                "the driver with it");
+
+            VehicleSystem.ServerStandUp(player, vehicle.Body.velocity, vehicle.Body.angularVelocity);
+            yield return null;
+            Assert.AreEqual("", player.seatedIn);
+            Assert.AreEqual(0u, vehicle.driverId);
+            Assert.AreNotEqual(Player.FreezeReason.Driving, Player.Instance.freezeReason, "it walks again");
+            foreach (Brick brick in vehicle.grid.Bricks) {
+                Assert.IsFalse(brick.WorldBounds.Contains(player.transform.position), "out of the vehicle");
+            }
+            float until = Time.time + 15;
+            while (vehicle.IsSimulated && Time.time < until) {
+                yield return null;
+            }
+            Assert.IsFalse(vehicle.IsSimulated, "the vehicle coming to rest: " + vehicle.Body.velocity + " " + vehicle.Body.angularVelocity + " at " + vehicle.transform.position + " floor " + top);
         }
     }
 }

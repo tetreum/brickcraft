@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Brickcraft.Bricks;
+using Brickcraft.Network;
 using Brickcraft.World;
 using Mirror;
 using UnityEngine;
@@ -15,6 +16,9 @@ namespace Brickcraft.Vehicles
     /// them: the other's bricks join this one.
     ///
     /// They're saved with the chunk they're in, like items on the ground (see NpcSystem, which saves and loads both).
+    ///
+    /// Players sit on their seats (PlayerNetwork.seatedIn): the first one in drives it (see Vehicle.ServerSetDriver),
+    /// then the next one in when they get up. Getting up puts them beside it; so does their seat going.
     /// </summary>
     public static class VehicleSystem
     {
@@ -38,6 +42,11 @@ namespace Brickcraft.Vehicles
         /// <summary>Removes a vehicle's brick; what it held together comes apart. Returns the bricks removed (it).</summary>
         public static List<Brick> ServerRemove(Brick brick) {
             Vehicle vehicle = brick.vehicle;
+            foreach (PlayerNetwork player in players()) {
+                if (player.seatedIn == brick.id) {
+                    ServerStandUp(player, vehicle.Body.velocity, vehicle.Body.angularVelocity);
+                }
+            }
             vehicle.ServerRemove(brick);
             if (vehicle.grid.Count == 0) {
                 NetworkServer.Destroy(vehicle.gameObject);
@@ -45,6 +54,77 @@ namespace Brickcraft.Vehicles
                 split(vehicle);
             }
             return new List<Brick>() { brick };
+        }
+
+        /// <summary>
+        /// Why the player can't sit on that brick now: it isn't a vehicle's seat, someone's on it; empty if it can.
+        /// </summary>
+        public static GameText WhyNotSit(PlayerNetwork player, Brick seat) {
+            if (seat.vehicle == null || seat.item.VehicleRole != VehicleRole.Seat) {
+                return GameText.Of("vehicle.not_seat");
+            }
+            foreach (PlayerNetwork other in players()) {
+                if (other != player && other.seatedIn == seat.id) {
+                    return GameText.Of("vehicle.seat_taken");
+                }
+            }
+            return new GameText();
+        }
+
+        /// <summary>Sits the player on a vehicle's seat (see WhyNotSit); if nobody drives it, it does.</summary>
+        public static void ServerSit(PlayerNetwork player, Brick seat) {
+            player.seatedIn = seat.id;
+            refreshDriver(seat.vehicle);
+        }
+
+        /// <summary>
+        /// The player gets up from its seat (its client puts it beside the vehicle, see PlayerSeat); the vehicle goes on as
+        /// it was moving, if it drove it.
+        /// </summary>
+        public static void ServerStandUp(PlayerNetwork player, Vector3 velocity, Vector3 angularVelocity) {
+            if (string.IsNullOrEmpty(player.seatedIn)) {
+                return;
+            }
+            Server.bricks.TryGetValue(player.seatedIn, out Brick seat);
+            player.seatedIn = "";
+            if (seat == null || seat.vehicle == null) {
+                return;
+            }
+            Vehicle vehicle = seat.vehicle;
+            if (vehicle.driverId == player.netId) {
+                vehicle.ServerSetDriver(null, velocity, angularVelocity);
+            }
+            refreshDriver(vehicle);
+        }
+
+        // the vehicle's driver is in one of its seats, else the first player in one (else nobody)
+        private static void refreshDriver(Vehicle vehicle) {
+            if (vehicle == null) {
+                return;
+            }
+            PlayerNetwork driver = vehicle.Driver;
+            if (driver != null && vehicle.SeatOf(driver) != null) {
+                return;
+            }
+            PlayerNetwork next = null;
+            foreach (PlayerNetwork player in players()) {
+                if (vehicle.SeatOf(player) != null) {
+                    next = player;
+                    break;
+                }
+            }
+            if (next != null || vehicle.driverId != 0) {
+                vehicle.ServerSetDriver(next, vehicle.Body.velocity, vehicle.Body.angularVelocity);
+            }
+        }
+
+        private static IEnumerable<PlayerNetwork> players() {
+            foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {
+                PlayerNetwork player = conn.identity != null ? conn.identity.GetComponent<PlayerNetwork>() : null;
+                if (player != null) {
+                    yield return player;
+                }
+            }
         }
 
         /// <summary>Paints a vehicle's brick (a colour its item can have).</summary>
@@ -143,7 +223,9 @@ namespace Brickcraft.Vehicles
                 Vehicle piece = create(vehicle.transform.position, vehicle.transform.rotation);
                 move(groups[i], vehicle, piece, 0, Vector3Int.zero);
                 NetworkServer.Spawn(piece.gameObject);
+                refreshDriver(piece);
             }
+            refreshDriver(vehicle);
         }
 
         // other vehicles lined up with this one that the placement touches join it
@@ -173,6 +255,7 @@ namespace Brickcraft.Vehicles
                 move(theirs, other, vehicle, turns, offset);
                 NetworkServer.Destroy(other.gameObject);
             }
+            refreshDriver(vehicle);
         }
 
         // bricks from one vehicle to another (keeping their ids), their placements turned and moved into its cells

@@ -562,7 +562,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 50431984918529
-    m_Localized: Por ahora solo se pueden conectar ruedas.
+    m_Localized: "Solo se pueden conectar ruedas, h\xE9lices y alas."
     m_Metadata:
       m_Items: []
   - m_Id: 50431984918530

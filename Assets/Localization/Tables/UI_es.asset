@@ -774,9 +774,10 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 50433637474304
-    m_Localized: "No hay nada conectado a este asiento, as\xED que mueve todas las
-      ruedas. Conecta ruedas con la herramienta de cableado para elegir qu\xE9 hace
-      cada una."
+    m_Localized: "No hay nada conectado a este asiento, as\xED que cada pieza hace
+      lo que hace por defecto: ruedas y h\xE9lices impulsan, las ruedas delanteras
+      giran, las alas son alerones. Conecta piezas con la herramienta de cableado
+      para elegir qu\xE9 hace cada una."
     m_Metadata:
       m_Items: []
   - m_Id: 50433637474305
@@ -829,6 +830,14 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 50433637474317
     m_Localized: derecha
+    m_Metadata:
+      m_Items: []
+  - m_Id: 53867426078720
+    m_Localized: Inclinar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 53867447050240
+    m_Localized: Teclas subir/bajar
     m_Metadata:
       m_Items: []
   references:

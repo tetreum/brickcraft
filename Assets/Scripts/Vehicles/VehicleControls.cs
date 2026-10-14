@@ -10,6 +10,8 @@ namespace Brickcraft.Vehicles
         /// <summary>Right (1) or left (-1).</summary>
         public float steer;
         public float brake;
+        /// <summary>Up (1) or down (-1).</summary>
+        public float lift;
         /// <summary>The wires' keys held (KeyCodes), for tests; null reads the keyboard.</summary>
         public int[] keys;
 
@@ -18,7 +20,8 @@ namespace Brickcraft.Vehicles
 
     /// <summary>
     /// The driver's keys: the player's own (see GameInput), forward and back for the throttle, left and right to steer,
-    /// jump to brake; wires can have keys of their own (see VehicleWire). Not while typing.
+    /// jump to brake, and up and down (R and F: a plane's nose); wires can have keys of their own (see VehicleWire). Not
+    /// while typing.
     /// </summary>
     public static class VehicleControls
     {
@@ -36,6 +39,7 @@ namespace Brickcraft.Vehicles
                 throttle = axis(GameInput.MoveForward, GameInput.MoveBack),
                 steer = axis(GameInput.MoveRight, GameInput.MoveLeft),
                 brake = GameInput.GetButton(GameInput.Jump) ? 1 : 0,
+                lift = axis(GameInput.VehicleUp, GameInput.VehicleDown),
             };
         }
 

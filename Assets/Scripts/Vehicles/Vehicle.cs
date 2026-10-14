@@ -147,8 +147,11 @@ namespace Brickcraft.Vehicles
                 physicsDirty = false;
                 PlayerNetwork driver = Driver;
                 Brick seat = driver != null ? SeatOf(driver) : null;
-                Drive.Rebuild(seat != null ? VehicleShape.Seat(seat, transform).forward : Vector3.forward,
-                    seat != null ? WiresOf(seat.id) : new List<VehicleWire>());
+                List<VehicleWire> seatWires = seat != null ? WiresOf(seat.id) : new List<VehicleWire>();
+                if (seat != null && seatWires.Count == 0) {
+                    seatWires = VehicleWires.AllDefaults(this, seat);
+                }
+                Drive.Rebuild(seat != null ? VehicleShape.Seat(seat, transform).forward : Vector3.forward, seatWires);
             }
             if (!IsSimulated) {
                 return;

@@ -34,6 +34,9 @@ namespace Brickcraft
         public const string PlayerList = "PlayerList";
         public const string Menu = "Menu";
         public const string SlotPrefix = "Slot"; // Slot1 to Slot9
+        /// <summary>In a vehicle: up and down (a plane's nose, see Vehicles.WireSource.UpDown).</summary>
+        public const string VehicleUp = "VehicleUp";
+        public const string VehicleDown = "VehicleDown";
 
         public sealed class Binding
         {
@@ -100,6 +103,8 @@ namespace Brickcraft
                 new Binding("interface", Chat, "controls.chat", KeyCode.Return, KeyCode.KeypadEnter),
                 new Binding("interface", PlayerList, "controls.player_list", KeyCode.Tab),
                 new Binding("interface", Menu, "controls.menu", KeyCode.Escape),
+                new Binding("vehicle", VehicleUp, "controls.vehicle_up", KeyCode.R),
+                new Binding("vehicle", VehicleDown, "controls.vehicle_down", KeyCode.F),
             };
             for (int i = 1; i <= 9; i++) {
                 bindings.Add(new Binding("hotbar", SlotPrefix + i, "controls.hotbar_slot", KeyCode.Alpha0 + i, KeyCode.None, i));

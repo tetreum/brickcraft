@@ -811,6 +811,14 @@ MonoBehaviour:
     m_Key: wiring.right
     m_Metadata:
       m_Items: []
+  - m_Id: 53867426078720
+    m_Key: wiring.action.tilt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 53867447050240
+    m_Key: wiring.source.updown
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

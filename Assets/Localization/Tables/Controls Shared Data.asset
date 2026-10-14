@@ -183,6 +183,18 @@ MonoBehaviour:
     m_Key: key.caps_lock
     m_Metadata:
       m_Items: []
+  - m_Id: 53865458950144
+    m_Key: category.vehicle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 53865576390656
+    m_Key: controls.vehicle_up
+    m_Metadata:
+      m_Items: []
+  - m_Id: 53865576390657
+    m_Key: controls.vehicle_down
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

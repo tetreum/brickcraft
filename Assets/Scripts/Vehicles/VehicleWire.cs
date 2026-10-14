@@ -9,8 +9,10 @@ namespace Brickcraft.Vehicles
     {
         /// <summary>A wheel turns (forward for the driver, with a positive value).</summary>
         Drive = 0,
-        /// <summary>A wheel steers (to the driver's right, with a positive value).</summary>
+        /// <summary>A wheel or propeller steers (to the driver's right, with a positive value).</summary>
         Steer = 1,
+        /// <summary>A wing lifts more (or less, with a negative value): a flap, an elevator, an aileron, a rudder.</summary>
+        Tilt = 2,
     }
 
     /// <summary>What a wire's value comes from.</summary>
@@ -22,6 +24,8 @@ namespace Brickcraft.Vehicles
         Steering = 1,
         /// <summary>A key of the wire's own: 1 while it's held.</summary>
         Key = 2,
+        /// <summary>The driver's up and down keys (see GameInput.VehicleUp): 1 to -1.</summary>
+        UpDown = 3,
     }
 
     /// <summary>
@@ -47,24 +51,43 @@ namespace Brickcraft.Vehicles
         /// <summary>A vehicle has no more than this many wires.</summary>
         public const int MaxPerVehicle = 256;
 
-        /// <summary>A part that can be wired to a seat: one that does something (a wheel, a propeller).</summary>
+        /// <summary>A part that can be wired to a seat: one that does something (a wheel, a propeller, a wing).</summary>
         public static bool CanWire(Brick part) {
             if (part == null || part.vehicle == null || !Server.items.TryGetValue(part.itemId, out Item item)) {
                 return false;
             }
             VehicleRole role = item.VehicleRole;
-            return role == VehicleRole.Wheel || role == VehicleRole.Propeller;
+            return role == VehicleRole.Wheel || role == VehicleRole.Propeller || role == VehicleRole.Wing;
+        }
+
+        /// <summary>
+        /// The wires of a seat that has none of its own: every part as it'd be wired to it (see Defaults), so a vehicle
+        /// works as it's built.
+        /// </summary>
+        public static List<VehicleWire> AllDefaults(Vehicle vehicle, Brick seat) {
+            List<VehicleWire> wires = new List<VehicleWire>();
+            foreach (Brick part in vehicle.grid.Bricks) {
+                if (CanWire(part)) {
+                    wires.AddRange(Defaults(vehicle, seat, part));
+                }
+            }
+            return wires;
         }
 
         /// <summary>
         /// The wires a part gets when it's wired to a seat: it goes forward and back with the throttle; a wheel ahead of the
-        /// vehicle's middle (for whoever sits there) also steers, and so does an upright propeller.
+        /// vehicle's middle (for whoever sits there) also steers, and so does an upright propeller. A wing is a control
+        /// surface: behind the middle, it pitches with the up and down keys (an elevator); to a side, it rolls the vehicle
+        /// with left and right (an aileron); upright, it turns it with them (a rudder).
         /// </summary>
         public static List<VehicleWire> Defaults(Vehicle vehicle, Brick seat, Brick part) {
+            Vector3 forward = VehicleShape.Seat(seat, vehicle.transform).forward;
+            if (part.item.VehicleRole == VehicleRole.Wing) {
+                return new List<VehicleWire>() { wingDefault(vehicle, seat, part, forward) };
+            }
             List<VehicleWire> wires = new List<VehicleWire>() {
                 new VehicleWire() { seat = seat.id, part = part.id, action = WireAction.Drive, source = WireSource.Throttle },
             };
-            Vector3 forward = VehicleShape.Seat(seat, vehicle.transform).forward;
             bool steers = part.item.VehicleRole == VehicleRole.Propeller
                 ? VehicleDrive.PropellerAxis(VehicleShape.MeshBounds(part, vehicle.transform), forward) != Vector3.up
                 : Vector3.Dot(part.placement.LocalBounds.center - vehicle.grid.CentreOfMass, forward) > Server.studSize * 0.5f;
@@ -74,6 +97,29 @@ namespace Brickcraft.Vehicles
             return wires;
         }
 
+        private static VehicleWire wingDefault(Vehicle vehicle, Brick seat, Brick part, Vector3 forward) {
+            Bounds mesh = VehicleShape.MeshBounds(part, vehicle.transform);
+            Vector3 normal = VehicleDrive.PropellerAxis(mesh, forward);
+            Vector3 at = mesh.center - vehicle.grid.CentreOfMass;
+            Vector3 right = Vector3.Cross(Vector3.up, forward);
+            float ahead = Vector3.Dot(at, forward), side = Vector3.Dot(at, right);
+            VehicleWire wire = new VehicleWire() { seat = seat.id, part = part.id, action = WireAction.Tilt };
+            if (normal != Vector3.up) {
+                // a rudder: turning right, the tail goes left (pushed the other way from its normal, the right)
+                wire.source = WireSource.Steering;
+                wire.invert = ahead < 0;
+            } else if (Mathf.Abs(side) > Mathf.Max(Server.studSize, Mathf.Abs(ahead))) {
+                // an aileron: rolling right, the right wing lifts less
+                wire.source = WireSource.Steering;
+                wire.invert = side > 0;
+            } else {
+                // an elevator: nose up, the tail lifts less (a canard ahead, more)
+                wire.source = WireSource.UpDown;
+                wire.invert = ahead < 0;
+            }
+            return wire;
+        }
+
         /// <summary>The wire's value with what the driver asks for: -1 to 1.</summary>
         public static float Value(VehicleWire wire, VehicleInput input) {
             float value;
@@ -81,6 +127,7 @@ namespace Brickcraft.Vehicles
                 case WireSource.Throttle: value = input.throttle; break;
                 case WireSource.Steering: value = input.steer; break;
                 case WireSource.Key: value = VehicleControls.KeyHeld(input, wire.key) ? 1 : 0; break;
+                case WireSource.UpDown: value = input.lift; break;
                 default: value = 0; break;
             }
             return wire.invert ? -value : value;

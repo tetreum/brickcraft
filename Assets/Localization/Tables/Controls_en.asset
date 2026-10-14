@@ -186,6 +186,18 @@ MonoBehaviour:
     m_Localized: Caps Lock
     m_Metadata:
       m_Items: []
+  - m_Id: 53865458950144
+    m_Localized: Vehicles
+    m_Metadata:
+      m_Items: []
+  - m_Id: 53865576390656
+    m_Localized: Up (a plane's nose)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 53865576390657
+    m_Localized: Down (a plane's nose)
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

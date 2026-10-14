@@ -7,8 +7,8 @@ using UnityEngine.UI;
 namespace Brickcraft.UI
 {
     /// <summary>
-    /// A seat's controls (see WiringTool): a row for each of its wires, the part, what it does (drive, steer), with what
-    /// (the forward and back keys, left and right, or a key of its own: click it, then press one) and whether it's
+    /// A seat's controls (see WiringTool): a row for each of its wires, the part, what it does (drive, steer, tilt), with
+    /// what (the forward and back keys, left and right, up and down, or a key of its own: click it, then press one) and whether it's
     /// inverted; a part can have more wires (+), or lose one (x). Every change goes to the server at once
     /// (PlayerNetwork.CmdSetWires), and the rows show the vehicle's wires as they come back. Made the first time it's needed.
     /// </summary>
@@ -170,12 +170,13 @@ namespace Brickcraft.UI
             Text part = CodeUi.Label(row.transform, font, partName(wire.part), 14, FontStyle.Normal, CodeUi.TextColor);
             part.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
 
-            CodeUi.Clickable(row.transform, font, Loc.Get(Loc.UI, wire.action == WireAction.Drive ? "wiring.action.drive" : "wiring.action.steer"),
-                CodeUi.ButtonColor, 110, () => change(index, w => { w.action = w.action == WireAction.Drive ? WireAction.Steer : WireAction.Drive; return w; }));
+            CodeUi.Clickable(row.transform, font, Loc.Get(Loc.UI, "wiring.action." + wire.action.ToString().ToLowerInvariant()),
+                CodeUi.ButtonColor, 110, () => change(index, w => { w.action = (WireAction)(((int)w.action + 1) % 3); return w; }));
 
             string source = listening == index ? Loc.Get(Loc.UI, "wiring.press_key")
                 : wire.source == WireSource.Throttle ? Loc.Get(Loc.UI, "wiring.source.throttle")
                 : wire.source == WireSource.Steering ? Loc.Get(Loc.UI, "wiring.source.steering")
+                : wire.source == WireSource.UpDown ? Loc.Get(Loc.UI, "wiring.source.updown")
                 : Loc.Get(Loc.UI, "wiring.source.key", GameInput.KeyName((KeyCode)wire.key));
             CodeUi.Clickable(row.transform, font, source, CodeUi.ButtonColor, 190, () => nextSource(index));
 
@@ -200,12 +201,14 @@ namespace Brickcraft.UI
             return where.Length > 0 ? item.DisplayName + " (" + where + ")" : item.DisplayName;
         }
 
-        // throttle, steering, then a key (waiting for it), then throttle again
+        // throttle, steering, up and down, then a key (waiting for it), then throttle again
         private void nextSource(int index) {
             VehicleWire wire = shown[index];
             if (wire.source == WireSource.Throttle) {
                 change(index, w => { w.source = WireSource.Steering; return w; });
             } else if (wire.source == WireSource.Steering) {
+                change(index, w => { w.source = WireSource.UpDown; return w; });
+            } else if (wire.source == WireSource.UpDown) {
                 listening = index;
                 showRows();
             } else {

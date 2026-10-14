@@ -186,6 +186,18 @@ MonoBehaviour:
     m_Localized: "Bloq May\xFAs"
     m_Metadata:
       m_Items: []
+  - m_Id: 53865458950144
+    m_Localized: "Veh\xEDculos"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 53865576390656
+    m_Localized: "Subir (el morro de un avi\xF3n)"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 53865576390657
+    m_Localized: "Bajar (el morro de un avi\xF3n)"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

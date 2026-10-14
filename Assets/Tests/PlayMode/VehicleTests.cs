@@ -368,6 +368,32 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator AWingLiftsAGliderAsItGoes() {
+            Assume.That(Server.items.ContainsKey("part_42609"), "a 16x16 wing in the catalogue");
+            Item wingItem = Server.items["part_42609"];
+            Vehicle glider = VehicleSystem.ServerCreate(wingItem, wingItem.color, new BrickPlacement(wingItem.brickModel, high()));
+            Item seatItem = Server.items["seat"];
+            Vector3Int middle = new Vector3Int(wingItem.brickModel.width / 2 - 1, wingItem.brickModel.heightInPlates, wingItem.brickModel.depth / 2 - 1);
+            Brick seat = VehicleSystem.ServerPlace(glider, seatItem, 4, new BrickPlacement(seatItem.brickModel, middle));
+            yield return null;
+
+            Network.PlayerNetwork player = TestGame.Player.GetComponent<Network.PlayerNetwork>();
+            VehicleSystem.ServerSit(player, seat);
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Assert.IsTrue(glider.IsSimulated);
+            Assert.AreEqual(1, glider.Drive.WingCount);
+
+            // launched level, the way its pilot faces
+            Vector3 forward = glider.transform.TransformDirection(VehicleShape.Seat(seat, glider.transform).forward);
+            glider.Body.velocity = forward * 20;
+            float start = glider.transform.position.y;
+            yield return TestGame.Wait(1);
+            Assert.Greater(glider.transform.position.y, start - 2.5f, "it fell far less than a stone (4.9 m in a second)");
+            VehicleSystem.ServerStandUp(player, Vector3.zero, Vector3.zero);
+        }
+
+        [UnityTest]
         public IEnumerator ADriverDrivesItAndItComesToRestWhenLeft() {
             Item wheelItem = wheel();
             Assume.That(wheelItem, Is.Not.Null, "a small wheel in the catalogue");

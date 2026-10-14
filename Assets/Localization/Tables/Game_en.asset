@@ -558,7 +558,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 50431984918529
-    m_Localized: Only wheels can be wired, for now.
+    m_Localized: Only wheels, propellers and wings can be wired.
     m_Metadata:
       m_Items: []
   - m_Id: 50431984918530

@@ -778,8 +778,9 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 50433637474304
-    m_Localized: Nothing is wired to this seat, so it drives every wheel. Wire wheels
-      to it with the wiring tool to choose what each does.
+    m_Localized: 'Nothing is wired to this seat, so every part does what it does
+      by default: wheels and propellers drive, the front wheels steer, wings are
+      flaps. Wire parts to it with the wiring tool to choose what each does.'
     m_Metadata:
       m_Items: []
   - m_Id: 50433637474305
@@ -832,6 +833,14 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 50433637474317
     m_Localized: right
+    m_Metadata:
+      m_Items: []
+  - m_Id: 53867426078720
+    m_Localized: Tilt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 53867447050240
+    m_Localized: Up/down keys
     m_Metadata:
       m_Items: []
   references:

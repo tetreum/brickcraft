@@ -1,0 +1,55 @@
+# Runs the Edit Mode and Play Mode tests (Assets/Tests) on every pull request, with GameCI's Unity test runner.
+# It needs a Unity license in the repository's secrets (Settings > Secrets and variables > Actions):
+# UNITY_LICENSE (the contents of a Unity_lic.ulf), UNITY_EMAIL and UNITY_PASSWORD. See https://game.ci/docs/github/activation
+name: Tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write # the results as a check on the pull request
+
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Edit Mode and Play Mode tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - uses: actions/checkout@v4
+
+      # the imported project, so later runs skip most of the import
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}-${{ hashFiles('Assets/**/*.meta') }}
+          restore-keys: |
+            Library-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}-
+            Library-
+
+      - uses: game-ci/unity-test-runner@v4
+        id: tests
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          testMode: all
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Test results
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Test results
+          path: ${{ steps.tests.outputs.artifactsPath }}

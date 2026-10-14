@@ -20,13 +20,29 @@ namespace Brickcraft
 
         private const string KeyPrefix = "settings.";
 
-        /// <summary>Languages the game can be played in, as codes and names to show.</summary>
-        public static readonly string[] LanguageCodes = { "en" };
-        public static readonly string[] LanguageNames = { "English" };
+        /// <summary>
+        /// Languages the game can be played in: their codes (the locales of Assets/Localization, see Loc) and names, each
+        /// in its own language.
+        /// </summary>
+        public static readonly string[] LanguageCodes = { "en", "es" };
+        public static readonly string[] LanguageNames = { "English", "Español" };
 
+        /// <summary>The language picked, the computer's the first time if the game has it (English otherwise).</summary>
         public static string Language {
-            get { return getString(LanguageSetting, "en"); }
+            get { return getString(LanguageSetting, SystemLanguage); }
             set { setString(LanguageSetting, value); }
+        }
+
+        /// <summary>The computer's language, if the game has it; English otherwise.</summary>
+        public static string SystemLanguage {
+            get {
+                switch (Application.systemLanguage) {
+                    case UnityEngine.SystemLanguage.Spanish:
+                        return "es";
+                    default:
+                        return "en";
+                }
+            }
         }
 
         public const int MinRenderDistance = 6;

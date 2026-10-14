@@ -41,21 +41,27 @@ namespace Brickcraft.Network
             }
         }
 
-        /// <summary>The chat line of an event.</summary>
+        /// <summary>The chat line of an event, in the player's language (main thread).</summary>
         public static string Describe(ChatEventMessage message) {
             switch (message.type) {
                 case ChatEventType.Joined:
-                    return message.player + " joined the game";
+                    return Loc.Get(Loc.Game, "event.joined", message.player);
                 case ChatEventType.Left:
-                    return message.player + " left the game";
+                    return Loc.Get(Loc.Game, "event.left", message.player);
                 case ChatEventType.Kicked:
-                    return message.player + " was kicked by " + message.by + withReason(message.reason);
+                    return string.IsNullOrEmpty(message.reason)
+                        ? Loc.Get(Loc.Game, "event.kicked", message.player, message.by)
+                        : Loc.Get(Loc.Game, "event.kicked_reason", message.player, message.by, message.reason);
                 case ChatEventType.Banned:
-                    return message.player + " was banned by " + message.by + withReason(message.reason);
+                    return string.IsNullOrEmpty(message.reason)
+                        ? Loc.Get(Loc.Game, "event.banned", message.player, message.by)
+                        : Loc.Get(Loc.Game, "event.banned_reason", message.player, message.by, message.reason);
                 case ChatEventType.Died:
-                    return string.IsNullOrEmpty(message.by) ? message.player + " died" : message.player + " was killed by " + message.by;
+                    return string.IsNullOrEmpty(message.by)
+                        ? Loc.Get(Loc.Game, "event.died", message.player)
+                        : Loc.Get(Loc.Game, "event.killed", message.player, GameText.Resolve(message.by));
                 case ChatEventType.Drowned:
-                    return message.player + " drowned";
+                    return Loc.Get(Loc.Game, "event.drowned", message.player);
                 case ChatEventType.Mod:
                     return string.IsNullOrEmpty(message.reason) ? null : message.reason;
                 default:
@@ -76,10 +82,6 @@ namespace Brickcraft.Network
             string result = clean.ToString().Trim();
 
             return result.Length > ChatMessage.MaxLength ? result.Substring(0, ChatMessage.MaxLength) : result;
-        }
-
-        private static string withReason(string reason) {
-            return string.IsNullOrEmpty(reason) ? "" : ": " + reason;
         }
     }
 }

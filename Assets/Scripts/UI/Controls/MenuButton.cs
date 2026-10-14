@@ -1,3 +1,4 @@
+using Brickcraft.Events;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,7 +7,8 @@ namespace Brickcraft.UI
     /// <summary>
     /// A big menu button (Prefabs/UI/MenuButton) that looks like a brick seen from above: a rounded
     /// plate with a darker bottom edge, a row of studs on each side, an icon and a label. Set the label,
-    /// icon and variant on the instance, and the click on its Button.
+    /// icon and variant on the instance, and the click on its Button. With a labelKey (of the UI string table, see Loc)
+    /// the label is that key's text in the player's language while playing; label is its English, shown in the editor.
     /// </summary>
     [RequireComponent(typeof(Button))]
     public class MenuButton : MonoBehaviour
@@ -20,6 +22,7 @@ namespace Brickcraft.UI
 
         [Header("Content")]
         public string label = "Button";
+        public string labelKey;
         public Sprite icon;
         public Variant variant = Variant.Secondary;
 
@@ -64,9 +67,23 @@ namespace Brickcraft.UI
             apply();
         }
 
-        /// <summary>Changes the label from code.</summary>
+        private void OnEnable() {
+            EventManager.LanguageChanged.Subscribe(onLanguageChanged);
+            apply();
+        }
+
+        private void OnDisable() {
+            EventManager.LanguageChanged.Unsubscribe(onLanguageChanged);
+        }
+
+        private void onLanguageChanged(LanguageChangedEvent e) {
+            apply();
+        }
+
+        /// <summary>Changes the label from code (already in the player's language: it replaces the labelKey).</summary>
         public void SetLabel(string text) {
             label = text;
+            labelKey = null;
             apply();
         }
 
@@ -93,7 +110,7 @@ namespace Brickcraft.UI
             iconImage.sprite = icon;
             iconImage.enabled = icon != null;
 
-            labelText.text = label;
+            labelText.text = Application.isPlaying && !string.IsNullOrEmpty(labelKey) ? Loc.Get(Loc.UI, labelKey) : label;
             labelText.resizeTextMaxSize = isPrimary ? 36 : 30;
         }
     }

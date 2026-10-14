@@ -1,0 +1,15 @@
+{
+  "item.launcher": "Launcher",
+  "item.sturdy_brick": "Sturdy Brick 2x2",
+  "npc.moss_golem": "Moss Golem",
+  "welcome.title": "Example mod",
+  "welcome.subtitle": "Bricks with scripts",
+  "welcome.popup_title": "Welcome, {0}!",
+  "welcome.popup_text": "This world has the Example mod. The Launcher shoots plates up into the air when you use it (E). Want one?",
+  "welcome.yes": "Yes please",
+  "welcome.no": "No thanks",
+  "welcome.given": "There's a Launcher in your inventory",
+  "welcome.full": "Your inventory is full",
+  "where": "You're at {0}, {1}, {2}",
+  "night": "Night is falling on day {0}. Golems are about."
+}

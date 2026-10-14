@@ -59,6 +59,7 @@ namespace Brickcraft.Scripting
             script.Globals["world"] = createWorld(script);
             script.Globals["timer"] = createTimer(script, mod);
             script.Globals["chat"] = createChat(script);
+            script.Globals["text"] = DynValue.NewCallback((context, args) => DynValue.NewString(text(mod, args)));
             LuaUi.Install(script, mod);
         }
 
@@ -272,6 +273,31 @@ namespace Brickcraft.Scripting
             });
 
             return world;
+        }
+
+        // text(player or language, key, ...): the mod's text of that key in the player's language (its
+        // lang/[language].json, English's if it hasn't it, the key if neither has), with {0}, {1}... filled in
+        private static string text(ModInfo mod, CallbackArguments args) {
+            DynValue who = args[0];
+            PlayerHandle player = who.Type == DataType.UserData ? who.UserData.Object as PlayerHandle : null;
+            string language = player != null ? player.language : who.Type == DataType.String ? who.String : null;
+            if (language == null) {
+                throw new ScriptRuntimeException("text's first argument should be a player or a language, like \"es\"");
+            }
+            string key = args.AsType(1, "text", DataType.String).String;
+            string format = ModTexts.Get(mod.id, key, language) ?? key;
+            if (args.Count <= 2) {
+                return format;
+            }
+            object[] values = new object[args.Count - 2];
+            for (int i = 2; i < args.Count; i++) {
+                values[i - 2] = args[i].ToPrintString();
+            }
+            try {
+                return string.Format(System.Globalization.CultureInfo.InvariantCulture, format, values);
+            } catch (System.FormatException) {
+                return format; // a text with braces that aren't placeholders
+            }
         }
 
         // what everybody's chat shows: messages from the server, and lines like "X joined the game"

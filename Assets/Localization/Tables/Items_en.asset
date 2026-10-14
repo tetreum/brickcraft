@@ -1,0 +1,271 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: Items_en
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: 87ee949cf5d49e44b9741c46b920eaad, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 9597931479040
+    m_Localized: Arrow
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839168
+    m_Localized: Bed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839169
+    m_Localized: Bedrock 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839170
+    m_Localized: Bow
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839171
+    m_Localized: A brick
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839172
+    m_Localized: Brick 1x6
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839173
+    m_Localized: Brick 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839174
+    m_Localized: Bucket
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839175
+    m_Localized: Cactus 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839176
+    m_Localized: Chest
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839177
+    m_Localized: Chest Lid
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839178
+    m_Localized: Coal Ore 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839179
+    m_Localized: Cobblestone 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839180
+    m_Localized: Color Picker
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839181
+    m_Localized: Diamond Ore 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839182
+    m_Localized: Dirt 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839183
+    m_Localized: Dirt 2x4
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839184
+    m_Localized: Dirt 48x48
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839185
+    m_Localized: Door 1x4x6
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839186
+    m_Localized: Door Frame 1x4x6
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839187
+    m_Localized: Glass 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839188
+    m_Localized: Gold Ore 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839189
+    m_Localized: Grass 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839190
+    m_Localized: Gravel 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839191
+    m_Localized: Handaxe
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839192
+    m_Localized: Helmet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839193
+    m_Localized: HP Potion
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839194
+    m_Localized: Ice 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839195
+    m_Localized: Iron Ingot
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839196
+    m_Localized: Iron Ore 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839197
+    m_Localized: Lapis Lazuli Ore 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839198
+    m_Localized: Lava 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839199
+    m_Localized: Leaves 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839200
+    m_Localized: Mallet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839201
+    m_Localized: Model Importer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839202
+    m_Localized: Obsidian 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839203
+    m_Localized: Parts Lister
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839204
+    m_Localized: Pickaxe
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839205
+    m_Localized: A brick
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839206
+    m_Localized: A brick
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839207
+    m_Localized: Redstone Ore 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839208
+    m_Localized: Redstone Ore Glowing 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839209
+    m_Localized: Rose 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839210
+    m_Localized: Sand 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839211
+    m_Localized: Shield
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839212
+    m_Localized: Shovel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839213
+    m_Localized: Sledgehammer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839214
+    m_Localized: Snow 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839215
+    m_Localized: Snow Block 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839216
+    m_Localized: Still Lava 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839217
+    m_Localized: Still Water 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839218
+    m_Localized: Stone 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839219
+    m_Localized: Sword
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839220
+    m_Localized: Tall Grass 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839221
+    m_Localized: Torch
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839222
+    m_Localized: Water 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839223
+    m_Localized: Water 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839224
+    m_Localized: Water Bucket
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839225
+    m_Localized: Wood 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839226
+    m_Localized: Wood Planks 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839227
+    m_Localized: Yellow Flower 2x2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9597960839228
+    m_Localized: Golem
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

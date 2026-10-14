@@ -53,7 +53,7 @@ namespace Brickcraft.UI
                 }
                 instance = create(Menu.Instance.transform);
             }
-            instance.title.text = item.name;
+            instance.title.text = item.DisplayName;
             string about = describe(item, health);
             instance.details.text = about;
             instance.details.gameObject.SetActive(about.Length > 0);
@@ -78,14 +78,14 @@ namespace Brickcraft.UI
             List<string> lines = new List<string>();
             if (item.type == Item.Type.Weapon) {
                 lines.Add(item.IsRanged && Server.items.TryGetValue(item.ammo, out Item ammo)
-                    ? "Damage " + item.damage + ", shoots " + ammo.name
-                    : "Damage " + item.damage + ", " + item.attackSpeed.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + " hits a second");
+                    ? Loc.Get(Loc.UI, "tooltip.damage_shoots", item.damage, ammo.DisplayName)
+                    : Loc.Get(Loc.UI, "tooltip.damage_hits_a_second", item.damage, item.attackSpeed.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)));
             }
             if (item.type == Item.Type.Armor) {
-                lines.Add("Armor " + item.armor);
+                lines.Add(Loc.Get(Loc.UI, "tooltip.armor", item.armor));
             }
             if (item.Wears) {
-                lines.Add("Durability " + Mathf.Max(0, item.durability - health) + " / " + item.durability);
+                lines.Add(Loc.Get(Loc.UI, "tooltip.durability", Mathf.Max(0, item.durability - health), item.durability));
             }
             return string.Join("\n", lines);
         }

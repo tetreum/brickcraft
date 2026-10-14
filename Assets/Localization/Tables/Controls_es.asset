@@ -1,0 +1,191 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: Controls_es
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: es
+  m_SharedData: {fileID: 11400000, guid: 015b3d855d3f785439d147774e3965ad, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 5707672576000
+    m_Localized: Movimiento
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707697741824
+    m_Localized: "Construcci\xF3n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936128
+    m_Localized: Interfaz
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936129
+    m_Localized: "Barra r\xE1pida"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936130
+    m_Localized: Avanzar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936131
+    m_Localized: Retroceder
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936132
+    m_Localized: Izquierda
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936133
+    m_Localized: Derecha
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936134
+    m_Localized: Saltar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936135
+    m_Localized: Correr
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936136
+    m_Localized: Excavar o quitar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936137
+    m_Localized: Colocar pieza
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936138
+    m_Localized: Girar pieza
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936139
+    m_Localized: Usar pieza
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936140
+    m_Localized: "Soltar objeto (con Ctrl, el mont\xF3n)"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936141
+    m_Localized: "Colocar en cualquier tet\xF3n (mantener)"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936142
+    m_Localized: Inventario
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936143
+    m_Localized: Chat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936144
+    m_Localized: Lista de jugadores (mantener)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936145
+    m_Localized: "Men\xFA"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936146
+    m_Localized: "Casilla {0} de la barra r\xE1pida"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936147
+    m_Localized: Clic izquierdo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936148
+    m_Localized: Clic derecho
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936149
+    m_Localized: Clic central
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936150
+    m_Localized: "Rat\xF3n {0}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936151
+    m_Localized: Intro
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936152
+    m_Localized: "Intro (teclado num\xE9rico)"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936153
+    m_Localized: Esc
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936154
+    m_Localized: Arriba
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936155
+    m_Localized: Abajo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936156
+    m_Localized: Izquierda
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936157
+    m_Localized: Derecha
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936158
+    m_Localized: "May\xFAs izq."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936159
+    m_Localized: "May\xFAs der."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936160
+    m_Localized: Ctrl izq.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936161
+    m_Localized: Ctrl der.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936162
+    m_Localized: Alt izq.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936163
+    m_Localized: Alt der.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936164
+    m_Localized: Espacio
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936165
+    m_Localized: Retroceso
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936166
+    m_Localized: Supr
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5707701936167
+    m_Localized: "Bloq May\xFAs"
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

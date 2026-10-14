@@ -51,7 +51,7 @@ namespace Brickcraft.UI
                 Destroy(old);
             }
             buttonObjects.Clear();
-            IList<string> labels = buttonLabels != null && buttonLabels.Count > 0 ? buttonLabels : new[] { "OK" };
+            IList<string> labels = buttonLabels != null && buttonLabels.Count > 0 ? buttonLabels : new[] { Loc.Get(Loc.UI, "popup.ok") };
             for (int i = 0; i < labels.Count; i++) {
                 int index = i;
                 Button button = Instantiate(buttonTemplate, buttons);

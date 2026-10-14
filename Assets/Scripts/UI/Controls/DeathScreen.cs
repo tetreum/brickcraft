@@ -26,7 +26,8 @@ namespace Brickcraft.UI
             }
             popup.transform.SetAsLastSibling();
             DialogMode.Enter();
-            popup.Show("You died", string.IsNullOrEmpty(e.killedBy) ? null : e.killedBy + " killed you.", new[] { "Respawn" }, false, null, null, (button, input) => {
+            string killed = string.IsNullOrEmpty(e.killedBy) ? null : Loc.Get(Loc.UI, "death.killed_you", e.killedBy);
+            popup.Show(Loc.Get(Loc.UI, "death.you_died"), killed, new[] { Loc.Get(Loc.UI, "death.respawn") }, false, null, null, (button, input) => {
                 DialogMode.Exit();
                 if (Player.Instance != null) {
                     Player.Instance.network.CmdRespawn();

@@ -1,0 +1,15 @@
+{
+  "item.launcher": "Lanzador",
+  "item.sturdy_brick": "Ladrillo resistente 2x2",
+  "npc.moss_golem": "Gólem de musgo",
+  "welcome.title": "Mod de ejemplo",
+  "welcome.subtitle": "Piezas con scripts",
+  "welcome.popup_title": "¡Bienvenido, {0}!",
+  "welcome.popup_text": "Este mundo tiene el mod de ejemplo. El Lanzador dispara placas por los aires cuando lo usas (E). ¿Quieres uno?",
+  "welcome.yes": "Sí, por favor",
+  "welcome.no": "No, gracias",
+  "welcome.given": "Tienes un Lanzador en el inventario",
+  "welcome.full": "Tienes el inventario lleno",
+  "where": "Estás en {0}, {1}, {2}",
+  "night": "Cae la noche del día {0}. Hay gólems por ahí."
+}

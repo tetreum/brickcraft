@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Brickcraft.Bricks.LDraw;
+using Brickcraft.Events;
 using Brickcraft.Network;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,9 +17,15 @@ namespace Brickcraft.UI
     {
         private static ModelImporterPanel window;
         private static GameObject hint;
+        private static Text hintText;
 
         private RectTransform list;
         private Text status;
+        private Text heading;
+        private Text folder;
+        private Text openFolder;
+        private Text refreshLabel;
+        private Text closeLabel;
         private int slot;
         private bool isOpen;
 
@@ -34,6 +41,7 @@ namespace Brickcraft.UI
             window.transform.SetAsLastSibling();
             window.gameObject.SetActive(true);
             window.status.text = "";
+            window.relabel();
             window.refresh();
             if (!window.isOpen) {
                 window.isOpen = true;
@@ -60,6 +68,28 @@ namespace Brickcraft.UI
             }
         }
 
+        private void OnEnable() {
+            EventManager.LanguageChanged.Subscribe(onLanguageChanged);
+        }
+
+        private void OnDisable() {
+            EventManager.LanguageChanged.Unsubscribe(onLanguageChanged);
+        }
+
+        private void onLanguageChanged(LanguageChangedEvent e) {
+            relabel();
+            refresh();
+        }
+
+        // its texts in the player's language
+        private void relabel() {
+            heading.text = Loc.Get(Loc.UI, "importer.model_importer");
+            folder.text = Loc.Get(Loc.UI, "importer.models_in_folder", ModelImporter.Folder);
+            openFolder.text = Loc.Get(Loc.UI, "importer.open_folder");
+            refreshLabel.text = Loc.Get(Loc.UI, "importer.refresh");
+            closeLabel.text = Loc.Get(Loc.UI, "importer.close");
+        }
+
         private void OnDestroy() {
             if (isOpen) {
                 isOpen = false;
@@ -74,7 +104,7 @@ namespace Brickcraft.UI
             }
             List<string> models = ModelImporter.Models();
             if (models.Count == 0) {
-                Text empty = CodeUi.Label(list, CodeUi.Font, "No LDraw models (.ldr, .mpd) in the folder yet: put some there and refresh.", 15, FontStyle.Italic, CodeUi.HintColor);
+                Text empty = CodeUi.Label(list, CodeUi.Font, Loc.Get(Loc.UI, "importer.no_models"), 15, FontStyle.Italic, CodeUi.HintColor);
                 empty.horizontalOverflow = HorizontalWrapMode.Wrap;
             }
             foreach (string file in models) {
@@ -95,20 +125,20 @@ namespace Brickcraft.UI
             try {
                 model = LDrawImport.Load(path);
             } catch (System.Exception e) {
-                status.text = "Can't read " + Path.GetFileName(path) + ": " + e.Message;
+                status.text = Loc.Get(Loc.UI, "importer.cant_read", Path.GetFileName(path), e.Message);
                 return;
             }
             if (model.bricks.Count == 0) {
-                status.text = "None of " + Path.GetFileName(path) + "'s parts can be placed" + skipped(model);
+                status.text = Loc.Get(Loc.UI, "importer.none_placeable", Path.GetFileName(path), skipped(model));
                 return;
             }
             if (model.bricks.Count > ModelImporter.MaxBricks) {
-                status.text = Path.GetFileName(path) + " has " + model.bricks.Count + " bricks, the most is " + ModelImporter.MaxBricks;
+                status.text = Loc.Get(Loc.UI, "importer.too_many_bricks", Path.GetFileName(path), model.bricks.Count, ModelImporter.MaxBricks);
                 return;
             }
             Close();
-            ModelImporter.Chat(name + ": " + model.bricks.Count + " bricks, " + model.Size.x + " x " + model.Size.z + " studs, "
-                + model.Size.y + " plates high" + skipped(model));
+            ModelImporter.Chat(Loc.Get(Loc.UI, "importer.model_summary", name, model.bricks.Count, model.Size.x, model.Size.z,
+                model.Size.y, skipped(model)));
             ModelImporterView.Open(model, name, slot);
         }
 
@@ -120,18 +150,18 @@ namespace Brickcraft.UI
             List<string> why = new List<string>();
             if (model.unknown > 0) {
                 List<string> some = model.unknownParts.GetRange(0, Mathf.Min(5, model.unknownParts.Count));
-                why.Add(model.unknown + " the game hasn't (" + string.Join(", ", some) + (model.unknownParts.Count > some.Count ? "..." : "") + ")");
+                why.Add(Loc.Get(Loc.UI, "importer.unknown_parts", model.unknown, string.Join(", ", some) + (model.unknownParts.Count > some.Count ? "..." : "")));
             }
             if (model.attachments > 0) {
-                why.Add(model.attachments + " doors or glass");
+                why.Add(Loc.Get(Loc.UI, "importer.attachments", model.attachments));
             }
             if (model.offGrid > 0) {
-                why.Add(model.offGrid + " turned or moved off the studs");
+                why.Add(Loc.Get(Loc.UI, "importer.off_grid", model.offGrid));
             }
             if (model.overlapping > 0) {
-                why.Add(model.overlapping + " where another part already is");
+                why.Add(Loc.Get(Loc.UI, "importer.overlapping", model.overlapping));
             }
-            return " (" + model.Skipped + " parts left out: " + string.Join(", ", why) + ")";
+            return " (" + Loc.Get(Loc.UI, "importer.parts_left_out", model.Skipped, string.Join(", ", why)) + ")";
         }
 
         /// <summary>The bar telling how to place the model, while its ghost is out.</summary>
@@ -142,6 +172,7 @@ namespace Brickcraft.UI
                 }
                 createHint(Menu.Instance.transform);
             }
+            hintText.text = Loc.Get(Loc.UI, "importer.hint");
             hint.transform.SetAsLastSibling();
             hint.SetActive(true);
         }
@@ -168,8 +199,8 @@ namespace Brickcraft.UI
             layout.childForceExpandHeight = false;
 
             ModelImporterPanel importer = panel.AddComponent<ModelImporterPanel>();
-            CodeUi.Label(panel.transform, font, "MODEL IMPORTER", 20, FontStyle.Bold, Color.white);
-            Text folder = CodeUi.Label(panel.transform, font, "LDraw models (.ldr, .mpd) in " + ModelImporter.Folder, 14, FontStyle.Normal, CodeUi.HintColor);
+            importer.heading = CodeUi.Label(panel.transform, font, "", 20, FontStyle.Bold, Color.white);
+            Text folder = importer.folder = CodeUi.Label(panel.transform, font, "", 14, FontStyle.Normal, CodeUi.HintColor);
             folder.horizontalOverflow = HorizontalWrapMode.Wrap;
 
             // the list, scrolling
@@ -212,12 +243,12 @@ namespace Brickcraft.UI
             line.childControlWidth = line.childControlHeight = true;
             line.childForceExpandWidth = true;
             line.childForceExpandHeight = true;
-            CodeUi.Clickable(buttons.transform, font, "Open folder", CodeUi.ButtonColor, 0, () => {
+            importer.openFolder = CodeUi.Clickable(buttons.transform, font, "Open folder", CodeUi.ButtonColor, 0, () => {
                 ModelImporter.Models(); // makes it if it isn't there
                 Application.OpenURL("file:///" + ModelImporter.Folder.Replace('\\', '/'));
-            });
-            CodeUi.Clickable(buttons.transform, font, "Refresh", CodeUi.ButtonColor, 0, () => importer.refresh());
-            CodeUi.Clickable(buttons.transform, font, "Close", CodeUi.ButtonColor, 0, Close);
+            }).GetComponentInChildren<Text>();
+            importer.refreshLabel = CodeUi.Clickable(buttons.transform, font, "Refresh", CodeUi.ButtonColor, 0, () => importer.refresh()).GetComponentInChildren<Text>();
+            importer.closeLabel = CodeUi.Clickable(buttons.transform, font, "Close", CodeUi.ButtonColor, 0, Close).GetComponentInChildren<Text>();
             panel.SetActive(false);
             return importer;
         }
@@ -235,8 +266,17 @@ namespace Brickcraft.UI
             layout.childControlWidth = layout.childControlHeight = true;
             ContentSizeFitter fitter = hint.GetComponent<ContentSizeFitter>();
             fitter.horizontalFit = fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            CodeUi.Label(hint.transform, CodeUi.Font, "Right click: place   R: turn   Shift: any stud   Esc: cancel", 15, FontStyle.Normal, CodeUi.TextColor);
+            hintText = CodeUi.Label(hint.transform, CodeUi.Font, "", 15, FontStyle.Normal, CodeUi.TextColor);
             hint.SetActive(false);
+            // it can be out while the language changes
+            EventManager.LanguageChanged.Unsubscribe(onHintLanguageChanged);
+            EventManager.LanguageChanged.Subscribe(onHintLanguageChanged);
+        }
+
+        private static void onHintLanguageChanged(LanguageChangedEvent e) {
+            if (hintText != null) {
+                hintText.text = Loc.Get(Loc.UI, "importer.hint");
+            }
         }
     }
 }

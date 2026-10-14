@@ -16,12 +16,15 @@ namespace Brickcraft.Network
         public ModEntry[] mods;
         /// <summary>The server's password as typed, hashed (see ServerConfig.HashPassword), empty if none.</summary>
         public string passwordHash;
+        /// <summary>The player's language (see Loc), for what mods' scripts tell it (see ConnectedPlayer.language).</summary>
+        public string language;
     }
 
     public struct AuthResponseMessage : NetworkMessage
     {
         public bool accepted;
-        public string message;
+        /// <summary>Rejected: why, worded by the client.</summary>
+        public GameText rejection;
         /// <summary>Accepted: the mods to play with, the world's.</summary>
         public ModEntry[] mods;
         /// <summary>Accepted: the server's name (empty in singleplayer) and how many can play at once.</summary>
@@ -39,6 +42,8 @@ namespace Brickcraft.Network
         public bool hasJoined;
         /// <summary>The others were already told why it's leaving (kicked, banned).</summary>
         public bool leaveAnnounced;
+        /// <summary>The language it plays in, like "es" (sent when joining and when it changes, see PlayerNetwork).</summary>
+        public string language = "en";
     }
 
     /// <summary>
@@ -79,29 +84,37 @@ namespace Brickcraft.Network
             }
 
             GameDatabase database = BrickcraftNetworkManager.Instance.Database;
-            string error = request.version != GameVersion.Current
-                ? "The server runs version " + GameVersion.Current + ", you have " + (string.IsNullOrEmpty(request.version) ? "an unknown version" : request.version)
-                : ModDatabase.CheckPlayerMods(request.mods) ?? PlayerIdentity.ValidateName(request.name);
+            GameText error;
+            if (request.version != GameVersion.Current) {
+                error = string.IsNullOrEmpty(request.version)
+                    ? GameText.Of("join.version_unknown", GameVersion.Current)
+                    : GameText.Of("join.version", GameVersion.Current, request.version);
+            } else {
+                error = ModDatabase.CheckPlayerMods(request.mods);
+                if (error.IsEmpty) {
+                    error = PlayerIdentity.ValidateName(request.name);
+                }
+            }
             PlayerRecord player = null;
 
             ServerConfig config = ServerConfig.Current;
             bool isHost = conn is LocalConnectionToClient;
-            if (error == null && !isHost && !config.CheckPassword(request.passwordHash)) {
-                error = string.IsNullOrEmpty(request.passwordHash) ? "This server needs a password" : "Wrong password";
+            if (error.IsEmpty && !isHost && !config.CheckPassword(request.passwordHash)) {
+                error = GameText.Of(string.IsNullOrEmpty(request.passwordHash) ? "join.password_needed" : "join.wrong_password");
             }
-            if (error == null && !isHost && onlineCount() >= config.maxPlayers) {
-                error = "The server is full (" + config.maxPlayers + " players)";
+            if (error.IsEmpty && !isHost && onlineCount() >= config.maxPlayers) {
+                error = GameText.Of("join.full", config.maxPlayers);
             }
 
-            if (error == null) {
+            if (error.IsEmpty) {
                 string machineIdHash = PlayerIdentity.HashMachineId(request.machineId);
                 JoinRules.Decision decision = JoinRules.Decide(request.name, machineIdHash, database.FindPlayer(request.name),
                     database.FindPlayerByMachine(machineIdHash), database.IsMachineBanned(machineIdHash), isOnline);
                 error = decision.error;
                 player = decision.player;
-                if (error == null && player == null) {
+                if (error.IsEmpty && player == null) {
                     player = database.CreatePlayer(request.name, machineIdHash);
-                } else if (error == null && decision.rename) {
+                } else if (error.IsEmpty && decision.rename) {
                     if (decision.moveAside != null) {
                         database.RenamePlayer(decision.moveAside, PlayerIdentity.FreeName(decision.moveAside.Name + "_" + decision.moveAside.Id, database));
                     }
@@ -110,8 +123,8 @@ namespace Brickcraft.Network
                 }
             }
 
-            if (error != null) {
-                conn.Send(new AuthResponseMessage() { accepted = false, message = error });
+            if (!error.IsEmpty) {
+                conn.Send(new AuthResponseMessage() { accepted = false, rejection = error });
                 conn.isAuthenticated = false;
                 StartCoroutine(rejectLater(conn));
                 return;
@@ -126,6 +139,7 @@ namespace Brickcraft.Network
             conn.authenticationData = new ConnectedPlayer() {
                 record = player,
                 session = database.StartSession(player, conn.address),
+                language = string.IsNullOrEmpty(request.language) ? "en" : request.language,
             };
 
             conn.Send(new AuthResponseMessage() {
@@ -183,6 +197,7 @@ namespace Brickcraft.Network
                 machineId = PlayerIdentity.MachineId,
                 mods = ModDatabase.InstalledEntries(),
                 passwordHash = ServerConfig.HashPassword(Password),
+                language = Loc.Language,
             });
         }
 
@@ -200,8 +215,8 @@ namespace Brickcraft.Network
                 }
                 ClientAccept();
             } else {
-                LastRejection = response.message;
-                Debug.LogWarning("The server rejected us: " + response.message);
+                LastRejection = response.rejection.Say();
+                Debug.LogWarning("The server rejected us: " + response.rejection);
                 ClientReject();
             }
         }

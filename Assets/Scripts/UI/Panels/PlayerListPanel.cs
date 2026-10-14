@@ -125,9 +125,11 @@ namespace Brickcraft.UI
 
             string server = BrickcraftAuthenticator.ServerName;
             if (title != null) {
-                title.text = server.Length > 0 ? server : "Players";
+                title.text = server.Length > 0 ? server : Loc.Get(Loc.UI, "player.players");
             }
-            count.text = BrickcraftAuthenticator.MaxPlayers > 1 ? players.Count + " / " + BrickcraftAuthenticator.MaxPlayers + " online" : players.Count + " online";
+            count.text = BrickcraftAuthenticator.MaxPlayers > 1
+                ? Loc.Get(Loc.UI, "player.online_of_max", players.Count, BrickcraftAuthenticator.MaxPlayers)
+                : Loc.Get(Loc.UI, "player.online", players.Count);
             adminHint.SetActive(admin);
 
             VerticalLayoutGroup layout = rowTemplate.transform.parent.GetComponent<VerticalLayoutGroup>();
@@ -159,12 +161,10 @@ namespace Brickcraft.UI
             popup.primaryColor = ban ? banColor : popupPrefab.primaryColor;
             popup.primaryBorderColor = ban ? banBorderColor : popupPrefab.primaryBorderColor;
 
-            string title = (ban ? "Ban " : "Kick ") + playerName + "?";
-            string text = ban
-                ? playerName + " and their machine won't be able to join again, until /unban " + playerName + "."
-                : playerName + " will leave the game, they can join again.";
+            string title = Loc.Get(Loc.UI, ban ? "player.ban_confirm" : "player.kick_confirm", playerName);
+            string text = Loc.Get(Loc.UI, ban ? "player.ban_explanation" : "player.kick_explanation", playerName);
             DialogMode.Enter();
-            popup.Show(title, text, new[] { ban ? "Ban" : "Kick", "Cancel" }, true, "", "Reason (optional)", (button, reason) => {
+            popup.Show(title, text, new[] { Loc.Get(Loc.UI, ban ? "player.ban" : "player.kick"), Loc.Get(Loc.UI, "player.cancel") }, true, "", Loc.Get(Loc.UI, "player.reason_optional"), (button, reason) => {
                 DialogMode.Exit();
                 if (button == 0) {
                     reason = reason.Trim();

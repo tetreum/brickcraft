@@ -12,6 +12,17 @@ log("placed", brick, "by", player)  -- [my_mod] placed brick my_mod:catapult at 
 
 The same as `log`.
 
+## text(player, key, ...)
+
+The mod's text of `key` in the player's language: from its `lang/[language].json` (see the Mods section of the readme), English's if that language hasn't it, `key` itself if neither has. `{0}`, `{1}`... are replaced by the arguments after the key. Instead of a player, a language can be given (`"es"`).
+
+```lua
+-- lang/en.json: { "welcome": "Welcome, {0}!" }   lang/es.json: { "welcome": "¡Bienvenido, {0}!" }
+function onPlayerJoined(player)
+  player:message(text(player, "welcome", player.name))
+end
+```
+
 ## shared
 
 A table shared by all of the mod's scripts (each file has its own globals otherwise). It lasts until the server stops; nothing in it is saved.

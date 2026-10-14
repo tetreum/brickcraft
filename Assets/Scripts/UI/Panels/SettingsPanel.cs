@@ -26,11 +26,13 @@ namespace Brickcraft.UI
         public Text title;
         public Text subtitle;
         public Sprite[] tabIcons;
-        public string[] tabSubtitles = {
-            "Adjust your game preferences.",
-            "Change how the game is displayed.",
-            "Click a key to change it, Esc cancels.",
-            "Set the volume of the game.",
+        // each tab's name and what it's for, in the order of the tabs
+        private static readonly string[] tabTitles = { "settings.general", "settings.graphics", "settings.controls", "settings.audio" };
+        private static readonly string[] tabSubtitles = {
+            "settings.adjust_your_game_preferences",
+            "settings.change_how_the_game_is_displayed",
+            "settings.click_a_key_to_change_it_esc_cancels",
+            "settings.set_the_volume_of_the_game",
         };
 
         [Header("General")]
@@ -56,7 +58,7 @@ namespace Brickcraft.UI
         // the resolutions listed, biggest first, and the display modes
         private readonly List<Vector2Int> resolutions = new List<Vector2Int>();
         private static readonly FullScreenMode[] displayModes = { FullScreenMode.ExclusiveFullScreen, FullScreenMode.FullScreenWindow, FullScreenMode.Windowed };
-        private static readonly string[] displayModeNames = { "Fullscreen", "Borderless window", "Windowed" };
+        private static readonly string[] displayModeKeys = { "settings.fullscreen", "settings.borderless_window", "settings.windowed" };
 
         /// <summary>Closed this frame, so the Escape that closed it does nothing else.</summary>
         public static bool WasClosedThisFrame {
@@ -83,8 +85,7 @@ namespace Brickcraft.UI
             crosshair.onValueChanged.AddListener(on => GameSettings.Crosshair = on);
             tutorialHints.onValueChanged.AddListener(on => GameSettings.TutorialHints = on);
 
-            displayMode.ClearOptions();
-            displayMode.AddOptions(new List<string>(displayModeNames));
+            showDisplayModes();
             displayMode.onValueChanged.AddListener(index => Screen.fullScreenMode = displayModes[index]);
             resolution.onValueChanged.AddListener(index => Screen.SetResolution(resolutions[index].x, resolutions[index].y, Screen.fullScreenMode));
             renderDistance.minValue = GameSettings.MinRenderDistance;
@@ -106,8 +107,23 @@ namespace Brickcraft.UI
                 tabViews[i].SetActive(i == index);
             }
             headerIcon.sprite = tabIcons[index];
-            title.text = tabs.segments[index].GetComponentInChildren<Text>().text;
-            subtitle.text = tabSubtitles[index];
+            title.text = Loc.Get(Loc.UI, tabTitles[index]);
+            subtitle.text = Loc.Get(Loc.UI, tabSubtitles[index]);
+        }
+
+        // the display modes' names, keeping the one selected
+        private void showDisplayModes() {
+            int selected = displayMode.value;
+            displayMode.ClearOptions();
+            displayMode.AddOptions(new List<string>(System.Array.ConvertAll(displayModeKeys, key => Loc.Get(Loc.UI, key))));
+            displayMode.SetValueWithoutNotify(selected);
+        }
+
+        // the texts say it again in the new language (the settings are open when it's changed)
+        private void onLanguageChanged(LanguageChangedEvent e) {
+            showTab(Mathf.Max(0, tabs.Selected));
+            showDisplayModes();
+            showChunks(renderDistance);
         }
 
         // the slider's "Value" text, next to it
@@ -120,9 +136,9 @@ namespace Brickcraft.UI
         private static void showChunks(Slider slider) {
             int chunks = Mathf.RoundToInt(slider.value);
             int allowed = Network.WorldNetwork.ServerMaxViewDistance;
-            string text = chunks + " chunks";
+            string text = Loc.Get(Loc.UI, "settings.chunks", chunks);
             if (Mirror.NetworkClient.isConnected && allowed > 0 && allowed < chunks) {
-                text += "\n(server allows " + allowed + ")";
+                text += "\n" + Loc.Get(Loc.UI, "settings.server_allows", allowed);
             }
             slider.transform.parent.Find("Value").GetComponent<Text>().text = text;
         }
@@ -147,6 +163,8 @@ namespace Brickcraft.UI
         }
 
         private void OnEnable() {
+            EventManager.LanguageChanged.Subscribe(onLanguageChanged);
+            showDisplayModes();
             showTab(0);
             load();
             Game.unlockMouse();
@@ -157,6 +175,7 @@ namespace Brickcraft.UI
         }
 
         private void OnDisable() {
+            EventManager.LanguageChanged.Unsubscribe(onLanguageChanged);
             if (Player.Instance != null) {
                 Player.Instance.unFreeze(Player.FreezeReason.Settings);
             }

@@ -11,7 +11,7 @@ namespace Brickcraft.Network
     /// <summary>Server to client: why the server is about to disconnect it.</summary>
     public struct DisconnectReasonMessage : NetworkMessage
     {
-        public string reason;
+        public GameText reason;
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ namespace Brickcraft.Network
             string reason = parts.Length > 2 ? parts[2].Trim() : null;
 
             if (admin == null || !admin.record.IsAdmin) {
-                reply(sender, "Only admins can use commands");
+                reply(sender, "cmd.only_admins");
                 return;
             }
 
@@ -61,35 +61,35 @@ namespace Brickcraft.Network
                     break;
                 case "kick":
                     if (target == null) {
-                        reply(sender, "Usage: /kick NICK|ID [reason]");
+                        reply(sender, "cmd.usage_kick");
                     } else {
                         kick(sender, admin, target, reason);
                     }
                     break;
                 case "ban":
                     if (target == null) {
-                        reply(sender, "Usage: /ban NICK|ID [reason]");
+                        reply(sender, "cmd.usage_ban");
                     } else {
                         ban(sender, admin, target, reason);
                     }
                     break;
                 case "role":
                     if (target == null) {
-                        reply(sender, "Usage: /role NICK|ID [" + PlayerRoles.User + "|" + PlayerRoles.Admin + "]");
+                        reply(sender, "cmd.usage_role", PlayerRoles.User, PlayerRoles.Admin);
                     } else {
                         role(sender, admin, target, reason);
                     }
                     break;
                 case "additem":
                     if (target == null) {
-                        reply(sender, "Usage: /additem ITEM[@COLOR] [count] [NICK|ID]");
+                        reply(sender, "cmd.usage_additem");
                     } else {
                         addItem(sender, admin, target, reason);
                     }
                     break;
                 case "tp":
                     if (target == null) {
-                        reply(sender, "Usage: /tp NICK|ID");
+                        reply(sender, "cmd.usage_tp");
                     } else {
                         teleport(sender, admin, target);
                     }
@@ -105,56 +105,57 @@ namespace Brickcraft.Network
                     break;
                 case "spawnnpc":
                     if (target == null) {
-                        reply(sender, "Usage: /spawnnpc NPC [count]");
+                        reply(sender, "cmd.usage_spawnnpc");
                     } else {
                         spawnNpc(sender, target, reason);
                     }
                     break;
                 case "removenpcs":
-                    reply(sender, "Removed " + Npcs.NpcSystem.ServerRemoveAll() + " NPCs");
+                    reply(sender, "cmd.removed_npcs", Npcs.NpcSystem.ServerRemoveAll());
                     break;
                 case "navdebug":
                     Npcs.Navigation.NavGrid.DebugDraw = !Npcs.Navigation.NavGrid.DebugDraw;
-                    reply(sender, "NPC navigation is " + (Npcs.Navigation.NavGrid.DebugDraw ? "drawn in the scene view" : "not drawn anymore"));
+                    reply(sender, Npcs.Navigation.NavGrid.DebugDraw ? "cmd.navdebug_on" : "cmd.navdebug_off");
                     break;
                 case "unban":
                     if (target == null) {
-                        reply(sender, "Usage: /unban NICK|ID");
+                        reply(sender, "cmd.usage_unban");
                     } else {
                         unban(sender, target);
                     }
                     break;
                 default:
-                    reply(sender, "Unknown command. Commands: /players, /kick NICK|ID [reason], /ban NICK|ID [reason], /unban NICK|ID, /tp NICK|ID, /pvp [on|off], /time [day|noon|night|midnight|HH:MM], /daylength [minutes], /spawnnpc NPC [count], /removenpcs, /navdebug, /role NICK|ID [role], /additem ITEM[@COLOR] [count] [NICK|ID]");
+                    reply(sender, "cmd.unknown");
                     break;
             }
         }
 
         private static void listPlayers(NetworkConnectionToClient sender) {
-            StringBuilder list = new StringBuilder("Online:");
+            // names and ids, the same in every language
+            StringBuilder list = new StringBuilder();
 
             foreach (KeyValuePair<NetworkConnectionToClient, ConnectedPlayer> online in onlinePlayers()) {
-                list.Append(' ').Append(online.Value.record.Name).Append(" (").Append(online.Value.record.Id).Append(')');
+                list.Append(list.Length > 0 ? " " : "").Append(online.Value.record.Name).Append(" (").Append(online.Value.record.Id).Append(')');
             }
-            reply(sender, list.ToString());
+            reply(sender, "cmd.online", list.ToString());
         }
 
         private static void kick(NetworkConnectionToClient sender, ConnectedPlayer admin, string target, string reason) {
             NetworkConnectionToClient conn = findOnline(target, out ConnectedPlayer player);
 
             if (conn == null) {
-                reply(sender, "Nobody called " + target + " is online");
+                reply(sender, "cmd.nobody_online", target);
                 return;
             }
-            string refusal = refuse(admin, player.record, conn);
-            if (refusal != null) {
-                reply(sender, refusal);
+            GameText refusal = refuse(admin, player.record, conn);
+            if (!refusal.IsEmpty) {
+                GameTexts.Send(sender, refusal);
                 return;
             }
 
             player.leaveAnnounced = true;
             ChatEvents.Send(new ChatEventMessage() { type = ChatEventType.Kicked, player = player.record.Name, by = admin.record.Name, reason = reason });
-            disconnect(conn, "You were kicked by " + admin.record.Name + withReason(reason));
+            disconnect(conn, string.IsNullOrEmpty(reason) ? GameText.Of("cmd.kicked_you", admin.record.Name) : GameText.Of("cmd.kicked_you_reason", admin.record.Name, reason));
         }
 
         private static void ban(NetworkConnectionToClient sender, ConnectedPlayer admin, string target, string reason) {
@@ -162,20 +163,20 @@ namespace Brickcraft.Network
             PlayerRecord player = online != null ? online.record : findRecord(target);
 
             if (player == null) {
-                reply(sender, "There's no player called " + target);
+                reply(sender, "cmd.no_player", target);
                 return;
             }
-            string refusal = refuse(admin, player, conn);
-            if (refusal != null) {
-                reply(sender, refusal);
+            GameText refusal = refuse(admin, player, conn);
+            if (!refusal.IsEmpty) {
+                GameTexts.Send(sender, refusal);
                 return;
             }
             if (player.TokenHash == admin.record.TokenHash) {
-                reply(sender, player.Name + " plays from your machine, banning it would ban you too");
+                reply(sender, "cmd.same_machine", player.Name);
                 return;
             }
             if (player.Banned) {
-                reply(sender, player.Name + " is already banned");
+                reply(sender, "cmd.already_banned", player.Name);
                 return;
             }
 
@@ -187,19 +188,23 @@ namespace Brickcraft.Network
             Debug.Log(player.Name + " (" + player.Id + ") was banned by " + admin.record.Name + withReason(reason));
 
             if (conn != null) {
-                disconnect(conn, "You were banned by " + admin.record.Name + withReason(reason));
+                disconnect(conn, string.IsNullOrEmpty(reason) ? GameText.Of("cmd.banned_you", admin.record.Name) : GameText.Of("cmd.banned_you_reason", admin.record.Name, reason));
             }
         }
 
         private static void unban(NetworkConnectionToClient sender, string target) {
             PlayerRecord player = findRecord(target);
 
-            if (player == null || !player.Banned) {
-                reply(sender, player == null ? "There's no player called " + target : player.Name + " isn't banned");
+            if (player == null) {
+                reply(sender, "cmd.no_player", target);
+                return;
+            }
+            if (!player.Banned) {
+                reply(sender, "cmd.not_banned", player.Name);
                 return;
             }
             BrickcraftNetworkManager.Instance.Database.SetBanned(player, false, null);
-            reply(sender, player.Name + " can join again");
+            reply(sender, "cmd.unbanned", player.Name);
         }
 
         private const int MaxSpawnedNpcs = 20;
@@ -212,12 +217,12 @@ namespace Brickcraft.Network
                 foreach (Npcs.NpcInfo npc in Npcs.NpcDatabase.All) {
                     ids.Add(npc.id);
                 }
-                reply(sender, "There's no NPC " + npcId + ". NPCs: " + string.Join(", ", ids));
+                reply(sender, "cmd.no_npc", npcId, string.Join(", ", ids));
                 return;
             }
             int count = 1;
             if (countText != null && (!int.TryParse(countText, out count) || count < 1 || count > MaxSpawnedNpcs)) {
-                reply(sender, "The count must be a number from 1 to " + MaxSpawnedNpcs);
+                reply(sender, "cmd.count_range", MaxSpawnedNpcs);
                 return;
             }
             if (sender.identity == null) {
@@ -243,28 +248,28 @@ namespace Brickcraft.Network
                     }
                 }
             }
-            reply(sender, "Spawned " + spawned + " " + info.name + (spawned < count ? " (there are too many NPCs for more)" : ""));
+            reply(sender, spawned < count ? "cmd.spawned_npcs_too_many" : "cmd.spawned_npcs", spawned, info);
         }
 
         private static void pvp(NetworkConnectionToClient sender, ConnectedPlayer admin, string value) {
             if (string.IsNullOrEmpty(value)) {
-                reply(sender, "PvP is " + (WorldNetwork.Pvp ? "on" : "off"));
+                reply(sender, "cmd.pvp_is", GameText.Of(WorldNetwork.Pvp ? "word.on" : "word.off"));
                 return;
             }
             value = value.ToLowerInvariant();
             if (value != "on" && value != "off") {
-                reply(sender, "Usage: /pvp [on|off]");
+                reply(sender, "cmd.usage_pvp");
                 return;
             }
             WorldNetwork.Pvp = value == "on";
             Debug.Log(admin.record.Name + " turned PvP " + value);
-            NetworkServer.SendToReady(new ChatMessage() { sender = ServerName, text = admin.record.Name + " turned PvP " + value });
+            GameTexts.SendToAll(WorldNetwork.Pvp ? "cmd.pvp_turned_on" : "cmd.pvp_turned_off", admin.record.Name);
         }
 
         // time only goes forward: to the next time it's that hour
         private static void time(NetworkConnectionToClient sender, ConnectedPlayer admin, string value) {
             if (string.IsNullOrEmpty(value)) {
-                reply(sender, "It's " + World.WorldTime.Describe() + (World.WorldTime.IsPaused ? " (paused)" : ""));
+                reply(sender, World.WorldTime.IsPaused ? "cmd.time_is_paused" : "cmd.time_is", World.WorldTime.DayNumber, World.WorldTime.Clock);
                 return;
             }
             float hours;
@@ -276,7 +281,7 @@ namespace Brickcraft.Network
                 default:
                     string[] parts = value.Split(':');
                     if (parts.Length != 2 || !int.TryParse(parts[0], out int h) || !int.TryParse(parts[1], out int m) || h < 0 || h > 23 || m < 0 || m > 59) {
-                        reply(sender, "Usage: /time [day|noon|night|midnight|HH:MM]");
+                        reply(sender, "cmd.usage_time");
                         return;
                     }
                     hours = h + m / 60f;
@@ -284,43 +289,42 @@ namespace Brickcraft.Network
             }
             WorldNetwork.ServerSetTime(World.WorldTime.NextTimeAt(hours));
             Debug.Log(admin.record.Name + " set the time to " + World.WorldTime.Describe());
-            NetworkServer.SendToReady(new ChatMessage() { sender = ServerName, text = admin.record.Name + " set the time to " + World.WorldTime.Describe() });
+            GameTexts.SendToAll("cmd.time_set", admin.record.Name, World.WorldTime.DayNumber, World.WorldTime.Clock);
         }
 
         private static void dayLength(NetworkConnectionToClient sender, ConnectedPlayer admin, string value) {
             if (string.IsNullOrEmpty(value)) {
-                reply(sender, "A day lasts " + (World.WorldTime.DayLength / 60f).ToString("0.#") + " minutes");
+                reply(sender, "cmd.day_lasts", Math.Round(World.WorldTime.DayLength / 60.0, 1));
                 return;
             }
             if (!float.TryParse(value.Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float minutes)
                     || minutes < 1 || minutes > 24 * 60) {
-                reply(sender, "Usage: /daylength [minutes], from 1 to 1440");
+                reply(sender, "cmd.usage_daylength");
                 return;
             }
             WorldNetwork.ServerSetDayLength(minutes * 60);
-            string text = admin.record.Name + " made days last " + minutes.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + " minutes";
-            Debug.Log(text);
-            NetworkServer.SendToReady(new ChatMessage() { sender = ServerName, text = text });
+            Debug.Log(admin.record.Name + " made days last " + minutes.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + " minutes");
+            GameTexts.SendToAll("cmd.day_length_set", admin.record.Name, Math.Round((double)minutes, 1));
         }
 
         private static void teleport(NetworkConnectionToClient sender, ConnectedPlayer admin, string target) {
             NetworkConnectionToClient conn = findOnline(target, out ConnectedPlayer player);
 
             if (conn == null) {
-                reply(sender, "Nobody called " + target + " is online");
+                reply(sender, "cmd.nobody_online", target);
                 return;
             }
             if (conn == sender) {
-                reply(sender, "You're already there");
+                reply(sender, "cmd.already_there");
                 return;
             }
             if (conn.identity == null || sender.identity == null) {
-                reply(sender, "Still joining, try again in a moment");
+                reply(sender, "cmd.still_joining");
                 return;
             }
             sender.identity.GetComponent<PlayerNetwork>().ServerTeleport(conn.identity.transform.position);
             Debug.Log(admin.record.Name + " teleported to " + player.record.Name);
-            reply(sender, "Teleported to " + player.record.Name);
+            reply(sender, "cmd.teleported", player.record.Name);
         }
 
         private static void role(NetworkConnectionToClient sender, ConnectedPlayer admin, string target, string newRole) {
@@ -329,34 +333,34 @@ namespace Brickcraft.Network
             PlayerRecord player = online != null ? online.record : findRecord(target);
 
             if (player == null) {
-                reply(sender, "There's no player called " + target);
+                reply(sender, "cmd.no_player", target);
                 return;
             }
             if (string.IsNullOrEmpty(newRole)) {
-                reply(sender, player.Name + " is " + player.Role);
+                reply(sender, "cmd.role_is", player.Name, player.Role);
                 return;
             }
 
             newRole = newRole.ToLowerInvariant();
             if (newRole != PlayerRoles.User && newRole != PlayerRoles.Admin) {
-                reply(sender, "Unknown role " + newRole + ", roles are " + PlayerRoles.User + " and " + PlayerRoles.Admin);
+                reply(sender, "cmd.unknown_role", newRole, PlayerRoles.User, PlayerRoles.Admin);
                 return;
             }
             if (player.Id == admin.record.Id) {
-                reply(sender, "You can't change your own role");
+                reply(sender, "cmd.own_role");
                 return;
             }
             if (player.Role == newRole) {
-                reply(sender, player.Name + " is already " + newRole);
+                reply(sender, "cmd.role_already", player.Name, newRole);
                 return;
             }
 
             BrickcraftNetworkManager.Instance.Database.SetRole(player, newRole);
             Debug.Log(admin.record.Name + " made " + player.Name + " (" + player.Id + ") " + newRole);
-            reply(sender, player.Name + " is now " + newRole);
+            reply(sender, "cmd.role_now", player.Name, newRole);
 
             if (conn != null) {
-                reply(conn, admin.record.Name + " made you " + newRole);
+                reply(conn, "cmd.role_made_you", admin.record.Name, newRole);
 
                 if (conn.identity != null) {
                     conn.identity.GetComponent<PlayerNetwork>().role = newRole; // the player list shows it
@@ -374,23 +378,25 @@ namespace Brickcraft.Network
             }
             string itemId = itemText.ToLowerInvariant();
             if (!Server.items.TryGetValue(itemId, out Item item)) {
-                reply(sender, "There's no item " + itemText);
+                reply(sender, "cmd.no_item", itemText);
                 return;
             }
             int color = item.color;
             if (colorText != null) {
                 BrickColor brickColor = BrickColorPalette.Find(colorText);
                 if (brickColor == null) {
-                    reply(sender, "There's no colour " + colorText + "");
+                    reply(sender, "cmd.no_colour", colorText);
                     return;
                 }
                 if (!item.AllowsColor(brickColor.id)) {
-                    reply(sender, item.name + " can't be " + brickColor.name);
+                    reply(sender, "cmd.cant_be_colour", item, brickColor);
                     return;
                 }
                 color = brickColor.id;
             }
-            string itemName = item.name + (color != item.color ? " (" + BrickColorPalette.Get(color).name + ")" : "");
+            // a colour that isn't the item's own is told (the "_colour" texts)
+            BrickColor otherColor = color != item.color ? BrickColorPalette.Get(color) : null;
+            string itemName = item.name + (otherColor != null ? " (" + otherColor.name + ")" : "");
 
             string[] rest = string.IsNullOrEmpty(args) ? new string[0] : args.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             int count = 1;
@@ -402,7 +408,7 @@ namespace Brickcraft.Network
                 countText = null;
             }
             if (countText != null && (!int.TryParse(countText, out count) || count < 1 || count > MaxAddedItems)) {
-                reply(sender, "The count must be a number from 1 to " + MaxAddedItems);
+                reply(sender, "cmd.count_range", MaxAddedItems);
                 return;
             }
 
@@ -415,7 +421,7 @@ namespace Brickcraft.Network
                 PlayerInventory inventory = conn.identity != null ? conn.identity.GetComponent<PlayerInventory>() : null;
 
                 if (inventory == null) {
-                    reply(sender, online.record.Name + " is still joining, try again in a moment");
+                    reply(sender, "cmd.player_still_joining", online.record.Name);
                     return;
                 }
                 player = online.record;
@@ -424,7 +430,7 @@ namespace Brickcraft.Network
                 // offline players get it in their saved inventory
                 player = findRecord(target);
                 if (player == null) {
-                    reply(sender, "There's no player called " + target);
+                    reply(sender, "cmd.no_player", target);
                     return;
                 }
                 GameDatabase database = BrickcraftNetworkManager.Instance.Database;
@@ -437,33 +443,45 @@ namespace Brickcraft.Network
             }
 
             if (!added) {
-                reply(sender, "There's no room for " + count + " x " + itemName + " in " + player.Name + "'s inventory");
+                if (otherColor != null) {
+                    reply(sender, "cmd.no_room_colour", count, item, otherColor, player.Name);
+                } else {
+                    reply(sender, "cmd.no_room", count, item, player.Name);
+                }
                 return;
             }
             Debug.Log(admin.record.Name + " gave " + count + " x " + itemName + " (" + itemId + ") to " + player.Name + " (" + player.Id + ")");
-            reply(sender, "Gave " + count + " x " + itemName + " to " + player.Name);
+            if (otherColor != null) {
+                reply(sender, "cmd.gave_colour", count, item, otherColor, player.Name);
+            } else {
+                reply(sender, "cmd.gave", count, item, player.Name);
+            }
 
             if (conn != null && conn != sender) {
-                reply(conn, admin.record.Name + " gave you " + count + " x " + itemName);
+                if (otherColor != null) {
+                    reply(conn, "cmd.gave_you_colour", admin.record.Name, count, item, otherColor);
+                } else {
+                    reply(conn, "cmd.gave_you", admin.record.Name, count, item);
+                }
             }
         }
 
-        // null if the admin can kick or ban the player, otherwise why not
-        private static string refuse(ConnectedPlayer admin, PlayerRecord player, NetworkConnectionToClient conn) {
+        // empty if the admin can kick or ban the player, otherwise why not
+        private static GameText refuse(ConnectedPlayer admin, PlayerRecord player, NetworkConnectionToClient conn) {
             if (player.Id == admin.record.Id) {
-                return "You can't do that to yourself";
+                return GameText.Of("cmd.not_yourself");
             }
             if (player.IsAdmin) {
-                return player.Name + " is an admin";
+                return GameText.Of("cmd.is_admin", player.Name);
             }
             if (conn is LocalConnectionToClient) {
-                return player.Name + " is hosting the game";
+                return GameText.Of("cmd.is_hosting", player.Name);
             }
-            return null;
+            return default(GameText);
         }
 
         // the reason travels first, the connection closes once it had time to arrive
-        private static void disconnect(NetworkConnectionToClient conn, string reason) {
+        private static void disconnect(NetworkConnectionToClient conn, GameText reason) {
             conn.Send(new DisconnectReasonMessage() { reason = reason });
             BrickcraftNetworkManager.Instance.StartCoroutine(disconnectLater(conn));
         }
@@ -519,8 +537,9 @@ namespace Brickcraft.Network
             return string.IsNullOrEmpty(reason) ? "" : ": " + reason;
         }
 
-        private static void reply(NetworkConnectionToClient conn, string text) {
-            conn.Send(new ChatMessage() { sender = ServerName, text = text });
+        // a line from the server, worded in that player's language
+        private static void reply(NetworkConnectionToClient conn, string key, params object[] args) {
+            GameTexts.Send(conn, key, args);
         }
     }
 }

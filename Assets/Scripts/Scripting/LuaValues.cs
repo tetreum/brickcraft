@@ -193,6 +193,14 @@ namespace Brickcraft.Scripting
 
         [MoonSharpHidden] public NetworkConnectionToClient connection;
 
+        /// <summary>The language it plays in, like "es" (see the global text).</summary>
+        public string language {
+            get {
+                ConnectedPlayer player = connection != null ? connection.authenticationData as ConnectedPlayer : null;
+                return player != null ? player.language : "en";
+            }
+        }
+
         /// <summary>Where its feet are, null if it left.</summary>
         public LuaVector position {
             get {

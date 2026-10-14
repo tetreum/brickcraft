@@ -56,7 +56,7 @@ namespace Brickcraft.Network
 
         private static void onOpened(StorageOpenedMessage message) {
             BrickId = message.brickId;
-            Title = message.title;
+            Title = GameText.Resolve(message.title);
             Slots = message.slots;
             Items.Clear();
             Items.AddRange(message.items ?? new InventoryItem[0]);

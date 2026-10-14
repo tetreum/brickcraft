@@ -1,0 +1,787 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: UI_es
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: es
+  m_SharedData: {fileID: 11400000, guid: aa8fd92a18fabda428a97bb6493b108f, type: 2}
+  m_Metadata:
+    m_Items:
+    - rid: 8627787809188479011
+  m_TableData:
+  - m_Id: 520962695168
+    m_Localized: Idioma
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020998
+    m_Localized: TODO
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603915
+    m_Localized: Salir
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603914
+    m_Localized: Ajustes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826693
+    m_Localized: ARMADURA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020993
+    m_Localized: PECHO
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272021000
+    m_Localized: Por defecto
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020995
+    m_Localized: PIES
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020992
+    m_Localized: CABEZA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020997
+    m_Localized: INVENTARIO
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020994
+    m_Localized: PIERNAS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020999
+    m_Localized: Buscar por nombre o id...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020996
+    m_Localized: ESCUDO
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603917
+    m_Localized: Crear partida
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603918
+    m_Localized: Unirse a partida
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215296
+    m_Localized: "Contrase\xF1a (si la hay)"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603920
+    m_Localized: Salir
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603919
+    m_Localized: Ajustes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603916
+    m_Localized: Un jugador
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272021001
+    m_Localized: Tu nombre
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826688
+    m_Localized: ADMIN
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826690
+    m_Localized: Banear
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826689
+    m_Localized: Echar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826692
+    m_Localized: "Clic derecho para usar el rat\xF3n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441234272256
+    m_Localized: Durmiendo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603913
+    m_Localized: Dejar de dormir
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826691
+    m_Localized: TP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215300
+    m_Localized: Audio
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215301
+    m_Localized: Cambia el idioma del juego.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215299
+    m_Localized: Controles
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215304
+    m_Localized: Punto de mira
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409606
+    m_Localized: Excavar, colocar, pasos...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215310
+    m_Localized: Modo de pantalla
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215303
+    m_Localized: "Muestra tu posici\xF3n actual (X, Y, Z)."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409605
+    m_Localized: Efectos
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215311
+    m_Localized: Pantalla completa, ventana sin bordes o ventana.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215297
+    m_Localized: General
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215298
+    m_Localized: "Gr\xE1ficos"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215313
+    m_Localized: "Hasta d\xF3nde se dibuja el mundo, en chunks."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409602
+    m_Localized: El volumen de todo el juego.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409601
+    m_Localized: Volumen general
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409603
+    m_Localized: "M\xFAsica"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215312
+    m_Localized: Distancia de dibujado
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409600
+    m_Localized: Restablecer valores
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215308
+    m_Localized: "Resoluci\xF3n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215305
+    m_Localized: Muestra un punto de mira en el centro.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215302
+    m_Localized: Mostrar coordenadas
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215307
+    m_Localized: "Muestra consejos \xFAtiles mientras juegas."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215309
+    m_Localized: "El tama\xF1o de la imagen del juego."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215306
+    m_Localized: Consejos del tutorial
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409604
+    m_Localized: "El volumen de la m\xFAsica."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603905
+    m_Localized: 10 min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603906
+    m_Localized: 20 min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603907
+    m_Localized: 30 min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603908
+    m_Localized: 60 min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603909
+    m_Localized: Volver
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603910
+    m_Localized: Crear y jugar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409609
+    m_Localized: Crear mundo nuevo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409621
+    m_Localized: "Duraci\xF3n del d\xEDa"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409614
+    m_Localized: Dificultad
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409618
+    m_Localized: "Dif\xEDcil"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409615
+    m_Localized: "Lo dif\xEDcil que es el mundo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603904
+    m_Localized: "Lo que duran un d\xEDa y su noche."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603911
+    m_Localized: Mods
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603912
+    m_Localized: No hay mods instalados. Los mods son carpetas dentro de la carpeta
+      Mods, junto al juego.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409608
+    m_Localized: "A\xFAn no hay mundos, \xA1crea uno!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409617
+    m_Localized: Normal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409616
+    m_Localized: "Pac\xEDfico"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409607
+    m_Localized: Jugar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409620
+    m_Localized: "Los jugadores pueden hacerse da\xF1o entre ellos."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409619
+    m_Localized: PvP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409612
+    m_Localized: Semilla
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409613
+    m_Localized: Misma semilla, mismo terreno.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409611
+    m_Localized: "C\xF3mo se llama en la lista."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409610
+    m_Localized: Nombre del mundo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681152
+    m_Localized: Un jugador
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681153
+    m_Localized: Elige un mundo o crea uno nuevo.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681154
+    m_Localized: Semilla {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681155
+    m_Localized: Jugado {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681156
+    m_Localized: ahora mismo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681157
+    m_Localized: hace {0} min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681158
+    m_Localized: hace {0} h
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681159
+    m_Localized: "hace {0} {0:plural:d\xEDa|d\xEDas}"
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479011
+  - m_Id: 5709513875456
+    m_Localized: '{0} {0:plural:mod|mods}'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479011
+  - m_Id: 5709513875457
+    m_Localized: "\xBFSeguro?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875458
+    m_Localized: Borrar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875459
+    m_Localized: 'No se puede jugar: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875460
+    m_Localized: "{0}, {1} y {2} m\xE1s"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875461
+    m_Localized: 'Faltan mods: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875462
+    m_Localized: "Partida antigua, se actualizar\xE1 al jugarla"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875463
+    m_Localized: Mundo nuevo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875464
+    m_Localized: "Deja la semilla vac\xEDa para una al azar."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875465
+    m_Localized: de {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875466
+    m_Localized: 'No se pudo crear el mundo: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875467
+    m_Localized: Ajusta tus preferencias del juego.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875468
+    m_Localized: "Cambia c\xF3mo se ve el juego."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875469
+    m_Localized: Haz clic en una tecla para cambiarla, Esc cancela.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875470
+    m_Localized: Ajusta el volumen del juego.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875471
+    m_Localized: Pantalla completa
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875472
+    m_Localized: Ventana sin bordes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875473
+    m_Localized: Ventana
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875474
+    m_Localized: '{0} {0:plural:chunk|chunks}'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479011
+  - m_Id: 5709513875475
+    m_Localized: (el servidor permite {0})
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875476
+    m_Localized: Todas las teclas vuelven a sus valores por defecto.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875477
+    m_Localized: "No se pueden cambiar las teclas sin teclado o rat\xF3n."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875478
+    m_Localized: Pulsa una tecla...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875479
+    m_Localized: "{0} tambi\xE9n se usa para: {1}."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585600
+    m_Localized: Jugadores
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585601
+    m_Localized: "{0} en l\xEDnea"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585602
+    m_Localized: "{0} / {1} en l\xEDnea"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585603
+    m_Localized: "\xBFEchar a {0}?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585604
+    m_Localized: "\xBFBanear a {0}?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585605
+    m_Localized: "{0} saldr\xE1 de la partida, pero podr\xE1 volver a entrar."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585606
+    m_Localized: "Ni {0} ni su equipo podr\xE1n volver a entrar, hasta /unban {0}."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585607
+    m_Localized: Cancelar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585608
+    m_Localized: Motivo (opcional)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585609
+    m_Localized: "{0} (t\xFA)"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585610
+    m_Localized: '{0} ms'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585611
+    m_Localized: Aire {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585612
+    m_Localized: "\xA1Te ahogas!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585613
+    m_Localized: Durmiendo hasta que pase la noche...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585614
+    m_Localized: '{0} de {1} {1:plural:jugador|jugadores} durmiendo, hacen falta
+      {2} para saltar la noche'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479011
+  - m_Id: 5709874585615
+    m_Localized: Te sigue. Ataca {0}.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585616
+    m_Localized: "Se queda donde est\xE1. Ataca {0}."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585617
+    m_Localized: a nadie
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585618
+    m_Localized: a quien te hiera o a quien golpees
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585619
+    m_Localized: a esos y a los NPC hostiles
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585620
+    m_Localized: a esos, a los NPC hostiles y a los jugadores (con PvP)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585621
+    m_Localized: Seguir
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585622
+    m_Localized: Quedarse
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585623
+    m_Localized: Cambiar ataques
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585624
+    m_Localized: Has muerto
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585625
+    m_Localized: Te ha matado {0}.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585626
+    m_Localized: Reaparecer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585627
+    m_Localized: "Da\xF1o {0}, dispara {1}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585628
+    m_Localized: "Da\xF1o {0}, {1} golpes por segundo"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585629
+    m_Localized: Armadura {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585630
+    m_Localized: Durabilidad {0} / {1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585631
+    m_Localized: No se han encontrado objetos
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585632
+    m_Localized: "P\xE1gina {0} / {1}  ({2} {2:plural:objeto|objetos})"
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479011
+  - m_Id: 5709874585633
+    m_Localized: Color por defecto
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712832
+    m_Localized: IMPORTADOR DE MODELOS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712833
+    m_Localized: Modelos LDraw (.ldr, .mpd) en {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712834
+    m_Localized: "A\xFAn no hay modelos LDraw (.ldr, .mpd) en la carpeta: pon alguno
+      y actualiza."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712835
+    m_Localized: 'No se puede leer {0}: {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712836
+    m_Localized: Ninguna pieza de {0} se puede colocar{1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712837
+    m_Localized: "{0} tiene {1} piezas; el m\xE1ximo es {2}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712838
+    m_Localized: '{0}: {1} {1:plural:pieza|piezas}, {2} x {3} tetones, {4} {4:plural:placa|placas}
+      de alto{5}'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479011
+  - m_Id: 5710222712839
+    m_Localized: '{0} que el juego no tiene ({1})'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712840
+    m_Localized: '{0} puertas o cristales'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712841
+    m_Localized: '{0} giradas o fuera de los tetones'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712842
+    m_Localized: '{0} donde ya hay otra pieza'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712843
+    m_Localized: '{0} {0:plural:pieza descartada|piezas descartadas}: {1}'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479011
+  - m_Id: 5710222712844
+    m_Localized: Abrir carpeta
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712845
+    m_Localized: Actualizar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712846
+    m_Localized: Cerrar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712847
+    m_Localized: "Clic derecho: colocar   R: girar   May\xFAs: cualquier tet\xF3n  
+      Esc: cancelar"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712848
+    m_Localized: Colocando {0}...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712849
+    m_Localized: "El modelo no cabe ah\xED"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712850
+    m_Localized: LISTA DE PIEZAS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712851
+    m_Localized: "Bot\xF3n derecho: mirar alrededor\nTeclas de movimiento, saltar,
+      Ctrl: volar\nRueda o arrastrar una cara: cambiar su tama\xF1o (May\xFAs: x4)"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712852
+    m_Localized: '{0} x {1} tetones, {2} {2:plural:placa|placas} de alto'
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479011
+  - m_Id: 5710222712853
+    m_Localized: Oeste
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712854
+    m_Localized: Este
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712855
+    m_Localized: Abajo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712856
+    m_Localized: Arriba
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712857
+    m_Localized: Sur
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712858
+    m_Localized: Norte
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712859
+    m_Localized: Nombre de la lista (obligatorio)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712860
+    m_Localized: Guardar lista de piezas
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712861
+    m_Localized: Cancelar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712862
+    m_Localized: SELECTOR DE COLOR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712863
+    m_Localized: Elige un color
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712864
+    m_Localized: Cerrar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712865
+    m_Localized: Aceptar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712866
+    m_Localized: 'No se ha podido abrir el mundo {0}: {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712867
+    m_Localized: No se ha podido conectar a {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712868
+    m_Localized: Entrando en {0}...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712869
+    m_Localized: Entrando...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712870
+    m_Localized: Conectando...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712871
+    m_Localized: Cargando {0}...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712872
+    m_Localized: Cargando el mundo...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712873
+    m_Localized: Esperando al servidor...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712874
+    m_Localized: Generando el terreno ({0}/{1} chunks)
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 8627787809188479011
+      type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
+      data:
+        m_Entries: 
+        m_SharedEntries:
+        - id: 5709509681159
+        - id: 5709513875456
+        - id: 5709513875474
+        - id: 5709874585614
+        - id: 5709874585632
+        - id: 5710222712838
+        - id: 5710222712843
+        - id: 5710222712852

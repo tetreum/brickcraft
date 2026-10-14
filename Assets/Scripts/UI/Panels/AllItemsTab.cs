@@ -114,6 +114,7 @@ namespace Brickcraft.UI
                 return true;
             }
             return (item.name != null && item.name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+                || item.DisplayName.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0
                 || item.id.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
@@ -135,13 +136,13 @@ namespace Brickcraft.UI
                 entry.item = matches[index];
                 entry.icon.texture = entry.item.icon;
                 ItemColorSwatch.Set(entry.icon, entry.item, colorOf(entry.item));
-                entry.name.text = entry.item.name + "\n" + entry.item.id;
+                entry.name.text = entry.item.DisplayName + "\n" + entry.item.id;
                 entry.gameObject.SetActive(true);
             }
 
             pageText.text = matches.Count == 0
-                ? "No items found"
-                : "Page " + (page + 1) + " / " + pages + "  (" + matches.Count + " items)";
+                ? Loc.Get(Loc.UI, "inventory.no_items_found")
+                : Loc.Get(Loc.UI, "inventory.page", page + 1, pages, matches.Count);
             previousPage.interactable = page > 0;
             nextPage.interactable = page < pages - 1;
         }

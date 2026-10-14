@@ -21,7 +21,7 @@ namespace Brickcraft.Network
             get {
                 string name = PlayerPrefs.GetString(NameKey, "");
 
-                if (ValidateName(name) != null) {
+                if (!ValidateName(name).IsEmpty) {
                     name = "Player" + UnityEngine.Random.Range(1000, 10000);
                     Name = name;
                 }
@@ -82,17 +82,17 @@ namespace Brickcraft.Network
             return id;
         }
 
-        /// <summary>Null if the name is valid, otherwise why it isn't.</summary>
-        public static string ValidateName(string name) {
+        /// <summary>Empty if the name is valid, otherwise why it isn't.</summary>
+        public static GameText ValidateName(string name) {
             if (string.IsNullOrEmpty(name) || name.Length < MinNameLength || name.Length > MaxNameLength) {
-                return "Names must have between " + MinNameLength + " and " + MaxNameLength + " characters";
+                return GameText.Of("name.length", MinNameLength, MaxNameLength);
             }
             foreach (char c in name) {
                 if (!char.IsLetterOrDigit(c) && c != '_' && c != '-') {
-                    return "Names can only have letters, numbers, - and _";
+                    return GameText.Of("name.characters");
                 }
             }
-            return null;
+            return new GameText();
         }
 
         /// <summary>A valid name like that one no player of the save has (cut to fit, numbered if taken).</summary>

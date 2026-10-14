@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Brickcraft.Mods;
 using Brickcraft.Network;
 using Brickcraft.World;
@@ -102,8 +103,8 @@ namespace Brickcraft.UI
         private void showList() {
             listView.SetActive(true);
             createView.SetActive(false);
-            title.text = "Singleplayer";
-            subtitle.text = "Pick a world or create a new one.";
+            title.text = Loc.Get(Loc.UI, "worlds.singleplayer");
+            subtitle.text = Loc.Get(Loc.UI, "worlds.pick_a_world_or_create_a_new_one");
             confirmingDelete = null;
             refreshList();
         }
@@ -125,8 +126,7 @@ namespace Brickcraft.UI
                 row.name = saveName;
                 row.transform.Find("Name").GetComponent<Text>().text = string.IsNullOrEmpty(world.Name) ? saveName : world.Name;
                 Text details = row.transform.Find("Details").GetComponent<Text>();
-                details.text = world.Difficulty + (world.Pvp ? "   PvP" : "") + "   Seed " + world.Seed + "   Played " + timeAgo(world.LastPlayedAt)
-                    + (world.Mods.Count > 0 ? "   " + world.Mods.Count + (world.Mods.Count == 1 ? " mod" : " mods") : "");
+                details.text = detailsOf(world);
                 Button playButton = row.transform.Find("Play").GetComponent<Button>();
                 playButton.onClick.AddListener(() => play(saveName));
                 showNote(row, details, noteFor(world));
@@ -138,6 +138,22 @@ namespace Brickcraft.UI
                 row.SetActive(true);
                 rows.Add(row);
             }
+            refreshDeleteLabels();
+        }
+
+        // difficulty, PvP, seed, when it was played and its mods
+        private static string detailsOf(WorldStorage world) {
+            List<string> parts = new List<string>();
+            parts.Add(Loc.Get(Loc.UI, "worlds." + world.Difficulty.ToString().ToLowerInvariant()));
+            if (world.Pvp) {
+                parts.Add(Loc.Get(Loc.UI, "worlds.pvp"));
+            }
+            parts.Add(Loc.Get(Loc.UI, "worlds.seed_value", world.Seed));
+            parts.Add(Loc.Get(Loc.UI, "worlds.played_ago", timeAgo(world.LastPlayedAt)));
+            if (world.Mods.Count > 0) {
+                parts.Add(Loc.Get(Loc.UI, "worlds.mod_count", world.Mods.Count));
+            }
+            return string.Join("   ", parts);
         }
 
         private void play(string saveName) {
@@ -163,7 +179,7 @@ namespace Brickcraft.UI
 
         private void refreshDeleteLabels() {
             foreach (GameObject row in rows) {
-                row.transform.Find("Delete").GetComponentInChildren<Text>().text = row.name == confirmingDelete ? "Sure?" : "Delete";
+                row.transform.Find("Delete").GetComponentInChildren<Text>().text = Loc.Get(Loc.UI, row.name == confirmingDelete ? "worlds.sure" : "worlds.delete");
             }
         }
 
@@ -171,18 +187,18 @@ namespace Brickcraft.UI
         // that aren't installed (their items are lost while playing without them), or that it'll be upgraded
         private static string noteFor(WorldStorage world) {
             if (world.Incompatibility != null) {
-                return "<color=#ff9e94>Can't be played: " + world.Incompatibility + "</color>";
+                return "<color=#ff9e94>" + Loc.Get(Loc.UI, "worlds.can_t_be_played", world.Incompatibility) + "</color>";
             }
             List<string> notes = new List<string>();
             List<WorldMod> missing = SavedWorlds.MissingMods(world);
             if (missing.Count > 0) {
                 // a couple of them, the line ends at the buttons
                 List<string> names = missing.ConvertAll(m => m.id + " " + m.version);
-                string shown = names.Count <= 2 ? string.Join(", ", names) : names[0] + ", " + names[1] + " and " + (names.Count - 2) + " more";
-                notes.Add("<color=#ff9e94>Missing mods: " + shown + "</color>");
+                string shown = names.Count <= 2 ? string.Join(", ", names) : Loc.Get(Loc.UI, "worlds.mods_and_more", names[0], names[1], names.Count - 2);
+                notes.Add("<color=#ff9e94>" + Loc.Get(Loc.UI, "worlds.missing_mods", shown) + "</color>");
             }
             if (world.NeedsUpgrade) {
-                notes.Add("<color=#f2d36b>Older save, upgraded when played</color>");
+                notes.Add("<color=#f2d36b>" + Loc.Get(Loc.UI, "worlds.older_save_upgraded_when_played") + "</color>");
             }
             return notes.Count > 0 ? string.Join("   ", notes) : null;
         }
@@ -206,18 +222,25 @@ namespace Brickcraft.UI
         private static string timeAgo(long unixSeconds) {
             TimeSpan ago = DateTimeOffset.UtcNow - DateTimeOffset.FromUnixTimeSeconds(unixSeconds);
             if (ago.TotalMinutes < 1) {
-                return "just now";
+                return Loc.Get(Loc.UI, "worlds.just_now");
             }
             if (ago.TotalHours < 1) {
-                return (int)ago.TotalMinutes + " min ago";
+                return Loc.Get(Loc.UI, "worlds.minutes_ago", (int)ago.TotalMinutes);
             }
             if (ago.TotalDays < 1) {
-                return (int)ago.TotalHours + " h ago";
+                return Loc.Get(Loc.UI, "worlds.hours_ago", (int)ago.TotalHours);
             }
             if (ago.TotalDays < 30) {
-                return (int)ago.TotalDays + (ago.TotalDays < 2 ? " day ago" : " days ago");
+                return Loc.Get(Loc.UI, "worlds.days_ago", (int)ago.TotalDays);
             }
-            return DateTimeOffset.FromUnixTimeSeconds(unixSeconds).ToLocalTime().ToString("d MMM yyyy");
+            // the month's name in the player's language
+            CultureInfo culture;
+            try {
+                culture = CultureInfo.GetCultureInfo(Loc.Language);
+            } catch (ArgumentException) {
+                culture = CultureInfo.InvariantCulture;
+            }
+            return DateTimeOffset.FromUnixTimeSeconds(unixSeconds).ToLocalTime().ToString("d MMM yyyy", culture);
         }
 
         // -------- new world --------
@@ -225,9 +248,9 @@ namespace Brickcraft.UI
         private void showCreate() {
             listView.SetActive(false);
             createView.SetActive(true);
-            title.text = "New world";
-            subtitle.text = "Leave the seed empty for a random one.";
-            nameInput.text = "New world";
+            title.text = Loc.Get(Loc.UI, "worlds.new_world");
+            subtitle.text = Loc.Get(Loc.UI, "worlds.leave_the_seed_empty_for_a_random_one");
+            nameInput.text = Loc.Get(Loc.UI, "worlds.new_world");
             seedInput.text = "";
             difficulty.Select((int)Difficulty.Normal);
             pvp.isOn = true;
@@ -256,7 +279,7 @@ namespace Brickcraft.UI
                 title.text = mod.name + "  " + mod.version;
                 Text details = row.transform.Find("Details").GetComponent<Text>();
                 details.supportRichText = false;
-                details.text = (mod.author.Length > 0 ? "by " + mod.author + "   " : "") + mod.description;
+                details.text = (mod.author.Length > 0 ? Loc.Get(Loc.UI, "worlds.by_author", mod.author) + "   " : "") + mod.description;
 
                 Toggle toggle = row.transform.Find("Control").GetComponent<Toggle>();
                 toggle.isOn = false;
@@ -268,9 +291,9 @@ namespace Brickcraft.UI
 
         private void create() {
             string name = nameInput.text.Trim();
-            string problem = SavedWorlds.ValidateName(name);
-            if (problem != null) {
-                error.text = problem;
+            GameText problem = SavedWorlds.ValidateName(name);
+            if (!problem.IsEmpty) {
+                error.text = problem.Say();
                 return;
             }
 
@@ -285,7 +308,7 @@ namespace Brickcraft.UI
                 float minutes = dayLength.Selected >= 0 ? dayLengths[dayLength.Selected] : World.WorldTime.DefaultDayLength / 60;
                 saveName = SavedWorlds.Create(name, SavedWorlds.ParseSeed(seedInput.text), (Difficulty)Mathf.Max(0, difficulty.Selected), pvp.isOn, mods, minutes * 60);
             } catch (Exception e) {
-                error.text = "Couldn't create the world: " + e.Message;
+                error.text = Loc.Get(Loc.UI, "worlds.couldn_t_create_the_world", e.Message);
                 return;
             }
             play(saveName);

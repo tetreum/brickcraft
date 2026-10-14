@@ -15,6 +15,11 @@ namespace Brickcraft.Npcs
         public string id;
         /// <summary>What players see (in the chat when it kills them...).</summary>
         public string name;
+
+        /// <summary>Its name in the player's language (see Names).</summary>
+        public string DisplayName {
+            get { return Names.Npc(id, name); }
+        }
         /// <summary>
         /// Its model, when its folder has no model.glb or model.gltf: a prefab of its mod's AssetBundles or
         /// Assets/Resources/NpcModels/[model].prefab (see NpcDatabase, NpcModel).

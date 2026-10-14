@@ -136,7 +136,7 @@ namespace Brickcraft.Network
 
                 storage = isSaved ? WorldStorage.OpenOrCreate(SaveFolder, newSeed, saveName, Difficulty.Normal) : null;
             } catch (System.Exception e) {
-                failStart("Couldn't open the world " + saveName + ": " + e.Message, e);
+                failStart(Loc.Get(Loc.UI, "network.couldnt_open_the_world", saveName, e.Message), e);
                 return;
             }
             WorldNetwork.StartServer(storage, newSeed, defaultSpawnPosition);
@@ -370,7 +370,11 @@ namespace Brickcraft.Network
             });
 
             disconnectReason = null;
-            NetworkClient.RegisterHandler<DisconnectReasonMessage>(message => disconnectReason = message.reason);
+            NetworkClient.RegisterHandler<DisconnectReasonMessage>(message => disconnectReason = message.reason.Say());
+            NetworkClient.RegisterHandler<GameTextMessage>(message => Events.EventManager.ChatLineReceived.Raise(new Events.ChatLineReceivedEvent() {
+                sender = message.isEvent ? null : ChatCommands.ServerName,
+                text = message.text.Say(),
+            }));
         }
 
         public override void OnStopClient() {
@@ -399,7 +403,7 @@ namespace Brickcraft.Network
             startFailure = null;
 
             if (message == null && isInMenu()) {
-                message = "Couldn't join " + networkAddress; // a failed join leaves us in the menu
+                message = Loc.Get(Loc.UI, "network.couldnt_join", networkAddress); // a failed join leaves us in the menu
             }
             if (message == null) {
                 return;

@@ -81,7 +81,7 @@ namespace Brickcraft.Network
             stack.health++;
             if (stack.health >= item.durability) {
                 items.RemoveAt(index);
-                connectionToClient?.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "Your " + item.name + " broke" });
+                GameTexts.Send(connectionToClient, "inventory.broke", item);
             } else {
                 items[index] = stack;
             }
@@ -262,7 +262,7 @@ namespace Brickcraft.Network
                 return;
             }
             if (!Inventory.Add(items, itemId, item.ValidColor(color), quantity)) {
-                connectionToClient.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = "There's no room for " + quantity + " x " + item.name + " in your inventory" });
+                GameTexts.Send(connectionToClient, "inventory.no_room", quantity, item);
                 return;
             }
             save();

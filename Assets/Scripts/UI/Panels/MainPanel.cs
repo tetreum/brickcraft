@@ -120,10 +120,10 @@ public class MainPanel : MonoBehaviour
     // saves the typed name, false if it isn't valid
     private bool applyName () {
         string name = nameInput != null ? nameInput.text.Trim() : PlayerIdentity.Name;
-        string error = PlayerIdentity.ValidateName(name);
+        GameText error = PlayerIdentity.ValidateName(name);
 
-        if (error != null) {
-            showMessage(error);
+        if (!error.IsEmpty) {
+            showMessage(error.Say());
             return false;
         }
         PlayerIdentity.Name = name;

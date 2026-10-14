@@ -30,11 +30,14 @@ namespace Brickcraft.UI
         private class Row
         {
             public GameInput.Binding binding;
+            public Text label;
             public Image keyImage;
             public Text keyText;
         }
 
         private readonly List<Row> rows = new List<Row>();
+        // the categories' titles, with a binding of each (for its name)
+        private readonly List<KeyValuePair<Text, GameInput.Binding>> categoryTitles = new List<KeyValuePair<Text, GameInput.Binding>>();
         private Row waiting;
         // waiting for its key, see GameInput.StartRebinding
         private IDisposable rebinding;
@@ -49,17 +52,17 @@ namespace Brickcraft.UI
                     category = binding.category;
                     GameObject title = Instantiate(categoryTemplate, list);
                     title.name = category;
-                    title.GetComponent<Text>().text = category;
+                    categoryTitles.Add(new KeyValuePair<Text, GameInput.Binding>(title.GetComponent<Text>(), binding));
                     title.SetActive(true);
                 }
 
                 GameObject go = Instantiate(rowTemplate, list);
                 go.name = binding.button;
-                go.transform.Find("Label").GetComponent<Text>().text = binding.label;
                 Transform key = go.transform.Find("Key");
 
                 Row row = new Row() {
                     binding = binding,
+                    label = go.transform.Find("Label").GetComponent<Text>(),
                     keyImage = key.GetComponent<Image>(),
                     keyText = key.GetComponentInChildren<Text>(),
                 };
@@ -71,13 +74,15 @@ namespace Brickcraft.UI
             resetButton.onClick.AddListener(() => {
                 stopWaiting();
                 GameInput.ResetAll();
-                status.text = "All keys are back to their defaults.";
+                status.text = Loc.Get(Loc.UI, "controls.all_keys_are_back_to_their_defaults");
             });
         }
 
         private void OnEnable() {
             EventManager.SettingChanged.Subscribe(onSettingChanged);
+            EventManager.LanguageChanged.Subscribe(onLanguageChanged);
             status.text = "";
+            showLabels();
             refresh();
 
             // from the top, whatever was seen last time
@@ -87,11 +92,28 @@ namespace Brickcraft.UI
 
         private void OnDisable() {
             EventManager.SettingChanged.Unsubscribe(onSettingChanged);
+            EventManager.LanguageChanged.Unsubscribe(onLanguageChanged);
             stopWaiting();
         }
 
         private void onSettingChanged(SettingChangedEvent e) {
             refresh();
+        }
+
+        private void onLanguageChanged(LanguageChangedEvent e) {
+            status.text = "";
+            showLabels();
+            refresh();
+        }
+
+        // the categories' and actions' names, in the player's language
+        private void showLabels() {
+            foreach (KeyValuePair<Text, GameInput.Binding> title in categoryTitles) {
+                title.Key.text = title.Value.CategoryName;
+            }
+            foreach (Row row in rows) {
+                row.label.text = row.binding.Label;
+            }
         }
 
         private void refresh() {
@@ -109,7 +131,7 @@ namespace Brickcraft.UI
             stopWaiting();
             rebinding = GameInput.StartRebinding(row.binding.button, path => onKey(row, path));
             if (rebinding == null) {
-                status.text = "Keys can't be changed without a keyboard or mouse.";
+                status.text = Loc.Get(Loc.UI, "controls.keys_can_t_be_changed_without_a_keyboard_or_mouse");
                 return;
             }
             waiting = row;
@@ -120,7 +142,7 @@ namespace Brickcraft.UI
             if (EventSystem.current != null) {
                 EventSystem.current.SetSelectedGameObject(null);
             }
-            row.keyText.text = "Press a key...";
+            row.keyText.text = Loc.Get(Loc.UI, "controls.press_a_key");
             row.keyImage.color = waitingColor;
             status.text = "";
         }
@@ -152,10 +174,10 @@ namespace Brickcraft.UI
             List<string> others = new List<string>();
             foreach (GameInput.Binding other in GameInput.Bindings) {
                 if (other != binding && Array.IndexOf(GameInput.GetPaths(other.button), path) >= 0) {
-                    others.Add(other.label);
+                    others.Add(other.Label);
                 }
             }
-            return others.Count == 0 ? "" : GameInput.PathName(path) + " is also used by " + string.Join(", ", others.ToArray()) + ".";
+            return others.Count == 0 ? "" : Loc.Get(Loc.UI, "controls.is_also_used_by", GameInput.PathName(path), string.Join(", ", others.ToArray()));
         }
     }
 }

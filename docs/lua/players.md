@@ -11,6 +11,7 @@ Events and `world.players()` give scripts players. Use `:` to call their methods
 | `position` | The cell its feet are in, see [Positions](README.md#positions). `nil` once it left. |
 | `health` | Its health, 0 while it's dead. `nil` once it left. |
 | `maxHealth` | Its health when full (20). `nil` once it left. |
+| `language` | The language it plays in, like `"en"` or `"es"`. See [`text`](globals.md#textplayer-key-). |
 
 ## player:message(text)
 

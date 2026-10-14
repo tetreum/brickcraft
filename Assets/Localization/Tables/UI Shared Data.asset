@@ -1,0 +1,764 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: UI Shared Data
+  m_EditorClassIdentifier: 
+  m_TableCollectionName: UI
+  m_TableCollectionNameGuidString: aa8fd92a18fabda428a97bb6493b108f
+  m_Entries:
+  - m_Id: 520962695168
+    m_Key: settings.language
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441234272256
+    m_Key: player.sleeping
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826688
+    m_Key: player.admin
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826689
+    m_Key: player.kick
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826690
+    m_Key: player.ban
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826691
+    m_Key: player.tp
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826692
+    m_Key: player.right_click_to_use_the_mouse
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441267826693
+    m_Key: inventory.armor
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020992
+    m_Key: inventory.head
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020993
+    m_Key: inventory.chest
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020994
+    m_Key: inventory.legs
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020995
+    m_Key: inventory.feet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020996
+    m_Key: inventory.shield
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020997
+    m_Key: inventory.inventory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020998
+    m_Key: all.all
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272020999
+    m_Key: inventory.search_by_name_or_id
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272021000
+    m_Key: inventory.default
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441272021001
+    m_Key: main.your_name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215296
+    m_Key: main.password_if_any
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215297
+    m_Key: settings.general
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215298
+    m_Key: settings.graphics
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215299
+    m_Key: settings.controls
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215300
+    m_Key: settings.audio
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215301
+    m_Key: settings.change_the_language_of_the_game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215302
+    m_Key: settings.show_coordinates
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215303
+    m_Key: settings.display_your_current_position_x_y_z
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215304
+    m_Key: settings.crosshair
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215305
+    m_Key: settings.show_a_center_crosshair
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215306
+    m_Key: settings.tutorial_hints
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215307
+    m_Key: settings.show_helpful_tips_while_playing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215308
+    m_Key: settings.resolution
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215309
+    m_Key: settings.the_size_of_the_game_s_picture
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215310
+    m_Key: settings.display_mode
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215311
+    m_Key: settings.fullscreen_a_borderless_window_or_a_wind
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215312
+    m_Key: settings.render_distance
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441276215313
+    m_Key: settings.how_far_the_world_is_drawn_in_chunks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409600
+    m_Key: settings.reset_to_defaults
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409601
+    m_Key: settings.master_volume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409602
+    m_Key: settings.how_loud_the_whole_game_is
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409603
+    m_Key: settings.music
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409604
+    m_Key: settings.volume_of_the_music
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409605
+    m_Key: settings.effects
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409606
+    m_Key: settings.digging_placing_steps
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409607
+    m_Key: worlds.play
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409608
+    m_Key: worlds.no_worlds_yet_create_one
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409609
+    m_Key: worlds.create_new_world
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409610
+    m_Key: worlds.world_name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409611
+    m_Key: worlds.what_it_s_called_in_the_list
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409612
+    m_Key: worlds.seed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409613
+    m_Key: worlds.the_same_seed_the_same_terrain
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409614
+    m_Key: worlds.difficulty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409615
+    m_Key: worlds.how_hard_the_world_is
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409616
+    m_Key: worlds.peaceful
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409617
+    m_Key: worlds.normal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409618
+    m_Key: worlds.hard
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409619
+    m_Key: worlds.pvp
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409620
+    m_Key: worlds.players_can_hurt_each_other
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441280409621
+    m_Key: worlds.day_length
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603904
+    m_Key: worlds.how_long_a_day_and_its_night_last
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603905
+    m_Key: worlds.10_min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603906
+    m_Key: worlds.20_min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603907
+    m_Key: worlds.30_min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603908
+    m_Key: worlds.60_min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603909
+    m_Key: worlds.back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603910
+    m_Key: worlds.create_and_play
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603911
+    m_Key: worlds.mods
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603912
+    m_Key: worlds.no_mods_installed_mods_are_folders_in_th
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603913
+    m_Key: player.stop_sleeping
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603914
+    m_Key: esc.settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603915
+    m_Key: esc.leave
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603916
+    m_Key: main.singleplayer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603917
+    m_Key: main.host_game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603918
+    m_Key: main.join_game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603919
+    m_Key: main.settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3441284603920
+    m_Key: main.quit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681152
+    m_Key: worlds.singleplayer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681153
+    m_Key: worlds.pick_a_world_or_create_a_new_one
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681154
+    m_Key: worlds.seed_value
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681155
+    m_Key: worlds.played_ago
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681156
+    m_Key: worlds.just_now
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681157
+    m_Key: worlds.minutes_ago
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681158
+    m_Key: worlds.hours_ago
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709509681159
+    m_Key: worlds.days_ago
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875456
+    m_Key: worlds.mod_count
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875457
+    m_Key: worlds.sure
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875458
+    m_Key: worlds.delete
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875459
+    m_Key: worlds.can_t_be_played
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875460
+    m_Key: worlds.mods_and_more
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875461
+    m_Key: worlds.missing_mods
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875462
+    m_Key: worlds.older_save_upgraded_when_played
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875463
+    m_Key: worlds.new_world
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875464
+    m_Key: worlds.leave_the_seed_empty_for_a_random_one
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875465
+    m_Key: worlds.by_author
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875466
+    m_Key: worlds.couldn_t_create_the_world
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875467
+    m_Key: settings.adjust_your_game_preferences
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875468
+    m_Key: settings.change_how_the_game_is_displayed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875469
+    m_Key: settings.click_a_key_to_change_it_esc_cancels
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875470
+    m_Key: settings.set_the_volume_of_the_game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875471
+    m_Key: settings.fullscreen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875472
+    m_Key: settings.borderless_window
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875473
+    m_Key: settings.windowed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875474
+    m_Key: settings.chunks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875475
+    m_Key: settings.server_allows
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875476
+    m_Key: controls.all_keys_are_back_to_their_defaults
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875477
+    m_Key: controls.keys_can_t_be_changed_without_a_keyboard_or_mouse
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875478
+    m_Key: controls.press_a_key
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709513875479
+    m_Key: controls.is_also_used_by
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585600
+    m_Key: player.players
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585601
+    m_Key: player.online
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585602
+    m_Key: player.online_of_max
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585603
+    m_Key: player.kick_confirm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585604
+    m_Key: player.ban_confirm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585605
+    m_Key: player.kick_explanation
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585606
+    m_Key: player.ban_explanation
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585607
+    m_Key: player.cancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585608
+    m_Key: player.reason_optional
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585609
+    m_Key: player.name_you
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585610
+    m_Key: player.ping_ms
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585611
+    m_Key: player.air
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585612
+    m_Key: player.drowning
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585613
+    m_Key: sleep.sleeping_through_the_night
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585614
+    m_Key: sleep.status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585615
+    m_Key: pet.follows_attacks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585616
+    m_Key: pet.stays_attacks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585617
+    m_Key: pet.attacks_nothing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585618
+    m_Key: pet.attacks_who_hurts_you
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585619
+    m_Key: pet.attacks_and_hostile_npcs
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585620
+    m_Key: pet.attacks_and_players
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585621
+    m_Key: pet.follow
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585622
+    m_Key: pet.stay
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585623
+    m_Key: pet.change_attacks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585624
+    m_Key: death.you_died
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585625
+    m_Key: death.killed_you
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585626
+    m_Key: death.respawn
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585627
+    m_Key: tooltip.damage_shoots
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585628
+    m_Key: tooltip.damage_hits_a_second
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585629
+    m_Key: tooltip.armor
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585630
+    m_Key: tooltip.durability
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585631
+    m_Key: inventory.no_items_found
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585632
+    m_Key: inventory.page
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5709874585633
+    m_Key: inventory.default_colour
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712832
+    m_Key: importer.model_importer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712833
+    m_Key: importer.models_in_folder
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712834
+    m_Key: importer.no_models
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712835
+    m_Key: importer.cant_read
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712836
+    m_Key: importer.none_placeable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712837
+    m_Key: importer.too_many_bricks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712838
+    m_Key: importer.model_summary
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712839
+    m_Key: importer.unknown_parts
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712840
+    m_Key: importer.attachments
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712841
+    m_Key: importer.off_grid
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712842
+    m_Key: importer.overlapping
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712843
+    m_Key: importer.parts_left_out
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712844
+    m_Key: importer.open_folder
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712845
+    m_Key: importer.refresh
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712846
+    m_Key: importer.close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712847
+    m_Key: importer.hint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712848
+    m_Key: importer.placing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712849
+    m_Key: importer.the_model_cant_go_there
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712850
+    m_Key: partslister.parts_list
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712851
+    m_Key: partslister.help
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712852
+    m_Key: partslister.size
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712853
+    m_Key: partslister.west
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712854
+    m_Key: partslister.east
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712855
+    m_Key: partslister.bottom
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712856
+    m_Key: partslister.top
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712857
+    m_Key: partslister.south
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712858
+    m_Key: partslister.north
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712859
+    m_Key: partslister.name_of_the_list_required
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712860
+    m_Key: partslister.save_parts_list
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712861
+    m_Key: partslister.cancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712862
+    m_Key: colorpicker.color_picker
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712863
+    m_Key: colorpicker.pick_a_colour
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712864
+    m_Key: colorpicker.close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712865
+    m_Key: popup.ok
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712866
+    m_Key: network.couldnt_open_the_world
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712867
+    m_Key: network.couldnt_join
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712868
+    m_Key: loading.joining_server
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712869
+    m_Key: loading.joining
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712870
+    m_Key: loading.connecting
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712871
+    m_Key: loading.loading_server
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712872
+    m_Key: loading.loading_world
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712873
+    m_Key: loading.waiting_for_the_server
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5710222712874
+    m_Key: loading.building_terrain
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 8627787809188479000
+  references:
+    version: 2
+    RefIds:
+    - rid: 8627787809188479000
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1791986708056

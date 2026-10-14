@@ -75,11 +75,11 @@ namespace Brickcraft.Bricks
             try {
                 gather(parts, triangles, filled, ref cellsMin, ref cellsMax);
             } catch (Exception e) {
-                done("The creation's model couldn't be made: " + e.Message);
+                done(Loc.Get(Loc.Game, "partslister.model_failed", e.Message));
                 yield break;
             }
             if (triangles.Count == 0) {
-                done("The creation's model couldn't be made: its parts have no shape");
+                done(Loc.Get(Loc.Game, "partslister.model_no_shape"));
                 yield break;
             }
             int before = triangles.Count;
@@ -94,20 +94,20 @@ namespace Brickcraft.Bricks
                 yield return null;
             }
             if (hiding.IsFaulted) {
-                done("The creation's model couldn't be made: " + hiding.Exception.GetBaseException().Message);
+                done(Loc.Get(Loc.Game, "partslister.model_failed", hiding.Exception.GetBaseException().Message));
                 yield break;
             }
 
             List<Triangle> kept = triangles.FindAll(t => !t.hidden);
             string id = IdFor(name);
-            string message;
+            string mod;
             try {
-                message = write(kept, parts, ldraw, cellsMin, cellsMax, id, name, author, folder);
+                mod = write(kept, parts, ldraw, cellsMin, cellsMax, id, name, author, folder);
             } catch (Exception e) {
-                done("The creation's model couldn't be saved: " + e.Message);
+                done(Loc.Get(Loc.Game, "partslister.model_not_saved", e.Message));
                 yield break;
             }
-            done(message + " (" + kept.Count + " of its " + before + " triangles are seen)");
+            done(Loc.Get(Loc.Game, "partslister.model_saved", id, mod, kept.Count, before));
         }
 
         // -------- the parts' shapes --------
@@ -410,6 +410,7 @@ namespace Brickcraft.Bricks
 
         // -------- the files --------
 
+        // the mod's files in folder/[id]; returns where the mod is
         private static string write(List<Triangle> kept, List<CreationPart> parts, List<LDraw.LDrawPlacement> ldraw, Vector3Int cellsMin, Vector3Int cellsMax,
                 string id, string name, string author, string folder) {
             // its pivot: the middle of its footprint, at its bottom (what it fills of the grid)
@@ -528,7 +529,7 @@ namespace Brickcraft.Bricks
                 UnityEngine.Object.Destroy(model);
                 UnityEngine.Object.Destroy(mesh);
             }
-            return "Model saved as the mod \"" + id + "\" (copy " + mod + " into Mods/, then add it to a world)";
+            return mod;
         }
 
         // a corner's 1-based index, made the first time that place and normal come

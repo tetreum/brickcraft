@@ -132,7 +132,7 @@ namespace Brickcraft.Network
             }
             conn.Send(new StorageOpenedMessage() {
                 brickId = storage.id,
-                title = Server.items[storage.itemId].name,
+                title = GameText.Reference(Server.items[storage.itemId]), // named by each player
                 slots = entry.slots,
                 items = items.ToArray(),
             });

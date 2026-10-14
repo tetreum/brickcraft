@@ -21,7 +21,7 @@ namespace Brickcraft.Tests
         public void ANewMachineGetsANewPlayer() {
             JoinRules.Decision decision = JoinRules.Decide("Newbie", Mine, null, null, false, nobodyOnline);
 
-            Assert.IsNull(decision.error);
+            Assert.IsTrue(decision.error.IsEmpty);
             Assert.IsNull(decision.player, "created by the authenticator");
         }
 
@@ -30,7 +30,7 @@ namespace Brickcraft.Tests
             PlayerRecord me = player(1, "Me", Mine);
             JoinRules.Decision decision = JoinRules.Decide("Me", Mine, me, me, false, nobodyOnline);
 
-            Assert.IsNull(decision.error);
+            Assert.IsTrue(decision.error.IsEmpty);
             Assert.AreSame(me, decision.player);
             Assert.IsFalse(decision.rename);
         }
@@ -40,7 +40,7 @@ namespace Brickcraft.Tests
             PlayerRecord me = player(1, "Me", Mine);
             JoinRules.Decision decision = JoinRules.Decide("NewName", Mine, null, me, false, nobodyOnline);
 
-            Assert.IsNull(decision.error);
+            Assert.IsTrue(decision.error.IsEmpty);
             Assert.AreSame(me, decision.player);
             Assert.IsTrue(decision.rename);
             Assert.IsNull(decision.moveAside);
@@ -51,7 +51,7 @@ namespace Brickcraft.Tests
             PlayerRecord them = player(2, "Them", Theirs);
             JoinRules.Decision decision = JoinRules.Decide("Them", Mine, them, player(1, "Me", Mine), false, nobodyOnline);
 
-            StringAssert.Contains("belongs to someone else", decision.error);
+            Assert.AreEqual("join.name_taken", decision.error.key);
         }
 
         [Test]
@@ -60,7 +60,7 @@ namespace Brickcraft.Tests
             PlayerRecord old = player(3, "Old", Mine); // from a save before players were their machine
             JoinRules.Decision decision = JoinRules.Decide("Old", Mine, old, me, false, nobodyOnline);
 
-            Assert.IsNull(decision.error);
+            Assert.IsTrue(decision.error.IsEmpty);
             Assert.AreSame(me, decision.player, "the machine's player, not the old one");
             Assert.IsTrue(decision.rename);
             Assert.AreSame(old, decision.moveAside);
@@ -71,7 +71,7 @@ namespace Brickcraft.Tests
             PlayerRecord me = player(1, "Me", Mine);
             JoinRules.Decision decision = JoinRules.Decide("Me", Mine, me, me, false, id => id == 1);
 
-            StringAssert.Contains("already playing", decision.error);
+            Assert.AreEqual("join.already_playing", decision.error.key);
         }
 
         [Test]
@@ -81,15 +81,15 @@ namespace Brickcraft.Tests
             me.BanReason = "griefing";
             JoinRules.Decision decision = JoinRules.Decide("Me", Mine, me, me, true, nobodyOnline);
 
-            StringAssert.Contains("banned", decision.error);
-            StringAssert.Contains("griefing", decision.error);
+            Assert.AreEqual("join.banned_reason", decision.error.key);
+            CollectionAssert.Contains(decision.error.args, "griefing");
         }
 
         [Test]
         public void ABannedMachineIsRefused() {
             JoinRules.Decision decision = JoinRules.Decide("Newbie", Mine, null, null, true, nobodyOnline);
 
-            StringAssert.Contains("banned", decision.error);
+            Assert.AreEqual("join.banned", decision.error.key);
         }
 
         [Test]
@@ -97,7 +97,7 @@ namespace Brickcraft.Tests
             PlayerRecord admin = player(1, "Admin", Mine, PlayerRoles.Admin);
             JoinRules.Decision decision = JoinRules.Decide("Admin", Mine, admin, admin, true, nobodyOnline);
 
-            Assert.IsNull(decision.error);
+            Assert.IsTrue(decision.error.IsEmpty);
             Assert.AreSame(admin, decision.player);
         }
     }

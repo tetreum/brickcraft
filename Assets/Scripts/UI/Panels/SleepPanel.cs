@@ -42,11 +42,10 @@ namespace Brickcraft.UI
             bool skipping = sleep.isSkipping;
             stopButton.gameObject.SetActive(!skipping);
             if (skipping) {
-                status.text = "Sleeping through the night...";
+                status.text = Loc.Get(Loc.UI, "sleep.sleeping_through_the_night");
             } else {
                 int needed = PlayerSleep.Needed(sleep.players);
-                status.text = sleep.sleeping + " of " + sleep.players + (sleep.players == 1 ? " player" : " players") + " asleep, "
-                    + needed + " needed to skip the night";
+                status.text = Loc.Get(Loc.UI, "sleep.status", sleep.sleeping, sleep.players, needed);
             }
         }
     }

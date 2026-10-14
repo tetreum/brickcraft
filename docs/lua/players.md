@@ -14,7 +14,7 @@ Events and `world.players()` give scripts players. Use `:` to call their methods
 
 ## player:message(text)
 
-Shows `text` in the player's chat, from the server.
+Shows `text` in the player's chat, from the server (one line, up to 200 characters). For everybody's chat, see [Chat](chat.md).
 
 ```lua
 player:message("Welcome back, " .. player.name)

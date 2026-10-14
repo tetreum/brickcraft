@@ -153,6 +153,26 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator ModsWriteInEverybodysChat() {
+            System.Collections.Generic.List<Events.ChatLineReceivedEvent> lines = new System.Collections.Generic.List<Events.ChatLineReceivedEvent>();
+            System.Action<Events.ChatLineReceivedEvent> received = line => lines.Add(line);
+            Events.EventManager.ChatLineReceived.Subscribe(received);
+            try {
+                MoonSharp.Interpreter.Script script = new MoonSharp.Interpreter.Script(MoonSharp.Interpreter.CoreModules.Preset_SoftSandbox);
+                Scripting.LuaApi.Install(script, new Mods.ModInfo() { id = "test_mod", name = "Test mod" });
+                script.DoString("chat.say('Hello from a mod') chat.event('A dragon was seen\\nnear spawn')");
+                yield return TestGame.WaitUntil(() => lines.Count >= 2, 5, "both lines in the chat");
+
+                Assert.AreEqual(Network.ChatCommands.ServerName, lines[0].sender, "said by the server");
+                Assert.AreEqual("Hello from a mod", lines[0].text);
+                Assert.IsTrue(lines[1].IsEvent, "an event, like a player joining");
+                Assert.AreEqual("A dragon was seen near spawn", lines[1].text, "one line");
+            } finally {
+                Events.EventManager.ChatLineReceived.Unsubscribe(received);
+            }
+        }
+
+        [UnityTest]
         public IEnumerator WaterPouredOnAFloorSpreads() {
             BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
             BlockType water = (BlockType)BlockDatabase.IdOf("water");

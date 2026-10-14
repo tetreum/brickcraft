@@ -10,6 +10,7 @@ Mods can script their bricks in Lua ([MoonSharp](https://www.moonsharp.org/), Lu
 | [Bricks](bricks.md) | What a brick is to a script: its fields, `move` and `remove`. |
 | [Players](players.md) | What a player is to a script: its fields, `message` and `give`. |
 | [NPCs](npcs.md) | Creatures: NPC scripts and their events (seeing, hearing, thinking), orders like `attack` and `follow`. |
+| [Chat](chat.md) | `chat.*`: messages and event lines in everybody's chat. |
 | [Timer](timer.md) | `timer.*`: running functions later or every so often. |
 | [UI](ui.md) | `ui.*`: popups (with buttons and text fields), toasts, titles and HUD panels on a player's screen. |
 

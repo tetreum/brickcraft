@@ -12,6 +12,8 @@ namespace Brickcraft.Network
         Died = 5,
         /// <summary>A player drowned.</summary>
         Drowned = 6,
+        /// <summary>A mod's own line (see Scripting.LuaApi's chat.event): reason is the whole text.</summary>
+        Mod = 7,
     }
 
     /// <summary>
@@ -54,9 +56,26 @@ namespace Brickcraft.Network
                     return string.IsNullOrEmpty(message.by) ? message.player + " died" : message.player + " was killed by " + message.by;
                 case ChatEventType.Drowned:
                     return message.player + " drowned";
+                case ChatEventType.Mod:
+                    return string.IsNullOrEmpty(message.reason) ? null : message.reason;
                 default:
                     return null; // from a newer server, nothing we know how to say
             }
+        }
+
+        /// <summary>One line of printable text, no longer than the chat allows ("" for null).</summary>
+        public static string Clean(string text) {
+            if (text == null) {
+                return "";
+            }
+            System.Text.StringBuilder clean = new System.Text.StringBuilder(text.Length);
+
+            foreach (char c in text) {
+                clean.Append(char.IsControl(c) ? ' ' : c);
+            }
+            string result = clean.ToString().Trim();
+
+            return result.Length > ChatMessage.MaxLength ? result.Substring(0, ChatMessage.MaxLength) : result;
         }
 
         private static string withReason(string reason) {

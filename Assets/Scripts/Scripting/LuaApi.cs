@@ -58,6 +58,7 @@ namespace Brickcraft.Scripting
             });
             script.Globals["world"] = createWorld(script);
             script.Globals["timer"] = createTimer(script, mod);
+            script.Globals["chat"] = createChat(script);
             LuaUi.Install(script, mod);
         }
 
@@ -271,6 +272,27 @@ namespace Brickcraft.Scripting
             });
 
             return world;
+        }
+
+        // what everybody's chat shows: messages from the server, and lines like "X joined the game"
+        private static Table createChat(Script script) {
+            Table chat = new Table(script);
+
+            chat["say"] = DynValue.NewCallback((context, args) => {
+                string text = ChatEvents.Clean(args.AsType(0, "say", DataType.String).String);
+                if (text.Length > 0) {
+                    NetworkServer.SendToReady(new ChatMessage() { sender = ChatCommands.ServerName, text = text });
+                }
+                return DynValue.Nil;
+            });
+            chat["event"] = DynValue.NewCallback((context, args) => {
+                string text = ChatEvents.Clean(args.AsType(0, "event", DataType.String).String);
+                if (text.Length > 0) {
+                    ChatEvents.Send(new ChatEventMessage() { type = ChatEventType.Mod, reason = text });
+                }
+                return DynValue.Nil;
+            });
+            return chat;
         }
 
         private static Table createTimer(Script script, ModInfo mod) {

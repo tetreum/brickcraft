@@ -258,7 +258,8 @@ namespace Brickcraft.Scripting
 
         /// <summary>Shows a message in its chat.</summary>
         public void message(string text) {
-            if (connection != null && text != null) {
+            text = ChatEvents.Clean(text);
+            if (connection != null && text.Length > 0) {
                 connection.Send(new ChatMessage() { sender = ChatCommands.ServerName, text = text });
             }
         }

@@ -81,7 +81,7 @@ Players sleep in beds (bricks of items tagged `bed`, like `Items/bed`; `Network.
 
 Players have health (`Combat.Health`, 20 by default, decided by the server; NPCs will have it too). Left clicking something with health hits it for the damage of the item in hand (`damage` in its info.json, 1 for a bare hand), at most every 0.4 seconds and from close by, and pushes it back; players can only be hit with PvP on. After a hit there's half a second nothing can hurt it again. The health bar above the bottom bar shows it. A dead player can't move or act: a popup says who killed it, and closing it respawns it at the spawn with all its health and its inventory (`PlayerNetwork.CmdRespawn`). Health isn't saved: players join with all of it.
 
-Besides player messages, the chat shows events: players joining, leaving, being kicked, banned or killed. The server sends a `ChatEventMessage` saying what happened (type, player, who did it, reason) and each client words it (`ChatEvents.Describe`); to add an event, add a `ChatEventType`, its sentence in `Describe`, and send it with `ChatEvents.Send`.
+Besides player messages, the chat shows events: players joining, leaving, being kicked, banned or killed. The server sends a `ChatEventMessage` saying what happened (type, player, who did it, reason) and each client words it (`ChatEvents.Describe`); to add an event, add a `ChatEventType`, its sentence in `Describe`, and send it with `ChatEvents.Send`. Mods' lines (Lua's `chat.event`) are the `Mod` type, their text already worded.
 
 The first player to join a save without admins (the host, starting singleplayer or a server) becomes its admin; everyone else joins as a `user`.
 
@@ -279,7 +279,7 @@ Players joining a server need its world's mods: the same version with the same f
 
 ### Scripts
 
-Mods can script their bricks in Lua ([MoonSharp](https://www.moonsharp.org/), Lua 5.2): `items/[item]/script.lua` handles the item's events (placed, hit, broken, used) and `scripts/*.lua` the mod's (loaded, players joining, leaving and chatting). Scripts run on the server only, sandboxed, and can spawn, move and remove bricks, change world blocks, message players and give them items, show them popups, toasts, titles and HUD panels, and run timers.
+Mods can script their bricks in Lua ([MoonSharp](https://www.moonsharp.org/), Lua 5.2): `items/[item]/script.lua` handles the item's events (placed, hit, broken, used) and `scripts/*.lua` the mod's (loaded, players joining, leaving and chatting). Scripts run on the server only, sandboxed, and can spawn, move and remove bricks, change world blocks, message players and write in everybody's chat (messages and event lines), give players items, show them popups, toasts, titles and HUD panels, and run timers.
 
 The reference, a page per section, is in [docs/lua](docs/lua/README.md).
 

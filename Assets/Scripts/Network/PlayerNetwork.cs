@@ -936,7 +936,7 @@ namespace Brickcraft.Network
 
         [Command]
         public void CmdChat(string text) {
-            text = cleanChatText(text);
+            text = ChatEvents.Clean(text);
 
             if (text.Length == 0 || NetworkTime.time < nextChatTime) {
                 return;
@@ -953,21 +953,6 @@ namespace Brickcraft.Network
             }
 
             NetworkServer.SendToReady(new ChatMessage() { sender = playerName, text = text });
-        }
-
-        // one line of printable text, no longer than the chat allows
-        private static string cleanChatText(string text) {
-            if (text == null) {
-                return "";
-            }
-            System.Text.StringBuilder clean = new System.Text.StringBuilder(text.Length);
-
-            foreach (char c in text) {
-                clean.Append(char.IsControl(c) ? ' ' : c);
-            }
-            string result = clean.ToString().Trim();
-
-            return result.Length > ChatMessage.MaxLength ? result.Substring(0, ChatMessage.MaxLength) : result;
         }
 
         [Server]

@@ -49,6 +49,19 @@ namespace Brickcraft.Network
         }
         private static bool testScenePvp = true;
 
+        /// <summary>Server: NPCs appear by themselves (see WorldStorage.NpcsOn; the test scene has them).</summary>
+        public static bool NpcsOn {
+            get { return Storage != null ? Storage.NpcsOn : testSceneNpcs; }
+            set {
+                if (Storage != null) {
+                    Storage.SetNpcsOn(value);
+                } else {
+                    testSceneNpcs = value;
+                }
+            }
+        }
+        private static bool testSceneNpcs = true;
+
         /// <summary>The saved world, null in scenes that aren't saved (the test scene).</summary>
         public static WorldStorage Storage { get; private set; }
 

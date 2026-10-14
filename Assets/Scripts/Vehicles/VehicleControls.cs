@@ -14,8 +14,10 @@ namespace Brickcraft.Vehicles
         public float lift;
         /// <summary>The wires' keys held (KeyCodes), for tests; null reads the keyboard.</summary>
         public int[] keys;
+        /// <summary>Nobody drives it: every wheel brakes (a handbrake), wired or not.</summary>
+        public bool parked;
 
-        public static readonly VehicleInput Parked = new VehicleInput() { brake = 1 };
+        public static readonly VehicleInput Parked = new VehicleInput() { brake = 1, parked = true };
     }
 
     /// <summary>

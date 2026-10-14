@@ -394,6 +394,49 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator RepositionPutsAnOverturnedCarBackOnItsWheels() {
+            Item wheelItem = wheel();
+            Assume.That(wheelItem, Is.Not.Null, "a small wheel in the catalogue");
+            Vector3Int floor = Vector3Int.zero;
+            yield return floorUp(f => floor = f);
+            float floorTop = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + Vector3Int.up)).y;
+            Vehicle vehicle = car(floor, wheelItem, out Brick seat);
+            yield return null;
+
+            List<Events.ChatLineReceivedEvent> lines = new List<Events.ChatLineReceivedEvent>();
+            System.Action<Events.ChatLineReceivedEvent> received = line => lines.Add(line);
+            Events.EventManager.ChatLineReceived.Subscribe(received);
+            Network.PlayerNetwork player = TestGame.Player.GetComponent<Network.PlayerNetwork>();
+            try {
+                Network.ChatCommands.Run(player.connectionToClient, "/reposition");
+                yield return TestGame.WaitUntil(() => lines.Count > 0, 5, "an answer");
+                Assert.IsFalse(lines[0].text.Contains("/reposition"), "not sitting: no vehicle to reposition (" + lines[0].text + ")");
+
+                VehicleSystem.ServerSit(player, seat);
+                yield return TestGame.WaitUntil(() => lines.Exists(line => line.text.Contains("/reposition")), 5, "the hint, sitting");
+            } finally {
+                Events.EventManager.ChatLineReceived.Unsubscribe(received);
+            }
+            yield return new WaitForFixedUpdate();
+            Assert.IsTrue(vehicle.IsSimulated);
+
+            // on its roof, off the floor, turned
+            Quaternion over = Quaternion.Euler(0, 30, 170);
+            Vector3 up = vehicle.transform.position + Vector3.up * 2;
+            vehicle.transform.SetPositionAndRotation(up, over);
+            vehicle.Body.position = up;
+            vehicle.Body.rotation = over;
+            yield return new WaitForFixedUpdate();
+
+            Network.ChatCommands.Run(player.connectionToClient, "/reposition");
+            yield return TestGame.Wait(1);
+            Assert.Greater(Vector3.Dot(vehicle.transform.up, Vector3.up), 0.95f, "upright");
+            Assert.Less(vehicle.transform.position.y - floorTop, 1.5f, "back down on the floor");
+            Assert.Greater(vehicle.transform.position.y - floorTop, -0.5f, "not in it");
+            VehicleSystem.ServerStandUp(player, Vector3.zero, Vector3.zero);
+        }
+
+        [UnityTest]
         public IEnumerator ADriverDrivesItAndItComesToRestWhenLeft() {
             Item wheelItem = wheel();
             Assume.That(wheelItem, Is.Not.Null, "a small wheel in the catalogue");
@@ -428,7 +471,15 @@ namespace Brickcraft.Tests
             Assert.Less(Vector3.Distance(vehicle.transform.TransformPoint(VehicleShape.Seat(seat, vehicle.transform).sitPoint), player.transform.position), 1,
                 "the driver with it");
 
-            VehicleSystem.ServerStandUp(player, vehicle.Body.velocity, vehicle.Body.angularVelocity);
+            // left while it's going
+            VehicleControls.Override = new VehicleInput() { throttle = 1 };
+            try {
+                yield return TestGame.Wait(0.4f);
+                Assert.Greater(vehicle.Body.velocity.magnitude, 2, "going");
+                VehicleSystem.ServerStandUp(player, vehicle.Body.velocity, vehicle.Body.angularVelocity);
+            } finally {
+                VehicleControls.Override = null;
+            }
             yield return null;
             Assert.AreEqual("", player.seatedIn);
             Assert.AreEqual(0u, vehicle.driverId);
@@ -436,7 +487,10 @@ namespace Brickcraft.Tests
             foreach (Brick brick in vehicle.grid.Bricks) {
                 Assert.IsFalse(brick.WorldBounds.Contains(player.transform.position), "out of the vehicle");
             }
-            float until = Time.time + 15;
+            // left moving: it brakes (all its wheels), it doesn't roll on
+            yield return TestGame.Wait(1.5f);
+            Assert.Less(Vector3.ProjectOnPlane(vehicle.Body.velocity, Vector3.up).magnitude, 0.5f, "stopped, on the floor at " + vehicle.transform.position);
+            float until = Time.time + 4;
             while (vehicle.IsSimulated && Time.time < until) {
                 yield return null;
             }

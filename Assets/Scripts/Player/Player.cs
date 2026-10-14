@@ -35,9 +35,9 @@ namespace Brickcraft
             get { return network != null && !string.IsNullOrEmpty(network.sleepingIn); }
         }
 
-        /// <summary>It can open the chat: when nothing froze it, or it's only sleeping.</summary>
+        /// <summary>It can open the chat: when nothing froze it, or it's only sleeping or in a vehicle's seat.</summary>
         public bool CanChat {
-            get { return !isFrozen || freezeReason == FreezeReason.Sleeping; }
+            get { return !isFrozen || freezeReason == FreezeReason.Sleeping || freezeReason == FreezeReason.Driving; }
         }
 
         public bool isFrozen {

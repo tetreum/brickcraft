@@ -38,7 +38,7 @@ namespace Brickcraft.Npcs
 
         public static void Update() {
             WorldBehaviour world = WorldBehaviour.Instance;
-            if (!Enabled || world == null || Time.unscaledTime < nextTry) {
+            if (!Enabled || !WorldNetwork.NpcsOn || world == null || Time.unscaledTime < nextTry) {
                 return;
             }
             nextTry = Time.unscaledTime + Interval;

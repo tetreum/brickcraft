@@ -142,6 +142,15 @@ namespace Brickcraft.Npcs
         }
 
         /// <summary>Takes every NPC out of the world (nobody gets their drops). Returns how many.</summary>
+        /// <summary>Takes every NPC but pets out of the world; how many went.</summary>
+        public static int ServerRemoveWild() {
+            List<Npc> wild = npcs.FindAll(npc => !npc.IsPet);
+            foreach (Npc npc in wild) {
+                NetworkServer.Destroy(npc.gameObject);
+            }
+            return wild.Count;
+        }
+
         public static int ServerRemoveAll() {
             List<Npc> all = new List<Npc>(npcs);
             foreach (Npc npc in all) {
@@ -409,7 +418,10 @@ namespace Brickcraft.Npcs
                 populated.Add(coords);
                 if (changes != null) {
                     foreach (SavedNpc saved in changes.GetNpcs(coords)) {
-                        restore(saved);
+                        // with NPCs off, only pets come back
+                        if (WorldNetwork.NpcsOn || saved.owner != 0) {
+                            restore(saved);
+                        }
                     }
                     DroppedItems.Restore(changes.GetDrops(coords));
                     Vehicles.VehicleSystem.Restore(changes.GetVehicles(coords));

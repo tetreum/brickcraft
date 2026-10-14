@@ -139,6 +139,27 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator EnterOpensTheChatInAVehiclesSeat() {
+            // a seat alone, a vehicle of its own, in the air above the player
+            Item seatItem = Server.items["seat"];
+            Vector3Int cell = BrickGrid.WorldToCell(player.transform.position + Vector3.up * 6);
+            Vehicles.Vehicle vehicle = Vehicles.VehicleSystem.ServerCreate(seatItem, 4, new BrickPlacement(seatItem.brickModel, cell));
+            yield return frames(1);
+            Vehicles.VehicleSystem.ServerSit(player.network, vehicle.grid.GetBrickAt(Vector3Int.zero));
+            yield return frames(2);
+            Assert.AreEqual(Player.FreezeReason.Driving, player.freezeReason, "seated");
+
+            input.PressAndRelease(keyboard.enterKey);
+            yield return frames(2);
+            Assert.IsTrue(GameInput.IsTyping, "the chat is open");
+            input.PressAndRelease(keyboard.escapeKey);
+            yield return frames(2);
+            Assert.IsFalse(GameInput.IsTyping, "the chat closed");
+            Assert.AreEqual(Player.FreezeReason.Driving, player.freezeReason, "still seated");
+            Vehicles.VehicleSystem.ServerStandUp(player.network, Vector3.zero, Vector3.zero);
+        }
+
+        [UnityTest]
         public IEnumerator TheMouseTurnsThePlayer() {
             float before = player.transform.eulerAngles.y;
             input.Set(mouse.delta, new Vector2(100, 0));

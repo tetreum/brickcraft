@@ -170,6 +170,72 @@ namespace Brickcraft.Vehicles
             }
         }
 
+        // how far above the ground a repositioned vehicle is dropped, and how far down the ground is looked for
+        private const float RepositionDrop = 0.5f;
+        private const float RepositionSearch = 50;
+
+        /// <summary>Its driver puts it back on its wheels (see VehicleSystem.ServerReposition).</summary>
+        [TargetRpc]
+        public void TargetReposition(NetworkConnectionToClient target) {
+            Reposition();
+        }
+
+        /// <summary>
+        /// Upright again, still facing the way it did, and dropped from a little above the ground under it, still. Stuck
+        /// or overturned, it goes on from there.
+        /// </summary>
+        public void Reposition() {
+            if (grid.Count == 0) {
+                return;
+            }
+            // its heading: where its front points, flattened (its top, if it's nose down or up)
+            Vector3 front = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+            if (front.sqrMagnitude < 0.01f) {
+                front = Vector3.ProjectOnPlane(transform.up, Vector3.up);
+            }
+            Quaternion upright = Quaternion.LookRotation(front.sqrMagnitude > 0.0001f ? front.normalized : Vector3.forward, Vector3.up);
+
+            // its bricks, in its space: their middle over where it is now, their bottom just above the ground
+            Bounds local = new Bounds();
+            bool any = false;
+            foreach (Brick brick in grid.Bricks) {
+                if (any) {
+                    local.Encapsulate(brick.placement.LocalBounds);
+                } else {
+                    local = brick.placement.LocalBounds;
+                    any = true;
+                }
+            }
+            Vector3 middle = transform.TransformPoint(local.center);
+            float ground = groundUnder(middle, local.extents.magnitude);
+            Vector3 position = new Vector3(middle.x, ground + RepositionDrop - local.min.y, middle.z) - upright * new Vector3(local.center.x, 0, local.center.z);
+
+            Body.velocity = Vector3.zero;
+            Body.angularVelocity = Vector3.zero;
+            transform.SetPositionAndRotation(position, upright);
+            Body.position = position;
+            Body.rotation = upright;
+            Physics.SyncTransforms();
+        }
+
+        // the ground under that point, from just above the vehicle down (not the vehicle, nor players; not a tree above
+        // it either), its height now if there's none
+        private float groundUnder(Vector3 point, float size) {
+            Vector3 from = point + Vector3.up * (size + 1);
+            RaycastHit[] hits = Physics.RaycastAll(from, Vector3.down, size + 1 + RepositionSearch, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+            float nearest = float.MaxValue, ground = point.y;
+            foreach (RaycastHit hit in hits) {
+                if (hit.collider.GetComponentInParent<Vehicle>() == this || hit.collider.GetComponentInParent<PlayerNetwork>() != null) {
+                    continue;
+                }
+                if (hit.distance < nearest) {
+                    nearest = hit.distance;
+                    ground = hit.point.y;
+                }
+            }
+            return ground;
+        }
+
         /// <summary>The wires from that seat.</summary>
         public List<VehicleWire> WiresOf(string seatId) {
             List<VehicleWire> from = new List<VehicleWire>();

@@ -45,7 +45,7 @@ namespace Brickcraft.World
         /// a migration from the previous one: older saves are upgraded when they're played (see
         /// Migrations.SaveMigrations).
         /// </summary>
-        public const ushort FormatVersion = 12;
+        public const ushort FormatVersion = 13;
 
         public string Folder { get; private set; }
         /// <summary>The format it's saved in, see FormatVersion.</summary>
@@ -68,6 +68,8 @@ namespace Brickcraft.World
         public List<WorldMod> Mods { get; private set; } = new List<WorldMod>();
         /// <summary>Players can hurt each other, chosen when it was created (admins change it with /pvp).</summary>
         public bool Pvp { get; private set; } = true;
+        /// <summary>NPCs appear by themselves (admins turn them off with /npcs: then only pets stay).</summary>
+        public bool NpcsOn { get; private set; } = true;
         /// <summary>Real seconds a day lasts (admins change it with /daylength), see WorldTime.</summary>
         public float DayLength { get; private set; } = WorldTime.DefaultDayLength;
         /// <summary>The game's time when it was last saved, in days since the world began (see WorldTime).</summary>
@@ -152,6 +154,12 @@ namespace Brickcraft.World
         /// <summary>Changes whether players can hurt each other, and saves it.</summary>
         public void SetPvp(bool pvp) {
             Pvp = pvp;
+            saveHeader();
+        }
+
+        /// <summary>Changes whether NPCs appear, and saves it.</summary>
+        public void SetNpcsOn(bool npcs) {
+            NpcsOn = npcs;
             saveHeader();
         }
 
@@ -421,6 +429,7 @@ namespace Brickcraft.World
                 Pvp = reader.ReadBoolean();
                 DayLength = reader.ReadSingle();
                 GameTime = reader.ReadDouble();
+                NpcsOn = reader.ReadBoolean();
                 if (!(DayLength > 0)) {
                     DayLength = WorldTime.DefaultDayLength;
                 }
@@ -476,6 +485,7 @@ namespace Brickcraft.World
                 writer.Write(Pvp);
                 writer.Write(DayLength);
                 writer.Write(GameTime);
+                writer.Write(NpcsOn);
             }
 
             if (File.Exists(path)) {

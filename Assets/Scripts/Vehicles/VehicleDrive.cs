@@ -317,14 +317,14 @@ namespace Brickcraft.Vehicles
                 float steer = wired(wheel.wires, WireAction.Steer, input);
                 // forward for the driver: the way the wheel rolls (its own way, if it rolls across)
                 float direction = wheel.motor != 0 ? wheel.motor : 1;
-                float brake = wheel.wires.Count > 0 ? brakeKey : 0;
-                // the other way while moving brakes first
-                float rolling = speed * direction;
-                if (drive * rolling < -0.5f) {
+                // the brake key brakes the wheels wired to the seat; left, they all brake
+                float brake = wheel.wires.Count > 0 || input.parked ? brakeKey : 0;
+                // the other way while moving brakes first (both for the driver: forward is forward, however the wheel's turned)
+                if (drive * speed < -0.5f) {
                     brake = Mathf.Max(brake, Mathf.Abs(drive));
                     drive = 0;
                 }
-                if (Mathf.Abs(speed) > MaxSpeed && drive * rolling > 0) {
+                if (Mathf.Abs(speed) > MaxSpeed && drive * speed > 0) {
                     drive = 0;
                 }
 

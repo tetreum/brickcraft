@@ -76,6 +76,25 @@ namespace Brickcraft.Vehicles
         public static void ServerSit(PlayerNetwork player, Brick seat) {
             player.seatedIn = seat.id;
             refreshDriver(seat.vehicle);
+            GameTexts.Send(player.connectionToClient, "vehicle.reposition_hint");
+        }
+
+        /// <summary>
+        /// The vehicle the player sits in back on its wheels (see Vehicle.Reposition), by whoever moves it: its driver's
+        /// client, or the server. False if the player isn't in one.
+        /// </summary>
+        public static bool ServerReposition(PlayerNetwork player) {
+            if (string.IsNullOrEmpty(player.seatedIn) || !Server.bricks.TryGetValue(player.seatedIn, out Brick seat) || seat.vehicle == null) {
+                return false;
+            }
+            Vehicle vehicle = seat.vehicle;
+            PlayerNetwork driver = vehicle.Driver;
+            if (driver != null && driver.connectionToClient != null) {
+                vehicle.TargetReposition(driver.connectionToClient);
+            } else {
+                vehicle.Reposition();
+            }
+            return true;
         }
 
         /// <summary>

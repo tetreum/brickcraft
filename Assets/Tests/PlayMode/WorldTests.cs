@@ -154,6 +154,32 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator NpcsCanBeTurnedOffAndItsSaved() {
+            Mirror.NetworkConnectionToClient admin = TestGame.Player.GetComponent<PlayerNetwork>().connectionToClient;
+            Assert.IsTrue(WorldNetwork.NpcsOn, "on in a new world");
+            string kind = null;
+            foreach (NpcInfo info in NpcDatabase.All) {
+                kind = kind ?? info.id;
+            }
+            ChatCommands.Run(admin, "/spawnnpc " + kind);
+            yield return null;
+            Assert.Greater(NpcSystem.All.Count, 0, "one spawned");
+
+            ChatCommands.Run(admin, "/npcs off");
+            yield return null;
+            Assert.IsFalse(WorldNetwork.NpcsOn);
+            foreach (Npc npc in NpcSystem.All) {
+                Assert.IsTrue(npc == null || npc.IsPet, "only pets stay: " + (npc != null ? npc.name : ""));
+            }
+
+            yield return game.Stop();
+            yield return game.Start();
+            Assert.IsFalse(WorldNetwork.NpcsOn, "still off, saved");
+            ChatCommands.Run(TestGame.Player.GetComponent<PlayerNetwork>().connectionToClient, "/npcs on");
+            Assert.IsTrue(WorldNetwork.NpcsOn);
+        }
+
+        [UnityTest]
         public IEnumerator ModsWriteInEverybodysChat() {
             System.Collections.Generic.List<Events.ChatLineReceivedEvent> lines = new System.Collections.Generic.List<Events.ChatLineReceivedEvent>();
             System.Action<Events.ChatLineReceivedEvent> received = line => lines.Add(line);

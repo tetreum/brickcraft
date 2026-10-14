@@ -573,6 +573,30 @@ MonoBehaviour:
     m_Localized: '{0}: desconectada.'
     m_Metadata:
       m_Items: []
+  - m_Id: 60420665368576
+    m_Localized: "Usa /reposition si te quedas atascado o vuelcas el veh\xEDculo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 60420715700224
+    m_Localized: "Si\xE9ntate en un veh\xEDculo para recolocarlo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186225623040
+    m_Localized: "Aparici\xF3n de PNJ: {0}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186380812288
+    m_Localized: 'Uso: /npcs [on|off]'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186380812289
+    m_Localized: "{0} activ\xF3 los PNJ"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186380812290
+    m_Localized: "{0} desactiv\xF3 los PNJ ({1} eliminados, las mascotas se quedan)"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

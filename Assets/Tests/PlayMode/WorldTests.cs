@@ -180,17 +180,22 @@ namespace Brickcraft.Tests
 
         [UnityTest]
         public IEnumerator NpcsDontWalkIntoTheTerrainsWater() {
-            BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
+            // dirt: wild golems appear on stone, one could be in the way
+            BlockType dirt = (BlockType)BlockDatabase.IdOf("dirt");
             BlockType water = (BlockType)BlockDatabase.IdOf("still_water");
-            // a stone floor two blocks thick, a pool sunk in it: the water has no collider, its bottom has
+            // a floor two blocks thick, a pool sunk in it: the water has no collider, its bottom has
             Vector3Int floor = above(20);
-            TestGame.Floor(floor + Vector3Int.down, 4, stone);
-            TestGame.Floor(floor, 4, stone);
+            TestGame.Floor(floor + Vector3Int.down, 4, dirt);
+            TestGame.Floor(floor, 4, dirt);
             Vector3Int pool = floor + new Vector3Int(1, 0, 0);
             Assert.IsTrue(WorldNetwork.ServerSetBlock(pool, water, Placer.Now(0)));
             Vector3 poolTop = onTop(pool);
             yield return TestGame.WaitUntil(() => Physics.Raycast(poolTop + Vector3.up * 3, Vector3.down, out RaycastHit hit, 6f)
                 && hit.point.y < poolTop.y - 0.1f, 10, "the pool's bottom under its water");
+
+            // NPCs only go where the world is marked walkable, which comes a moment after it loads
+            Vector3 dirtTop = onTop(floor - new Vector3Int(1, 0, 0));
+            yield return TestGame.WaitUntil(() => NpcSystem.IsLoaded(poolTop) && NpcSystem.IsLoaded(dirtTop), 10, "the floor walkable to NPCs");
 
             Npc golem = NpcSystem.ServerSpawn(NpcDatabase.Get("golem"), onTop(floor), 0);
             Assert.IsNotNull(golem);
@@ -202,10 +207,10 @@ namespace Brickcraft.Tests
                 // its capsule off, as when it checks (see Npc.canWalk)
                 body.enabled = false;
                 bool intoWater = (bool)isWalkable.Invoke(golem, new object[] { standing, poolTop - standing });
-                bool ontoStone = (bool)isWalkable.Invoke(golem, new object[] { standing, onTop(floor - new Vector3Int(1, 0, 0)) - standing });
+                bool ontoDirt = (bool)isWalkable.Invoke(golem, new object[] { standing, dirtTop - standing });
                 body.enabled = true;
                 Assert.IsFalse(intoWater, "the water isn't walked into");
-                Assert.IsTrue(ontoStone, "the stone is");
+                Assert.IsTrue(ontoDirt, "the dirt is");
             } finally {
                 Mirror.NetworkServer.Destroy(golem.gameObject);
             }

@@ -34,6 +34,8 @@ namespace Brickcraft.World
 
         // triangles facing this much against a side's outward direction are inside the block
         private const float InwardThreshold = -0.1f;
+        // a surface's triangles facing up at least this much (a 45 degree slope's are 0.71) are its top
+        private const float SurfaceUp = 0.3f;
 
         private readonly FaceMap[] sides;
         // how high it is: a block's, or less (see the constructor)
@@ -52,8 +54,12 @@ namespace Brickcraft.World
         public BlockShape(Vector3[] vertices, int[] triangles) : this(vertices, triangles, Server.brickHeight) {
         }
 
-        /// <summary>A shape lower than a block (a shallow fluid): its sides are found against its own height.</summary>
-        public BlockShape(Vector3[] vertices, int[] triangles, float height) {
+        /// <summary>
+        /// A shape lower than a block (a shallow fluid): its sides are found against its own height. A surface (a
+        /// flowing fluid's slopes) has every triangle facing up on its top, wherever it is: a slope crosses the block
+        /// and would otherwise go half to a side, hidden where the neighbour there is the same fluid.
+        /// </summary>
+        public BlockShape(Vector3[] vertices, int[] triangles, float height, bool surface = false) {
             this.height = height;
             List<int>[] sideTriangles = new List<int>[SideCount];
             for (int i = 0; i < SideCount; i++) {
@@ -64,7 +70,8 @@ namespace Brickcraft.World
                 Vector3 a = vertices[triangles[i]];
                 Vector3 b = vertices[triangles[i + 1]];
                 Vector3 c = vertices[triangles[i + 2]];
-                BlockSide side = classify((a + b + c) / 3f, Vector3.Cross(b - a, c - a).normalized, height);
+                Vector3 normal = Vector3.Cross(b - a, c - a).normalized;
+                BlockSide side = surface && normal.y >= SurfaceUp ? BlockSide.Top : classify((a + b + c) / 3f, normal, height);
 
                 sideTriangles[(int)side].Add(triangles[i]);
                 sideTriangles[(int)side].Add(triangles[i + 1]);

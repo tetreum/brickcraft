@@ -116,7 +116,7 @@ namespace Brickcraft.World
                 Vector3 v = vertices[i];
                 placed[i] = rotation * new Vector3(v.x, v.y * height, v.z);
             }
-            return new BlockShape(placed, triangles, Server.brickHeight * height);
+            return new BlockShape(placed, triangles, Server.brickHeight * height, true);
         }
 
         // an LDraw part, its pivot in the middle of its footprint on its bottom, like block models

@@ -38,6 +38,22 @@ namespace Brickcraft.Tests
         }
 
         [Test]
+        public void AFluidsSlopeIsAllOnItsTop() {
+            // a slope down toward the front, across the whole block: from the top of the back to the bottom of the front
+            float w = Server.brickWidth / 2, h = Server.brickHeight;
+            Vector3[] vertices = { new Vector3(-w, 0, -w), new Vector3(w, 0, -w), new Vector3(w, h, w), new Vector3(-w, h, w) };
+            int[] triangles = { 0, 2, 1, 0, 3, 2 };
+            Assert.Greater(Vector3.Cross(vertices[2] - vertices[0], vertices[1] - vertices[0]).y, 0, "it faces up");
+
+            BlockShape surface = new BlockShape(vertices, triangles, h, true);
+            Assert.AreEqual(6, surface.GetSide(BlockSide.Top).triangles.Length, "both triangles on the top: drawn while there's air above");
+
+            // as a block's model, its triangles go to the sides nearest them: a slope there would be split
+            BlockShape model = new BlockShape(vertices, triangles, h);
+            Assert.Less(model.GetSide(BlockSide.Top).triangles.Length, 6);
+        }
+
+        [Test]
         public void TriangleRaysHitWhatEveryTriangleWould() {
             System.Random random = new System.Random(1234);
             const int Count = 300;

@@ -77,6 +77,8 @@ namespace Brickcraft.Npcs
 
         public static void StartServer() {
             npcs.Clear();
+            nextRefresh = 0;
+            NpcSpawner.Reset();
             activeChunks.Clear();
             Navigation.NavGrid.Start();
             NpcPerception.Clear();

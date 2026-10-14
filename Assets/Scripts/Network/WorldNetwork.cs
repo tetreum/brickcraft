@@ -102,6 +102,10 @@ namespace Brickcraft.Network
             serverChanges = storage != null ? storage.Changes : new WorldChanges();
             interests.Clear();
             serverChunks.Clear();
+            // a game before this one (in the editor, play mode without a domain reload keeps statics) left its areas and
+            // its times: Time.unscaledTime starts over, so a time of the last game would hold this one back
+            lastAreas.Clear();
+            nextServerUpdate = 0;
 
             NetworkServer.RegisterHandler<JoinWorldMessage>(onJoinWorld);
             NetworkServer.RegisterHandler<ViewDistanceMessage>(onViewDistance);

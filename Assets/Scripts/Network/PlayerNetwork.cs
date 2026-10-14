@@ -553,6 +553,53 @@ namespace Brickcraft.Network
             airLeft = MaxAir;
         }
 
+        /// <summary>
+        /// Starts a vehicle with the part held in the inventory slot (a wheel), placed on the world's grid there (see
+        /// Vehicles.VehicleSystem).
+        /// </summary>
+        [Command]
+        public void CmdCreateVehicle(int slot, Vector3Int origin, byte rotation) {
+            if (health.isDead) {
+                return;
+            }
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            if (!held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || item.type != Item.Type.Brick
+                    || item.VehicleRole != Vehicles.VehicleRole.Wheel) {
+                return;
+            }
+            BrickPlacement placement = new BrickPlacement(item.brickModel, origin, rotation);
+            if (!isInReach(placement.WorldBounds.center) || !BrickGrid.IsFree(placement) || BrickPlacer.overlapsPlayer(placement)) {
+                return;
+            }
+            Vehicles.VehicleSystem.ServerCreate(item, item.ValidColor(held.Value.color), placement);
+            inventory.ServerRemoveFromSlot(slot, 1);
+            TargetBrickPlaced();
+            Npcs.NpcPerception.MakeNoise(placement.WorldBounds.center, PlaceNoise, health, Npcs.Noise.Place);
+        }
+
+        /// <summary>Places the brick held in the inventory slot on a vehicle, in its cells (see Vehicles.Vehicle).</summary>
+        [Command]
+        public void CmdPlaceVehicleBrick(int slot, NetworkIdentity target, Vector3Int origin, byte rotation) {
+            if (health.isDead || target == null || !target.TryGetComponent(out Vehicles.Vehicle vehicle)) {
+                return;
+            }
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            if (!held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || item.type != Item.Type.Brick
+                    || item.brickModel.IsAttachment) {
+                return;
+            }
+            BrickPlacement placement = new BrickPlacement(item.brickModel, origin, rotation);
+            Vector3 center = vehicle.transform.TransformPoint(placement.LocalBounds.center);
+            if (!isInReach(center) || !vehicle.grid.IsFree(placement) || vehicle.grid.Touching(placement).Count == 0
+                    || Vehicles.VehicleSystem.OverlapsOthers(vehicle, placement)) {
+                return;
+            }
+            Vehicles.VehicleSystem.ServerPlace(vehicle, item, item.ValidColor(held.Value.color), placement);
+            inventory.ServerRemoveFromSlot(slot, 1);
+            TargetBrickPlaced();
+            Npcs.NpcPerception.MakeNoise(center, PlaceNoise, health, Npcs.Noise.Place);
+        }
+
         /// <summary>Places the brick held in the inventory slot.</summary>
         [Command]
         public void CmdPlaceBrick(int slot, Vector3Int origin, byte rotation) {
@@ -603,7 +650,7 @@ namespace Brickcraft.Network
             InventoryItem? held = inventory.ServerGetSlot(slot);
             if (!held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || item.type != Item.Type.Brick
                 || !Server.bricks.TryGetValue(holderId, out Brick holder) || !CanAttach(item.brickModel, holder)
-                || !isInReach(holder.placement.WorldBounds.center)) {
+                || !isInReach(holder.WorldBounds.center)) {
                 return;
             }
             ConnectedPlayer player = connectionToClient.authenticationData as ConnectedPlayer;
@@ -618,13 +665,22 @@ namespace Brickcraft.Network
         /// <summary>Whether bricks of the model can go in the brick's slot now: it fits, and it's free.</summary>
         public static bool CanAttach(BrickModel model, Brick holder) {
             BrickSlot slot = Server.slotOf(holder);
-            return model.IsAttachment && holder.attachedTo == null && slot != null && slot.fits == model.attachesTo
+            return model.IsAttachment && holder.attachedTo == null && holder.vehicle == null && slot != null && slot.fits == model.attachesTo
                 && Server.attachmentOf(holder) == null;
         }
 
         [Command]
         public void CmdRemoveBrick(string brickId) {
-            if (health.isDead || !Server.bricks.TryGetValue(brickId, out Brick brick) || !isInReach(brick.placement.WorldBounds.center)) {
+            if (health.isDead || !Server.bricks.TryGetValue(brickId, out Brick brick) || !isInReach(brick.WorldBounds.center)) {
+                return;
+            }
+            // a vehicle's: it comes off (scripts don't see vehicles yet)
+            if (brick.vehicle != null) {
+                Npcs.NpcPerception.MakeNoise(brick.WorldBounds.center, DigNoise, health, Npcs.Noise.Dig);
+                foreach (Brick removed in WorldNetwork.ServerRemoveBrick(brick)) {
+                    inventory.ServerAdd(removed.itemId, removed.color, 1);
+                }
+                wearDigTool();
                 return;
             }
             // its script can make it resist
@@ -633,7 +689,7 @@ namespace Brickcraft.Network
             if (!ModScripts.ItemEvent(brick.itemId, "onHit", handle, player)) {
                 return;
             }
-            Npcs.NpcPerception.MakeNoise(brick.placement.WorldBounds.center, DigNoise, health, Npcs.Noise.Dig);
+            Npcs.NpcPerception.MakeNoise(brick.WorldBounds.center, DigNoise, health, Npcs.Noise.Dig);
             // what was attached to it comes along
             foreach (Brick removed in WorldNetwork.ServerRemoveBrick(brick)) {
                 inventory.ServerAdd(removed.itemId, removed.color, 1);
@@ -649,7 +705,7 @@ namespace Brickcraft.Network
                 return;
             }
             Brick storage = BrickStorage.StorageOf(clicked);
-            if (storage == null || !isInReach(storage.placement.WorldBounds.center)) {
+            if (storage == null || storage.vehicle != null || !isInReach(storage.WorldBounds.center)) {
                 return;
             }
             if (!BrickStorage.CanOpen(connectionToClient, storage)) {
@@ -690,7 +746,7 @@ namespace Brickcraft.Network
         [Command]
         public void CmdSleep(string brickId) {
             if (health.isDead || !string.IsNullOrEmpty(sleepingIn) || !Server.bricks.TryGetValue(brickId, out Brick bed)
-                    || !isInReach(bed.placement.WorldBounds.center)) {
+                    || bed.vehicle != null || !isInReach(bed.WorldBounds.center)) {
                 return;
             }
             // a bed it can't sleep in now (by day...) still becomes its spawn point
@@ -756,18 +812,18 @@ namespace Brickcraft.Network
         /// <summary>A click on a brick with a door (see BrickDoor): opens or closes it.</summary>
         [Command]
         public void CmdToggleDoor(string brickId) {
-            if (health.isDead || !Server.bricks.TryGetValue(brickId, out Brick brick) || !isInReach(brick.placement.WorldBounds.center)
+            if (health.isDead || !Server.bricks.TryGetValue(brickId, out Brick brick) || !isInReach(brick.WorldBounds.center)
                 || brick.model.prefab.GetComponentInChildren<BrickDoor>(true) == null) {
                 return;
             }
             WorldNetwork.ServerSetBrickState(brick, brick.state == BrickDoor.Open ? BrickDoor.Closed : BrickDoor.Open);
-            Npcs.NpcPerception.MakeNoise(brick.placement.WorldBounds.center, DoorNoise, health, Npcs.Noise.Door);
+            Npcs.NpcPerception.MakeNoise(brick.WorldBounds.center, DoorNoise, health, Npcs.Noise.Door);
         }
 
         /// <summary>The use key on a brick (see ModScripts, onInteract).</summary>
         [Command]
         public void CmdInteractBrick(string brickId) {
-            if (!health.isDead && Server.bricks.TryGetValue(brickId, out Brick brick) && isInReach(brick.placement.WorldBounds.center)
+            if (!health.isDead && Server.bricks.TryGetValue(brickId, out Brick brick) && isInReach(brick.WorldBounds.center)
                 && ModScripts.HasItemEvent(brick.itemId, "onInteract")) {
                 ModScripts.ItemEvent(brick.itemId, "onInteract", BrickHandle.ForBrick(brick, WorldNetwork.ServerPlacerOf(brick)), PlayerHandle.For(connectionToClient));
             }
@@ -850,7 +906,7 @@ namespace Brickcraft.Network
             InventoryItem? held = inventory.ServerGetSlot(slot);
             if (health.isDead || !held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || !item.IsColorPicker
                     || brickId == null || !Server.bricks.TryGetValue(brickId, out Brick brick) || brick.item == null
-                    || !isInReach(brick.placement.WorldBounds.center)) {
+                    || !isInReach(brick.WorldBounds.center)) {
                 return;
             }
             int color = held.Value.color;

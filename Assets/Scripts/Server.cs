@@ -141,12 +141,18 @@ namespace Brickcraft
 
         /// <summary>
         /// Adds a brick to this game instance. In a networked game use Network.WorldNetwork instead,
-        /// which calls this on the server and every client.
+        /// which calls this on the server and every client. A vehicle's (see Vehicles.Vehicle) is placed in its cells,
+        /// under it, instead of the BrickGrid's.
         /// </summary>
-        public Brick spawnBrick(Item item, int color, BrickPlacement placement, string id = null, int state = 0, string attachedTo = null) {
+        public Brick spawnBrick(Item item, int color, BrickPlacement placement, string id = null, int state = 0, string attachedTo = null,
+                Vehicles.Vehicle vehicle = null) {
             color = item.ValidColor(color);
             GameObject brickObj;
-            if (attachedTo != null) {
+            if (vehicle != null) {
+                Transform parent = vehicle.transform;
+                brickObj = createBrickObject(item, color, parent.TransformPoint(placement.LocalPosition), parent.rotation * placement.Rotation);
+                brickObj.transform.SetParent(parent, true);
+            } else if (attachedTo != null) {
                 // in its brick's slot, moving with it
                 if (!bricks.TryGetValue(attachedTo, out Brick holder) || slotOf(holder) == null) {
                     Debug.LogError("The brick " + attachedTo + " that " + item.id + " is attached to isn't there, or has no slot");
@@ -168,9 +174,12 @@ namespace Brickcraft
             brick.placement = placement;
             brick.state = state;
             brick.attachedTo = attachedTo;
+            brick.vehicle = vehicle;
 
             bricks.Add(brick.id, brick);
-            if (attachedTo == null) {
+            if (vehicle != null) {
+                vehicle.grid.Register(brick);
+            } else if (attachedTo == null) {
                 BrickGrid.Register(brick);
             } else {
                 attachments[attachedTo] = brick;
@@ -238,7 +247,9 @@ namespace Brickcraft
             if (!bricks.Remove(brick.id)) {
                 return;
             }
-            if (brick.attachedTo == null) {
+            if (brick.vehicle != null) {
+                brick.vehicle.grid.Unregister(brick);
+            } else if (brick.attachedTo == null) {
                 BrickGrid.Unregister(brick);
             } else if (attachments.TryGetValue(brick.attachedTo, out Brick inSlot) && inSlot == brick) {
                 attachments.Remove(brick.attachedTo);

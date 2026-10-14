@@ -221,6 +221,9 @@ namespace Brickcraft.Network
 
         /// <summary>Who placed a brick, nobody (0) if no player did.</summary>
         public static Placer ServerPlacerOf(Brick brick) {
+            if (brick.vehicle != null) {
+                return default(Placer); // vehicles' bricks aren't in the world's changes
+            }
             return serverChanges != null && serverChanges.TryGetBrick(new Guid(brick.id), brick.placement.origin, out SavedBrick saved) ? saved.placer : default(Placer);
         }
 
@@ -230,7 +233,7 @@ namespace Brickcraft.Network
         /// False if it doesn't fit there, or it's an attachment (they move with their brick).
         /// </summary>
         public static bool ServerMoveBrick(Brick brick, BrickPlacement to) {
-            if (brick.attachedTo != null) {
+            if (brick.attachedTo != null || brick.vehicle != null) {
                 return false;
             }
             Placer placer = ServerPlacerOf(brick);
@@ -268,6 +271,10 @@ namespace Brickcraft.Network
             if (brick.color == color) {
                 return;
             }
+            if (brick.vehicle != null) {
+                Vehicles.VehicleSystem.ServerSetColor(brick, color);
+                return;
+            }
             Placer placer = ServerPlacerOf(brick);
             Server.Instance.setBrickColor(brick, color);
             serverChanges.AddBrick(toSaved(brick, placer));
@@ -279,8 +286,8 @@ namespace Brickcraft.Network
         }
 
         public static void ServerSetBrickState(Brick brick, int state) {
-            if (brick.state == state) {
-                return;
+            if (brick.state == state || brick.vehicle != null) {
+                return; // vehicles' bricks have no states yet (doors...)
             }
             Placer placer = ServerPlacerOf(brick);
             Server.Instance.setBrickState(brick, state);
@@ -295,6 +302,9 @@ namespace Brickcraft.Network
 
         /// <summary>Removes a brick and what's attached to it (which players remove with it). Returns them all.</summary>
         public static List<Brick> ServerRemoveBrick(Brick brick) {
+            if (brick.vehicle != null) {
+                return Vehicles.VehicleSystem.ServerRemove(brick);
+            }
             List<Brick> removed = new List<Brick>();
             // what a chest kept falls around it
             if (BrickStorage.IsStorage(brick)) {

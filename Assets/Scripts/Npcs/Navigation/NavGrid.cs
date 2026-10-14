@@ -167,7 +167,7 @@ namespace Brickcraft.Npcs.Navigation
             if (!IsRunning) {
                 return;
             }
-            Bounds bounds = brick.placement.WorldBounds;
+            Bounds bounds = brick.WorldBounds;
             if (brick.gameObject != null) {
                 foreach (Collider collider in brick.gameObject.GetComponentsInChildren<Collider>()) {
                     bounds.Encapsulate(collider.bounds);

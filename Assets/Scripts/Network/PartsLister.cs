@@ -78,7 +78,7 @@ namespace Brickcraft.Network
                 tell("partslister.not_yours");
                 return;
             }
-            if (Vector3.Distance(transform.position, brick.placement.WorldBounds.center) > MaxDistance) {
+            if (Vector3.Distance(transform.position, brick.WorldBounds.center) > MaxDistance) {
                 return;
             }
             PartsList.Creation(playerId, brick, out startMin, out startMax);

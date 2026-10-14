@@ -35,7 +35,7 @@ namespace Brickcraft.World
                 if (!isWashable(brick)) {
                     continue;
                 }
-                Vector3 at = brick.placement.WorldBounds.center;
+                Vector3 at = brick.WorldBounds.center;
                 foreach (Brick removed in WorldNetwork.ServerRemoveBrick(brick)) {
                     if (!burns) {
                         DroppedItems.ServerDrop(removed.itemId, removed.color, 1, 0, at, Vector3.zero);

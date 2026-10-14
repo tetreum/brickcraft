@@ -320,7 +320,7 @@ namespace Brickcraft.Npcs
             Vector3 place = npc.HomePosition;
             float reach = 1.2f;
             if (bed != null) {
-                Bounds bounds = bed.placement.WorldBounds;
+                Bounds bounds = bed.WorldBounds;
                 place = bounds.center;
                 reach = Mathf.Max(bounds.extents.x, bounds.extents.z) + npc.Radius + 0.8f;
             }

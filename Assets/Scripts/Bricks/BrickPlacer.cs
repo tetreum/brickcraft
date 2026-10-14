@@ -1,4 +1,5 @@
 using UnityEngine;
+using Brickcraft.Vehicles;
 using Brickcraft.World;
 
 namespace Brickcraft.Bricks
@@ -15,6 +16,9 @@ namespace Brickcraft.Bricks
     ///
     /// Attachments (doors, see BrickAttachment) go in the slot of the brick looked at instead (a door frame,
     /// see BrickSlot), if they fit and it's free.
+    ///
+    /// On a vehicle's brick (see Vehicles.Vehicle) it goes on the vehicle, the same way but on its own cells, however it's
+    /// turned. A wheel on the world starts a vehicle there instead of being one of its bricks.
     /// </summary>
     public class BrickPlacer : MonoBehaviour
     {
@@ -64,6 +68,13 @@ namespace Brickcraft.Bricks
                 rotation = (rotation + 1) % 4;
             }
 
+            Brick looked = hasHit ? Server.findBrick(hit.collider) : null;
+            if (looked != null && looked.vehicle != null) {
+                target = null;
+                tickVehicle(hit, selectedItem, model, looked.vehicle);
+                return;
+            }
+
             target = hasHit ? computePlacement(hit, model) : (BrickPlacement?)null;
 
             bool isValid = target.HasValue && BrickGrid.IsFree(target.Value) && !overlapsPlayer(target.Value);
@@ -71,8 +82,55 @@ namespace Brickcraft.Bricks
             updateGhost(isValid);
 
             if (isValid && GameInput.GetButtonDown(GameInput.Place)) {
-                place(selectedItem, target.Value);
+                if (selectedItem.item.VehicleRole == VehicleRole.Wheel) {
+                    Player.Instance.network.CmdCreateVehicle(selectedItem.slot, target.Value.origin, (byte)target.Value.rotation);
+                } else {
+                    place(selectedItem, target.Value);
+                }
             }
+        }
+
+        // on a vehicle: in its cells, against the face looked at like on the world's grid
+        private void tickVehicle(RaycastHit hit, UserItem selectedItem, BrickModel model, Vehicle vehicle) {
+            BrickPlacement placement = computeVehiclePlacement(hit, model, vehicle.transform);
+            bool isValid = vehicle.grid.IsFree(placement) && !VehicleSystem.OverlapsOthers(vehicle, placement);
+
+            Transform tr = vehicle.transform;
+            ghost.transform.SetPositionAndRotation(tr.TransformPoint(placement.LocalPosition), tr.rotation * placement.Rotation * model.prefab.transform.rotation);
+            ghost.SetActive(true);
+            setGhostColor(isValid);
+
+            if (isValid && GameInput.GetButtonDown(GameInput.Place)) {
+                Player.Instance.network.CmdPlaceVehicleBrick(selectedItem.slot, vehicle.netIdentity, placement.origin, (byte)placement.rotation);
+            }
+        }
+
+        private BrickPlacement computeVehiclePlacement(RaycastHit hit, BrickModel model, Transform vehicle) {
+            Vector3Int normal = dominantAxis(vehicle.InverseTransformDirection(hit.normal));
+            Vector3Int size = BrickPlacement.SizeFor(model, rotation);
+            Vector3 local = vehicle.InverseTransformPoint(hit.point);
+            Vector3 cells = toCells(local);
+            Vector3 beyond = toCells(local + (Vector3)normal * SurfaceOffset);
+            Vector3Int adjacent = new Vector3Int(Mathf.FloorToInt(beyond.x), Mathf.FloorToInt(beyond.y), Mathf.FloorToInt(beyond.z));
+            Vector3Int origin = Vector3Int.zero;
+
+            for (int axis = 0; axis < 3; axis++) {
+                if (normal[axis] > 0) {
+                    origin[axis] = adjacent[axis];
+                } else if (normal[axis] < 0) {
+                    origin[axis] = adjacent[axis] - size[axis] + 1;
+                } else if (axis == 1) {
+                    origin.y = adjacent.y;
+                } else {
+                    // any stud: a vehicle's bricks have no blocks to line up with
+                    origin[axis] = Mathf.RoundToInt(cells[axis] - size[axis] / 2f);
+                }
+            }
+            return new BrickPlacement(model, origin, rotation);
+        }
+
+        private static Vector3 toCells(Vector3 local) {
+            return new Vector3(local.x / BrickGrid.CellSize.x, local.y / BrickGrid.CellSize.y, local.z / BrickGrid.CellSize.z);
         }
 
         private void tickAttachment(bool hasHit, RaycastHit hit, UserItem selectedItem, BrickModel model) {

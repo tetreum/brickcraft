@@ -609,7 +609,7 @@ namespace Brickcraft
                 return attached;
             }
             if (diggedBrick != null) {
-                return diggedBrick.placement.WorldBounds;
+                return diggedBrick.WorldBounds;
             }
             Vector3Int cell = BrickGrid.BlockToCell(diggedBlock.Value);
             Bounds bounds = new Bounds();

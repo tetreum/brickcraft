@@ -362,12 +362,16 @@ namespace Brickcraft
             return Server.items.TryGetValue(brick.itemId, out Item item) && item.tags.Contains(Item.BedTag);
         }
 
+        /// <summary>It was frozen, or isn't any more (see freeze).</summary>
+        public event System.Action FrozenChanged;
+
         public void freeze(FreezeReason reason) {
             if (isFrozen) {
                 return;
             }
             freezeReason = reason;
             firstPersonController.enabled = false;
+            FrozenChanged?.Invoke();
         }
 
         public void unFreeze(FreezeReason reason) {
@@ -391,10 +395,14 @@ namespace Brickcraft
         }
 
         public void unFreeze() {
+            bool was = isFrozen;
             freezeReason = null;
             try {
                 firstPersonController.enabled = true;
             } catch { }
+            if (was) {
+                FrozenChanged?.Invoke();
+            }
         }
 
         void frontRaycast () {

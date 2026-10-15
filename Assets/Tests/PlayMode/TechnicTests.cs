@@ -285,6 +285,32 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator TheKeysThatApplyAreShown() {
+            Player player = Player.Instance;
+            PlayerInventory inventory = player.GetComponent<PlayerInventory>();
+            yield return null;
+            UI.KeyHints hints = Object.FindObjectOfType<UI.KeyHints>(true);
+            Assert.IsNotNull(hints, "the key hints, with the player");
+            System.Func<int> rows = () => hints.gameObject.activeSelf ? hints.transform.childCount : 0;
+
+            Assert.IsTrue(inventory.ServerAdd("brick_2x2", Server.items["brick_2x2"].color, 1, 0, Player.FirstFastSlot + 5));
+            Assert.IsTrue(inventory.ServerAdd("part_3706", 0, 1, 0, Player.FirstFastSlot + 6));
+            yield return null;
+            player.selectFastSlot(5);
+            yield return null; // destroyed rows go at the end of the frame
+            Assert.AreEqual(1, rows(), "a brick: R");
+            player.selectFastSlot(6);
+            yield return null;
+            Assert.AreEqual(3, rows(), "an axle: R, T and G");
+            player.freeze(Player.FreezeReason.ViewingInventory);
+            Assert.IsFalse(hints.gameObject.activeSelf, "hidden behind a panel");
+            player.unFreeze(Player.FreezeReason.ViewingInventory);
+            Assert.IsTrue(hints.gameObject.activeSelf);
+            player.selectFastSlot(7);
+            Assert.IsFalse(hints.gameObject.activeSelf, "nothing in hand: nothing to show");
+        }
+
+        [UnityTest]
         public IEnumerator WhatDoesntFitDoesntGo() {
             Brick holder = technicBrick();
             Item barWheel = item("part_11208");

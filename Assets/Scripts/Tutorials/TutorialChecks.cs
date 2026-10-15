@@ -7,26 +7,46 @@ using UnityEngine;
 
 namespace Brickcraft.Tutorials
 {
-    /// <summary>What the vehicle tutorials' steps look at: the vehicle being built and its parts, how they're placed.</summary>
+    /// <summary>
+    /// What the vehicle tutorials' steps look at: the vehicle being built and its parts, how they're placed. The
+    /// tutorial's finished one shown beside it (see TutorialDemos) isn't the one being built.
+    /// </summary>
     public static class TutorialChecks
     {
-        /// <summary>The vehicle being built: the one with the most bricks, null if there's none yet.</summary>
+        // the finished vehicles shown (on the server, this game)
+        private static readonly HashSet<Vehicle> demos = new HashSet<Vehicle>();
+
+        /// <summary>That vehicle is a tutorial's finished one, shown: it isn't the one being built.</summary>
+        public static void MarkDemo(Vehicle vehicle) {
+            demos.RemoveWhere(v => v == null);
+            demos.Add(vehicle);
+        }
+
+        public static bool IsDemo(Vehicle vehicle) {
+            return vehicle != null && demos.Contains(vehicle);
+        }
+
+        /// <summary>The vehicle being built: the one with the most bricks (not a demo), null if there's none yet.</summary>
         public static Vehicle Built() {
             Vehicle built = null;
             foreach (Vehicle vehicle in Vehicle.All) {
-                if (vehicle != null && (built == null || vehicle.grid.Count > built.grid.Count)) {
+                if (vehicle != null && !IsDemo(vehicle) && (built == null || vehicle.grid.Count > built.grid.Count)) {
                     built = vehicle;
                 }
             }
             return built;
         }
 
-        /// <summary>Its bricks of that item.</summary>
+        /// <summary>The vehicle being built's bricks of that item.</summary>
         public static List<Brick> Parts(string itemId) {
+            return Parts(Built(), itemId);
+        }
+
+        /// <summary>A vehicle's bricks of that item, none if there's no vehicle.</summary>
+        public static List<Brick> Parts(Vehicle vehicle, string itemId) {
             List<Brick> parts = new List<Brick>();
-            Vehicle built = Built();
-            if (built != null) {
-                foreach (Brick brick in built.grid.Bricks) {
+            if (vehicle != null) {
+                foreach (Brick brick in vehicle.grid.Bricks) {
                     if (brick.itemId == itemId) {
                         parts.Add(brick);
                     }
@@ -55,14 +75,21 @@ namespace Brickcraft.Tutorials
             return VehicleShape.Seat(seat, seat.vehicle.transform).forward;
         }
 
-        /// <summary>A seat facing the way the wheels roll: across the axles (those of that item).</summary>
+        /// <summary>The way its axles (those of that item) roll it, in its space: across them; forward if it has none.</summary>
+        public static Vector3 AcrossAxles(Vehicle vehicle, string axleId) {
+            foreach (Brick axle in Parts(vehicle, axleId)) {
+                Vector3 along = axle.jointRotation * axle.model.connectors[0].axis;
+                return Vector3.Cross(Vector3.up, along).normalized;
+            }
+            return Vector3.forward;
+        }
+
+        /// <summary>A seat facing the way the wheels roll: across its vehicle's axles (those of that item).</summary>
         public static bool FacesAcross(Brick seat, string axleId) {
-            List<Brick> axles = Parts(axleId);
-            if (axles.Count == 0 || seat.vehicle == null) {
+            if (seat.vehicle == null || Parts(seat.vehicle, axleId).Count == 0) {
                 return false;
             }
-            Vector3 along = axles[0].jointRotation * axles[0].model.connectors[0].axis;
-            return Mathf.Abs(Vector3.Dot(along.normalized, Facing(seat).normalized)) < 0.5f;
+            return Mathf.Abs(Vector3.Dot(AcrossAxles(seat.vehicle, axleId), Facing(seat).normalized)) > 0.85f;
         }
 
         /// <summary>A propeller that pushes along that way (in its vehicle's space): its blades across it.</summary>

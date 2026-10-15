@@ -1,3 +1,4 @@
+using Brickcraft.World.CustomGenerator;
 using UnityEngine;
 using static Brickcraft.Tutorials.TutorialChecks;
 
@@ -5,8 +6,9 @@ namespace Brickcraft.Tutorials
 {
     /// <summary>
     /// Build your first plane: a car's chassis the technic way (a wheel on the ground, an axle, a technic brick 1x8,
-    /// another axle, three more wheels, a brick 1x8 on top), a wing 16x16 on it, a propeller at its front and a seat
-    /// facing it; then take off. Its wheels are small (the wing goes over them) and rubber.
+    /// another axle, three more wheels, a brick 1x8 on top), a wing 16x16 on it, a propeller near its middle and a
+    /// seat facing it; then take off. Its wheels are small (the wing goes over them) and rubber. A finished one stands
+    /// behind where the player starts.
     /// </summary>
     public static class FirstPlane
     {
@@ -39,7 +41,7 @@ namespace Brickcraft.Tutorials
                 new TutorialStep() { textKey = "tutorial.first_plane.wheels", isDone = () => Count(Wheel) >= 4 },
                 new TutorialStep() { textKey = "tutorial.first_plane.top", isDone = () => Count(Top) >= 1 },
                 new TutorialStep() { textKey = "tutorial.first_plane.wing", isDone = () => Count(Wing) >= 1 },
-                new TutorialStep() { textKey = "tutorial.first_plane.propeller", isDone = () => Parts(Propeller).Exists(p => PushesAlong(p, Ahead()) && IsMiddle(p)) },
+                new TutorialStep() { textKey = "tutorial.first_plane.propeller", isDone = () => Parts(Propeller).Exists(IsGoodPropeller) },
                 new TutorialStep() { textKey = "tutorial.first_plane.seat", isDone = () => Parts(Seat).Exists(s => FacesAcross(s, Axle)) },
                 new TutorialStep() { textKey = "tutorial.first_plane.sit", isDone = IsSeated },
                 new TutorialStep() {
@@ -49,29 +51,40 @@ namespace Brickcraft.Tutorials
                     overTime = true,
                 },
             },
+            buildDemo = BuildDemo,
         };
 
-        // in the middle of its width (off it, it'd push it round): over its technic brick, along it
-        private static bool IsMiddle(Brick propeller) {
-            Brick beam = Parts(Beam).Find(b => true);
+        /// <summary>Pushing the way the plane goes, in the middle of its width (off it, it'd push it round).</summary>
+        public static bool IsGoodPropeller(Brick propeller) {
+            Vehicles.Vehicle plane = propeller.vehicle;
+            Brick beam = Parts(plane, Beam).Find(b => true);
             if (beam == null) {
                 return false;
             }
-            Transform vehicle = propeller.vehicle.transform;
-            Vector3 off = Vehicles.VehicleShape.MeshBounds(propeller, vehicle).center - Vehicles.VehicleShape.MeshBounds(beam, vehicle).center;
-            return Mathf.Abs(Vector3.Dot(off, Vector3.Cross(Vector3.up, Ahead()))) < MiddleOff;
+            Vector3 ahead = AcrossAxles(plane, Axle);
+            Vector3 off = Vehicles.VehicleShape.MeshBounds(propeller, plane.transform).center - Vehicles.VehicleShape.MeshBounds(beam, plane.transform).center;
+            return PushesAlong(propeller, ahead) && Mathf.Abs(Vector3.Dot(off, Vector3.Cross(Vector3.up, ahead))) < MiddleOff;
         }
 
         // how far off the middle a propeller may be, metres (half a stud)
         private const float MiddleOff = 0.25f;
 
-        // the way it goes: across its axles (along its technic brick), in its space
-        private static Vector3 Ahead() {
-            foreach (Brick axle in Parts(Axle)) {
-                Vector3 along = axle.jointRotation * axle.model.connectors[0].axis;
-                return Vector3.Cross(Vector3.up, along).normalized;
+        /// <summary>A finished plane behind where the player starts.</summary>
+        public static Vehicles.Vehicle BuildDemo(Vector3 start) {
+            Brick top = TutorialDemos.Chassis(TutorialDemos.CellBeside(start, new Vector3Int(0, CustomChunkGenerator.FlatGrassHeight + 1, -10)), Wheel, Axle, Beam, Top);
+            if (top == null) {
+                return null;
             }
-            return Vector3.forward;
+            BrickModel topModel = Server.items[Top].brickModel, wingModel = Server.items[Wing].brickModel;
+            Vector3Int topSize = Bricks.BrickPlacement.SizeFor(topModel, 0);
+            Brick wing = TutorialDemos.OnStuds(top, Wing, TutorialDemos.Around(topSize.x / 2 - wingModel.width / 2, topSize.z / 2 - wingModel.depth / 2, topModel.heightInPlates, 6));
+            if (wing == null) {
+                return top.vehicle;
+            }
+            int on = wingModel.heightInPlates, size = wingModel.width;
+            TutorialDemos.OnStuds(wing, Propeller, TutorialDemos.Around(size / 2 - 3, size / 2 - 1, on, 6), IsGoodPropeller);
+            TutorialDemos.OnStuds(wing, Seat, TutorialDemos.Around(size / 2 - 1, size / 2 - 1, on, 4), s => FacesAcross(s, Axle));
+            return top.vehicle;
         }
     }
 }

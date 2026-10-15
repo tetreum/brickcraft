@@ -879,8 +879,8 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 295655680237576
-    m_Localized: "Coge las ruedas (casilla 1) y pon una en el suelo: as\xED empieza
-      tu coche."
+    m_Localized: "Detr\xE1s de ti hay un coche terminado: m\xEDralo cuando lo necesites.
+      Coge las ruedas (casilla 1) y pon una en el suelo: as\xED empieza tu coche."
     m_Metadata:
       m_Items: []
   - m_Id: 295655680237577
@@ -932,7 +932,8 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 353080315731969
-    m_Localized: "Coge las ruedas (casilla 1) y pon una en el suelo: as\xED empieza
+    m_Localized: "Detr\xE1s de ti hay un avi\xF3n terminado: m\xEDralo cuando lo
+      necesites. Coge las ruedas (casilla 1) y pon una en el suelo: as\xED empieza
       tu avi\xF3n."
     m_Metadata:
       m_Items: []
@@ -996,9 +997,10 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 353080328314881
-    m_Localized: "Camina hasta el mar que tienes delante. Coge el asiento (casilla
-      1), apunta al agua a unos pasos de la orilla y col\xF3calo mirando hacia el
-      mar (R lo gira): flota ah\xED y empieza tu barco."
+    m_Localized: "A tu izquierda, junto a la orilla, flota un barco terminado: m\xEDralo
+      cuando lo necesites. Camina hasta el mar que tienes delante. Coge el asiento
+      (casilla 1), apunta al agua a unos pasos de la orilla y col\xF3calo mirando
+      hacia el mar (R lo gira): flota ah\xED y empieza tu barco."
     m_Metadata:
       m_Items: []
   - m_Id: 353080328314882

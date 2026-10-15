@@ -1,3 +1,4 @@
+using Brickcraft.World.CustomGenerator;
 using UnityEngine;
 using static Brickcraft.Tutorials.TutorialChecks;
 
@@ -6,7 +7,8 @@ namespace Brickcraft.Tutorials
     /// <summary>
     /// Build your first car, the technic way (see docs/vehicles.md): a wheel on the ground starts it, an axle in its
     /// hub, a technic brick 1x12 on the axle by an end hole, another axle through its other end hole, the other three
-    /// wheels on the axles' ends, a brick 1x8 on top and a seat on it; then sit and drive.
+    /// wheels on the axles' ends, a brick 1x8 on top and a seat on it; then sit and drive. A finished one stands
+    /// behind where the player starts.
     /// </summary>
     public static class FirstCar
     {
@@ -44,6 +46,18 @@ namespace Brickcraft.Tutorials
                     overTime = true,
                 },
             },
+            buildDemo = BuildDemo,
         };
+
+        /// <summary>A finished car behind where the player starts.</summary>
+        public static Vehicles.Vehicle BuildDemo(Vector3 start) {
+            Brick top = TutorialDemos.Chassis(TutorialDemos.CellBeside(start, new Vector3Int(0, CustomChunkGenerator.FlatGrassHeight + 1, -10)), Wheel, Axle, Beam, Top);
+            if (top == null) {
+                return null;
+            }
+            int on = Server.items[Top].brickModel.heightInPlates;
+            TutorialDemos.OnStuds(top, Seat, TutorialDemos.Around(3, 0, on, 4), s => FacesAcross(s, Axle));
+            return top.vehicle;
+        }
     }
 }

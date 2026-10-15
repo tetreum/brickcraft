@@ -882,8 +882,8 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 295655680237576
-    m_Localized: 'Pick the wheels (slot 1) and place one on the ground: it starts
-      your car.'
+    m_Localized: 'A finished car stands behind you: look at it whenever you need.
+      Pick the wheels (slot 1) and place one on the ground: it starts your car.'
     m_Metadata:
       m_Items: []
   - m_Id: 295655680237577
@@ -935,8 +935,8 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 353080315731969
-    m_Localized: 'Pick the wheels (slot 1) and place one on the ground: it starts
-      your plane.'
+    m_Localized: 'A finished plane stands behind you: look at it whenever you need.
+      Pick the wheels (slot 1) and place one on the ground: it starts your plane.'
     m_Metadata:
       m_Items: []
   - m_Id: 353080315731970
@@ -999,9 +999,10 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 353080328314881
-    m_Localized: 'Walk to the sea ahead. Pick the seat (slot 1), aim at the water
-      a few steps from the shore and place it facing out to sea (R turns it): it
-      floats there and starts your boat.'
+    m_Localized: 'A finished boat floats off the shore to your left: look at it whenever
+      you need. Walk to the sea ahead. Pick the seat (slot 1), aim at the water a
+      few steps from the shore and place it facing out to sea (R turns it): it floats
+      there and starts your boat.'
     m_Metadata:
       m_Items: []
   - m_Id: 353080328314882

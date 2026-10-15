@@ -19,6 +19,8 @@ namespace Brickcraft.Tutorials
         /// <summary>What the player gets, in its hotbar from the first slot, one stack a slot.</summary>
         public TutorialItem[] items;
         public TutorialStep[] steps;
+        /// <summary>Builds its finished vehicle beside where the player starts (given), to look at; null if it has none.</summary>
+        public Func<UnityEngine.Vector3, Vehicles.Vehicle> buildDemo;
 
         /// <summary>The game's tutorials, in the order the menu shows them.</summary>
         public static IReadOnlyList<Tutorial> All {
@@ -33,6 +35,20 @@ namespace Brickcraft.Tutorials
                 }
             }
             return null;
+        }
+
+        /// <summary>Its finished vehicle, built beside where the player starts (the first time it joins its world).</summary>
+        public void ServerBuildDemo(UnityEngine.Vector3 start) {
+            if (buildDemo == null) {
+                return;
+            }
+            try {
+                if (buildDemo(start) == null) {
+                    UnityEngine.Debug.LogWarning("The tutorial " + id + "'s finished vehicle couldn't be built");
+                }
+            } catch (Exception e) {
+                UnityEngine.Debug.LogError("Building the tutorial " + id + "'s finished vehicle: " + e);
+            }
         }
 
         /// <summary>The player of a tutorial's world gets its items (the first time it joins it).</summary>

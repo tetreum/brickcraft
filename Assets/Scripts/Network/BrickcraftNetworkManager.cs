@@ -330,10 +330,11 @@ namespace Brickcraft.Network
             inventory.ServerLoad(record.Id, Database.LoadInventory(record.Id));
 
             if (record.TimesJoined == 1 && inventory.items.Count == 0) {
-                // a tutorial's world: what it needs instead
+                // a tutorial's world: what it needs instead, and its finished vehicle to look at
                 Tutorials.Tutorial tutorial = WorldNetwork.Storage != null ? Tutorials.Tutorial.Find(WorldNetwork.Storage.Tutorial) : null;
                 if (tutorial != null) {
                     tutorial.ServerGive(inventory);
+                    tutorial.ServerBuildDemo(inventory.transform.position);
                     return;
                 }
                 foreach (StarterItem starter in starterItems) {

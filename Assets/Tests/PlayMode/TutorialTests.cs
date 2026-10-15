@@ -46,6 +46,13 @@ namespace Brickcraft.Tests
             }
             Assert.IsFalse(System.Linq.Enumerable.Any(inventory.items, stack => stack.itemId == "dirt"), "not the usual starter items");
             yield return stepIs(0, "the guide on its first step");
+            Assert.IsNotNull(demo(), "a finished one to look at");
+            Assert.IsNull(TutorialChecks.Built(), "it isn't the one being built");
+        }
+
+        // the tutorial's finished vehicle, shown
+        private static Vehicle demo() {
+            return System.Linq.Enumerable.FirstOrDefault(Vehicle.All, TutorialChecks.IsDemo);
         }
 
         private static Item item(string id) {
@@ -220,6 +227,8 @@ namespace Brickcraft.Tests
         [UnityTest]
         public IEnumerator TheFirstCarIsBuiltStepByStepAndDrives() {
             yield return play(FirstCar.Tutorial);
+            Assert.AreEqual(4, TutorialChecks.Parts(demo(), FirstCar.Wheel).Count, "the finished car: its wheels");
+            Assert.IsTrue(TutorialChecks.Parts(demo(), FirstCar.Seat).Exists(s => TutorialChecks.FacesAcross(s, FirstCar.Axle)), "and its seat");
             Vector3Int under = TestGame.PlayerBlock;
             under.y = CustomChunkGenerator.FlatGrassHeight;
             Assert.AreEqual(BlockType.Grass, TestGame.Block(under), "grass");
@@ -239,6 +248,10 @@ namespace Brickcraft.Tests
         [UnityTest]
         public IEnumerator TheFirstPlaneIsBuiltStepByStepAndTakesOff() {
             yield return play(FirstPlane.Tutorial);
+            Assert.AreEqual(4, TutorialChecks.Parts(demo(), FirstPlane.Wheel).Count, "the finished plane: its wheels");
+            Assert.AreEqual(1, TutorialChecks.Parts(demo(), FirstPlane.Wing).Count, "its wing");
+            Assert.IsTrue(TutorialChecks.Parts(demo(), FirstPlane.Propeller).Exists(FirstPlane.IsGoodPropeller), "its propeller");
+            Assert.IsTrue(TutorialChecks.Parts(demo(), FirstPlane.Seat).Exists(s => TutorialChecks.FacesAcross(s, FirstPlane.Axle)), "and its seat");
             Brick top = null;
             yield return chassis(FirstPlane.Tutorial, FirstPlane.Wheel, FirstPlane.Axle, FirstPlane.Beam, FirstPlane.Top, built => top = built);
 
@@ -268,6 +281,8 @@ namespace Brickcraft.Tests
         [UnityTest]
         public IEnumerator TheFirstBoatIsStartedOnTheWaterAndSails() {
             yield return play(FirstBoat.Tutorial);
+            Assert.IsTrue(TutorialChecks.Parts(demo(), FirstBoat.Seat).Exists(FirstBoat.IsOnEvenRaft), "the finished boat: its raft");
+            Assert.IsTrue(TutorialChecks.Parts(demo(), FirstBoat.Propeller).Exists(FirstBoat.PushesFromBehind), "and its propeller");
             Vector3Int player = TestGame.PlayerBlock;
             int surface = CustomChunkGenerator.FlatGrassHeight;
             Assert.AreEqual(BlockType.Still_Water, TestGame.Block(new Vector3Int(player.x, surface, CustomChunkGenerator.CoastSeaZ + 2)), "a sea ahead");

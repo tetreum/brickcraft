@@ -1024,6 +1024,22 @@ MonoBehaviour:
     m_Localized: Sail! W and S go forward and back, A and D steer. Sail 20 metres.
     m_Metadata:
       m_Items: []
+  - m_Id: 406322538078208
+    m_Localized: Write on the sign
+    m_Metadata:
+      m_Items: []
+  - m_Id: 406322659713024
+    m_Localized: Up to {0} lines and {1} characters. Enter starts a new line.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 406322659713025
+    m_Localized: Save
+    m_Metadata:
+      m_Items: []
+  - m_Id: 406322659713026
+    m_Localized: Cancel
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

@@ -22,6 +22,8 @@ namespace Brickcraft
         /// others. Their placement is their holder's, their place jointPosition and jointRotation (their parent's space).
         /// </summary>
         public BrickJoint? joint;
+        /// <summary>What's written on it (a sign's, see Bricks.SignText), null for none.</summary>
+        public string text;
         public Vector3 jointPosition;
         public Quaternion jointRotation = Quaternion.identity;
         /// <summary>

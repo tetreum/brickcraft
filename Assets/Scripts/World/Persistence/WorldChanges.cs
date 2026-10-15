@@ -37,6 +37,8 @@ namespace Brickcraft.World
         public Guid attachedTo;
         /// <summary>How a connected brick is held by attachedTo (see Bricks.BrickJoints), null for others.</summary>
         public Bricks.BrickJoint? joint;
+        /// <summary>What's written on it (a sign's, see Bricks.SignText), null for none.</summary>
+        public string text;
     }
 
     /// <summary>An NPC left in a chunk, as stored in a save (see Npcs.NpcSystem; never sent to clients).</summary>
@@ -480,6 +482,8 @@ namespace Brickcraft.World
     ///     (joint: varint holder connector, varint connector, zigzag varint slide, u8 spin + 4 if flipped)
     ///   varint count of the connected bricks and parts above held on their holder's studs instead (see
     ///     BrickJoint.onStuds), per one: 16 bytes id, zigzag varint x y z (its cell on the holder's grid)
+    ///   varint count of the bricks above with something written on them (signs, see Bricks.SignText), per one: 16
+    ///     bytes id, string text
     /// where placer is a varint player id (0 when no player placed it) followed, when not 0, by varint unix seconds.
     /// Blocks are saved by name, the numbers chunks use are only valid in the game that gave them (see
     /// BlockDatabase).
@@ -487,7 +491,7 @@ namespace Brickcraft.World
     public static class ChunkChangesSerializer
     {
         // change it when the format changes, records of other versions are rejected
-        public const byte Version = 13;
+        public const byte Version = 14;
 
         // pages keep network messages small, even for heavily modified chunks
         private const int BlocksPerPage = 8192;
@@ -740,6 +744,15 @@ namespace Brickcraft.World
                         }
                     }
                 }
+                int texts = (int)readVarUInt(reader);
+                for (int i = 0; i < texts; i++) {
+                    Guid id = new Guid(reader.ReadBytes(16));
+                    string text = reader.ReadString();
+                    if (changes.bricks.TryGetValue(id, out SavedBrick brick)) {
+                        brick.text = text;
+                        changes.bricks[id] = brick;
+                    }
+                }
 
                 foreach (SavedVehicle vehicle in read) {
                     if (vehicle.parts.Count > 0) {
@@ -930,6 +943,12 @@ namespace Brickcraft.World
                         writeVarInt(writer, held.Value.x);
                         writeVarInt(writer, held.Value.y);
                         writeVarInt(writer, held.Value.z);
+                    }
+                    List<SavedBrick> written = bricks.FindAll(b => !string.IsNullOrEmpty(b.text));
+                    writeVarUInt(writer, (uint)written.Count);
+                    foreach (SavedBrick brick in written) {
+                        writer.Write(brick.id.ToByteArray());
+                        writer.Write(brick.text);
                     }
                 }
                 return output.ToArray();

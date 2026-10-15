@@ -278,6 +278,12 @@ namespace Brickcraft
             showState(brick, true);
         }
 
+        /// <summary>What's written on a brick (a sign's), shown on it; null or empty for nothing.</summary>
+        public void setBrickText(Brick brick, string text) {
+            brick.text = string.IsNullOrEmpty(text) ? null : text;
+            SignText.Show(brick);
+        }
+
         private static void showState(Brick brick, bool animate) {
             foreach (IBrickState shown in brick.gameObject.GetComponentsInChildren<IBrickState>()) {
                 shown.ShowState(brick.state, animate);

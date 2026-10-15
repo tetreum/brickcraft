@@ -33,6 +33,7 @@ public class Menu : MonoBehaviour {
 		PartsListerView.Closed += PartsListerPanel.Hide;
 		ModelImporterView.WindowRequested += ModelImporterPanel.Open;
 		ColorPickerTool.WindowRequested += ColorPickerPanel.Open;
+		Brickcraft.Bricks.SignText.EditorRequested += SignPanel.Open;
 		Brickcraft.Vehicles.WiringTool.PanelRequested += WiringPanel.Open;
 		ModelImporterView.Opened += ModelImporterPanel.ShowHint;
 		ModelImporterView.Closed += ModelImporterPanel.HideHint;
@@ -53,6 +54,7 @@ public class Menu : MonoBehaviour {
 		PartsListerView.Closed -= PartsListerPanel.Hide;
 		ModelImporterView.WindowRequested -= ModelImporterPanel.Open;
 		ColorPickerTool.WindowRequested -= ColorPickerPanel.Open;
+		Brickcraft.Bricks.SignText.EditorRequested -= SignPanel.Open;
 		Brickcraft.Vehicles.WiringTool.PanelRequested -= WiringPanel.Open;
 		ModelImporterView.Opened -= ModelImporterPanel.ShowHint;
 		ModelImporterView.Closed -= ModelImporterPanel.HideHint;

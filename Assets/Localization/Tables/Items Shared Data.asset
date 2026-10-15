@@ -271,6 +271,10 @@ MonoBehaviour:
     m_Key: item.wiring_tool
     m_Metadata:
       m_Items: []
+  - m_Id: 406324874305536
+    m_Key: item.sign
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

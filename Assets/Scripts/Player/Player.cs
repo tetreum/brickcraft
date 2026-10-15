@@ -316,7 +316,7 @@ namespace Brickcraft
             EventManager.SelectedSlotChanged.Raise(new SelectedSlotChangedEvent() { slot = SelectedSlot });
         }
 
-        // a click on a door opens or closes it, on a bed sleeps in it, on a chest looks inside; true while it may still be one (digging waits for it)
+        // a click on a door opens or closes it, on a bed sleeps in it, on a chest looks inside, on a sign writes on it; true while it may still be one (digging waits for it)
         private bool clickDoors(bool isDigHeld) {
             bool isPressed = isDigHeld && !wasDigHeld;
             bool isReleased = !isDigHeld && wasDigHeld;
@@ -338,6 +338,8 @@ namespace Brickcraft
                         network.CmdSit(clickedDoor.id);
                     } else if (BrickStorage.StorageOf(clickedDoor) != null) {
                         network.CmdOpenStorage(clickedDoor.id);
+                    } else if (isSign(clickedDoor)) {
+                        network.CmdOpenSign(clickedDoor.id);
                     } else {
                         network.CmdToggleDoor(clickedDoor.id);
                     }
@@ -351,7 +353,12 @@ namespace Brickcraft
         // a click uses it: a door, a bed, a chest, a vehicle's seat
         private static bool isUsable(Brick brick) {
             return brick.gameObject != null && (brick.gameObject.GetComponentInChildren<BrickDoor>() != null || isBed(brick) || isSeat(brick)
-                || BrickStorage.StorageOf(brick) != null);
+                || BrickStorage.StorageOf(brick) != null || isSign(brick));
+        }
+
+        // a sign of the world: a click writes on it
+        private static bool isSign(Brick brick) {
+            return brick.vehicle == null && Server.items.TryGetValue(brick.itemId, out Item item) && item.IsSign;
         }
 
         private static bool isSeat(Brick brick) {

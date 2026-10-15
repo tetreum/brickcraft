@@ -339,6 +339,25 @@ namespace Brickcraft.Network
             });
         }
 
+        /// <summary>
+        /// Writes on a brick of the world (a sign, see Bricks.SignText), the text already cleaned (SignText.Clean); empty
+        /// rubs it out. False for a vehicle's brick (they're not written on yet).
+        /// </summary>
+        public static bool ServerSetBrickText(Brick brick, string text) {
+            if (brick.vehicle != null) {
+                return false;
+            }
+            Placer placer = ServerPlacerOf(brick);
+            Server.Instance.setBrickText(brick, text);
+            serverChanges.AddBrick(toSaved(brick, placer));
+            sendToChunk(WorldChanges.ChunkOfBrick(brick.placement.origin), new BrickTextMessage() {
+                id = brick.id,
+                origin = brick.placement.origin,
+                text = brick.text ?? "",
+            });
+            return true;
+        }
+
         /// <summary>Removes a brick and what's attached to it (which players remove with it). Returns them all.</summary>
         public static List<Brick> ServerRemoveBrick(Brick brick) {
             if (brick.vehicle != null) {
@@ -657,6 +676,7 @@ namespace Brickcraft.Network
                 state = brick.state,
                 attachedTo = brick.attachedTo != null ? new Guid(brick.attachedTo) : Guid.Empty,
                 joint = brick.joint,
+                text = brick.text,
             };
         }
 
@@ -684,6 +704,7 @@ namespace Brickcraft.Network
             NetworkClient.RegisterHandler<BrickPlacedMessage>(onBrickPlaced);
             NetworkClient.RegisterHandler<BrickRemovedMessage>(onBrickRemoved);
             NetworkClient.RegisterHandler<BrickStateMessage>(onBrickState);
+            NetworkClient.RegisterHandler<BrickTextMessage>(onBrickText);
             NetworkClient.RegisterHandler<BrickColorMessage>(onBrickColor);
             NetworkClient.RegisterHandler<TimeMessage>(onTime);
             NetworkClient.RegisterHandler<SleepStatusMessage>(message => SleepStatus = message);
@@ -906,6 +927,19 @@ namespace Brickcraft.Network
             }
         }
 
+        private static void onBrickText(BrickTextMessage message) {
+            if (NetworkServer.active) {
+                return;
+            }
+            if (clientChanges.TryGetBrick(new Guid(message.id), message.origin, out SavedBrick saved)) {
+                saved.text = string.IsNullOrEmpty(message.text) ? null : message.text;
+                clientChanges.AddBrick(saved);
+            }
+            if (Server.bricks.TryGetValue(message.id, out Brick brick)) {
+                Server.Instance.setBrickText(brick, message.text);
+            }
+        }
+
         private static void onBrickColor(BrickColorMessage message) {
             if (NetworkServer.active) {
                 return;
@@ -951,10 +985,11 @@ namespace Brickcraft.Network
                     if (attachedTo != null && !Server.bricks.ContainsKey(attachedTo)) {
                         continue; // its brick isn't there (yet)
                     }
-                    if (saved.joint.HasValue) {
-                        Server.Instance.spawnConnected(item, saved.color, Server.bricks[attachedTo], saved.joint.Value, id, saved.state);
-                    } else {
-                        Server.Instance.spawnBrick(item, saved.color, new BrickPlacement(item.brickModel, saved.origin, saved.rotation), id, saved.state, attachedTo);
+                    Brick brick = saved.joint.HasValue
+                        ? Server.Instance.spawnConnected(item, saved.color, Server.bricks[attachedTo], saved.joint.Value, id, saved.state)
+                        : Server.Instance.spawnBrick(item, saved.color, new BrickPlacement(item.brickModel, saved.origin, saved.rotation), id, saved.state, attachedTo);
+                    if (brick != null && !string.IsNullOrEmpty(saved.text)) {
+                        Server.Instance.setBrickText(brick, saved.text);
                     }
                     waiting.Remove(saved);
                     spawned = true;

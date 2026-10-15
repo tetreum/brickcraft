@@ -645,9 +645,14 @@ namespace Brickcraft.Network
                 && placement.MatchesWorldBlock
                 && WorldNetwork.ServerSetBlock(block, item.blockType.Value, placer, blockColor);
 
+            Brick placedBrick = placedAsWorldBlock ? null : WorldNetwork.ServerPlaceBrick(item, color, placement, placer);
             BrickHandle placed = placedAsWorldBlock
                 ? BrickHandle.ForBlock(block, item.blockType.Value, blockColor, placer)
-                : BrickHandle.ForBrick(WorldNetwork.ServerPlaceBrick(item, color, placement, placer), placer);
+                : BrickHandle.ForBrick(placedBrick, placer);
+            // a sign: its placer writes it
+            if (placedBrick != null && item.IsSign) {
+                TargetOpenSign(placedBrick.id, "");
+            }
 
             inventory.ServerRemoveFromSlot(slot, 1);
             TargetBrickPlaced();
@@ -791,6 +796,47 @@ namespace Brickcraft.Network
                 return;
             }
             BrickStorage.ServerOpen(connectionToClient, storage);
+        }
+
+        /// <summary>It clicked a sign: its editor opens if it can write on it (see CanWriteSign).</summary>
+        [Command]
+        public void CmdOpenSign(string brickId) {
+            if (health.isDead || !Server.bricks.TryGetValue(brickId, out Brick sign) || !isSign(sign) || !isInReach(sign.WorldBounds.center)) {
+                return;
+            }
+            if (!CanWriteSign(connectionToClient, sign)) {
+                GameTexts.Send(connectionToClient, "sign.not_yours");
+                return;
+            }
+            TargetOpenSign(sign.id, sign.text);
+        }
+
+        /// <summary>It wrote on a sign (cleaned here, see SignText.Clean), if it can (see CanWriteSign).</summary>
+        [Command]
+        public void CmdSetSignText(string brickId, string text) {
+            if (health.isDead || !Server.bricks.TryGetValue(brickId, out Brick sign) || !isSign(sign) || !isInReach(sign.WorldBounds.center)
+                    || !CanWriteSign(connectionToClient, sign)) {
+                return;
+            }
+            WorldNetwork.ServerSetBrickText(sign, SignText.Clean(text));
+        }
+
+        /// <summary>Who can write on a sign: whoever placed it, and admins (anyone, for one no player placed).</summary>
+        public static bool CanWriteSign(NetworkConnectionToClient conn, Brick sign) {
+            if (!(conn.authenticationData is ConnectedPlayer player)) {
+                return false;
+            }
+            return SignText.CanWrite(player.record.Id, player.record.IsAdmin, WorldNetwork.ServerPlacerOf(sign).playerId);
+        }
+
+        // a sign of the world (vehicles' bricks aren't written on yet)
+        private static bool isSign(Brick brick) {
+            return brick.vehicle == null && Server.items.TryGetValue(brick.itemId, out Item item) && item.IsSign;
+        }
+
+        [TargetRpc]
+        private void TargetOpenSign(string brickId, string text) {
+            SignText.RequestEditor(brickId, text);
         }
 
         [Command]

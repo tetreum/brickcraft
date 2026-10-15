@@ -563,6 +563,10 @@ MonoBehaviour:
     m_Key: cmd.npcs_turned_off
     m_Metadata:
       m_Items: []
+  - m_Id: 406324714921984
+    m_Key: sign.not_yours
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

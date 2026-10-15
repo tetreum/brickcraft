@@ -26,7 +26,7 @@ namespace Brickcraft.Tests
 
             brick = new SavedBrick() {
                 id = Guid.NewGuid(), itemId = "chest", origin = new Vector3Int(-3, 150, 31), rotation = 3, color = 72,
-                placer = new Placer() { playerId = 2, placedAt = 1760000001 }, state = 1,
+                placer = new Placer() { playerId = 2, placedAt = 1760000001 }, state = 1, text = "Keep\nout",
             };
             door = new SavedBrick() { id = Guid.NewGuid(), itemId = "door", origin = brick.origin, color = 4, attachedTo = brick.id };
             changes.bricks[brick.id] = brick;
@@ -101,6 +101,7 @@ namespace Brickcraft.Tests
             ChunkChanges loaded = ChunkChangesSerializer.Deserialize(pages[0]);
             Assert.AreEqual(4, loaded.bricks.Count);
             Assert.AreEqual(axle.joint, loaded.bricks[axle.id].joint, "players get how connected bricks are held");
+            Assert.AreEqual("Keep\nout", loaded.bricks[brick.id].text, "and what's written on signs");
             Assert.AreEqual(0, loaded.npcs.Count);
             Assert.AreEqual(0, loaded.storage.Count);
             Assert.AreEqual(0, loaded.drops.Count);
@@ -145,6 +146,7 @@ namespace Brickcraft.Tests
                 File.WriteAllBytes(path, old);
 
                 new Brickcraft.World.Migrations.Migration15To16().Migrate(folder);
+                new Brickcraft.World.Migrations.Migration16To17().Migrate(folder);
                 WorldStorage info = WorldStorage.ReadInfo(folder);
                 Assert.AreEqual(WorldStorage.FormatVersion, info.Format);
                 Assert.AreEqual("Old", info.Name, "the rest as it was");

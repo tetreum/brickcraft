@@ -46,7 +46,7 @@ namespace Brickcraft.World
         /// a migration from the previous one: older saves are upgraded when they're played (see
         /// Migrations.SaveMigrations).
         /// </summary>
-        public const ushort FormatVersion = 16;
+        public const ushort FormatVersion = 17;
 
         public string Folder { get; private set; }
         /// <summary>The format it's saved in, see FormatVersion.</summary>

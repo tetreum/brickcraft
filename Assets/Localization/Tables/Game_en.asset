@@ -593,6 +593,10 @@ MonoBehaviour:
     m_Localized: '{0} turned NPCs off ({1} removed, pets stay)'
     m_Metadata:
       m_Items: []
+  - m_Id: 406324714921984
+    m_Localized: Only whoever placed this sign (or an admin) can write on it.
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

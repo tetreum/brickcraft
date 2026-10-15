@@ -1,0 +1,9 @@
+{
+    "name": "Sign",
+    "type": "brick",
+    "brickModel": "59349",
+    "ldrawId": "59349",
+    "color": 15,
+    "colors": "all",
+    "tags": ["sign"]
+}

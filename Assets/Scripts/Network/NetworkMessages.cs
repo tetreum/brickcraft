@@ -110,6 +110,14 @@ namespace Brickcraft.Network
         public int state;
     }
 
+    /// <summary>Server to client: what's written on a brick (a sign) changed, see Brick.text.</summary>
+    public struct BrickTextMessage : NetworkMessage
+    {
+        public string id;
+        public Vector3Int origin;
+        public string text;
+    }
+
     /// <summary>Server to client: a brick was painted (see WorldNetwork.ServerSetBrickColor).</summary>
     public struct BrickColorMessage : NetworkMessage
     {

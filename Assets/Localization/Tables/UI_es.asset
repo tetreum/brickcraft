@@ -1023,6 +1023,23 @@ MonoBehaviour:
       20 metros."
     m_Metadata:
       m_Items: []
+  - m_Id: 406322538078208
+    m_Localized: Escribe en el cartel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 406322659713024
+    m_Localized: "Hasta {0} l\xEDneas y {1} caracteres. Intro empieza una l\xEDnea
+      nueva."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 406322659713025
+    m_Localized: Guardar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 406322659713026
+    m_Localized: Cancelar
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

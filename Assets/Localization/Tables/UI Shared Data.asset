@@ -971,6 +971,22 @@ MonoBehaviour:
     m_Key: tutorial.first_boat.sail
     m_Metadata:
       m_Items: []
+  - m_Id: 406322538078208
+    m_Key: sign.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 406322659713024
+    m_Key: sign.hint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 406322659713025
+    m_Key: sign.save
+    m_Metadata:
+      m_Items: []
+  - m_Id: 406322659713026
+    m_Key: sign.cancel
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

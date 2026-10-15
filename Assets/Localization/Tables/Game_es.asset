@@ -597,6 +597,10 @@ MonoBehaviour:
     m_Localized: "{0} desactiv\xF3 los PNJ ({1} eliminados, las mascotas se quedan)"
     m_Metadata:
       m_Items: []
+  - m_Id: 406324714921984
+    m_Localized: "Solo quien puso este cartel (o un admin) puede escribir en \xE9l."
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

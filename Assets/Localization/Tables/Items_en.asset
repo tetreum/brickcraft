@@ -274,6 +274,10 @@ MonoBehaviour:
     m_Localized: Wiring Tool
     m_Metadata:
       m_Items: []
+  - m_Id: 406324874305536
+    m_Localized: Sign
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

@@ -273,8 +273,9 @@ namespace Brickcraft.Tests
             Brick seat = onStuds(wing, item(FirstPlane.Seat), around(size / 2 - 1, size / 2 - 1, on, 4), s => FirstPlane.Tutorial.steps[8].isDone());
             Assert.IsNotNull(seat, "a seat on the wing, facing ahead");
             yield return stepIs(9, "sitting next");
-            Assert.AreEqual(1, seat.vehicle.Drive.WingCount, "a wing");
-            Assert.AreEqual(1, seat.vehicle.Drive.PropellerCount, "and a propeller");
+            // its drive takes in its new parts at the next physics step
+            Vehicle plane = seat.vehicle;
+            yield return TestGame.WaitUntil(() => plane.Drive.WingCount == 1 && plane.Drive.PropellerCount == 1, 2, "a wing and a propeller that work");
             yield return sitAndGo(seat, 10, 40, FirstPlane.FlyHeight + " metres up");
         }
 

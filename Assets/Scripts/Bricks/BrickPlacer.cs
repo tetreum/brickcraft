@@ -41,6 +41,8 @@ namespace Brickcraft.Bricks
         private Color ghostColor;
 
         private int rotation;
+        // a sign turns its front (see SignText.FrontOf) towards the player, R turning it from there
+        private bool facesPlayer;
         private BrickPlacement? target;
         // connected placement: the other way round, and which of the part's fitting connectors
         private bool flip;
@@ -86,6 +88,7 @@ namespace Brickcraft.Bricks
                 return;
             }
 
+            facesPlayer = selectedItem.item.IsSign;
             // the mouse wheel picks the slot instead, see PlayerPanel
             if (GameInput.GetButtonDown(GameInput.Rotate)) {
                 rotation = (rotation + 1) % 4;
@@ -249,11 +252,24 @@ namespace Brickcraft.Bricks
             }
         }
 
+        // the quarter turns it goes with on a grid turned that way: R's, and for a sign the ones that face its front to
+        // the player (its model's -Z: its +Z the way the player looks)
+        private int turnsOn(Quaternion gridTurned) {
+            Camera eye = Camera.main;
+            if (!facesPlayer || eye == null) {
+                return rotation;
+            }
+            Vector3 looking = Quaternion.Inverse(gridTurned) * eye.transform.forward;
+            int facing = Mathf.RoundToInt(Mathf.Atan2(looking.x, looking.z) / (Mathf.PI / 2));
+            return BrickGrid.Mod(rotation + facing, 4);
+        }
+
         // on a grid of its own that starts there, turned that way (a vehicle's cells, a connected brick's grid)
         private BrickPlacement computeVehiclePlacement(RaycastHit hit, BrickModel model, Vector3 gridStart, Quaternion gridTurned) {
             Quaternion back = Quaternion.Inverse(gridTurned);
             Vector3Int normal = dominantAxis(back * hit.normal);
-            Vector3Int size = BrickPlacement.SizeFor(model, rotation);
+            int turns = turnsOn(gridTurned);
+            Vector3Int size = BrickPlacement.SizeFor(model, turns);
             Vector3 local = back * (hit.point - gridStart);
             Vector3 cells = toCells(local);
             Vector3 beyond = toCells(local + (Vector3)normal * SurfaceOffset);
@@ -272,7 +288,7 @@ namespace Brickcraft.Bricks
                     origin[axis] = startAlong(axis, cells[axis], size[axis]);
                 }
             }
-            return new BrickPlacement(model, origin, rotation);
+            return new BrickPlacement(model, origin, turns);
         }
 
         // its first cell along an axis of the face looked at (x or z; point in cells): centred on the crosshair, or by a
@@ -320,7 +336,8 @@ namespace Brickcraft.Bricks
 
         private BrickPlacement computePlacement(RaycastHit hit, BrickModel model) {
             Vector3Int normal = dominantAxis(hit.normal);
-            Vector3Int size = BrickPlacement.SizeFor(model, rotation);
+            int turns = turnsOn(Quaternion.identity);
+            Vector3Int size = BrickPlacement.SizeFor(model, turns);
             // relative to the floating origin, which is a whole number of chunks so block snapping still works
             Vector3 gridPoint = BrickGrid.WorldToLocalGrid(hit.point);
             Vector3Int originCell = FloatingOrigin.Cell;
@@ -352,7 +369,7 @@ namespace Brickcraft.Bricks
                 }
             }
 
-            return new BrickPlacement(model, origin, rotation);
+            return new BrickPlacement(model, origin, turns);
         }
 
         // the server places it, and takes the item from our inventory if it could

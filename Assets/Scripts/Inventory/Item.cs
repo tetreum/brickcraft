@@ -228,6 +228,13 @@ namespace Brickcraft
             get { return tags.Contains(StorageTag); }
         }
 
+        /// <summary>Placed, it's written on (see Bricks.SignText): who placed it writes it, and only they (and admins) change it.</summary>
+        public const string SignTag = "sign";
+
+        public bool IsSign {
+            get { return tags.Contains(SignTag); }
+        }
+
         // World block this item turns into when placed exactly over a world block (2x2 bricks only)
         public BlockType? blockType;
 

@@ -45,6 +45,10 @@ namespace Brickcraft.Vehicles
         public void Register(Brick brick) {
             bricks.Add(brick);
             Changed?.Invoke();
+            // a connected brick (see BrickJoints) takes no cells
+            if (brick.joint.HasValue) {
+                return;
+            }
             foreach (Vector3Int cell in brick.placement.Cells) {
                 cells[cell] = brick;
             }
@@ -93,6 +97,19 @@ namespace Brickcraft.Vehicles
         public List<List<Brick>> Components() {
             List<List<Brick>> groups = new List<List<Brick>>();
             HashSet<Brick> seen = new HashSet<Brick>();
+            // connected bricks (see BrickJoints) go with what holds them, and what they hold with them
+            Dictionary<string, List<Brick>> held = new Dictionary<string, List<Brick>>();
+            Dictionary<string, Brick> byId = new Dictionary<string, Brick>();
+            foreach (Brick brick in bricks) {
+                byId[brick.id] = brick;
+                if (brick.joint.HasValue && brick.attachedTo != null) {
+                    if (!held.TryGetValue(brick.attachedTo, out List<Brick> list)) {
+                        list = new List<Brick>();
+                        held[brick.attachedTo] = list;
+                    }
+                    list.Add(brick);
+                }
+            }
             foreach (Brick start in bricks) {
                 if (!seen.Add(start)) {
                     continue;
@@ -103,6 +120,19 @@ namespace Brickcraft.Vehicles
                 while (queue.Count > 0) {
                     Brick brick = queue.Dequeue();
                     group.Add(brick);
+                    if (held.TryGetValue(brick.id, out List<Brick> holding)) {
+                        foreach (Brick next in holding) {
+                            if (seen.Add(next)) {
+                                queue.Enqueue(next);
+                            }
+                        }
+                    }
+                    if (brick.joint.HasValue) {
+                        if (brick.attachedTo != null && byId.TryGetValue(brick.attachedTo, out Brick holder) && seen.Add(holder)) {
+                            queue.Enqueue(holder);
+                        }
+                        continue;
+                    }
                     foreach (Vector3Int cell in brick.placement.Cells) {
                         foreach (Vector3Int step in Neighbours) {
                             Brick next = GetBrickAt(cell + step);

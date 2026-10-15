@@ -361,6 +361,7 @@ namespace Brickcraft.Bricks
                     }
                 }
                 model.ldrawOrigin = origin;
+                model.connectors = LDraw.LDrawConnectors.For(id, origin);
                 return model;
             } catch (Exception e) {
                 Debug.LogError("Can't read the LDraw part " + id + ": " + e.Message);

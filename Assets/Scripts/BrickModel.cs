@@ -45,6 +45,9 @@ namespace Brickcraft
 
         public float hardness = 4; //seconds with bare hands
 
+        /// <summary>Where it connects besides its studs: technic axles, pins and holes... (see Bricks.Connector), none if nowhere.</summary>
+        public Bricks.Connector[] connectors = new Bricks.Connector[0];
+
         /// <summary>LDraw parts' models: where the part's LDraw origin is in the model (see LDraw.LDrawWriter), null for others.</summary>
         public Vector3? ldrawOrigin;
 

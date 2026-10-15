@@ -52,6 +52,8 @@ The game ships a pruned copy of the [LDraw](https://www.ldraw.org) parts library
 
 A model id that's an LDraw part number is read from the library when nothing else has it (see `Bricks.LDraw.LDrawModelBuilder`): its faces facing out (BFC), its own colours (a window's glass) kept and the brick's colour on the rest, in the game's units (a stud is 20 LDU), its pivot in the middle of its footprint, at its bottom. The game's own models (StreamingAssets/BrickModels, custom prefabs) come first.
 
+Where parts connect besides their studs (technic axles, pins and holes, bars) is `connectors.txt`, built from the [LDCad Shadow Library](https://github.com/RolandMelkert/LDCadShadowLibrary) with `Brickcraft > LDraw > Build connectors from LDCad shadow library folder...` (after the library, to rebuild it).
+
 To update the library: unpack library.ldraw.org's complete.zip somewhere, then `Brickcraft > LDraw > Build library from complete.zip folder...` and `Brickcraft > LDraw > Render missing catalogue icons` (it can be run again to go on, rendering takes a while).
 
 
@@ -61,6 +63,7 @@ To update the library: unpack library.ldraw.org's complete.zip somewhere, then `
 - stone-SJH for fixing "Terrain mesh is randomly broken because of brick's top face" bug at https://github.com/tetreum/brickcraft/pull/2
 - World chunk system - Smjert - https://github.com/chraft/chunk-light-tester/
 - Most brick models - https://www.ldraw.org
+- Where LDraw parts connect (axles, pins, holes) - LDCad Shadow Library, Roland Melkert and contributors (CC BY-SA 4.0; `StreamingAssets/LDraw/connectors.txt` is under it too, see `connectors-LICENSE.md`) - https://github.com/RolandMelkert/LDCadShadowLibrary
 - Some brick models - https://www.mecabricks.com/
 - Tapping sound effect - https://freesound.org/people/rioforce/sounds/233654/
 - Dig + remove block sound effect - https://freesound.org/people/Agaxly/sounds/213005/

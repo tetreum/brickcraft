@@ -45,7 +45,7 @@ namespace Brickcraft.Tests
         public IEnumerator Start() {
             deleteLeftovers();
             GameSettings.RenderDistanceOverride = GameSettings.MinRenderDistance;
-            GameSettings.MasterVolumeOverride = 0; // silent (a test about sound sets its own)
+            GameSettings.MasterVolumeOverride = 0; // silent (a test about sound sets its own), see SilentTests
             BrickcraftNetworkManager.GetOrCreate().PlayWorld(saveName);
             float end = Time.realtimeSinceStartup + StartTimeout;
             while (Player == null) {
@@ -97,7 +97,7 @@ namespace Brickcraft.Tests
         public IEnumerator Delete() {
             yield return Stop();
             GameSettings.RenderDistanceOverride = null;
-            GameSettings.MasterVolumeOverride = null;
+            // still silent: the menu between tests too (see SilentTests)
             for (int attempt = 0; Directory.Exists(SaveFolder); attempt++) {
                 try {
                     Directory.Delete(SaveFolder, true);

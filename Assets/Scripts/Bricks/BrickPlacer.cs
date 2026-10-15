@@ -23,7 +23,8 @@ namespace Brickcraft.Bricks
     /// A part with connectors (technic: an axle, a wheel, a pin, see BrickJoints) aimed near a connector of the brick looked
     /// at that one of its own fits goes there instead, connected: as far along it as the crosshair (Z and X sliding it
     /// further back or forward, half a stud a time: a long axle through a short hole), R turning it around it a quarter
-    /// turn at a time, T putting it the other way round, G picking another of its connectors that fits.
+    /// turn at a time, T putting it the other way round, G picking another of its connectors that fits. Against a
+    /// connected brick (a beam on an axle) it goes on that brick's own grid, held by it.
     /// </summary>
     public class BrickPlacer : MonoBehaviour
     {
@@ -92,6 +93,11 @@ namespace Brickcraft.Bricks
             Brick looked = hasHit ? Server.findBrick(hit.collider) : null;
             if (looked != null && model.connectors.Length > 0 && tickConnected(hit, selectedItem, model, looked)) {
                 target = null;
+                return;
+            }
+            if (looked != null && BrickJoints.HoldsOnStuds(looked)) {
+                target = null;
+                tickOnStuds(hit, selectedItem, model, looked);
                 return;
             }
             if (looked != null && looked.vehicle != null) {
@@ -163,9 +169,30 @@ namespace Brickcraft.Bricks
             return true;
         }
 
+        // against a connected brick: on its own grid, held by it
+        private void tickOnStuds(RaycastHit hit, UserItem selectedItem, BrickModel model, Brick holder) {
+            BrickJoints.GridOf(holder, out Vector3 grid, out Quaternion gridTurned);
+            Transform parent = BrickJoints.ParentOf(holder);
+            if (parent != null) {
+                grid = parent.TransformPoint(grid);
+                gridTurned = parent.rotation * gridTurned;
+            }
+            BrickPlacement placement = computeVehiclePlacement(hit, model, grid, gridTurned);
+            BrickJoint joint = BrickJoint.OnStuds(placement.origin, placement.rotation);
+            BrickJoints.PoseHeldBy(holder, model, joint, out Vector3 position, out Quaternion turned);
+            ghost.transform.SetPositionAndRotation(parent != null ? parent.TransformPoint(position) : position, parent != null ? parent.rotation * turned : turned);
+            ghost.SetActive(true);
+            bool isValid = BrickJoints.WhyNot(holder, model, joint) == null;
+            setGhostColor(isValid);
+
+            if (isValid && GameInput.GetButtonDown(GameInput.Place)) {
+                Player.Instance.network.CmdPlaceOnStuds(selectedItem.slot, holder.id, placement.origin, placement.rotation);
+            }
+        }
+
         // on a vehicle: in its cells, against the face looked at like on the world's grid
         private void tickVehicle(RaycastHit hit, UserItem selectedItem, BrickModel model, Vehicle vehicle) {
-            BrickPlacement placement = computeVehiclePlacement(hit, model, vehicle.transform);
+            BrickPlacement placement = computeVehiclePlacement(hit, model, vehicle.transform.position, vehicle.transform.rotation);
             bool isValid = vehicle.grid.IsFree(placement) && !VehicleSystem.OverlapsOthers(vehicle, placement);
 
             Transform tr = vehicle.transform;
@@ -178,10 +205,12 @@ namespace Brickcraft.Bricks
             }
         }
 
-        private BrickPlacement computeVehiclePlacement(RaycastHit hit, BrickModel model, Transform vehicle) {
-            Vector3Int normal = dominantAxis(vehicle.InverseTransformDirection(hit.normal));
+        // on a grid of its own that starts there, turned that way (a vehicle's cells, a connected brick's grid)
+        private BrickPlacement computeVehiclePlacement(RaycastHit hit, BrickModel model, Vector3 gridStart, Quaternion gridTurned) {
+            Quaternion back = Quaternion.Inverse(gridTurned);
+            Vector3Int normal = dominantAxis(back * hit.normal);
             Vector3Int size = BrickPlacement.SizeFor(model, rotation);
-            Vector3 local = vehicle.InverseTransformPoint(hit.point);
+            Vector3 local = back * (hit.point - gridStart);
             Vector3 cells = toCells(local);
             Vector3 beyond = toCells(local + (Vector3)normal * SurfaceOffset);
             Vector3Int adjacent = new Vector3Int(Mathf.FloorToInt(beyond.x), Mathf.FloorToInt(beyond.y), Mathf.FloorToInt(beyond.z));

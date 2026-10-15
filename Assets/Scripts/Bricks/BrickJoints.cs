@@ -6,7 +6,9 @@ namespace Brickcraft.Bricks
     /// <summary>
     /// How a connected brick (see BrickJoints) is held by another: by which of the holder's connectors and which of its
     /// own (see Connector), how far along the holder's axis their middles are (half studs, 10 LDU), turned how many
-    /// quarter turns around it, and whether it faces the other way along it.
+    /// quarter turns around it, and whether it faces the other way along it. Or on its studs (onStuds): against any of
+    /// its faces on the holder's own grid (see BrickJoints.GridOf), at a cell (origin) turned spin quarter turns, like
+    /// on a vehicle's cells.
     /// </summary>
     public struct BrickJoint
     {
@@ -15,6 +17,13 @@ namespace Brickcraft.Bricks
         public int slide;
         public int spin;
         public bool flip;
+        public bool onStuds;
+        public Vector3Int origin;
+
+        /// <summary>On the holder's studs (or against another of its faces), on its grid.</summary>
+        public static BrickJoint OnStuds(Vector3Int origin, int rotation) {
+            return new BrickJoint() { onStuds = true, origin = origin, spin = BrickJoints.Mod(rotation, 4) };
+        }
     }
 
     /// <summary>
@@ -24,6 +33,7 @@ namespace Brickcraft.Bricks
     /// an axle in an axle hole (locked) or in a round hole at least as wide (it spins), a round peg in a round hole as
     /// wide. Things slide along the ones that slide, the shorter one staying within the longer. Where it goes it may only
     /// meet what it connects to: its holder, and bricks with a connector that lines up with one of its own and fits.
+    /// A connected brick's studs hold bricks too (an axle through a beam, a brick on the beam): they go on its own grid.
     /// </summary>
     public static class BrickJoints
     {
@@ -90,6 +100,13 @@ namespace Brickcraft.Bricks
         /// </summary>
         public static void PoseOf(Vector3 holderPosition, Quaternion holderRotation, BrickModel holderModel, BrickModel model, BrickJoint joint,
                 out Vector3 position, out Quaternion rotation) {
+            if (joint.onStuds) {
+                GridOf(holderPosition, holderRotation, holderModel, out Vector3 grid, out Quaternion turned);
+                BrickPlacement placement = new BrickPlacement(model, joint.origin, joint.spin);
+                position = grid + turned * placement.LocalPosition;
+                rotation = turned * placement.Rotation * PrefabRotation(model);
+                return;
+            }
             Connector held = holderModel.connectors[joint.holderConnector];
             Connector own = model.connectors[joint.connector];
             Vector3 axis = holderRotation * held.axis;
@@ -110,9 +127,27 @@ namespace Brickcraft.Bricks
                 rotation = brick.jointRotation;
                 return;
             }
-            Quaternion prefab = brick.model != null && brick.model.prefab != null ? brick.model.prefab.transform.rotation : Quaternion.identity;
-            rotation = brick.placement.Rotation * prefab;
+            rotation = brick.placement.Rotation * PrefabRotation(brick.model);
             position = brick.vehicle != null ? brick.placement.LocalPosition : brick.placement.Position;
+        }
+
+        /// <summary>
+        /// The grid a brick's studs hold others on (its parent's space): where the cells of a vehicle would start for it
+        /// to be on them at the first cell, unturned.
+        /// </summary>
+        public static void GridOf(Vector3 holderPosition, Quaternion holderRotation, BrickModel holderModel, out Vector3 position, out Quaternion rotation) {
+            rotation = holderRotation * Quaternion.Inverse(PrefabRotation(holderModel));
+            position = holderPosition - rotation * new BrickPlacement(holderModel, Vector3Int.zero).LocalPosition;
+        }
+
+        public static void GridOf(Brick holder, out Vector3 position, out Quaternion rotation) {
+            BasePose(holder, out Vector3 at, out Quaternion turned);
+            GridOf(at, turned, holder.model, out position, out rotation);
+        }
+
+        /// <summary>How a model's object is turned when it's unturned on the grid.</summary>
+        public static Quaternion PrefabRotation(BrickModel model) {
+            return model != null && model.prefab != null ? model.prefab.transform.rotation : Quaternion.identity;
         }
 
         /// <summary>Where a brick held by that one, that way, would go (its parent's space).</summary>
@@ -129,11 +164,31 @@ namespace Brickcraft.Bricks
                 && (holder.attachedTo == null || holder.joint.HasValue);
         }
 
+        /// <summary>Whether a brick's studs hold others off the grid: it's connected itself (bricks on the grid have cells).</summary>
+        public static bool HoldsOnStuds(Brick holder) {
+            return holder != null && holder.gameObject != null && holder.model != null && !holder.model.IsAttachment && holder.joint.HasValue;
+        }
+
+        /// <summary>Whether a joint is one a brick can have with that holder (its connectors exist), wherever it goes.</summary>
+        public static bool IsValid(Brick holder, BrickModel model, BrickJoint joint) {
+            if (holder == null || holder.model == null || model == null || model.IsAttachment) {
+                return false;
+            }
+            if (joint.onStuds) {
+                return HoldsOnStuds(holder);
+            }
+            return CanHold(holder) && joint.holderConnector >= 0 && joint.holderConnector < holder.model.connectors.Length
+                && joint.connector >= 0 && joint.connector < model.connectors.Length;
+        }
+
         /// <summary>
         /// Why that model can't be held by that brick that way, null if it can: the connectors fit, it's within their
         /// slide, and where it goes it meets nothing it doesn't connect to.
         /// </summary>
         public static string WhyNot(Brick holder, BrickModel model, BrickJoint joint) {
+            if (joint.onStuds) {
+                return whyNotOnStuds(holder, model, joint);
+            }
             if (!CanHold(holder)) {
                 return "the holder can't hold anything";
             }
@@ -156,6 +211,29 @@ namespace Brickcraft.Bricks
             Quaternion worldRotation = parent != null ? parent.rotation * rotation : rotation;
             Brick blocking = Blocking(model, worldPosition, worldRotation, holder);
             return blocking != null ? "something's in the way" : null;
+        }
+
+        // against the holder (touching it, not in it), and in nothing else
+        private static string whyNotOnStuds(Brick holder, BrickModel model, BrickJoint joint) {
+            if (!IsValid(holder, model, joint)) {
+                return "the holder can't hold anything on its studs";
+            }
+            Bounds own = new BrickPlacement(holder.model, Vector3Int.zero).LocalBounds;
+            Bounds placed = new BrickPlacement(model, joint.origin, joint.spin).LocalBounds;
+            Bounds inside = placed;
+            inside.Expand(-OverlapMargin * 2);
+            placed.Expand(OverlapMargin * 2);
+            if (!placed.Intersects(own)) {
+                return "it doesn't touch the holder";
+            }
+            if (inside.Intersects(own)) {
+                return "it goes into the holder";
+            }
+            PoseHeldBy(holder, model, joint, out Vector3 position, out Quaternion rotation);
+            Transform parent = ParentOf(holder);
+            Vector3 worldPosition = parent != null ? parent.TransformPoint(position) : position;
+            Quaternion worldRotation = parent != null ? parent.rotation * rotation : rotation;
+            return Blocking(model, worldPosition, worldRotation, holder) != null ? "something's in the way" : null;
         }
 
         /// <summary>Where a brick held by that one lives: the world (null) or its vehicle.</summary>

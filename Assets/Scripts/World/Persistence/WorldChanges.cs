@@ -478,6 +478,8 @@ namespace Brickcraft.World
     ///   varint count of connected bricks (see Bricks.BrickJoints; those above that have a joint), per one: 16 bytes id,
     ///     joint; then varint count of connected vehicle parts, per one: 16 bytes part id, 16 bytes holder part id, joint
     ///     (joint: varint holder connector, varint connector, zigzag varint slide, u8 spin + 4 if flipped)
+    ///   varint count of the connected bricks and parts above held on their holder's studs instead (see
+    ///     BrickJoint.onStuds), per one: 16 bytes id, zigzag varint x y z (its cell on the holder's grid)
     /// where placer is a varint player id (0 when no player placed it) followed, when not 0, by varint unix seconds.
     /// Blocks are saved by name, the numbers chunks use are only valid in the game that gave them (see
     /// BlockDatabase).
@@ -485,7 +487,7 @@ namespace Brickcraft.World
     public static class ChunkChangesSerializer
     {
         // change it when the format changes, records of other versions are rejected
-        public const byte Version = 12;
+        public const byte Version = 13;
 
         // pages keep network messages small, even for heavily modified chunks
         private const int BlocksPerPage = 8192;
@@ -720,6 +722,25 @@ namespace Brickcraft.World
                     }
                 }
 
+                int onStuds = (int)readVarUInt(reader);
+                for (int i = 0; i < onStuds; i++) {
+                    Guid id = new Guid(reader.ReadBytes(16));
+                    Vector3Int origin = new Vector3Int(readVarInt(reader), readVarInt(reader), readVarInt(reader));
+                    if (changes.bricks.TryGetValue(id, out SavedBrick brick) && brick.joint.HasValue) {
+                        brick.joint = Bricks.BrickJoint.OnStuds(origin, brick.joint.Value.spin);
+                        changes.bricks[id] = brick;
+                    }
+                    foreach (SavedVehicle vehicle in read) {
+                        for (int p = 0; p < vehicle.parts.Count; p++) {
+                            if (vehicle.parts[p].id == id && vehicle.parts[p].holder != Guid.Empty) {
+                                SavedVehiclePart part = vehicle.parts[p];
+                                part.joint = Bricks.BrickJoint.OnStuds(origin, part.joint.spin);
+                                vehicle.parts[p] = part;
+                            }
+                        }
+                    }
+                }
+
                 foreach (SavedVehicle vehicle in read) {
                     if (vehicle.parts.Count > 0) {
                         changes.vehicles.Add(vehicle);
@@ -891,6 +912,24 @@ namespace Brickcraft.World
                         writer.Write(part.id.ToByteArray());
                         writer.Write(part.holder.ToByteArray());
                         writeJoint(writer, part.joint);
+                    }
+                    List<KeyValuePair<Guid, Vector3Int>> onStuds = new List<KeyValuePair<Guid, Vector3Int>>();
+                    foreach (SavedBrick brick in connected) {
+                        if (brick.joint.Value.onStuds) {
+                            onStuds.Add(new KeyValuePair<Guid, Vector3Int>(brick.id, brick.joint.Value.origin));
+                        }
+                    }
+                    foreach (SavedVehiclePart part in connectedParts) {
+                        if (part.joint.onStuds) {
+                            onStuds.Add(new KeyValuePair<Guid, Vector3Int>(part.id, part.joint.origin));
+                        }
+                    }
+                    writeVarUInt(writer, (uint)onStuds.Count);
+                    foreach (KeyValuePair<Guid, Vector3Int> held in onStuds) {
+                        writer.Write(held.Key.ToByteArray());
+                        writeVarInt(writer, held.Value.x);
+                        writeVarInt(writer, held.Value.y);
+                        writeVarInt(writer, held.Value.z);
                     }
                 }
                 return output.ToArray();

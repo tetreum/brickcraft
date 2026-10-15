@@ -114,6 +114,53 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator BricksGoOnTheStudsOfABeamOnAnAxle() {
+            Brick first = technicBrick();
+            Item axleItem = item("part_3706"), beamItem = item("part_3700"), brickItem = item("brick_2x2");
+            Brick axle = WorldNetwork.ServerConnectBrick(axleItem, axleItem.color, first, new BrickJoint() { holderConnector = indexOf(first.model, false), connector = 0 }, Placer.Now(0));
+            Assert.IsNotNull(axle);
+            yield return null;
+            // another technic brick on the axle's end, away from the first
+            int hole = indexOf(beamItem.brickModel, false);
+            BrickJoint onEnd = new BrickJoint() { holderConnector = 0, connector = hole, slide = BrickJoints.MaxSlide(axle.model.connectors[0], beamItem.brickModel.connectors[hole]) };
+            Assert.IsNull(BrickJoints.WhyNot(axle, beamItem.brickModel, onEnd));
+            Brick beam = WorldNetwork.ServerConnectBrick(beamItem, beamItem.color, axle, onEnd, Placer.Now(0));
+            Assert.IsNotNull(beam);
+            yield return null;
+            Assert.IsTrue(BrickJoints.HoldsOnStuds(beam), "a connected brick holds others on its studs");
+            Assert.IsFalse(BrickJoints.HoldsOnStuds(first), "one on the grid doesn't: they go on the grid");
+
+            int height = beamItem.brickModel.heightInPlates;
+            Assert.IsNotNull(BrickJoints.WhyNot(beam, brickItem.brickModel, BrickJoint.OnStuds(new Vector3Int(0, height + 2, 0), 0)), "not in the air");
+            Assert.IsNotNull(BrickJoints.WhyNot(beam, brickItem.brickModel, BrickJoint.OnStuds(new Vector3Int(0, 1, 0), 0)), "not into it");
+            BrickJoint onTop = BrickJoint.OnStuds(new Vector3Int(0, height, 0), 1);
+            Assert.IsNull(BrickJoints.WhyNot(beam, brickItem.brickModel, onTop), "on its studs");
+            Brick top = WorldNetwork.ServerConnectBrick(brickItem, 4, beam, onTop, Placer.Now(0));
+            Assert.IsNotNull(top);
+            yield return null;
+            Transform b = beam.gameObject.transform, t = top.gameObject.transform;
+            Vector3 above = Quaternion.Inverse(b.rotation * Quaternion.Inverse(BrickJoints.PrefabRotation(beam.model))) * (t.position - b.position);
+            Assert.AreEqual(height * BrickGrid.CellSize.y, above.y, 0.001f, "its bottom on the beam's top");
+            Assert.Less(new Vector2(above.x, above.z).magnitude, BrickGrid.CellSize.x * 1.01f, "over it");
+            Assert.IsTrue(BrickJoints.HoldsOnStuds(top), "and holds others itself");
+            string axleId = axle.id, beamId = beam.id, topId = top.id;
+            Vector3 topAt = FloatingOrigin.ToAbsolute(t.position);
+
+            yield return game.Stop();
+            yield return game.Start();
+            yield return TestGame.WaitUntil(() => Server.bricks.ContainsKey(topId), 10, "the brick back");
+            Brick back = Server.bricks[topId];
+            Assert.AreEqual(beamId, back.attachedTo, "on the beam");
+            Assert.AreEqual(onTop, back.joint.Value, "where it was on it");
+            Assert.Less(Vector3.Distance(topAt, FloatingOrigin.ToAbsolute(back.gameObject.transform.position)), 0.001f);
+
+            // the axle goes: the beam with it, and what's on it
+            Server.Instance.removeBrick(Server.bricks[axleId]);
+            Assert.IsFalse(Server.bricks.ContainsKey(beamId));
+            Assert.IsFalse(Server.bricks.ContainsKey(topId));
+        }
+
+        [UnityTest]
         public IEnumerator AVehicleKeepsItsConnectedParts() {
             Item brickItem = item("part_3700"), axleItem = item("part_3706"), wheelItem = item("part_55982");
             Vector3Int cell = BrickGrid.BlockToCell(TestGame.PlayerBlock + new Vector3Int(0, 8, 0));

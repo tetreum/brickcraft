@@ -83,7 +83,7 @@ namespace Brickcraft.Vehicles
 
         // where a wheel turns around: on the axle it's held by (its hub's middle), else its middle
         private Vector3 hubOf(Brick brick, Vector3 middle) {
-            if (!brick.joint.HasValue || brick.model == null) {
+            if (!brick.joint.HasValue || brick.joint.Value.onStuds || brick.model == null) {
                 return middle;
             }
             Connector hub = brick.model.connectors[brick.joint.Value.connector];
@@ -123,6 +123,9 @@ namespace Brickcraft.Vehicles
         private static Connector lockedAxle(Brick axle, Brick wheel) {
             BrickJoint joint;
             Connector rod, hole;
+            if (wheel.joint.HasValue && wheel.joint.Value.onStuds || axle.joint.HasValue && axle.joint.Value.onStuds) {
+                return null;
+            }
             if (wheel.joint.HasValue && wheel.attachedTo == axle.id) {
                 joint = wheel.joint.Value;
                 rod = axle.model.connectors[joint.holderConnector];

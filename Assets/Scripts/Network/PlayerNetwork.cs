@@ -669,12 +669,17 @@ namespace Brickcraft.Network
                 return;
             }
             BrickJoint joint = new BrickJoint() { holderConnector = holderConnector, connector = connector, slide = slide, spin = BrickJoints.Mod(spin, 4), flip = flip };
+            connect(slot, held.Value, item, holder, joint);
+        }
+
+        // the held brick, held by another that way, if it can be
+        private void connect(int slot, InventoryItem held, Item item, Brick holder, BrickJoint joint) {
             if (!isInReach(holder.WorldBounds.center) || BrickJoints.WhyNot(holder, item.brickModel, joint) != null) {
                 return;
             }
             ConnectedPlayer player = connectionToClient.authenticationData as ConnectedPlayer;
             Placer placer = Placer.Now(player != null ? player.record.Id : 0);
-            int color = item.ValidColor(held.Value.color);
+            int color = item.ValidColor(held.color);
             Brick brick = holder.vehicle != null
                 ? Vehicles.VehicleSystem.ServerConnect(item, color, holder, joint)
                 : WorldNetwork.ServerConnectBrick(item, color, holder, joint, placer);
@@ -687,6 +692,22 @@ namespace Brickcraft.Network
             if (holder.vehicle == null) {
                 ModScripts.ItemEvent(item.id, "onPlaced", BrickHandle.ForBrick(brick, placer), PlayerHandle.For(connectionToClient));
             }
+        }
+
+        /// <summary>
+        /// Puts the brick held in the inventory slot on the studs (or against a face) of a connected brick, on its grid
+        /// (see BrickJoints.GridOf): at that cell, turned.
+        /// </summary>
+        [Command]
+        public void CmdPlaceOnStuds(int slot, string holderId, Vector3Int origin, int rotation) {
+            if (health.isDead || holderId == null || !Server.bricks.TryGetValue(holderId, out Brick holder)) {
+                return;
+            }
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            if (!held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || item.type != Item.Type.Brick || item.brickModel == null) {
+                return;
+            }
+            connect(slot, held.Value, item, holder, BrickJoint.OnStuds(origin, rotation));
         }
 
         /// <summary>Puts the attachment held in the inventory slot (a door...) in a brick's slot, see BrickSlot.</summary>

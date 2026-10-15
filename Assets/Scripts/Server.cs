@@ -203,9 +203,7 @@ namespace Brickcraft
         /// game use WorldNetwork or VehicleSystem, which call this on the server and every client.
         /// </summary>
         public Brick spawnConnected(Item item, int color, Brick holder, BrickJoint joint, string id = null, int state = 0) {
-            if (holder == null || !BrickJoints.CanHold(holder) || item.brickModel == null
-                    || joint.connector < 0 || joint.connector >= item.brickModel.connectors.Length
-                    || joint.holderConnector < 0 || joint.holderConnector >= holder.model.connectors.Length) {
+            if (!BrickJoints.IsValid(holder, item.brickModel, joint)) {
                 Debug.LogError("The brick " + (holder != null ? holder.id : "?") + " can't hold " + item.id + " like that");
                 return null;
             }

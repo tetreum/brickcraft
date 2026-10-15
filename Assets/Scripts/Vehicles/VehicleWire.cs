@@ -90,7 +90,7 @@ namespace Brickcraft.Vehicles
             };
             bool steers = part.item.VehicleRole == VehicleRole.Propeller
                 ? VehicleDrive.PropellerAxis(VehicleShape.MeshBounds(part, vehicle.transform), forward) != Vector3.up
-                : Vector3.Dot(part.placement.LocalBounds.center - vehicle.grid.CentreOfMass, forward) > Server.studSize * 0.5f;
+                : Vector3.Dot(part.LocalBounds.center - vehicle.grid.CentreOfMass, forward) > Server.studSize * 0.5f;
             if (steers) {
                 wires.Add(new VehicleWire() { seat = seat.id, part = part.id, action = WireAction.Steer, source = WireSource.Steering });
             }

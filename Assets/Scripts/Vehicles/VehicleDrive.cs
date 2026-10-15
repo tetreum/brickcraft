@@ -161,12 +161,13 @@ namespace Brickcraft.Vehicles
             driven = drivenPropellers = 0;
             float cell = Server.studSize * Server.studSize * Server.plateHeight;
             foreach (Brick brick in vehicle.grid.Bricks) {
-                Bounds bounds = brick.placement.LocalBounds;
+                Bounds bounds = brick.LocalBounds;
                 Vector3Int size = brick.placement.Size;
                 floaters.Add(new Floater() {
                     bottom = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z),
                     top = new Vector3(bounds.center.x, bounds.max.y, bounds.center.z),
-                    volume = size.x * size.y * size.z * cell,
+                    // a connected part (an axle) takes no cells: about half its box
+                    volume = brick.joint.HasValue ? bounds.size.x * bounds.size.y * bounds.size.z / 2 : size.x * size.y * size.z * cell,
                 });
 
                 if (!Server.items.TryGetValue(brick.itemId, out Item item) || brick.gameObject == null) {

@@ -220,9 +220,9 @@ namespace Brickcraft.Vehicles
             bool any = false;
             foreach (Brick brick in grid.Bricks) {
                 if (any) {
-                    local.Encapsulate(brick.placement.LocalBounds);
+                    local.Encapsulate(brick.LocalBounds);
                 } else {
-                    local = brick.placement.LocalBounds;
+                    local = brick.LocalBounds;
                     any = true;
                 }
             }

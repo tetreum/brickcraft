@@ -204,6 +204,86 @@ namespace Brickcraft.Tests
             Assert.IsTrue(inventory.ServerGetSlot(slot).HasValue, "not placed into the axle");
         }
 
+        // a car the technic way: a technic brick 1x8, an axle through each end hole, a wheel on each axle end, a brick and
+        // a seat on top (facing the way the wheels roll)
+        private static Vehicles.Vehicle technicCar(Vector3Int cell, out Brick seat, out Brick axle) {
+            Item beamItem = item("part_3702"), topItem = item("part_3008"), axleItem = item("part_3706"), wheelItem = item("part_55982");
+            Vehicles.Vehicle vehicle = Vehicles.VehicleSystem.ServerCreate(beamItem, 1, new BrickPlacement(beamItem.brickModel, cell));
+            Brick beam = vehicle.grid.GetBrickAt(Vector3Int.zero);
+            Vehicles.VehicleSystem.ServerPlace(vehicle, topItem, 4, new BrickPlacement(topItem.brickModel, new Vector3Int(0, 3, 0)));
+            int first = -1, last = -1;
+            for (int i = 0; i < beam.model.connectors.Length; i++) {
+                Connector c = beam.model.connectors[i];
+                if (c.male || c.HasAxleShape) {
+                    continue;
+                }
+                if (first < 0 || c.Middle.x < beam.model.connectors[first].Middle.x) { first = i; }
+                if (last < 0 || c.Middle.x > beam.model.connectors[last].Middle.x) { last = i; }
+            }
+            Assert.AreNotEqual(first, last, "two end holes");
+            int hub = indexOf(wheelItem.brickModel, false, c => c.HasAxleShape);
+            axle = null;
+            foreach (int hole in new[] { first, last }) {
+                BrickJoint through = new BrickJoint() { holderConnector = hole, connector = 0 };
+                Assert.IsNull(BrickJoints.WhyNot(beam, axleItem.brickModel, through), "an axle through hole " + hole);
+                Brick rod = Vehicles.VehicleSystem.ServerConnect(axleItem, axleItem.color, beam, through);
+                axle = axle ?? rod;
+                int max = BrickJoints.MaxSlide(rod.model.connectors[0], wheelItem.brickModel.connectors[hub]);
+                foreach (int slide in new[] { max, -max }) {
+                    BrickJoint onEnd = new BrickJoint() { holderConnector = 0, connector = hub, slide = slide, flip = slide < 0 };
+                    Assert.IsNull(BrickJoints.WhyNot(rod, wheelItem.brickModel, onEnd), "a wheel on its end " + slide);
+                    Vehicles.VehicleSystem.ServerConnect(wheelItem, 0, rod, onEnd);
+                }
+            }
+            Item seatItem = item("seat");
+            for (int rotation = 0; rotation < 4; rotation++) {
+                seat = Vehicles.VehicleSystem.ServerPlace(vehicle, seatItem, 4, new BrickPlacement(seatItem.brickModel, new Vector3Int(3, 6, 0), rotation));
+                if (Mathf.Abs(Vehicles.VehicleShape.Seat(seat, vehicle.transform).forward.x) > 0.5f) {
+                    return vehicle;
+                }
+                Vehicles.VehicleSystem.ServerRemove(seat);
+            }
+            Assert.Fail("a seat facing along the beam");
+            seat = null;
+            return vehicle;
+        }
+
+        [UnityTest]
+        public IEnumerator ACarOnAxlesDrives() {
+            // a floor high up
+            BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
+            Vector3Int floor = TestGame.PlayerBlock + new Vector3Int(0, 12, 0);
+            TestGame.Floor(floor, 14, stone);
+            Vector3 top = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + Vector3Int.up));
+            yield return TestGame.WaitUntil(() => Physics.Raycast(top + Vector3.up, Vector3.down, 2), 10, "the floor solid");
+
+            Vehicles.Vehicle car = technicCar(BrickGrid.BlockToCell(floor + new Vector3Int(-2, 2, 0)), out Brick seat, out Brick axle);
+            yield return null;
+            Assert.AreEqual(1, car.grid.Components().Count, "one piece");
+            PlayerNetwork player = TestGame.Player.GetComponent<PlayerNetwork>();
+            Vehicles.VehicleSystem.ServerSit(player, seat);
+            yield return TestGame.Wait(1.5f); // it settles on its wheels
+            Assert.AreEqual(4, car.Drive.WheelCount, "the wheels on the axles");
+            Assert.Greater(car.transform.position.y, top.y - 0.1f, "on its wheels, not through the floor");
+
+            Vector3 forward = car.transform.TransformDirection(Vehicles.VehicleShape.Seat(seat, car.transform).forward);
+            Vector3 start = car.transform.position;
+            Quaternion axleBuilt = axle.jointRotation;
+            float turned = 0;
+            Vehicles.VehicleControls.Override = new Vehicles.VehicleInput() { throttle = 1 };
+            try {
+                for (int i = 0; i < 6; i++) {
+                    yield return TestGame.Wait(0.25f);
+                    turned = Mathf.Max(turned, Quaternion.Angle(axleBuilt, axle.gameObject.transform.localRotation));
+                }
+            } finally {
+                Vehicles.VehicleControls.Override = null;
+            }
+            Assert.Greater(Vector3.Dot(car.transform.position - start, forward), 1, "it went forward");
+            Assert.Greater(turned, 1, "its axles turn with its wheels");
+            Vehicles.VehicleSystem.ServerStandUp(player, Vector3.zero, Vector3.zero);
+        }
+
         [UnityTest]
         public IEnumerator WhatDoesntFitDoesntGo() {
             Brick holder = technicBrick();

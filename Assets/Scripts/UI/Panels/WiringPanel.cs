@@ -192,7 +192,7 @@ namespace Brickcraft.UI
             }
             // which one of the same kind, by where it is
             Transform vehicle = seat.vehicle.transform;
-            Vector3 at = part.placement.LocalBounds.center - seat.placement.LocalBounds.center;
+            Vector3 at = part.LocalBounds.center - seat.LocalBounds.center;
             Vector3 forward = VehicleShape.Seat(seat, vehicle).forward;
             Vector3 right = Vector3.Cross(Vector3.up, forward);
             string side = Vector3.Dot(at, right) > 0.01f ? Loc.Get(Loc.UI, "wiring.right") : Vector3.Dot(at, right) < -0.01f ? Loc.Get(Loc.UI, "wiring.left") : "";

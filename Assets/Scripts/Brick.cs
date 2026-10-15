@@ -59,6 +59,25 @@ namespace Brickcraft
             }
         }
 
+        /// <summary>
+        /// Its box in its parent's space (a vehicle's, see Vehicles.Vehicle): its placement's, or for a connected brick
+        /// its model's around where it's held.
+        /// </summary>
+        public Bounds LocalBounds {
+            get {
+                if (!joint.HasValue || model == null) {
+                    return placement.LocalBounds;
+                }
+                Bounds mesh = BrickJoints.MeshBounds(model);
+                Bounds around = new Bounds(jointPosition + jointRotation * mesh.center, Vector3.zero);
+                for (int corner = 0; corner < 8; corner++) {
+                    Vector3 offset = new Vector3((corner & 1) == 0 ? -1 : 1, (corner & 2) == 0 ? -1 : 1, (corner & 4) == 0 ? -1 : 1);
+                    around.Encapsulate(jointPosition + jointRotation * (mesh.center + Vector3.Scale(mesh.extents, offset)));
+                }
+                return around;
+            }
+        }
+
         private static Vector3 point(Transform parent, Vector3 local) {
             return parent != null ? parent.TransformPoint(local) : local;
         }

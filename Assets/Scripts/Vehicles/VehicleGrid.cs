@@ -33,7 +33,7 @@ namespace Brickcraft.Vehicles
                 foreach (Brick brick in bricks) {
                     float part = Server.items.TryGetValue(brick.itemId ?? "", out Item item) ? item.Mass : VehicleParts.MassPerCell;
                     mass += part;
-                    centre += brick.placement.LocalBounds.center * part;
+                    centre += brick.LocalBounds.center * part;
                 }
                 return mass > 0 ? centre / mass : Vector3.zero;
             }

@@ -239,6 +239,48 @@ namespace Brickcraft.Vehicles
                     }
                 }
                 NetworkServer.Spawn(vehicle.gameObject);
+                liftPlayersOnto(vehicle);
+            }
+        }
+
+        // how far above a vehicle's top a player stands put on it, and how far under it it may have fallen, metres
+        private const float LiftClearance = 0.05f;
+        private const float FallenUnder = 3;
+
+        // a vehicle came back (its chunk loaded) where players are: those in it or under it (who were on it when they
+        // left, and came back before it did) go on top of it, where they are
+        private static void liftPlayersOnto(Vehicle vehicle) {
+            Physics.SyncTransforms();
+            Collider[] colliders = vehicle.GetComponentsInChildren<Collider>();
+            if (colliders.Length == 0) {
+                return;
+            }
+            Bounds bounds = colliders[0].bounds;
+            foreach (Collider collider in colliders) {
+                bounds.Encapsulate(collider.bounds);
+            }
+            foreach (PlayerNetwork player in players()) {
+                if (!string.IsNullOrEmpty(player.seatedIn) || !player.TryGetComponent(out CharacterController body)) {
+                    continue;
+                }
+                Bounds feet = body.bounds;
+                Vector3 at = player.transform.position;
+                if (at.x < bounds.min.x || at.x > bounds.max.x || at.z < bounds.min.z || at.z > bounds.max.z
+                        || feet.min.y >= bounds.max.y || feet.max.y < bounds.min.y - FallenUnder) {
+                    continue; // not in it nor just under it
+                }
+                // its top right there
+                float top = float.NegativeInfinity;
+                Vector3 above = new Vector3(at.x, bounds.max.y + 1, at.z);
+                foreach (RaycastHit hit in Physics.RaycastAll(above, Vector3.down, bounds.size.y + 1, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)) {
+                    if (hit.collider.GetComponentInParent<Vehicle>() == vehicle) {
+                        top = Mathf.Max(top, hit.point.y);
+                    }
+                }
+                if (float.IsNegativeInfinity(top) || feet.min.y >= top) {
+                    continue; // nothing of it there, or already on it
+                }
+                player.ServerTeleport(new Vector3(at.x, at.y + top - feet.min.y + LiftClearance, at.z));
             }
         }
 

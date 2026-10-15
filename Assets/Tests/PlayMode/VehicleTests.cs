@@ -43,6 +43,43 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator AVehicleComingBackWhereAPlayerFellLiftsItOn() {
+            // a platform of 2x2 bricks on a floor high up
+            BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
+            Vector3Int floor = TestGame.PlayerBlock + new Vector3Int(0, 12, 0);
+            TestGame.Floor(floor, 6, stone);
+            // high enough for the player to stand under it (a car's body over its wheels)
+            Vector3Int cell = BrickGrid.BlockToCell(floor + new Vector3Int(-2, 6, -2));
+            Vehicle platform = VehicleSystem.ServerCreate(brick2x2, 4, at(cell));
+            for (int x = 0; x < 8; x += 2) {
+                for (int z = 0; z < 8; z += 2) {
+                    if (x != 0 || z != 0) {
+                        VehicleSystem.ServerPlace(platform, brick2x2, 4, at(new Vector3Int(x, 0, z)));
+                    }
+                }
+            }
+            float top = BrickGrid.CellToWorld(cell + new Vector3Int(0, brick2x2.brickModel.heightInPlates, 0)).y;
+            Vector3 middle = platform.transform.TransformPoint(new Vector3(1.6f, 0, 1.6f));
+            Vector2Int chunk = WorldBehaviour.ChunkAt(platform.transform.position);
+            yield return TestGame.WaitUntil(() => Physics.Raycast(new Vector3(middle.x, top + 3, middle.z), Vector3.down, 3.2f), 10, "the platform solid");
+
+            // its chunk saved and gone (the game left), the player under where it was (it fell before it came back)
+            List<SavedVehicle> saved = VehicleSystem.SavedIn(chunk, true);
+            Assert.AreEqual(1, saved.Count);
+            yield return null;
+            Network.PlayerNetwork network = TestGame.Player.GetComponent<Network.PlayerNetwork>();
+            network.ServerTeleport(new Vector3(middle.x, BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + Vector3Int.up)).y + 1.2f, middle.z));
+            yield return TestGame.StandStill();
+            CharacterController body = TestGame.Player.GetComponent<CharacterController>();
+            Assert.Less(body.bounds.min.y, top - 0.3f, "under where it was");
+
+            // back: the player on it, not under it
+            VehicleSystem.Restore(saved);
+            yield return TestGame.StandStill();
+            Assert.AreEqual(top, TestGame.Player.GetComponent<CharacterController>().bounds.min.y, 0.15f, "standing on it");
+        }
+
+        [UnityTest]
         public IEnumerator AVehicleIsBuiltOnItsOwnCells() {
             Vector3Int cell = high();
             Vehicle vehicle = VehicleSystem.ServerCreate(brick2x2, 4, at(cell));

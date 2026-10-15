@@ -33,21 +33,26 @@ namespace Brickcraft.World.CustomGenerator
         private FastRandom _FastRandom;
 
         private long _Seed;
-        private bool _Flat;
+        private TerrainKind _Terrain;
         Random r = new Random();
 
         /// <summary>A flat world's ground: its grass is this high, dirt under it, then stone and bedrock.</summary>
         public const int FlatGrassHeight = 64;
+        /// <summary>A coast's sea starts this far from the spawn (block Z), its beach just before; its surface is the grass'.</summary>
+        public const int CoastSeaZ = 10;
+        private const int CoastBeach = 3, CoastDepth = 8;
+        // how far out a coast's sea is a block deep, then two (walking out of it, not climbing a wall), then deep
+        public const int CoastShallows = 3, CoastShelf = 2;
 
         public enum BIOME_TYPE : byte
         {
             PLAINS = 1, DESERT, MOUNTAINS, SNOW = 12 
         }
 
-        public void Init(long seed, bool flat = false)
+        public void Init(long seed, TerrainKind terrain = TerrainKind.Generated)
         {
             _Seed = seed;
-            _Flat = flat;
+            _Terrain = terrain;
         }
 
         private void InitGen()
@@ -69,8 +74,8 @@ namespace Brickcraft.World.CustomGenerator
 
         public Chunk GenerateChunk(Chunk chunk, int x, int z)
         {
-            if (_Flat) {
-                GenerateFlat(chunk);
+            if (_Terrain != TerrainKind.Generated) {
+                GenerateFlat(chunk, z, _Terrain == TerrainKind.Coast);
                 chunk.RecalculateHeight();
                 return chunk;
             }
@@ -94,16 +99,28 @@ namespace Brickcraft.World.CustomGenerator
             return chunk;
         }
 
-        // grass everywhere at the same height, nothing on it
-        private static void GenerateFlat(Chunk c)
+        // grass everywhere at the same height, nothing on it; on a coast, a sea ahead of the spawn past a beach
+        private static void GenerateFlat(Chunk c, int z, bool coast)
         {
-            for (int bx = 0; bx < 16; bx++) {
-                for (int bz = 0; bz < 16; bz++) {
+            for (int bz = 0; bz < 16; bz++) {
+                int worldZ = bz + z * 16;
+                bool sea = coast && worldZ >= CoastSeaZ;
+                bool beach = coast && !sea && worldZ >= CoastSeaZ - CoastBeach;
+                int out_ = worldZ - CoastSeaZ;
+                int depth = out_ < CoastShallows ? 1 : out_ < CoastShallows + CoastShelf ? 2 : CoastDepth;
+                for (int bx = 0; bx < 16; bx++) {
                     c.SetType(bx, 0, bz, BlockType.Bedrock, false);
-                    for (int by = 1; by < FlatGrassHeight; by++) {
-                        c.SetType(bx, by, bz, by < FlatGrassHeight - 3 ? BlockType.Stone : BlockType.Dirt, false);
+                    for (int by = 1; by <= FlatGrassHeight; by++) {
+                        BlockType type;
+                        if (sea) {
+                            type = by > FlatGrassHeight - depth ? BlockType.Still_Water : by > FlatGrassHeight - depth - 2 ? BlockType.Sand : BlockType.Stone;
+                        } else if (by == FlatGrassHeight) {
+                            type = beach ? BlockType.Sand : BlockType.Grass;
+                        } else {
+                            type = by < FlatGrassHeight - 3 ? BlockType.Stone : beach ? BlockType.Sand : BlockType.Dirt;
+                        }
+                        c.SetType(bx, by, bz, type, false);
                     }
-                    c.SetType(bx, FlatGrassHeight, bz, BlockType.Grass, false);
                 }
             }
         }

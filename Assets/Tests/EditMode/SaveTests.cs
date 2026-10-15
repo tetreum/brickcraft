@@ -134,7 +134,7 @@ namespace Brickcraft.Tests
         public void OldWorldsAreUpgradedNeitherFlatNorTutorials() {
             string folder = Path.Combine(Path.GetTempPath(), "brickcraft-test-" + Guid.NewGuid().ToString("N"));
             try {
-                WorldStorage.Create(folder, "Old", 5, Difficulty.Normal, true, flat: true, tutorial: "x");
+                WorldStorage.Create(folder, "Old", 5, Difficulty.Normal, true, terrain: TerrainKind.Flat, tutorial: "x");
                 // as format 15 wrote it: without its last fields (a bool, and a string of one character)
                 string path = Path.Combine(folder, WorldStorage.HeaderFile);
                 byte[] header = File.ReadAllBytes(path);
@@ -148,7 +148,7 @@ namespace Brickcraft.Tests
                 WorldStorage info = WorldStorage.ReadInfo(folder);
                 Assert.AreEqual(WorldStorage.FormatVersion, info.Format);
                 Assert.AreEqual("Old", info.Name, "the rest as it was");
-                Assert.IsFalse(info.Flat);
+                Assert.AreEqual(TerrainKind.Generated, info.Terrain);
                 Assert.AreEqual("", info.Tutorial);
             } finally {
                 Directory.Delete(folder, true);

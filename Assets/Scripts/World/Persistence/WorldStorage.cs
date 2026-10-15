@@ -11,8 +11,8 @@ namespace Brickcraft.World
     ///   world.dat                 header: format version, seed, generator version, timestamps,
     ///                             game versions that created and last saved it, name, difficulty,
     ///                             mods (id and version last played with), PvP, how long a day lasts,
-    ///                             the game's time (see WorldTime), whether NPCs appear, whether its
-    ///                             terrain is flat and the tutorial it's for (see Tutorials), if any
+    ///                             the game's time (see WorldTime), whether NPCs appear, its kind of
+    ///                             terrain and the tutorial it's for (see Tutorials), if any
     ///   regions/r.[x].[z].bcr     changes of each chunk, see <see cref="RegionFile"/>
     ///
     /// The terrain itself is never stored, it's generated again from the seed. Saves only contain
@@ -71,8 +71,8 @@ namespace Brickcraft.World
         public bool Pvp { get; private set; } = true;
         /// <summary>NPCs appear by themselves (admins turn them off with /npcs: then only pets stay).</summary>
         public bool NpcsOn { get; private set; } = true;
-        /// <summary>Its terrain is flat ground everywhere instead of generated from its seed (a tutorial's).</summary>
-        public bool Flat { get; private set; }
+        /// <summary>Its terrain: generated from its seed, or flat ground (a tutorial's, see TerrainKind).</summary>
+        public TerrainKind Terrain { get; private set; }
         /// <summary>The tutorial it's for (see Tutorials.Tutorial.id), empty for a world to play.</summary>
         public string Tutorial { get; private set; } = "";
         /// <summary>Real seconds a day lasts (admins change it with /daylength), see WorldTime.</summary>
@@ -139,14 +139,14 @@ namespace Brickcraft.World
 
         /// <summary>Creates a new world in the folder (nothing is generated until it's played).</summary>
         public static void Create(string folder, string name, long seed, Difficulty difficulty, bool pvp, List<WorldMod> mods = null, float dayLength = WorldTime.DefaultDayLength,
-                bool flat = false, string tutorial = null, bool npcsOn = true) {
+                TerrainKind terrain = TerrainKind.Generated, string tutorial = null, bool npcsOn = true) {
             WorldStorage storage = new WorldStorage() {
                 Folder = folder,
                 Name = name,
                 Seed = seed,
                 Difficulty = difficulty,
                 Pvp = pvp,
-                Flat = flat,
+                Terrain = terrain,
                 Tutorial = tutorial ?? "",
                 NpcsOn = npcsOn,
                 DayLength = dayLength > 0 ? dayLength : WorldTime.DefaultDayLength,
@@ -439,7 +439,7 @@ namespace Brickcraft.World
                 DayLength = reader.ReadSingle();
                 GameTime = reader.ReadDouble();
                 NpcsOn = reader.ReadBoolean();
-                Flat = reader.ReadBoolean();
+                Terrain = (TerrainKind)reader.ReadByte();
                 Tutorial = reader.ReadString();
                 if (!(DayLength > 0)) {
                     DayLength = WorldTime.DefaultDayLength;
@@ -497,7 +497,7 @@ namespace Brickcraft.World
                 writer.Write(DayLength);
                 writer.Write(GameTime);
                 writer.Write(NpcsOn);
-                writer.Write(Flat);
+                writer.Write((byte)Terrain);
                 writer.Write(Tutorial ?? "");
             }
 

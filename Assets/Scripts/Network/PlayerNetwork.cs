@@ -566,8 +566,8 @@ namespace Brickcraft.Network
         }
 
         /// <summary>
-        /// Starts a vehicle with the part held in the inventory slot (a wheel), placed on the world's grid there (see
-        /// Vehicles.VehicleSystem).
+        /// Starts a vehicle with the part held in the inventory slot (a wheel, a seat, a propeller, a wing: one with a
+        /// vehicle role), placed on the world's grid there (see Vehicles.VehicleSystem).
         /// </summary>
         [Command]
         public void CmdCreateVehicle(int slot, Vector3Int origin, byte rotation) {
@@ -576,7 +576,7 @@ namespace Brickcraft.Network
             }
             InventoryItem? held = inventory.ServerGetSlot(slot);
             if (!held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || item.type != Item.Type.Brick
-                    || item.VehicleRole != Vehicles.VehicleRole.Wheel) {
+                    || item.VehicleRole == Vehicles.VehicleRole.None) {
                 return;
             }
             BrickPlacement placement = new BrickPlacement(item.brickModel, origin, rotation);

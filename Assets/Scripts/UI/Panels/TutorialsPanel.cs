@@ -79,7 +79,7 @@ namespace Brickcraft.UI
         private static void play(Tutorial tutorial) {
             string saveName;
             try {
-                saveName = SavedWorlds.CreateTutorial(tutorial.id, Loc.Get(Loc.UI, tutorial.titleKey));
+                saveName = SavedWorlds.CreateTutorial(tutorial.id, Loc.Get(Loc.UI, tutorial.titleKey), tutorial.terrain);
             } catch (System.Exception e) {
                 Debug.LogError("Couldn't make the tutorial's world: " + e);
                 return;

@@ -49,16 +49,16 @@ namespace Brickcraft.World
         }
 
         /// <summary>
-        /// A tutorial's world, new (the one it had before goes): flat, peaceful, without NPCs, in a folder of its own.
-        /// Returns its save name.
+        /// A tutorial's world, new (the one it had before goes): flat (that kind of flat), peaceful, without NPCs, in a
+        /// folder of its own. Returns its save name.
         /// </summary>
-        public static string CreateTutorial(string tutorialId, string name) {
+        public static string CreateTutorial(string tutorialId, string name, TerrainKind terrain = TerrainKind.Flat) {
             string saveName = TutorialSaveName(tutorialId);
             string folder = Path.Combine(Folder, saveName);
             if (Directory.Exists(folder)) {
                 Directory.Delete(folder, true);
             }
-            WorldStorage.Create(folder, name, 1, Difficulty.Peaceful, false, flat: true, tutorial: tutorialId, npcsOn: false);
+            WorldStorage.Create(folder, name, 1, Difficulty.Peaceful, false, terrain: terrain, tutorial: tutorialId, npcsOn: false);
             return saveName;
         }
 

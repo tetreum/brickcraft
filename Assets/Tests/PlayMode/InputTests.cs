@@ -167,6 +167,55 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator SwimmingIntoABankClimbsOutOfDeepWater() {
+            yield return standStill();
+            BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
+            BlockType water = (BlockType)BlockDatabase.IdOf("still_water");
+            // a pool 6 blocks deep up in the air, its banks level with its water, a ledge to walk onto at +X
+            const int Deep = 6;
+            Vector3Int floor = TestGame.PlayerBlock + new Vector3Int(0, 10, 0);
+            TestGame.Floor(floor, 4, stone);
+            for (int y = 1; y <= Deep; y++) {
+                for (int x = -2; x <= 4; x++) {
+                    for (int z = -2; z <= 2; z++) {
+                        bool inside = x >= -1 && x <= 1 && z >= -1 && z <= 1;
+                        bool ledge = x >= 2 && y == Deep;
+                        if (inside || ledge || x == -2 || x == 2 || Mathf.Abs(z) == 2) {
+                            Assert.IsTrue(WorldNetwork.ServerSetBlock(floor + new Vector3Int(x, y, z), inside ? water : stone, Placer.Now(0)));
+                        }
+                    }
+                }
+            }
+            float bankTop = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + new Vector3Int(2, Deep + 1, 0))).y;
+            Vector3 bankSide = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + new Vector3Int(2, Deep + 1, 0)));
+            yield return TestGame.WaitUntil(() => Physics.Raycast(bankSide + new Vector3(0.4f, 1, 0.4f), Vector3.down, 2), 10, "the bank solid");
+
+            // in the middle of the pool, at its surface, facing the bank
+            Vector3 middle = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + new Vector3Int(0, Deep, 0))) + new Vector3(0.4f, 0.2f, 0.4f);
+            player.network.ServerTeleport(middle);
+            player.transform.rotation = Quaternion.LookRotation(Vector3.right);
+            player.firstPersonController.ResetLook();
+            yield return TestGame.WaitUntil(() => player.firstPersonController.IsSwimming, 5, "swimming");
+
+            input.Press(keyboard.wKey);
+            string trace = "bank top " + bankTop + " side x " + bankSide.x + ": ";
+            float end = Time.time + 8;
+            try {
+                while (!(player.GetComponent<CharacterController>().bounds.min.y > bankTop - 0.05f
+                        && player.transform.position.x > bankSide.x + 0.3f && !player.firstPersonController.IsSwimming)) {
+                    Assert.Less(Time.time, end, "out on the bank: " + trace);
+                    yield return seconds(0.25f);
+                    trace += "[" + player.transform.position.ToString("F2") + " feet " + player.GetComponent<CharacterController>().bounds.min.y.ToString("F2")
+                        + " " + player.firstPersonController.Depth + "]";
+                }
+            } finally {
+                input.Release(keyboard.wKey);
+            }
+            yield return seconds(0.5f);
+            Assert.Greater(player.GetComponent<CharacterController>().bounds.min.y, bankTop - 0.05f, "standing on it");
+        }
+
+        [UnityTest]
         public IEnumerator EnterOpensTheChatInAVehiclesSeat() {
             // a seat alone, a vehicle of its own, in the air above the player
             Item seatItem = Server.items["seat"];

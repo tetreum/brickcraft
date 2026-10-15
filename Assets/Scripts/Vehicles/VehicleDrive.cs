@@ -18,7 +18,8 @@ namespace Brickcraft.Vehicles
     ///
     /// Wings lift as they move through the air, with the square of their speed: flat ones up (a little even level, more
     /// the more their front is raised), upright ones sideways (only what hits them). Tilting them (control surfaces) lifts
-    /// more or less.
+    /// more or less. A vehicle with wings is also steadied by the air as it gets faster, the way game planes are: its
+    /// nose turns into where it's going, its wings level when its driver doesn't steer, and its turning is damped.
     /// </summary>
     public class VehicleDrive
     {
@@ -46,6 +47,12 @@ namespace Brickcraft.Vehicles
         private const float TiltLift = 1.2f;
         private const float Plate = 2;
         private const float AirDrag = 0.05f;
+        // a winged vehicle steadied by the air: fully from this speed (m/s, less below it with its square), turning
+        // its nose into where it goes, levelling its wings and damping its turning (radians a second each second)
+        private const float SteadySpeed = 12;
+        private const float NoseIntoAir = 4;
+        private const float Levelling = 3;
+        private const float TurnDamping = 1.5f;
 
         private class Wheel
         {
@@ -306,6 +313,7 @@ namespace Brickcraft.Vehicles
             applyPropellers(input);
             applyWater();
             applyAir(input);
+            steadyInAir(input);
         }
 
         // what the part's wires add up to, for an action
@@ -398,6 +406,32 @@ namespace Brickcraft.Vehicles
                 float water = under * floater.volume * WaterDensity;
                 body.AddForceAtPosition(Vector3.up * water * g - body.GetPointVelocity(centre) * water * WaterDrag, centre);
             }
+        }
+
+        // a winged vehicle going fast: its nose into the air, its wings level unless its driver steers, its turning damped
+        private void steadyInAir(VehicleInput input) {
+            if (wings.Count == 0) {
+                return;
+            }
+            Rigidbody body = vehicle.Body;
+            Transform tr = vehicle.transform;
+            Vector3 velocity = body.velocity;
+            float speed = velocity.magnitude;
+            float steady = Mathf.Clamp01(speed / SteadySpeed);
+            steady *= steady;
+            if (steady <= 0 || World.Water.IsAt(tr.TransformPoint(body.centerOfMass))) {
+                return;
+            }
+            Vector3 nose = tr.TransformDirection(forward);
+            Vector3 torque = -body.angularVelocity * TurnDamping;
+            // going forward, not sliding back
+            if (Vector3.Dot(nose, velocity) > 0.2f * speed) {
+                torque += Vector3.Cross(nose, velocity / speed) * NoseIntoAir;
+            }
+            if (Mathf.Abs(input.steer) < 0.01f) {
+                torque += nose * Vector3.Dot(Vector3.Cross(tr.up, Vector3.up), nose) * Levelling;
+            }
+            body.AddTorque(torque * steady, ForceMode.Acceleration);
         }
 
         // wings lift with the air going past them, and the air hitting them pushes them back

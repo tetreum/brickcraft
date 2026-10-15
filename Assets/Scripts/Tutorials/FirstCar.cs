@@ -1,9 +1,5 @@
-using System.Collections.Generic;
-using Brickcraft.Bricks;
-using Brickcraft.Network;
-using Brickcraft.Vehicles;
-using Brickcraft.World;
 using UnityEngine;
+using static Brickcraft.Tutorials.TutorialChecks;
 
 namespace Brickcraft.Tutorials
 {
@@ -39,75 +35,15 @@ namespace Brickcraft.Tutorials
                 new TutorialStep() { textKey = "tutorial.first_car.second_axle", isDone = () => Parts(Axle).Exists(a => HeldBy(a, Beam)) },
                 new TutorialStep() { textKey = "tutorial.first_car.wheels", isDone = () => Count(Wheel) >= 4 },
                 new TutorialStep() { textKey = "tutorial.first_car.top", isDone = () => Count(Top) >= 1 },
-                new TutorialStep() { textKey = "tutorial.first_car.seat", isDone = () => Parts(Seat).Exists(FacesAlong) },
+                new TutorialStep() { textKey = "tutorial.first_car.seat", isDone = () => Parts(Seat).Exists(s => FacesAcross(s, Axle)) },
                 new TutorialStep() { textKey = "tutorial.first_car.sit", isDone = IsSeated },
                 new TutorialStep() {
                     textKey = "tutorial.first_car.drive",
-                    begin = () => driveStart = Car() != null ? FloatingOrigin.ToAbsolute(Car().transform.position) : Vector3.zero,
-                    isDone = () => IsSeated() && Vector3.Distance(FloatingOrigin.ToAbsolute(Car().transform.position), driveStart) >= DriveDistance,
+                    begin = () => driveStart = Where(),
+                    isDone = () => IsSeated() && Vector3.Distance(Where(), driveStart) >= DriveDistance,
                     overTime = true,
                 },
             },
         };
-
-        /// <summary>The car being built: the vehicle with the most bricks, null if there's none yet.</summary>
-        public static Vehicle Car() {
-            Vehicle car = null;
-            foreach (Vehicle vehicle in Vehicle.All) {
-                if (vehicle != null && (car == null || vehicle.grid.Count > car.grid.Count)) {
-                    car = vehicle;
-                }
-            }
-            return car;
-        }
-
-        /// <summary>The car's bricks of that item.</summary>
-        public static List<Brick> Parts(string itemId) {
-            List<Brick> parts = new List<Brick>();
-            Vehicle car = Car();
-            if (car != null) {
-                foreach (Brick brick in car.grid.Bricks) {
-                    if (brick.itemId == itemId) {
-                        parts.Add(brick);
-                    }
-                }
-            }
-            return parts;
-        }
-
-        public static int Count(string itemId) {
-            return Parts(itemId).Count;
-        }
-
-        // held by a brick of that item (an axle through it, see BrickJoints)
-        private static bool HeldBy(Brick brick, string itemId) {
-            return brick.joint.HasValue && brick.attachedTo != null && Server.bricks.TryGetValue(brick.attachedTo, out Brick holder) && holder.itemId == itemId;
-        }
-
-        // its studs up, on the car
-        private static bool IsUpright(Brick brick) {
-            BrickJoints.GridOf(brick, out _, out Quaternion turned);
-            return Vector3.Dot(turned * Vector3.up, Vector3.up) > 0.9f;
-        }
-
-        // a seat facing the way the wheels roll: across the axles
-        private static bool FacesAlong(Brick seat) {
-            List<Brick> axles = Parts(Axle);
-            if (axles.Count == 0 || seat.vehicle == null) {
-                return false;
-            }
-            Brick axle = axles[0];
-            Vector3 along = axle.jointRotation * axle.model.connectors[0].axis;
-            Vector3 forward = VehicleShape.Seat(seat, seat.vehicle.transform).forward;
-            return Mathf.Abs(Vector3.Dot(along.normalized, forward.normalized)) < 0.5f;
-        }
-
-        // the local player in the car's seat
-        private static bool IsSeated() {
-            PlayerNetwork network = Player.Instance != null ? Player.Instance.network : null;
-            Vehicle car = Car();
-            return network != null && car != null && !string.IsNullOrEmpty(network.seatedIn)
-                && Server.bricks.TryGetValue(network.seatedIn, out Brick seat) && seat.vehicle == car;
-        }
     }
 }

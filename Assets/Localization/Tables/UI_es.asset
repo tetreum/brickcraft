@@ -865,8 +865,8 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 295655680237573
-    m_Localized: "\xA1Tu primer coche funciona! Sigue conduciendo, o pulsa Esc y
-      sal de la partida para volver al men\xFA."
+    m_Localized: "\xA1Hecho! Sigue, o pulsa Esc y sal de la partida para volver al
+      men\xFA."
     m_Metadata:
       m_Items: []
   - m_Id: 295655680237574
@@ -920,6 +920,105 @@ MonoBehaviour:
   - m_Id: 295655680237584
     m_Localized: "\xA1Conduce! W y S van adelante y atr\xE1s, A y D giran, Espacio
       frena. Recorre 15 metros."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080236040192
+    m_Localized: "Construye tu primer avi\xF3n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080315731968
+    m_Localized: "Un chasis con ruedas, un ala grande, una h\xE9lice y un asiento:
+      m\xF3ntalo paso a paso y despega."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080315731969
+    m_Localized: "Coge las ruedas (casilla 1) y pon una en el suelo: as\xED empieza
+      tu avi\xF3n."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080315731970
+    m_Localized: "Coge un eje (casilla 2) y apunta al centro de la rueda: el eje
+      encaja en su buje. Col\xF3calo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080319926272
+    m_Localized: "Coge el ladrillo technic (casilla 3) y apunta cerca del extremo
+      libre del eje: entra por uno de sus agujeros. Usa un agujero de un extremo
+      (G elige otro agujero), con los tetones hacia arriba (R lo gira), y col\xF3calo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080319926273
+    m_Localized: "Coge el otro eje y p\xE1salo por el agujero del otro extremo del
+      ladrillo technic. Z y X lo deslizan: d\xE9jalo centrado."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080319926274
+    m_Localized: 'Pon las otras tres ruedas (casilla 1) en los extremos libres de
+      los ejes: apunta al extremo de un eje.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080319926275
+    m_Localized: Pon el ladrillo 1x8 (casilla 4) encima del ladrillo technic.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080319926276
+    m_Localized: "Pon el ala (casilla 5) sobre el ladrillo 1x8, centrada: levanta
+      el avi\xF3n cuando avanza."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080319926277
+    m_Localized: "Pon la h\xE9lice (casilla 6) sobre el ala cerca de su centro, un
+      poco por delante, con las palas mirando hacia delante, de lado a lado del avi\xF3n
+      (R la gira). Fuera de la l\xEDnea central, har\xEDa girar el avi\xF3n."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080319926278
+    m_Localized: "Pon el asiento (casilla 7) sobre el ala detr\xE1s de la h\xE9lice,
+      mirando hacia ella (R lo gira)."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080324120576
+    m_Localized: Haz clic en el asiento para sentarte.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080324120577
+    m_Localized: "\xA1Despega! Mant\xE9n W: acelera sobre sus ruedas hasta que el
+      ala lo levanta. A y D giran. Sube 5 metros."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080324120578
+    m_Localized: Construye tu primer barco
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080328314880
+    m_Localized: "Un asiento sobre el agua, una balsa de ladrillos y una h\xE9lice:
+      m\xF3ntalo en el mar y navega."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080328314881
+    m_Localized: "Camina hasta el mar que tienes delante. Coge el asiento (casilla
+      1), apunta al agua a unos pasos de la orilla y col\xF3calo mirando hacia el
+      mar (R lo gira): flota ah\xED y empieza tu barco."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080328314882
+    m_Localized: 'Coge los ladrillos 2x4 (casilla 2) y pon 4 alrededor del asiento,
+      uno contra cada lado de su base, centrados: una balsa equilibrada no vuelca.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080328314883
+    m_Localized: "Pon la h\xE9lice (casilla 3) contra la balsa justo detr\xE1s del
+      asiento, en el centro, con las palas mirando hacia atr\xE1s (R la gira). Descentrada,
+      har\xEDa girar el barco."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080328314884
+    m_Localized: Haz clic en el asiento para sentarte.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080328314885
+    m_Localized: "\xA1Navega! W y S van adelante y atr\xE1s, A y D giran. Navega
+      20 metros."
     m_Metadata:
       m_Items: []
   references:

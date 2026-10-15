@@ -14,13 +14,15 @@ namespace Brickcraft.Tutorials
         /// <summary>Its title and what it teaches, keys of the UI string table (see Loc).</summary>
         public string titleKey;
         public string descriptionKey;
+        /// <summary>Its world's terrain (see World.SavedWorlds.CreateTutorial).</summary>
+        public World.TerrainKind terrain = World.TerrainKind.Flat;
         /// <summary>What the player gets, in its hotbar from the first slot, one stack a slot.</summary>
         public TutorialItem[] items;
         public TutorialStep[] steps;
 
         /// <summary>The game's tutorials, in the order the menu shows them.</summary>
         public static IReadOnlyList<Tutorial> All {
-            get { return new[] { FirstCar.Tutorial }; }
+            get { return new[] { FirstCar.Tutorial, FirstPlane.Tutorial, FirstBoat.Tutorial }; }
         }
 
         /// <summary>The tutorial with that id, null if there's none.</summary>

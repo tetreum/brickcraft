@@ -7,7 +7,7 @@ namespace Brickcraft.Vehicles
     public enum VehicleRole
     {
         None,
-        /// <summary>It rolls: the first one placed on the ground starts a vehicle; wired to a seat, it drives or steers.</summary>
+        /// <summary>It rolls; wired to a seat, it drives or steers. Any part with a role placed on the world starts a vehicle.</summary>
         Wheel,
         /// <summary>Where the driver sits; the parts wired to it are what it controls.</summary>
         Seat,

@@ -18,7 +18,8 @@ namespace Brickcraft.Bricks
     /// see BrickSlot), if they fit and it's free.
     ///
     /// On a vehicle's brick (see Vehicles.Vehicle) it goes on the vehicle, the same way but on its own cells, however it's
-    /// turned. A wheel on the world starts a vehicle there instead of being one of its bricks.
+    /// turned. A vehicle part (a wheel, a seat, a propeller, a wing; see Vehicles.VehicleRole) on the world starts a
+    /// vehicle there instead of being one of its bricks; aimed at water, it goes on its surface (a boat starts there).
     ///
     /// A part with connectors (technic: an axle, a wheel, a pin, see BrickJoints) aimed near a connector of the brick looked
     /// at that one of its own fits goes there instead, connected: as far along it as the crosshair (Z and X sliding it
@@ -115,6 +116,12 @@ namespace Brickcraft.Bricks
                 return;
             }
 
+            // a vehicle part over water: on its surface (it has no collider, the line of sight goes through it)
+            bool startsVehicle = selectedItem.item.VehicleRole != VehicleRole.None;
+            if (looked == null && startsVehicle && waterSurface(hasHit, hit, out RaycastHit surface)) {
+                hasHit = true;
+                hit = surface;
+            }
             target = hasHit ? computePlacement(hit, model) : (BrickPlacement?)null;
 
             bool isValid = target.HasValue && BrickGrid.IsFree(target.Value) && !overlapsPlayer(target.Value)
@@ -123,13 +130,37 @@ namespace Brickcraft.Bricks
             updateGhost(isValid);
 
             if (isValid && GameInput.GetButtonDown(GameInput.Place)) {
-                if (selectedItem.item.VehicleRole == VehicleRole.Wheel) {
+                if (startsVehicle) {
                     Player.Instance.network.CmdCreateVehicle(selectedItem.slot, target.Value.origin, (byte)target.Value.rotation);
                 } else {
                     place(selectedItem, target.Value);
                 }
                 corner = 0;
             }
+        }
+
+        // how far a vehicle part reaches over water with nothing behind it
+        private const float WaterReach = 5;
+
+        // where the line of sight first goes into water (before what it hits), as a hit on its surface
+        private static bool waterSurface(bool hasHit, RaycastHit hit, out RaycastHit surface) {
+            surface = default(RaycastHit);
+            Transform eye = Camera.main != null ? Camera.main.transform : null;
+            if (eye == null || Water.IsFluidBlockAt(eye.position)) {
+                return false; // swimming: what's ahead
+            }
+            float reach = hasHit ? hit.distance : WaterReach;
+            for (float along = 0; along <= reach; along += 0.05f) {
+                Vector3 point = eye.position + eye.forward * along;
+                if (!Water.IsFluidBlockAt(point)) {
+                    continue;
+                }
+                Vector3Int block = BrickGrid.CellToBlock(BrickGrid.WorldToCell(point));
+                surface.point = new Vector3(point.x, BrickGrid.CellToWorld(BrickGrid.BlockToCell(block + Vector3Int.up)).y, point.z);
+                surface.normal = Vector3.up;
+                return true;
+            }
+            return false;
         }
 
         // connected to the brick looked at, where the line of sight passes near one of its connectors that fits (holes
@@ -295,7 +326,7 @@ namespace Brickcraft.Bricks
             Vector3Int originCell = FloatingOrigin.Cell;
             Vector3Int adjacent = BrickGrid.WorldToCell(hit.point + (Vector3)normal * SurfaceOffset);
             // on a brick it goes on any of its studs: the block grid is the terrain's
-            bool snapToBlocks = !GameInput.GetButton(GameInput.FreePlacement) && Server.findBrick(hit.collider) == null;
+            bool snapToBlocks = !GameInput.GetButton(GameInput.FreePlacement) && (hit.collider == null || Server.findBrick(hit.collider) == null);
             Vector3Int origin = Vector3Int.zero;
 
             for (int axis = 0; axis < 3; axis++) {

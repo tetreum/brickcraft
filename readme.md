@@ -40,7 +40,7 @@ The first player to join a save without admins (the host, starting singleplayer 
 
 ## Vehicles
 
-Cars, boats and planes, built from bricks starting with a wheel (and technic axles, pins and holes), driven from a seat and wired with a screwdriver: see `docs/vehicles.md`. The main menu's Tutorials walk through building a first car, in a flat world of its own.
+Cars, boats and planes, built from bricks starting with a vehicle part (a wheel, a seat, a propeller, a wing; and technic axles, pins and holes), driven from a seat and wired with a screwdriver: see `docs/vehicles.md`. The main menu's Tutorials walk through building a first car, plane and boat, each in a flat world of its own.
 
 ## Documentation about modding, npcs and more
 

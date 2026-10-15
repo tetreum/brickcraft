@@ -4,7 +4,7 @@ Cars, boats and planes are built from bricks, like anything else, but they aren'
 
 ### Building one
 
-Place a wheel (any part of LDraw's *Wheel* category) on the ground: it starts a vehicle. Bricks placed on a vehicle's bricks are its own, placed with studs and plates like the world's but on its own grid, so it can drive and turn. Removing a brick that held two parts together splits it into two vehicles where they are; placing a brick that touches both (lined up) joins them again.
+Place a vehicle part (a wheel, a seat, a propeller or a wing, see below) on the ground: it starts a vehicle. Aimed at water, it goes on its surface, so a boat starts afloat. Bricks placed on a vehicle's bricks are its own, placed with studs and plates like the world's but on its own grid, so it can drive and turn. Removing a brick that held two parts together splits it into two vehicles where they are; placing a brick that touches both (lined up) joins them again.
 
 What its parts do depends on their kind (their LDraw category, or `vehicle.role` in an item's `info.json`):
 
@@ -14,6 +14,8 @@ What its parts do depends on their kind (their LDraw category, or `vehicle.role`
 | Wheels | `wheel` | Drive and steer on the ground. |
 | Propellers | `propeller` | Push along their axis: upright ones forward (and steer, like an outboard motor), flat ones up. |
 | Wings | `wing` | Lift with speed. Wired, they're flaps: elevators, ailerons, rudders. |
+
+A vehicle with wings is steadied by the air as it speeds up: its nose turns into where it's going, its wings level when you don't steer, and its spinning is damped, so a plane takes off on its own once it's fast enough.
 
 Every brick weighs by its size (a 2x2 brick, 24 kg; `vehicle.mass` in `info.json` overrides it), and every brick floats: a vehicle in water is pushed up by the water its bricks are under.
 

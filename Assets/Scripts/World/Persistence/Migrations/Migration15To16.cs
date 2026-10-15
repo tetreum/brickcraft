@@ -3,8 +3,8 @@ using System.IO;
 namespace Brickcraft.World.Migrations
 {
     /// <summary>
-    /// Format 15 to 16: world.dat ends with whether its terrain is flat and the tutorial it's for (see
-    /// WorldStorage.Flat, Tutorial): neither, for the old worlds. Chunk records don't change.
+    /// Format 15 to 16: world.dat ends with its kind of terrain and the tutorial it's for (see WorldStorage.Terrain,
+    /// Tutorial): generated and none, for the old worlds. Chunk records don't change.
     /// </summary>
     public class Migration15To16 : SaveMigration
     {
@@ -24,7 +24,7 @@ namespace Brickcraft.World.Migrations
             SetFormat(header, 16);
             byte[] upgraded = new byte[header.Length + 2];
             header.CopyTo(upgraded, 0);
-            upgraded[header.Length] = 0; // not flat
+            upgraded[header.Length] = (byte)TerrainKind.Generated;
             upgraded[header.Length + 1] = 0; // no tutorial: an empty string
             WriteHeader(saveFolder, upgraded);
         }

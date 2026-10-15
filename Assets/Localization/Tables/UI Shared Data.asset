@@ -891,6 +891,86 @@ MonoBehaviour:
     m_Key: tutorial.first_car.drive
     m_Metadata:
       m_Items: []
+  - m_Id: 353080236040192
+    m_Key: tutorial.first_plane.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080315731968
+    m_Key: tutorial.first_plane.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080315731969
+    m_Key: tutorial.first_plane.wheel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080315731970
+    m_Key: tutorial.first_plane.axle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080319926272
+    m_Key: tutorial.first_plane.beam
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080319926273
+    m_Key: tutorial.first_plane.second_axle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080319926274
+    m_Key: tutorial.first_plane.wheels
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080319926275
+    m_Key: tutorial.first_plane.top
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080319926276
+    m_Key: tutorial.first_plane.wing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080319926277
+    m_Key: tutorial.first_plane.propeller
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080319926278
+    m_Key: tutorial.first_plane.seat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080324120576
+    m_Key: tutorial.first_plane.sit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080324120577
+    m_Key: tutorial.first_plane.fly
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080324120578
+    m_Key: tutorial.first_boat.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080328314880
+    m_Key: tutorial.first_boat.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080328314881
+    m_Key: tutorial.first_boat.seat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080328314882
+    m_Key: tutorial.first_boat.raft
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080328314883
+    m_Key: tutorial.first_boat.propeller
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080328314884
+    m_Key: tutorial.first_boat.sit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353080328314885
+    m_Key: tutorial.first_boat.sail
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

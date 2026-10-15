@@ -37,6 +37,9 @@ namespace Brickcraft
         [SerializeField] private float m_SwimAcceleration = 8f;
         [SerializeField] private float m_ClimbOutSpeed = 5f;
         [SerializeField] private float m_WadingSpeedFactor = 0.7f;
+        // how high over its feet the top of a bank can be, swimming, to climb out onto it (a sheer bank level with the
+        // water, however deep: its head's above the water)
+        [SerializeField] private float m_ClimbReach = 2f;
 
         /// <summary>How deep in water it is: not, to the knees (it wades), to the waist (it swims), or with its eyes under.</summary>
         public enum WaterDepth
@@ -78,6 +81,11 @@ namespace Brickcraft
 
         // stepping up moves the player at once: the camera starts where it was and follows (negative, going to 0)
         private float m_StepCameraOffset;
+
+        // climbing out of the water onto a bank: the height its feet go up to (NaN while it isn't, see climbOut)
+        private float m_ClimbTo = float.NaN;
+        // how far ahead of it a bank is looked for, past its own radius
+        private const float BankReach = 0.3f;
 
         private void Awake() {
             originalWalkSpeed = m_WalkSpeed;
@@ -172,8 +180,70 @@ namespace Brickcraft
             }
         }
 
+        // swimming into a bank whose top is within reach, with room on it: it climbs up the bank to its top, then onto it.
+        // Letting go of forward stops it (it falls back in). False when it isn't climbing.
+        private bool climbOut()
+        {
+            float feet = m_CharacterController.bounds.min.y;
+            if (float.IsNaN(m_ClimbTo))
+            {
+                if (!IsSwimming || m_Input.y <= 0 || !bankAhead(feet, out float top))
+                    return false;
+                m_ClimbTo = top;
+            }
+            if (m_Input.y <= 0)
+            {
+                m_ClimbTo = float.NaN;
+                return false;
+            }
+            Vector3 move;
+            if (feet < m_ClimbTo + 0.02f)
+            {
+                move = Vector3.up*m_ClimbOutSpeed; // up the bank
+            }
+            else
+            {
+                // over its top: onto it, walking from there
+                move = transform.forward*m_SwimSpeed;
+                m_ClimbTo = float.NaN;
+            }
+            m_MoveDir = move;
+            m_Jump = false;
+            m_Jumping = false;
+            m_CollisionFlags = m_CharacterController.Move(move*Time.fixedDeltaTime);
+            m_StepCameraOffset = Mathf.MoveTowards(m_StepCameraOffset, 0, m_StepSmoothing*Time.fixedDeltaTime);
+            UpdateCameraPosition(0);
+            m_PreviouslyGrounded = m_CharacterController.isGrounded;
+            return true;
+        }
+
+        // the top of what's right ahead (its feet over it), if it's a bank it can climb onto: higher than a step, within
+        // reach, flat, with room on it for the player
+        private bool bankAhead(float feet, out float top)
+        {
+            top = 0;
+            float radius = m_CharacterController.radius;
+            Vector3 ahead = transform.position + transform.forward*(radius + BankReach);
+            Vector3 from = new Vector3(ahead.x, feet + m_ClimbReach, ahead.z);
+            if (Physics.CheckSphere(from, 0.05f, ~0, QueryTriggerInteraction.Ignore))
+                return false; // in what's ahead: too high
+            if (!Physics.Raycast(from, Vector3.down, out RaycastHit hit, m_ClimbReach, ~0, QueryTriggerInteraction.Ignore))
+                return false;
+            if (hit.normal.y < 0.7f || hit.point.y <= feet + m_StepHeight)
+                return false; // a slope, or low enough to walk up
+            top = hit.point.y;
+            Vector3 bottom = new Vector3(ahead.x, top + radius + 0.05f, ahead.z);
+            Vector3 head = bottom + Vector3.up*Mathf.Max(0, m_CharacterController.height - radius*2);
+            foreach (Collider collider in Physics.OverlapCapsule(bottom, head, radius*0.9f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                if (collider.transform.root != transform.root)
+                    return false; // no room
+            }
+            return true;
+        }
+
         // in water: it moves where it looks once its eyes are under (along the ground otherwise), goes up while jump
-        // is held and sinks slowly otherwise (at the surface too); at an edge, jump climbs out
+        // is held (or swimming into a bank) and sinks slowly otherwise (at the surface too); at an edge, jump climbs out
         private void swim()
         {
             Vector3 forward = Depth == WaterDepth.Eyes ? m_Camera.transform.forward : transform.forward;
@@ -183,10 +253,11 @@ namespace Brickcraft
             Vector3 target = move*m_SwimSpeed;
 
             bool up = GameInput.GetButton(GameInput.Jump);
-            if (up && Depth != WaterDepth.Eyes && (m_CollisionFlags & CollisionFlags.Sides) != 0)
+            bool atWall = (m_CollisionFlags & CollisionFlags.Sides) != 0;
+            if (up && Depth != WaterDepth.Eyes && atWall)
                 target.y = m_ClimbOutSpeed; // out over the edge
-            else if (up)
-                target.y = m_SwimUpSpeed; // at the surface it bobs: up out of the water, and back in
+            else if (up || (atWall && m_Input.y > 0))
+                target.y = m_SwimUpSpeed; // at the surface it bobs (up out of the water, and back in); along a bank swum into, up to its top to climb out (see climbOut)
             else
                 target.y -= m_SinkSpeed;
 
@@ -261,6 +332,10 @@ namespace Brickcraft
             float speed;
             GetInput(out speed);
             updateDepth();
+            if (climbOut())
+            {
+                return;
+            }
             if (IsSwimming)
             {
                 swim();

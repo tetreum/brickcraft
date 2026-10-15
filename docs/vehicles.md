@@ -19,6 +19,22 @@ Every brick weighs by its size (a 2x2 brick, 24 kg; `vehicle.mass` in `info.json
 
 A vehicle that nobody drives stays where it is, solid to build on. Vehicles are saved with the world.
 
+### Technic: axles, pins and holes
+
+Besides their studs, LDraw parts connect the way LEGO Technic does: an axle goes through a technic brick's hole or a wheel's axle hole, a pin into a beam. Hold a part that has such connections (an axle, a wheel, a pin, a beam...) and look at a matching one on a brick, in the world or on a vehicle: the preview snaps there, as far along it as you look (half a stud at a time).
+
+| Key | |
+|---|---|
+| R | Turn it around the connection, a quarter turn |
+| T | Put it the other way round |
+| G | Use another of its connections that fits (which of a beam's holes goes on the axle) |
+
+What fits: an axle in an axle hole (it can't turn there) or in a round hole at least as wide (it spins); a pin, or a bar, in a round hole its size. Parts slide along axles and holes that let them, the shorter staying within the longer, and they can't go into anything they don't connect to. A connected part goes with what holds it: take the technic brick away and its axle and wheels go too.
+
+Wheels with an axle hole (like *Wheel Rim 14x18 with Axlehole*) go on axles; others have a hub of their own size (*Wheel Rim 10x14*'s takes a bar, a wheel holder's pin). A car the technic way: a *Technic Brick 1x8 with Holes*, an axle through each end hole, a wheel on each axle end, a brick and a seat on top. Its axles turn with its wheels.
+
+Where parts connect comes from the [LDCad Shadow Library](https://github.com/RolandMelkert/LDCadShadowLibrary) (most technic parts and wheels; the game guesses the rest).
+
 ### Driving
 
 Click a seat to sit on it. The player's own keys drive (remap them in Settings > Controls):

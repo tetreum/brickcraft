@@ -102,6 +102,26 @@ namespace Brickcraft.Tests
         }
 
         [Test]
+        public void TyresStartBlackAndRimsDont() {
+            Assert.IsTrue(ItemDatabase.IsTyre(new LDrawPart() { id = "t1", name = "Wheel 22x50 with Integral Smooth Racing Tyre", category = "Wheel" }));
+            Assert.IsTrue(ItemDatabase.IsTyre(new LDrawPart() { id = "t2", name = "Wheel 14x21 Solid Rubber with Axlehole", category = "Wheel" }));
+            Assert.IsTrue(ItemDatabase.IsTyre(new LDrawPart() { id = "t3", name = "Tyre 30.4 x 14 Offset Tread", category = "Tyre" }));
+            Assert.IsFalse(ItemDatabase.IsTyre(new LDrawPart() { id = "t4", name = "Wheel Rim 14x18 with Axlehole", category = "Wheel" }), "a rim");
+            Assert.IsFalse(ItemDatabase.IsTyre(new LDrawPart() { id = "t5", name = "Tyre Swing", category = "Minifig Accessory" }), "not a tyre's category");
+
+            Assume.That(Server.items.ContainsKey("part_105645"), "the catalogue has wheel 105645");
+            Assert.AreEqual(ItemDatabase.LDrawTyreColor, item("part_105645").color);
+            Assert.AreEqual(ItemDatabase.LDrawItemColor, item("part_55982").color, "a rim keeps the usual colour");
+        }
+
+        [Test]
+        public void WheelsCollideByTheirShape() {
+            Assume.That(Server.items.ContainsKey("part_105645") && Server.items.ContainsKey("part_3001"), "the catalogue has wheel 105645 and brick 3001");
+            Assert.IsNotNull(item("part_105645").brickModel.prefab.GetComponent<UnityEngine.MeshCollider>(), "round: aimed past its tyre, it isn't hit");
+            Assert.IsNotNull(item("part_3001").brickModel.prefab.GetComponent<UnityEngine.BoxCollider>(), "a brick's is still a box");
+        }
+
+        [Test]
         public void PanesArentFrames() {
             Assert.IsNull(LDrawGlass.FrameFits(new LDrawPart() { id = "test", name = "Window 1x6x5 Pane", category = "Window" }));
         }

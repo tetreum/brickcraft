@@ -321,7 +321,8 @@ namespace Brickcraft.Bricks
             }
         }
 
-        // an LDraw part: its colours of their own (glass...) stay theirs, its collider is a box of its size
+        // an LDraw part: its colours of their own (glass...) stay theirs, its collider is a box of its size (but round ones'
+        // is their shape: aimed past a wheel's tyre, the air in its box's corners isn't the wheel)
         private static BrickModel loadLDraw(string id) {
             try {
                 Mesh mesh = LDraw.LDrawModelBuilder.Build(id, out string[] materialNames);
@@ -333,7 +334,7 @@ namespace Brickcraft.Bricks
                 string attachesTo = LDraw.LDrawGlass.GlassFits(catalogPart);
                 Vector3 origin = attachesTo != null ? Vector3.zero : place(mesh, 1); // where its LDraw origin (0, 0, 0) went
                 loaded.Add(mesh);
-                ModelInfo info = new ModelInfo() { parts = new Dictionary<string, int>(), collider = attachesTo != null ? "mesh" : "box" };
+                ModelInfo info = new ModelInfo() { parts = new Dictionary<string, int>(), collider = attachesTo != null || isRound(catalogPart) ? "mesh" : "box" };
                 foreach (string part in materialNames) {
                     if (part != LDraw.LDrawModelBuilder.MainPart && int.TryParse(part.Substring(1), out int ldrawColor)) {
                         BrickColor color = BrickColorPalette.FromLDraw(ldrawColor);
@@ -367,6 +368,12 @@ namespace Brickcraft.Bricks
                 Debug.LogError("Can't read the LDraw part " + id + ": " + e.Message);
                 return null;
             }
+        }
+
+        // wheels and tyres
+        private static bool isRound(LDraw.LDrawPart part) {
+            string category = part != null && part.category != null ? part.category.Trim() : "";
+            return string.Equals(category, "Wheel", StringComparison.OrdinalIgnoreCase) || string.Equals(category, "Tyre", StringComparison.OrdinalIgnoreCase);
         }
 
         // a slot for an attachment (see BrickSlot), its point there in the model

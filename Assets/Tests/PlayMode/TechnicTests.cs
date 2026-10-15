@@ -86,6 +86,77 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator ConnectedBricksAreSavedHeldAsTheyWere() {
+            Brick holder = technicBrick();
+            Item axleItem = item("part_3706"), wheelItem = item("part_55982");
+            int wheelHole = indexOf(wheelItem.brickModel, false, c => c.HasAxleShape);
+            Brick axle = WorldNetwork.ServerConnectBrick(axleItem, axleItem.color, holder, new BrickJoint() { holderConnector = indexOf(holder.model, false), connector = 0, spin = 1 }, Placer.Now(0));
+            yield return null;
+            BrickJoint onEnd = new BrickJoint() { holderConnector = 0, connector = wheelHole, slide = BrickJoints.MaxSlide(axle.model.connectors[0], wheelItem.brickModel.connectors[wheelHole]), flip = true };
+            Assert.IsNull(BrickJoints.WhyNot(axle, wheelItem.brickModel, onEnd));
+            Brick wheel = WorldNetwork.ServerConnectBrick(wheelItem, 4, axle, onEnd, Placer.Now(0));
+            yield return null;
+            string axleId = axle.id, wheelId = wheel.id;
+            Vector3 wheelAt = FloatingOrigin.ToAbsolute(wheel.gameObject.transform.position);
+            Quaternion wheelTurned = wheel.gameObject.transform.rotation;
+
+            yield return game.Stop();
+            yield return game.Start();
+            yield return TestGame.WaitUntil(() => Server.bricks.ContainsKey(wheelId), 10, "the wheel back");
+            Brick back = Server.bricks[wheelId];
+            Assert.AreEqual(axleId, back.attachedTo, "on its axle");
+            Assert.AreEqual(onEnd, back.joint.Value, "held as it was");
+            Assert.AreEqual(4, back.color);
+            Assert.Less(Vector3.Distance(wheelAt, FloatingOrigin.ToAbsolute(back.gameObject.transform.position)), 0.001f, "where it was");
+            Assert.Less(Quaternion.Angle(wheelTurned, back.gameObject.transform.rotation), 0.01f, "turned as it was");
+            Assert.AreEqual(1, Server.bricks[axleId].joint.Value.spin, "the axle too");
+        }
+
+        [UnityTest]
+        public IEnumerator AVehicleKeepsItsConnectedParts() {
+            Item brickItem = item("part_3700"), axleItem = item("part_3706"), wheelItem = item("part_55982");
+            Vector3Int cell = BrickGrid.BlockToCell(TestGame.PlayerBlock + new Vector3Int(0, 8, 0));
+            Vehicles.Vehicle vehicle = Vehicles.VehicleSystem.ServerCreate(brickItem, brickItem.color, new BrickPlacement(brickItem.brickModel, cell));
+            yield return null;
+            Brick holder = vehicle.grid.GetBrickAt(Vector3Int.zero);
+            BrickJoint through = new BrickJoint() { holderConnector = indexOf(holder.model, false), connector = 0 };
+            Assert.IsNull(BrickJoints.WhyNot(holder, axleItem.brickModel, through));
+            Brick axle = Vehicles.VehicleSystem.ServerConnect(axleItem, axleItem.color, holder, through);
+            int wheelHole = indexOf(wheelItem.brickModel, false, c => c.HasAxleShape);
+            BrickJoint onEnd = new BrickJoint() { holderConnector = 0, connector = wheelHole, slide = BrickJoints.MaxSlide(axle.model.connectors[0], wheelItem.brickModel.connectors[wheelHole]) };
+            Brick wheel = Vehicles.VehicleSystem.ServerConnect(wheelItem, wheelItem.color, axle, onEnd);
+            Assert.IsNotNull(wheel);
+            Assert.AreSame(vehicle, wheel.vehicle, "the vehicle's");
+            Assert.AreSame(vehicle.transform, wheel.gameObject.transform.parent, "moving with it");
+            Assert.AreEqual(3, vehicle.grid.Count);
+            Assert.AreEqual(3, vehicle.parts.Count, "its parts, for the clients");
+            Assert.AreEqual(holder.id, vehicle.parts[1].holder);
+            Assert.AreEqual(1, vehicle.grid.Components().Count, "one piece");
+            string wheelId = wheel.id, id = vehicle.vehicleId;
+            yield return TestGame.WaitUntil(() => Npcs.NpcSystem.IsLoaded(vehicle.transform.position), 30, "its chunk loaded");
+
+            yield return game.Stop();
+            yield return game.Start();
+            Vehicles.Vehicle reloaded = null;
+            yield return TestGame.WaitUntil(() => {
+                foreach (Vehicles.Vehicle v in Vehicles.Vehicle.All) {
+                    if (v.vehicleId == id) {
+                        reloaded = v;
+                    }
+                }
+                return reloaded != null;
+            }, 10, "the vehicle back");
+            Assert.AreEqual(3, reloaded.grid.Count, "with its axle and wheel");
+            Assert.IsTrue(Server.bricks.TryGetValue(wheelId, out Brick wheelBack) && wheelBack.joint.HasValue, "the wheel connected");
+            Assert.AreEqual(onEnd, wheelBack.joint.Value);
+
+            // the brick holding the axle goes: the vehicle with it
+            Vehicles.VehicleSystem.ServerRemove(reloaded.grid.GetBrickAt(Vector3Int.zero));
+            yield return null;
+            Assert.IsFalse(Server.bricks.ContainsKey(wheelId), "and what it held");
+        }
+
+        [UnityTest]
         public IEnumerator WhatDoesntFitDoesntGo() {
             Brick holder = technicBrick();
             Item barWheel = item("part_11208");

@@ -95,6 +95,9 @@ namespace Brickcraft.Network
         public int state;
         /// <summary>The brick it's attached to (see Brick.attachedTo), null for bricks on the grid.</summary>
         public string attachedTo;
+        /// <summary>A connected brick (see Bricks.BrickJoints): how attachedTo holds it.</summary>
+        public bool connected;
+        public Bricks.BrickJoint joint;
     }
 
     /// <summary>Server to client: a brick's state changed (a door opened...), see Brick.state.</summary>

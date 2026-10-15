@@ -11,7 +11,7 @@ namespace Brickcraft.Tests
     public class SaveTests
     {
         private ChunkChanges changes;
-        private SavedBrick brick, door;
+        private SavedBrick brick, door, axle;
         private ushort placed, dug;
 
         [SetUp]
@@ -31,6 +31,11 @@ namespace Brickcraft.Tests
             door = new SavedBrick() { id = Guid.NewGuid(), itemId = "door", origin = brick.origin, color = 4, attachedTo = brick.id };
             changes.bricks[brick.id] = brick;
             changes.bricks[door.id] = door;
+            axle = new SavedBrick() {
+                id = Guid.NewGuid(), itemId = "brick_2x2", origin = brick.origin, color = 0, attachedTo = brick.id,
+                joint = new Bricks.BrickJoint() { holderConnector = 2, connector = 1, slide = -3, spin = 3, flip = true },
+            };
+            changes.bricks[axle.id] = axle;
             changes.storage[brick.id] = new List<InventoryItem>() { new InventoryItem() { slot = 2, itemId = "pickaxe", color = 72, quantity = 1, health = 12 } };
             changes.npcs.Add(new SavedNpc() { type = "wolf", x = 1.5, y = 70, z = -2.25, yaw = 90, health = 8, owner = 2, ownerName = "Me", pack = Guid.NewGuid() });
             changes.drops.Add(new SavedDrop() { itemId = "stone", color = 72, quantity = 3, x = 4, y = 71, z = 5, lifetime = 120 });
@@ -38,7 +43,8 @@ namespace Brickcraft.Tests
                 id = Guid.NewGuid(), x = 1e7 + 0.5, y = 68.25, z = -3, rotation = Quaternion.Euler(0, 90, 5),
                 parts = new List<SavedVehiclePart>() {
                     new SavedVehiclePart() { id = Guid.NewGuid(), itemId = "brick_2x2", color = 4, origin = Vector3Int.zero, rotation = 1 },
-                    new SavedVehiclePart() { id = Guid.NewGuid(), itemId = "seat", color = 72, origin = new Vector3Int(-2, 3, 1), state = 2 },
+                    new SavedVehiclePart() { id = Guid.NewGuid(), itemId = "seat", color = 72, origin = new Vector3Int(-2, 3, 1), state = 2,
+                        holder = Guid.NewGuid(), joint = new Bricks.BrickJoint() { holderConnector = 1, connector = 0, slide = 2, spin = 1 } },
                     new SavedVehiclePart() { id = Guid.NewGuid(), itemId = "no_such_item", origin = new Vector3Int(0, 6, 0) },
                 },
                 wires = new List<SavedWire>() {
@@ -63,6 +69,8 @@ namespace Brickcraft.Tests
             CollectionAssert.AreEquivalent(changes.colors, loaded.colors);
             CollectionAssert.AreEquivalent(changes.bricks, loaded.bricks);
 
+            Assert.AreEqual(axle.joint, loaded.bricks[axle.id].joint, "a connected brick keeps how it's held");
+            Assert.IsFalse(loaded.bricks[brick.id].joint.HasValue);
             Assert.AreEqual(1, loaded.storage.Count);
             CollectionAssert.AreEqual(changes.storage[brick.id], loaded.storage[brick.id]);
             CollectionAssert.AreEqual(changes.npcs, loaded.npcs);
@@ -83,7 +91,8 @@ namespace Brickcraft.Tests
             Assert.AreEqual(1, pages.Count);
 
             ChunkChanges loaded = ChunkChangesSerializer.Deserialize(pages[0]);
-            Assert.AreEqual(2, loaded.bricks.Count);
+            Assert.AreEqual(3, loaded.bricks.Count);
+            Assert.AreEqual(axle.joint, loaded.bricks[axle.id].joint, "players get how connected bricks are held");
             Assert.AreEqual(0, loaded.npcs.Count);
             Assert.AreEqual(0, loaded.storage.Count);
             Assert.AreEqual(0, loaded.drops.Count);

@@ -208,6 +208,21 @@ namespace Brickcraft.Network
             return brick;
         }
 
+        /// <summary>
+        /// A connected brick (an axle through a hole, see Bricks.BrickJoints) held by another. The caller checks it can
+        /// (BrickJoints.WhyNot).
+        /// </summary>
+        public static Brick ServerConnectBrick(Item item, int color, Brick holder, BrickJoint joint, Placer placer) {
+            Brick brick = Server.Instance.spawnConnected(item, color, holder, joint);
+            if (brick == null) {
+                return null;
+            }
+            serverChanges.AddBrick(toSaved(brick, placer));
+            sendPlaced(brick, placer);
+            Npcs.Navigation.NavGrid.MarkDirty(brick);
+            return brick;
+        }
+
         private static void sendPlaced(Brick brick, Placer placer) {
             sendToChunk(WorldChanges.ChunkOfBrick(brick.placement.origin), new BrickPlacedMessage() {
                 id = brick.id,
@@ -219,6 +234,8 @@ namespace Brickcraft.Network
                 placedAt = placer.placedAt,
                 state = brick.state,
                 attachedTo = brick.attachedTo,
+                connected = brick.joint.HasValue,
+                joint = brick.joint ?? default(BrickJoint),
             });
         }
 
@@ -247,10 +264,11 @@ namespace Brickcraft.Network
         /// <summary>
         /// Moves a brick (it keeps its id, colour and placer) and what's attached to it. Players see them
         /// removed and placed again, so those that only have one of the two chunks get the right half.
-        /// False if it doesn't fit there, or it's an attachment (they move with their brick).
+        /// False if it doesn't fit there, or it's an attachment (they move with their brick), or it holds connected bricks
+        /// (see Bricks.BrickJoints: they'd have to go somewhere else too).
         /// </summary>
         public static bool ServerMoveBrick(Brick brick, BrickPlacement to) {
-            if (brick.attachedTo != null || brick.vehicle != null) {
+            if (brick.attachedTo != null || brick.vehicle != null || Server.connectedTo(brick).Count > 0) {
                 return false;
             }
             Placer placer = ServerPlacerOf(brick);
@@ -330,6 +348,9 @@ namespace Brickcraft.Network
             Brick attached = Server.attachmentOf(brick);
             if (attached != null) {
                 removed.AddRange(ServerRemoveBrick(attached));
+            }
+            foreach (Brick held in new List<Brick>(Server.connectedTo(brick))) {
+                removed.AddRange(ServerRemoveBrick(held));
             }
             // whoever slept in it loses their spawn point
             if (Npcs.NpcBeds.IsBed(brick)) {
@@ -630,6 +651,7 @@ namespace Brickcraft.Network
                 placer = placer,
                 state = brick.state,
                 attachedTo = brick.attachedTo != null ? new Guid(brick.attachedTo) : Guid.Empty,
+                joint = brick.joint,
             };
         }
 
@@ -845,6 +867,7 @@ namespace Brickcraft.Network
                 placer = new Placer() { playerId = message.placedBy, placedAt = message.placedAt },
                 state = message.state,
                 attachedTo = string.IsNullOrEmpty(message.attachedTo) ? Guid.Empty : new Guid(message.attachedTo),
+                joint = message.connected ? message.joint : (BrickJoint?)null,
             };
             clientChanges.AddBrick(brick);
 
@@ -901,23 +924,35 @@ namespace Brickcraft.Network
         // -------- both --------
 
         private static void spawnBricks(List<SavedBrick> bricks) {
-            // attachments after the bricks they go in
+            // attachments after the bricks they go in (connected bricks may hold others: as many rounds as it takes)
             bricks.Sort((a, b) => (a.attachedTo != Guid.Empty).CompareTo(b.attachedTo != Guid.Empty));
-            foreach (SavedBrick saved in bricks) {
-                string id = saved.id.ToString();
-
-                if (Server.bricks.ContainsKey(id)) {
-                    continue;
+            List<SavedBrick> waiting = new List<SavedBrick>(bricks);
+            bool spawned = true;
+            while (spawned && waiting.Count > 0) {
+                spawned = false;
+                foreach (SavedBrick saved in new List<SavedBrick>(waiting)) {
+                    string id = saved.id.ToString();
+                    if (Server.bricks.ContainsKey(id)) {
+                        waiting.Remove(saved);
+                        continue;
+                    }
+                    if (!Server.items.TryGetValue(saved.itemId, out Item item)) {
+                        Debug.LogError("Unknown item " + saved.itemId + " for brick " + id);
+                        waiting.Remove(saved);
+                        continue;
+                    }
+                    string attachedTo = saved.attachedTo != Guid.Empty ? saved.attachedTo.ToString() : null;
+                    if (attachedTo != null && !Server.bricks.ContainsKey(attachedTo)) {
+                        continue; // its brick isn't there (yet)
+                    }
+                    if (saved.joint.HasValue) {
+                        Server.Instance.spawnConnected(item, saved.color, Server.bricks[attachedTo], saved.joint.Value, id, saved.state);
+                    } else {
+                        Server.Instance.spawnBrick(item, saved.color, new BrickPlacement(item.brickModel, saved.origin, saved.rotation), id, saved.state, attachedTo);
+                    }
+                    waiting.Remove(saved);
+                    spawned = true;
                 }
-                if (!Server.items.TryGetValue(saved.itemId, out Item item)) {
-                    Debug.LogError("Unknown item " + saved.itemId + " for brick " + id);
-                    continue;
-                }
-                string attachedTo = saved.attachedTo != Guid.Empty ? saved.attachedTo.ToString() : null;
-                if (attachedTo != null && !Server.bricks.ContainsKey(attachedTo)) {
-                    continue; // its brick isn't there (yet)
-                }
-                Server.Instance.spawnBrick(item, saved.color, new BrickPlacement(item.brickModel, saved.origin, saved.rotation), id, saved.state, attachedTo);
             }
         }
 

@@ -39,6 +39,14 @@ namespace Brickcraft.Vehicles
             return brick;
         }
 
+        /// <summary>
+        /// A connected brick (see Bricks.BrickJoints) held by a vehicle's brick. The caller checks it can
+        /// (BrickJoints.WhyNot).
+        /// </summary>
+        public static Brick ServerConnect(Item item, int color, Brick holder, BrickJoint joint) {
+            return holder.vehicle != null ? holder.vehicle.ServerConnect(item, color, holder, joint) : null;
+        }
+
         /// <summary>Removes a vehicle's brick; what it held together comes apart. Returns the bricks removed (it).</summary>
         public static List<Brick> ServerRemove(Brick brick) {
             Vehicle vehicle = brick.vehicle;
@@ -201,7 +209,14 @@ namespace Brickcraft.Vehicles
                 Vehicle vehicle = create(FloatingOrigin.ToLocal(s.x, s.y, s.z), s.rotation);
                 vehicle.vehicleId = s.id.ToString();
                 foreach (SavedVehiclePart part in s.parts) {
-                    if (Server.items.TryGetValue(part.itemId, out Item item) && item.brickModel != null) {
+                    if (!Server.items.TryGetValue(part.itemId, out Item item) || item.brickModel == null) {
+                        continue;
+                    }
+                    if (part.holder != Guid.Empty) {
+                        if (Server.bricks.TryGetValue(part.holder.ToString(), out Brick holder) && holder.vehicle == vehicle) {
+                            vehicle.ServerConnect(item, part.color, holder, part.joint, part.id.ToString(), part.state);
+                        }
+                    } else {
                         vehicle.ServerAdd(item, part.color, new BrickPlacement(item.brickModel, part.origin, part.rotation), part.id.ToString(), part.state);
                     }
                 }
@@ -247,6 +262,8 @@ namespace Brickcraft.Vehicles
                     origin = brick.placement.origin,
                     rotation = (byte)brick.placement.rotation,
                     state = brick.state,
+                    holder = brick.joint.HasValue && brick.attachedTo != null ? guidOf(brick.attachedTo) : Guid.Empty,
+                    joint = brick.joint ?? default(BrickJoint),
                 });
             }
             return saved;
@@ -276,6 +293,15 @@ namespace Brickcraft.Vehicles
                 refreshDriver(piece);
             }
             refreshDriver(vehicle);
+        }
+
+        // how many bricks hold it (0 for one on the cells): what holds comes first
+        private static int depthOf(Brick brick) {
+            int depth = 0;
+            for (Brick at = brick; at.joint.HasValue && at.attachedTo != null && Server.bricks.TryGetValue(at.attachedTo, out Brick holder) && depth < 64; at = holder) {
+                depth++;
+            }
+            return depth;
         }
 
         // other vehicles lined up with this one that the placement touches join it
@@ -308,9 +334,11 @@ namespace Brickcraft.Vehicles
             refreshDriver(vehicle);
         }
 
-        // bricks from one vehicle to another (keeping their ids), their placements turned and moved into its cells; the
-        // wires between them go too, the ones to bricks left behind are cut
+        // bricks from one vehicle to another (keeping their ids), their placements turned and moved into its cells (connected
+        // ones held as they were, after what holds them); the wires between them go too, the ones to bricks left behind are cut
         private static void move(List<Brick> bricks, Vehicle from, Vehicle to, int turns, Vector3Int offset) {
+            bricks = new List<Brick>(bricks);
+            bricks.Sort((a, b) => depthOf(a).CompareTo(depthOf(b)));
             HashSet<string> moving = new HashSet<string>();
             foreach (Brick brick in bricks) {
                 moving.Add(brick.id);
@@ -326,8 +354,16 @@ namespace Brickcraft.Vehicles
                 int color = brick.color, state = brick.state;
                 string id = brick.id;
                 BrickPlacement placement = VehicleGrid.Map(brick.placement, turns, offset);
+                BrickJoint? joint = brick.joint;
+                string holder = brick.attachedTo;
                 from.ServerRemove(brick);
-                to.ServerAdd(item, color, placement, id, state);
+                if (joint.HasValue) {
+                    if (holder != null && Server.bricks.TryGetValue(holder, out Brick holding) && holding.vehicle == to) {
+                        to.ServerConnect(item, color, holding, joint.Value, id, state);
+                    }
+                } else {
+                    to.ServerAdd(item, color, placement, id, state);
+                }
             }
             from.ServerCleanWires();
             foreach (VehicleWire wire in wires) {

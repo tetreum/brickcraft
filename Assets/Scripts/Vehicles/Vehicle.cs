@@ -15,6 +15,9 @@ namespace Brickcraft.Vehicles
         public Vector3Int origin;
         public byte rotation;
         public int state;
+        /// <summary>A connected part (see Bricks.BrickJoints): the part holding it, null for parts on the vehicle's cells.</summary>
+        public string holder;
+        public BrickJoint joint;
     }
 
     /// <summary>
@@ -379,15 +382,22 @@ namespace Brickcraft.Vehicles
             }
             parts.Clear();
             foreach (Brick brick in grid.Bricks) {
-                parts.Add(new VehiclePart() {
-                    id = brick.id,
-                    itemId = brick.itemId,
-                    color = brick.color,
-                    origin = brick.placement.origin,
-                    rotation = (byte)brick.placement.rotation,
-                    state = brick.state,
-                });
+                parts.Add(PartOf(brick));
             }
+        }
+
+        /// <summary>A brick of it as its parts list has it.</summary>
+        public static VehiclePart PartOf(Brick brick) {
+            return new VehiclePart() {
+                id = brick.id,
+                itemId = brick.itemId,
+                color = brick.color,
+                origin = brick.placement.origin,
+                rotation = (byte)brick.placement.rotation,
+                state = brick.state,
+                holder = brick.joint.HasValue ? brick.attachedTo : null,
+                joint = brick.joint ?? default(BrickJoint),
+            };
         }
 
         public Brick BrickOf(VehiclePart part) {
@@ -402,6 +412,14 @@ namespace Brickcraft.Vehicles
             // moving here from another vehicle (split or merged): its message may come first
             if (Server.bricks.TryGetValue(part.id, out Brick moving)) {
                 Server.Instance.removeBrick(moving);
+            }
+            if (!string.IsNullOrEmpty(part.holder)) {
+                // connected: where its holder (before it in the list) holds it
+                if (!Server.bricks.TryGetValue(part.holder, out Brick holder) || holder.vehicle != this) {
+                    Debug.LogWarning("A vehicle's connected brick " + part.id + " has no holder " + part.holder);
+                    return null;
+                }
+                return Server.Instance.spawnConnected(item, part.color, holder, part.joint, part.id, part.state);
             }
             BrickPlacement placement = new BrickPlacement(item.brickModel, part.origin, part.rotation);
             return Server.Instance.spawnBrick(item, part.color, placement, part.id, part.state, null, this);
@@ -445,8 +463,32 @@ namespace Brickcraft.Vehicles
             return brick;
         }
 
+        /// <summary>A connected brick (see Bricks.BrickJoints) held by one of its bricks. The caller checks it can.</summary>
+        [Server]
+        public Brick ServerConnect(Item item, int color, Brick holder, BrickJoint joint, string id = null, int state = 0) {
+            VehiclePart part = new VehiclePart() {
+                id = id ?? System.Guid.NewGuid().ToString(),
+                itemId = item.id,
+                color = item.ValidColor(color),
+                origin = holder.placement.origin,
+                rotation = (byte)holder.placement.rotation,
+                state = state,
+                holder = holder.id,
+                joint = joint,
+            };
+            Brick brick = spawn(part);
+            if (brick != null) {
+                parts.Add(part);
+            }
+            return brick;
+        }
+
+        /// <summary>Removes a brick of it, and the connected bricks it holds.</summary>
         [Server]
         public void ServerRemove(Brick brick) {
+            foreach (Brick held in new List<Brick>(Server.connectedTo(brick))) {
+                ServerRemove(held);
+            }
             int index = indexOf(brick.id);
             if (index >= 0) {
                 parts.RemoveAt(index);

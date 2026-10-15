@@ -843,6 +843,88 @@ MonoBehaviour:
     m_Localized: Up/down keys
     m_Metadata:
       m_Items: []
+  - m_Id: 295655617323008
+    m_Localized: Tutorials
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237568
+    m_Localized: Tutorials
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237569
+    m_Localized: Start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237570
+    m_Localized: Close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237571
+    m_Localized: Step {0} of {1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237572
+    m_Localized: All done!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237573
+    m_Localized: Your first car drives! Keep driving, or press Esc and leave the
+      game to go back to the menu.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237574
+    m_Localized: Build your first car
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237575
+    m_Localized: 'Wheels, axles, a technic brick and a seat: put them together step
+      by step, then drive it.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237576
+    m_Localized: 'Pick the wheels (slot 1) and place one on the ground: it starts
+      your car.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237577
+    m_Localized: 'Take an axle (slot 2) and aim at the middle of the wheel: the axle
+      snaps into its hub. Place it.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237578
+    m_Localized: 'Take the technic brick (slot 3) and aim near the free end of the
+      axle: it goes on it by one of its holes. Use a hole at one end (G picks another
+      hole), studs up (R turns it), and place it.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237579
+    m_Localized: 'Take the other axle and push it through the hole at the other end
+      of the technic brick. Z and X slide it along: leave it centred.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237580
+    m_Localized: 'Put the other three wheels (slot 1) on the free ends of the axles:
+      aim at an axle''s end.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237581
+    m_Localized: Place the 1x8 brick (slot 4) on top of the technic brick.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237582
+    m_Localized: 'Place the seat (slot 5) on the brick, facing along it: the way
+      the car will go (R turns it).'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237583
+    m_Localized: Click the seat to sit on it.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237584
+    m_Localized: Drive! W and S go forward and back, A and D steer, Space brakes.
+      Drive 15 metres.
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

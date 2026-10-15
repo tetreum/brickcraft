@@ -18,14 +18,14 @@ namespace Brickcraft.World
             get { return Path.Combine(Application.persistentDataPath, "saves"); }
         }
 
-        /// <summary>The saved worlds (just their headers), the last played first.</summary>
+        /// <summary>The saved worlds (just their headers), the last played first; not the tutorials' (see Tutorials).</summary>
         public static List<WorldStorage> List() {
             List<WorldStorage> worlds = new List<WorldStorage>();
 
             if (Directory.Exists(Folder)) {
                 foreach (string folder in Directory.GetDirectories(Folder)) {
                     WorldStorage world = WorldStorage.ReadInfo(folder);
-                    if (world != null) {
+                    if (world != null && string.IsNullOrEmpty(world.Tutorial)) {
                         worlds.Add(world);
                     }
                 }
@@ -46,6 +46,25 @@ namespace Brickcraft.World
             string saveName = freeFolderName(name);
             WorldStorage.Create(Path.Combine(Folder, saveName), name, seed, difficulty, pvp, mods, dayLength);
             return saveName;
+        }
+
+        /// <summary>
+        /// A tutorial's world, new (the one it had before goes): flat, peaceful, without NPCs, in a folder of its own.
+        /// Returns its save name.
+        /// </summary>
+        public static string CreateTutorial(string tutorialId, string name) {
+            string saveName = TutorialSaveName(tutorialId);
+            string folder = Path.Combine(Folder, saveName);
+            if (Directory.Exists(folder)) {
+                Directory.Delete(folder, true);
+            }
+            WorldStorage.Create(folder, name, 1, Difficulty.Peaceful, false, flat: true, tutorial: tutorialId, npcsOn: false);
+            return saveName;
+        }
+
+        /// <summary>The folder of a tutorial's world.</summary>
+        public static string TutorialSaveName(string tutorialId) {
+            return "tutorial-" + tutorialId;
         }
 
         /// <summary>The mods of the world that aren't installed.</summary>

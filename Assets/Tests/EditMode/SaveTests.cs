@@ -11,7 +11,7 @@ namespace Brickcraft.Tests
     public class SaveTests
     {
         private ChunkChanges changes;
-        private SavedBrick brick, door, axle;
+        private SavedBrick brick, door, axle, onStuds;
         private ushort placed, dug;
 
         [SetUp]
@@ -36,6 +36,11 @@ namespace Brickcraft.Tests
                 joint = new Bricks.BrickJoint() { holderConnector = 2, connector = 1, slide = -3, spin = 3, flip = true },
             };
             changes.bricks[axle.id] = axle;
+            onStuds = new SavedBrick() {
+                id = Guid.NewGuid(), itemId = "brick_2x2", origin = brick.origin, color = 4, attachedTo = axle.id,
+                joint = Bricks.BrickJoint.OnStuds(new Vector3Int(1, 3, -2), 2),
+            };
+            changes.bricks[onStuds.id] = onStuds;
             changes.storage[brick.id] = new List<InventoryItem>() { new InventoryItem() { slot = 2, itemId = "pickaxe", color = 72, quantity = 1, health = 12 } };
             changes.npcs.Add(new SavedNpc() { type = "wolf", x = 1.5, y = 70, z = -2.25, yaw = 90, health = 8, owner = 2, ownerName = "Me", pack = Guid.NewGuid() });
             changes.drops.Add(new SavedDrop() { itemId = "stone", color = 72, quantity = 3, x = 4, y = 71, z = 5, lifetime = 120 });
@@ -45,6 +50,8 @@ namespace Brickcraft.Tests
                     new SavedVehiclePart() { id = Guid.NewGuid(), itemId = "brick_2x2", color = 4, origin = Vector3Int.zero, rotation = 1 },
                     new SavedVehiclePart() { id = Guid.NewGuid(), itemId = "seat", color = 72, origin = new Vector3Int(-2, 3, 1), state = 2,
                         holder = Guid.NewGuid(), joint = new Bricks.BrickJoint() { holderConnector = 1, connector = 0, slide = 2, spin = 1 } },
+                    new SavedVehiclePart() { id = Guid.NewGuid(), itemId = "brick_2x2", color = 1, origin = Vector3Int.zero,
+                        holder = Guid.NewGuid(), joint = Bricks.BrickJoint.OnStuds(new Vector3Int(0, 3, 5), 1) },
                     new SavedVehiclePart() { id = Guid.NewGuid(), itemId = "no_such_item", origin = new Vector3Int(0, 6, 0) },
                 },
                 wires = new List<SavedWire>() {
@@ -70,6 +77,7 @@ namespace Brickcraft.Tests
             CollectionAssert.AreEquivalent(changes.bricks, loaded.bricks);
 
             Assert.AreEqual(axle.joint, loaded.bricks[axle.id].joint, "a connected brick keeps how it's held");
+            Assert.AreEqual(onStuds.joint, loaded.bricks[onStuds.id].joint, "and one on a connected brick's studs, where it is on them");
             Assert.IsFalse(loaded.bricks[brick.id].joint.HasValue);
             Assert.AreEqual(1, loaded.storage.Count);
             CollectionAssert.AreEqual(changes.storage[brick.id], loaded.storage[brick.id]);
@@ -81,7 +89,7 @@ namespace Brickcraft.Tests
             Assert.AreEqual(vehicle.id, back.id);
             Assert.AreEqual(new[] { vehicle.x, vehicle.y, vehicle.z }, new[] { back.x, back.y, back.z });
             Assert.AreEqual(vehicle.rotation, back.rotation);
-            CollectionAssert.AreEqual(vehicle.parts.GetRange(0, 2), back.parts, "the parts of items that aren't there are lost");
+            CollectionAssert.AreEqual(vehicle.parts.GetRange(0, 3), back.parts, "the parts of items that aren't there are lost");
             CollectionAssert.AreEqual(vehicle.wires, back.wires);
         }
 
@@ -91,7 +99,7 @@ namespace Brickcraft.Tests
             Assert.AreEqual(1, pages.Count);
 
             ChunkChanges loaded = ChunkChangesSerializer.Deserialize(pages[0]);
-            Assert.AreEqual(3, loaded.bricks.Count);
+            Assert.AreEqual(4, loaded.bricks.Count);
             Assert.AreEqual(axle.joint, loaded.bricks[axle.id].joint, "players get how connected bricks are held");
             Assert.AreEqual(0, loaded.npcs.Count);
             Assert.AreEqual(0, loaded.storage.Count);
@@ -120,6 +128,31 @@ namespace Brickcraft.Tests
         public void EmptyChangesAreEmpty() {
             Assert.IsTrue(new ChunkChanges().IsEmpty);
             Assert.IsTrue(ChunkChangesSerializer.Deserialize(ChunkChangesSerializer.Serialize(new ChunkChanges())).IsEmpty);
+        }
+
+        [Test]
+        public void OldWorldsAreUpgradedNeitherFlatNorTutorials() {
+            string folder = Path.Combine(Path.GetTempPath(), "brickcraft-test-" + Guid.NewGuid().ToString("N"));
+            try {
+                WorldStorage.Create(folder, "Old", 5, Difficulty.Normal, true, flat: true, tutorial: "x");
+                // as format 15 wrote it: without its last fields (a bool, and a string of one character)
+                string path = Path.Combine(folder, WorldStorage.HeaderFile);
+                byte[] header = File.ReadAllBytes(path);
+                byte[] old = new byte[header.Length - 3];
+                Array.Copy(header, old, old.Length);
+                old[4] = 15;
+                old[5] = 0;
+                File.WriteAllBytes(path, old);
+
+                new Brickcraft.World.Migrations.Migration15To16().Migrate(folder);
+                WorldStorage info = WorldStorage.ReadInfo(folder);
+                Assert.AreEqual(WorldStorage.FormatVersion, info.Format);
+                Assert.AreEqual("Old", info.Name, "the rest as it was");
+                Assert.IsFalse(info.Flat);
+                Assert.AreEqual("", info.Tutorial);
+            } finally {
+                Directory.Delete(folder, true);
+            }
         }
 
         [Test]

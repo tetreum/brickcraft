@@ -330,6 +330,12 @@ namespace Brickcraft.Network
             inventory.ServerLoad(record.Id, Database.LoadInventory(record.Id));
 
             if (record.TimesJoined == 1 && inventory.items.Count == 0) {
+                // a tutorial's world: what it needs instead
+                Tutorials.Tutorial tutorial = WorldNetwork.Storage != null ? Tutorials.Tutorial.Find(WorldNetwork.Storage.Tutorial) : null;
+                if (tutorial != null) {
+                    tutorial.ServerGive(inventory);
+                    return;
+                }
                 foreach (StarterItem starter in starterItems) {
                     inventory.ServerAdd(starter.itemId, Server.items.TryGetValue(starter.itemId, out Item item) ? item.color : BrickColor.None, starter.quantity);
                 }

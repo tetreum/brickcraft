@@ -33,6 +33,9 @@ namespace Brickcraft.Network
 
         public static long Seed { get; private set; }
 
+        /// <summary>The terrain is flat ground, not generated from the seed (see WorldStorage.Flat).</summary>
+        public static bool Flat { get; private set; }
+
         /// <summary>How hard the world is (saved with it, see WorldStorage), on the server and its clients.</summary>
         public static Difficulty Difficulty { get; private set; }
 
@@ -98,6 +101,7 @@ namespace Brickcraft.Network
         public static void StartServer(WorldStorage storage, long unsavedSeed, Vector3 spawn) {
             Storage = storage;
             Seed = storage != null ? storage.Seed : unsavedSeed;
+            Flat = storage != null && storage.Flat;
             Difficulty = storage != null ? storage.Difficulty : Difficulty.Normal;
             serverChanges = storage != null ? storage.Changes : new WorldChanges();
             interests.Clear();
@@ -114,7 +118,7 @@ namespace Brickcraft.Network
 
             WorldBehaviour world = WorldBehaviour.Instance;
             if (world != null) {
-                world.Initialize(Seed, serverChanges, storage != null ? storage.EnsureLoaded : (Action<Vector2Int>)null);
+                world.Initialize(Seed, Flat, serverChanges, storage != null ? storage.EnsureLoaded : (Action<Vector2Int>)null);
                 world.SpawnChunk = spawnChunk;
                 world.ChunkGenerated += onServerChunkGenerated;
                 world.ChunkUnloaded += onServerChunkUnloaded;
@@ -611,6 +615,7 @@ namespace Brickcraft.Network
             PlayerSleep.SendStatus(conn);
             conn.Send(new WorldInfoMessage() {
                 seed = Seed,
+                flat = Flat,
                 difficulty = (byte)Difficulty,
                 spawnChunk = interest.spawnChunk,
                 viewDistance = interest.viewDistance,
@@ -801,6 +806,7 @@ namespace Brickcraft.Network
             hasWorldInfo = true;
             ServerMaxViewDistance = message.maxViewDistance > 0 ? message.maxViewDistance : message.viewDistance;
             Difficulty = (Difficulty)message.difficulty;
+            Flat = message.flat;
 
             WorldBehaviour world = WorldBehaviour.Instance;
             if (world == null) {
@@ -809,7 +815,7 @@ namespace Brickcraft.Network
             world.ViewDistance = message.viewDistance;
             // the host's world was set up by the server
             if (!NetworkServer.active) {
-                world.Initialize(message.seed, clientChanges);
+                world.Initialize(message.seed, message.flat, clientChanges);
                 world.ChunkGenerated += onClientChunkGenerated;
                 world.ChunkUnloaded += onClientChunkUnloaded;
             }

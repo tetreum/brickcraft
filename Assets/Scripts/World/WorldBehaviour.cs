@@ -108,14 +108,14 @@ namespace Brickcraft.World
 		}
 
 		/// <summary>Sets up the world, chunks are then loaded with <see cref="RequestChunk"/>.</summary>
-		public void Initialize(long seed, WorldChanges worldChanges, Action<Vector2Int> prepare = null)
+		public void Initialize(long seed, bool flat, WorldChanges worldChanges, Action<Vector2Int> prepare = null)
 		{
 			Seed = seed;
 			changes = worldChanges;
 			prepareChunk = prepare;
 			generators = new ThreadLocal<CustomChunkGenerator>(() => {
 				CustomChunkGenerator generator = new CustomChunkGenerator();
-				generator.Init(seed);
+				generator.Init(seed, flat);
 				return generator;
 			});
 

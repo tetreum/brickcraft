@@ -61,6 +61,7 @@ public class Menu : MonoBehaviour {
 	private void onLocalPlayerStarted(LocalPlayerStartedEvent e) {
 		showPanel("PlayerPanel");
 		KeyHints.Show(transform);
+		TutorialGuide.Show(transform);
 	}
 
 	private void onWorldLoadingStarted(WorldLoadingStartedEvent e) {

@@ -33,16 +33,21 @@ namespace Brickcraft.World.CustomGenerator
         private FastRandom _FastRandom;
 
         private long _Seed;
+        private bool _Flat;
         Random r = new Random();
+
+        /// <summary>A flat world's ground: its grass is this high, dirt under it, then stone and bedrock.</summary>
+        public const int FlatGrassHeight = 64;
 
         public enum BIOME_TYPE : byte
         {
             PLAINS = 1, DESERT, MOUNTAINS, SNOW = 12 
         }
 
-        public void Init(long seed)
+        public void Init(long seed, bool flat = false)
         {
             _Seed = seed;
+            _Flat = flat;
         }
 
         private void InitGen()
@@ -64,6 +69,11 @@ namespace Brickcraft.World.CustomGenerator
 
         public Chunk GenerateChunk(Chunk chunk, int x, int z)
         {
+            if (_Flat) {
+                GenerateFlat(chunk);
+                chunk.RecalculateHeight();
+                return chunk;
+            }
 
             InitGen();
 
@@ -82,6 +92,20 @@ namespace Brickcraft.World.CustomGenerator
             chunk.RecalculateHeight();
 
             return chunk;
+        }
+
+        // grass everywhere at the same height, nothing on it
+        private static void GenerateFlat(Chunk c)
+        {
+            for (int bx = 0; bx < 16; bx++) {
+                for (int bz = 0; bz < 16; bz++) {
+                    c.SetType(bx, 0, bz, BlockType.Bedrock, false);
+                    for (int by = 1; by < FlatGrassHeight; by++) {
+                        c.SetType(bx, by, bz, by < FlatGrassHeight - 3 ? BlockType.Stone : BlockType.Dirt, false);
+                    }
+                    c.SetType(bx, FlatGrassHeight, bz, BlockType.Grass, false);
+                }
+            }
         }
 
         private void GenerateTerrain(Chunk c, int x, int z)

@@ -37,6 +37,9 @@ namespace Brickcraft.Vehicles
         /// <summary>Every vehicle of this peer.</summary>
         public static readonly HashSet<Vehicle> All = new HashSet<Vehicle>();
 
+        /// <summary>A vehicle came or went, or a brick went on or off one (on every peer).</summary>
+        public static event System.Action AnyChanged;
+
         /// <summary>Identifies it in saves.</summary>
         [SyncVar] public string vehicleId;
 
@@ -80,7 +83,10 @@ namespace Brickcraft.Vehicles
             Drive = new VehicleDrive(this);
             Visuals = new VehicleVisuals(this);
             lastPosition = transform.position;
-            grid.Changed += () => physicsDirty = true;
+            grid.Changed += () => {
+                physicsDirty = true;
+                AnyChanged?.Invoke();
+            };
             wires.OnChange += (op, index, old) => physicsDirty = true;
             All.Add(this);
         }
@@ -342,6 +348,7 @@ namespace Brickcraft.Vehicles
 
         private void OnDestroy() {
             All.Remove(this);
+            AnyChanged?.Invoke();
             // its bricks go with it (none on the server once moved to another vehicle)
             if (Server.Instance != null) {
                 foreach (Brick brick in new List<Brick>(grid.Bricks)) {

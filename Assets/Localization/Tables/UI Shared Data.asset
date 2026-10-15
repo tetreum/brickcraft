@@ -819,6 +819,78 @@ MonoBehaviour:
     m_Key: wiring.source.updown
     m_Metadata:
       m_Items: []
+  - m_Id: 295655617323008
+    m_Key: main.tutorials
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237568
+    m_Key: tutorials.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237569
+    m_Key: tutorials.start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237570
+    m_Key: tutorials.close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237571
+    m_Key: tutorial.step
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237572
+    m_Key: tutorial.all_done
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237573
+    m_Key: tutorial.done
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237574
+    m_Key: tutorial.first_car.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237575
+    m_Key: tutorial.first_car.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237576
+    m_Key: tutorial.first_car.wheel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237577
+    m_Key: tutorial.first_car.axle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237578
+    m_Key: tutorial.first_car.beam
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237579
+    m_Key: tutorial.first_car.second_axle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237580
+    m_Key: tutorial.first_car.wheels
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237581
+    m_Key: tutorial.first_car.top
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237582
+    m_Key: tutorial.first_car.seat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237583
+    m_Key: tutorial.first_car.sit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237584
+    m_Key: tutorial.first_car.drive
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

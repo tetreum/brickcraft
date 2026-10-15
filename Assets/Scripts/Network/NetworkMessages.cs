@@ -28,6 +28,8 @@ namespace Brickcraft.Network
     public struct WorldInfoMessage : NetworkMessage
     {
         public long seed;
+        /// <summary>Flat ground instead of the seed's terrain, see WorldStorage.Flat.</summary>
+        public bool flat;
         public byte difficulty;
         public Vector2Int spawnChunk;
 

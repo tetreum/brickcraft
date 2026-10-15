@@ -840,6 +840,88 @@ MonoBehaviour:
     m_Localized: Teclas subir/bajar
     m_Metadata:
       m_Items: []
+  - m_Id: 295655617323008
+    m_Localized: Tutoriales
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237568
+    m_Localized: Tutoriales
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237569
+    m_Localized: Empezar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237570
+    m_Localized: Cerrar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237571
+    m_Localized: Paso {0} de {1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237572
+    m_Localized: "\xA1Hecho!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237573
+    m_Localized: "\xA1Tu primer coche funciona! Sigue conduciendo, o pulsa Esc y
+      sal de la partida para volver al men\xFA."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237574
+    m_Localized: Construye tu primer coche
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237575
+    m_Localized: "Ruedas, ejes, un ladrillo technic y un asiento: m\xF3ntalos paso
+      a paso y conduce."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237576
+    m_Localized: "Coge las ruedas (casilla 1) y pon una en el suelo: as\xED empieza
+      tu coche."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237577
+    m_Localized: "Coge un eje (casilla 2) y apunta al centro de la rueda: el eje
+      encaja en su buje. Col\xF3calo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237578
+    m_Localized: "Coge el ladrillo technic (casilla 3) y apunta cerca del extremo
+      libre del eje: entra por uno de sus agujeros. Usa un agujero de un extremo
+      (G elige otro agujero), con los tetones hacia arriba (R lo gira), y col\xF3calo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237579
+    m_Localized: "Coge el otro eje y p\xE1salo por el agujero del otro extremo del
+      ladrillo technic. Z y X lo deslizan: d\xE9jalo centrado."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237580
+    m_Localized: 'Pon las otras tres ruedas (casilla 1) en los extremos libres de
+      los ejes: apunta al extremo de un eje.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237581
+    m_Localized: Pon el ladrillo 1x8 (casilla 4) encima del ladrillo technic.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237582
+    m_Localized: "Pon el asiento (casilla 5) sobre el ladrillo, mirando a lo largo
+      de \xE9l: hacia donde ir\xE1 el coche (R lo gira)."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237583
+    m_Localized: Haz clic en el asiento para sentarte.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 295655680237584
+    m_Localized: "\xA1Conduce! W y S van adelante y atr\xE1s, A y D giran, Espacio
+      frena. Recorre 15 metros."
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

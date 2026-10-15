@@ -346,10 +346,10 @@ namespace Brickcraft.Tests
             yield return null;
             player.selectFastSlot(5);
             yield return null; // destroyed rows go at the end of the frame
-            Assert.AreEqual(1, rows(), "a brick: R");
+            Assert.AreEqual(2, rows(), "a brick: R and the corner");
             player.selectFastSlot(6);
             yield return null;
-            Assert.AreEqual(4, rows(), "an axle: R, T, G, and Z and X sliding it");
+            Assert.AreEqual(5, rows(), "an axle: R, the corner, T, G, and Z and X sliding it");
             player.freeze(Player.FreezeReason.ViewingInventory);
             Assert.IsFalse(hints.gameObject.activeSelf, "hidden behind a panel");
             player.unFreeze(Player.FreezeReason.ViewingInventory);
@@ -358,6 +358,7 @@ namespace Brickcraft.Tests
             Assert.IsFalse(hints.gameObject.activeSelf, "nothing in hand, looking at no brick: nothing to show");
 
             // nothing in hand, looking at a brick: what it is
+            yield return TestGame.StandStill();
             Item technic = item("part_3700");
             Transform eye = Camera.main.transform;
             Vector3Int cell = BrickGrid.WorldToCell(eye.position + player.transform.forward * 2.5f + Vector3.down * 0.2f);

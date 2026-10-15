@@ -215,6 +215,10 @@ MonoBehaviour:
     m_Key: controls.slide_along
     m_Metadata:
       m_Items: []
+  - m_Id: 286452521623552
+    m_Key: controls.corner
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

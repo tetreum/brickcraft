@@ -218,6 +218,10 @@ MonoBehaviour:
     m_Localized: Deslizar (technic)
     m_Metadata:
       m_Items: []
+  - m_Id: 286452521623552
+    m_Localized: Colocar por una esquina
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

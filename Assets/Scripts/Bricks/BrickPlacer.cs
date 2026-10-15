@@ -25,6 +25,9 @@ namespace Brickcraft.Bricks
     /// further back or forward, half a stud a time: a long axle through a short hole), R turning it around it a quarter
     /// turn at a time, T putting it the other way round, G picking another of its connectors that fits. Against a
     /// connected brick (a beam on an axle) it goes on that brick's own grid, held by it.
+    ///
+    /// The middle button puts it by one of its corners at the crosshair instead of centred on it (going round them,
+    /// then back to the middle): next to something in the way, it reaches away from it. Placing goes back to the middle.
     /// </summary>
     public class BrickPlacer : MonoBehaviour
     {
@@ -41,6 +44,9 @@ namespace Brickcraft.Bricks
         // connected placement: the other way round, and which of the part's fitting connectors
         private bool flip;
         private int connectorChoice;
+        // 0: centred on the crosshair; 1 to 4: by a corner, reaching +x+z, -x+z, -x-z, +x-z (its grid's)
+        private int corner;
+        private const int Corners = 4;
         // half studs slid with the keys, on top of where it's looked at; for the connection it was slid on
         private int slideOffset;
         private string slidOn;
@@ -89,6 +95,9 @@ namespace Brickcraft.Bricks
             if (GameInput.GetButtonDown(GameInput.NextConnector)) {
                 connectorChoice++;
             }
+            if (GameInput.GetButtonDown(GameInput.Corner)) {
+                corner = (corner + 1) % (Corners + 1);
+            }
 
             Brick looked = hasHit ? Server.findBrick(hit.collider) : null;
             if (looked != null && model.connectors.Length > 0 && tickConnected(hit, selectedItem, model, looked)) {
@@ -119,6 +128,7 @@ namespace Brickcraft.Bricks
                 } else {
                     place(selectedItem, target.Value);
                 }
+                corner = 0;
             }
         }
 
@@ -165,6 +175,7 @@ namespace Brickcraft.Bricks
 
             if (isValid && GameInput.GetButtonDown(GameInput.Place)) {
                 Player.Instance.network.CmdConnectBrick(selectedItem.slot, holder.id, joint.holderConnector, joint.connector, joint.slide, joint.spin, joint.flip);
+                corner = 0;
             }
             return true;
         }
@@ -187,6 +198,7 @@ namespace Brickcraft.Bricks
 
             if (isValid && GameInput.GetButtonDown(GameInput.Place)) {
                 Player.Instance.network.CmdPlaceOnStuds(selectedItem.slot, holder.id, placement.origin, placement.rotation);
+                corner = 0;
             }
         }
 
@@ -202,6 +214,7 @@ namespace Brickcraft.Bricks
 
             if (isValid && GameInput.GetButtonDown(GameInput.Place)) {
                 Player.Instance.network.CmdPlaceVehicleBrick(selectedItem.slot, vehicle.netIdentity, placement.origin, (byte)placement.rotation);
+                corner = 0;
             }
         }
 
@@ -225,10 +238,21 @@ namespace Brickcraft.Bricks
                     origin.y = adjacent.y;
                 } else {
                     // any stud: a vehicle's bricks have no blocks to line up with
-                    origin[axis] = Mathf.RoundToInt(cells[axis] - size[axis] / 2f);
+                    origin[axis] = startAlong(axis, cells[axis], size[axis]);
                 }
             }
             return new BrickPlacement(model, origin, rotation);
+        }
+
+        // its first cell along an axis of the face looked at (x or z; point in cells): centred on the crosshair, or by a
+        // corner, from the cell looked at one way or the other
+        private int startAlong(int axis, float point, int size) {
+            if (corner == 0) {
+                return Mathf.RoundToInt(point - size / 2f);
+            }
+            int looked = Mathf.FloorToInt(point);
+            bool back = axis == 0 ? corner == 2 || corner == 3 : corner == 3 || corner == 4;
+            return back ? looked - size + 1 : looked;
         }
 
         private static Vector3 toCells(Vector3 local) {
@@ -286,6 +310,8 @@ namespace Brickcraft.Bricks
                     origin.y = snapToBlocks && size.y % BrickGrid.PlatesPerBlock == 0
                         ? BrickGrid.FloorDiv(adjacent.y, BrickGrid.PlatesPerBlock) * BrickGrid.PlatesPerBlock
                         : adjacent.y;
+                } else if (corner != 0) {
+                    origin[axis] = originCell[axis] + startAlong(axis, gridPoint[axis], size[axis]);
                 } else {
                     // center the brick on the crosshair
                     float start = gridPoint[axis] - size[axis] / 2f;

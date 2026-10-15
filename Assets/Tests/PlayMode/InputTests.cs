@@ -74,17 +74,8 @@ namespace Brickcraft.Tests
             }
         }
 
-        // the player still (landed after spawning), so what's placed in front stays in front
         private static IEnumerator standStill() {
-            Vector3 last = player.transform.position;
-            int still = 0;
-            float end = Time.realtimeSinceStartup + 10;
-            while (still < 10) {
-                Assert.Less(Time.realtimeSinceStartup, end, "the player didn't stand still in 10 seconds");
-                yield return null;
-                still = Vector3.Distance(last, player.transform.position) < 0.001f ? still + 1 : 0;
-                last = player.transform.position;
-            }
+            return TestGame.StandStill();
         }
 
         // what the crosshair is on: a brick, or a terrain mesh
@@ -104,6 +95,43 @@ namespace Brickcraft.Tests
             Brick brick = WorldNetwork.ServerPlaceBrick(brickItem, color, placement, Placer.Now(0));
             yield return TestGame.WaitUntil(() => underCrosshair() != null && Server.findBrick(underCrosshair()) == brick, 5, "the brick under the crosshair");
             placed(brick);
+        }
+
+        // where the brick in hand would go now (the placer's preview on the grid)
+        private static BrickPlacement? previewed() {
+            BrickPlacer placer = Object.FindObjectOfType<BrickPlacer>();
+            return (BrickPlacement?)typeof(BrickPlacer).GetField("target", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(placer);
+        }
+
+        [UnityTest]
+        public IEnumerator TheMiddleButtonPutsABrickByItsCornersUntilItsPlaced() {
+            yield return placeInFront("brick_2x2", 1, placed => { });
+            hold(5, "brick_2x2", 3);
+            yield return frames(3);
+            BrickPlacement? centred = previewed();
+            Assert.IsTrue(centred.HasValue, "a preview");
+
+            input.PressAndRelease(mouse.middleButton);
+            yield return frames(2);
+            BrickPlacement? cornered = previewed();
+            Assert.IsTrue(cornered.HasValue);
+            Assert.AreNotEqual(centred.Value.origin, cornered.Value.origin, "by a corner, not centred");
+            for (int press = 0; press < 4; press++) {
+                input.PressAndRelease(mouse.middleButton);
+                yield return frames(2);
+            }
+            Assert.AreEqual(centred.Value.origin, previewed().Value.origin, "round the 4 corners, then centred again");
+
+            input.PressAndRelease(mouse.middleButton);
+            yield return frames(2);
+            Assert.AreEqual(cornered.Value.origin, previewed().Value.origin);
+            input.PressAndRelease(mouse.rightButton); // placed
+            yield return frames(5);
+            Assert.AreEqual(2, quantityIn(5), "placed");
+            Assert.IsNotNull(BrickGrid.GetBrickAt(cornered.Value.origin), "where it was by its corner");
+            BrickPlacer placer = Object.FindObjectOfType<BrickPlacer>();
+            object corner = typeof(BrickPlacer).GetField("corner", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(placer);
+            Assert.AreEqual(0, corner, "centred again for the next one");
         }
 
         private static int quantityOf(int slot) {

@@ -118,6 +118,19 @@ namespace Brickcraft.Tests
             }
         }
 
+        /// <summary>Waits until the player stands still (landed after spawning), so what's in front stays in front.</summary>
+        public static IEnumerator StandStill() {
+            Vector3 last = Brickcraft.Player.Instance.transform.position;
+            int still = 0;
+            float end = Time.realtimeSinceStartup + 10;
+            while (still < 10) {
+                Assert.Less(Time.realtimeSinceStartup, end, "the player didn't stand still in 10 seconds");
+                yield return null;
+                still = Vector3.Distance(last, Brickcraft.Player.Instance.transform.position) < 0.001f ? still + 1 : 0;
+                last = Brickcraft.Player.Instance.transform.position;
+            }
+        }
+
         public static IEnumerator Wait(float seconds) {
             yield return new WaitForSeconds(seconds);
         }

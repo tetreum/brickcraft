@@ -218,6 +218,10 @@ MonoBehaviour:
     m_Localized: Slide along (technic)
     m_Metadata:
       m_Items: []
+  - m_Id: 286452521623552
+    m_Localized: Place by a corner
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

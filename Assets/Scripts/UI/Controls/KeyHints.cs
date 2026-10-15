@@ -6,7 +6,8 @@ using UnityEngine.UI;
 namespace Brickcraft.UI
 {
     /// <summary>
-    /// At the bottom right while playing: the keys that do something with what's in hand (R turns a brick; a part that
+    /// At the bottom right while playing: the keys that do something with what's in hand (R turns a brick, the middle
+    /// button puts it by a corner; a part that
     /// connects the technic way, see Bricks.BrickJoints, also has T, the other way round, and G, another of its
     /// connectors), each with the player's own key (see GameInput) and what it does, in their language. With nothing in
     /// hand, the brick looked at instead: its name and its item's id (what /additem takes). Hidden when there's nothing
@@ -87,6 +88,7 @@ namespace Brickcraft.UI
             BrickModel model = held != null && held.item.type == Item.Type.Brick ? held.item.brickModel : null;
             if (model != null && !model.IsAttachment) {
                 buttons.Add(GameInput.Rotate);
+                buttons.Add(GameInput.Corner);
                 if (model.connectors.Length > 0) {
                     buttons.Add(GameInput.Flip);
                     buttons.Add(GameInput.NextConnector);

@@ -6,10 +6,11 @@ using UnityEngine.UI;
 namespace Brickcraft.UI
 {
     /// <summary>
-    /// The keys that do something with what's in hand, at the bottom right while playing: R turns a brick; a part that
-    /// connects the technic way (see Bricks.BrickJoints) also has T (the other way round) and G (another of its
-    /// connectors). Each with the player's own key (see GameInput) and what it does, in their language; hidden while
-    /// nothing in hand has any, or a panel is open. Made the first time the local player starts.
+    /// At the bottom right while playing: the keys that do something with what's in hand (R turns a brick; a part that
+    /// connects the technic way, see Bricks.BrickJoints, also has T, the other way round, and G, another of its
+    /// connectors), each with the player's own key (see GameInput) and what it does, in their language. With nothing in
+    /// hand, the brick looked at instead: its name and its item's id (what /additem takes). Hidden when there's nothing
+    /// to show, or a panel is open. Made the first time the local player starts.
     /// </summary>
     public class KeyHints : MonoBehaviour
     {
@@ -63,10 +64,12 @@ namespace Brickcraft.UI
             }
             if (player != null) {
                 player.FrozenChanged -= refresh;
+                player.LookedBrickChanged -= refresh;
             }
             player = now;
             if (player != null) {
                 player.FrozenChanged += refresh;
+                player.LookedBrickChanged += refresh;
             }
         }
 
@@ -89,6 +92,11 @@ namespace Brickcraft.UI
                     buttons.Add(GameInput.NextConnector);
                 }
             }
+            // nothing in hand: the brick looked at
+            Brick looked = player != null && !player.isFrozen && held == null ? player.LookedBrick : null;
+            if (looked != null && Server.items.ContainsKey(looked.itemId)) {
+                buttons.Add(PiecePrefix + looked.itemId);
+            }
             bool visible = buttons.Count > 0;
             if (buttons.Count == shown.Count && buttons.TrueForAll(shown.Contains) && gameObject.activeSelf == visible) {
                 return;
@@ -99,9 +107,33 @@ namespace Brickcraft.UI
                 Destroy(row.gameObject);
             }
             foreach (string button in buttons) {
-                addRow(button);
+                if (button.StartsWith(PiecePrefix)) {
+                    addPiece(Server.items[button.Substring(PiecePrefix.Length)]);
+                } else {
+                    addRow(button);
+                }
             }
             gameObject.SetActive(visible);
+        }
+
+        // what's shown for a piece looked at, among the buttons' names
+        private const string PiecePrefix = "piece:";
+
+        // its name, its item's id under it
+        private void addPiece(Item item) {
+            Font font = CodeUi.Font;
+            GameObject piece = new GameObject("Piece", typeof(RectTransform), typeof(VerticalLayoutGroup));
+            piece.transform.SetParent(rows, false);
+            VerticalLayoutGroup layout = piece.GetComponent<VerticalLayoutGroup>();
+            layout.spacing = 1;
+            layout.childAlignment = TextAnchor.MiddleRight;
+            layout.childControlWidth = layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+            Text name = CodeUi.Label(piece.transform, font, item.DisplayName, 15, FontStyle.Bold, Color.white);
+            name.alignment = TextAnchor.MiddleRight;
+            Text id = CodeUi.Label(piece.transform, font, item.id, 13, FontStyle.Normal, CodeUi.HintColor);
+            id.alignment = TextAnchor.MiddleRight;
         }
 
         private void addRow(string button) {

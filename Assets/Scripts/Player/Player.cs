@@ -405,7 +405,23 @@ namespace Brickcraft
             }
         }
 
+        /// <summary>The brick it's looking at (within reach), null if none.</summary>
+        public Brick LookedBrick {
+            get { return lookedBrick; }
+        }
+
+        /// <summary>It looks at another brick now (or at none).</summary>
+        public event System.Action LookedBrickChanged;
+
         void frontRaycast () {
+            Brick before = lookedBrick;
+            raycastFront();
+            if (before != lookedBrick) {
+                LookedBrickChanged?.Invoke();
+            }
+        }
+
+        void raycastFront () {
             lookedBrick = null;
             lookedBlock = null;
             lookedHealth = null;

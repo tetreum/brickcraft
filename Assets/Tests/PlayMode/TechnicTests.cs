@@ -5,6 +5,7 @@ using Brickcraft.World;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 namespace Brickcraft.Tests
 {
@@ -307,7 +308,24 @@ namespace Brickcraft.Tests
             player.unFreeze(Player.FreezeReason.ViewingInventory);
             Assert.IsTrue(hints.gameObject.activeSelf);
             player.selectFastSlot(7);
-            Assert.IsFalse(hints.gameObject.activeSelf, "nothing in hand: nothing to show");
+            Assert.IsFalse(hints.gameObject.activeSelf, "nothing in hand, looking at no brick: nothing to show");
+
+            // nothing in hand, looking at a brick: what it is
+            Item technic = item("part_3700");
+            Transform eye = Camera.main.transform;
+            Vector3Int cell = BrickGrid.WorldToCell(eye.position + player.transform.forward * 2.5f + Vector3.down * 0.2f);
+            Brick looked = WorldNetwork.ServerPlaceBrick(technic, 1, new BrickPlacement(technic.brickModel, cell), Placer.Now(0));
+            Physics.SyncTransforms();
+            Vector3 toward = (looked.WorldBounds.center - eye.position).normalized;
+            player.transform.rotation = Quaternion.LookRotation(new Vector3(toward.x, 0, toward.z).normalized);
+            eye.localRotation = Quaternion.Euler(-Mathf.Asin(toward.y) * Mathf.Rad2Deg, 0, 0);
+            player.firstPersonController.ResetLook();
+            yield return TestGame.WaitUntil(() => player.LookedBrick == looked, 5, "looking at it");
+            yield return null;
+            Assert.IsTrue(hints.gameObject.activeSelf);
+            Text[] texts = hints.GetComponentsInChildren<Text>();
+            Assert.IsTrue(System.Array.Exists(texts, t => t.text == technic.DisplayName), "its name");
+            Assert.IsTrue(System.Array.Exists(texts, t => t.text == "part_3700"), "its item's id");
         }
 
         [UnityTest]

@@ -302,7 +302,7 @@ namespace Brickcraft.Tests
             Assert.AreEqual(1, rows(), "a brick: R");
             player.selectFastSlot(6);
             yield return null;
-            Assert.AreEqual(3, rows(), "an axle: R, T and G");
+            Assert.AreEqual(4, rows(), "an axle: R, T, G, and Z and X sliding it");
             player.freeze(Player.FreezeReason.ViewingInventory);
             Assert.IsFalse(hints.gameObject.activeSelf, "hidden behind a panel");
             player.unFreeze(Player.FreezeReason.ViewingInventory);

@@ -203,6 +203,18 @@ MonoBehaviour:
     m_Key: controls.next_connector
     m_Metadata:
       m_Items: []
+  - m_Id: 274201702031360
+    m_Key: controls.slide_back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 274201756557312
+    m_Key: controls.slide_forward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 274201756557313
+    m_Key: controls.slide_along
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

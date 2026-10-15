@@ -28,6 +28,7 @@ Besides their studs, LDraw parts connect the way LEGO Technic does: an axle goes
 | R | Turn it around the connection, a quarter turn |
 | T | Put it the other way round |
 | G | Use another of its connections that fits (which of a beam's holes goes on the axle) |
+| Z / X | Slide it back / forward along the connection, half a stud at a time (a long axle through a short hole) |
 
 What fits: an axle in an axle hole (it can't turn there) or in a round hole at least as wide (it spins); a pin, or a bar, in a round hole its size. Parts slide along axles and holes that let them, the shorter staying within the longer, and they can't go into anything they don't connect to. A connected part goes with what holds it: take the technic brick away and its axle and wheels go too.
 

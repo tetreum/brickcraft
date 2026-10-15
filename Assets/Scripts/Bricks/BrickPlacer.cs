@@ -21,8 +21,9 @@ namespace Brickcraft.Bricks
     /// turned. A wheel on the world starts a vehicle there instead of being one of its bricks.
     ///
     /// A part with connectors (technic: an axle, a wheel, a pin, see BrickJoints) aimed near a connector of the brick looked
-    /// at that one of its own fits goes there instead, connected: as far along it as the crosshair, R turning it around it
-    /// a quarter turn at a time, T putting it the other way round, G picking another of its connectors that fits.
+    /// at that one of its own fits goes there instead, connected: as far along it as the crosshair (Z and X sliding it
+    /// further back or forward, half a stud a time: a long axle through a short hole), R turning it around it a quarter
+    /// turn at a time, T putting it the other way round, G picking another of its connectors that fits.
     /// </summary>
     public class BrickPlacer : MonoBehaviour
     {
@@ -39,6 +40,9 @@ namespace Brickcraft.Bricks
         // connected placement: the other way round, and which of the part's fitting connectors
         private bool flip;
         private int connectorChoice;
+        // half studs slid with the keys, on top of where it's looked at; for the connection it was slid on
+        private int slideOffset;
+        private string slidOn;
         private readonly System.Collections.Generic.List<int> fitting = new System.Collections.Generic.List<int>();
         // the line of sight this near a connector connects to it, looked at this far past the surface it hits
         private const float ConnectDistance = 0.15f;
@@ -125,10 +129,24 @@ namespace Brickcraft.Bricks
                 return false;
             }
             int own = fitting[BrickJoints.Mod(connectorChoice, fitting.Count)];
+            // another connection: slid from where it's looked at again
+            string connection = holder.id + "/" + holderConnector + "/" + own;
+            if (connection != slidOn) {
+                slidOn = connection;
+                slideOffset = 0;
+            }
+            int max = BrickJoints.MaxSlide(holder.model.connectors[holderConnector], model.connectors[own]);
+            int looked = BrickJoints.SlideToward(holder, holderConnector, model.connectors[own], nearest);
+            if (GameInput.GetButtonDown(GameInput.SlideForward)) {
+                slideOffset = Mathf.Min(slideOffset + 1, max - looked);
+            }
+            if (GameInput.GetButtonDown(GameInput.SlideBack)) {
+                slideOffset = Mathf.Max(slideOffset - 1, -max - looked);
+            }
             BrickJoint joint = new BrickJoint() {
                 holderConnector = holderConnector,
                 connector = own,
-                slide = BrickJoints.SlideToward(holder, holderConnector, model.connectors[own], nearest),
+                slide = Mathf.Clamp(looked + slideOffset, -max, max),
                 spin = rotation,
                 flip = flip,
             };

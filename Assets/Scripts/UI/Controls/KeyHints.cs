@@ -90,6 +90,7 @@ namespace Brickcraft.UI
                 if (model.connectors.Length > 0) {
                     buttons.Add(GameInput.Flip);
                     buttons.Add(GameInput.NextConnector);
+                    buttons.Add(Slide);
                 }
             }
             // nothing in hand: the brick looked at
@@ -116,8 +117,9 @@ namespace Brickcraft.UI
             gameObject.SetActive(visible);
         }
 
-        // what's shown for a piece looked at, among the buttons' names
+        // what's shown for a piece looked at, among the buttons' names; and for sliding, one row with both keys
         private const string PiecePrefix = "piece:";
+        private const string Slide = "slide";
 
         // its name, its item's id under it
         private void addPiece(Item item) {
@@ -147,13 +149,24 @@ namespace Brickcraft.UI
             layout.childForceExpandWidth = layout.childForceExpandHeight = false;
 
             // the label takes what the row has spare, the keys line up on the right
-            Text label = CodeUi.Label(row.transform, font, labelOf(button), 14, FontStyle.Normal, CodeUi.TextColor);
+            string text = button == Slide ? Loc.Get(Loc.Controls, "controls.slide_along") : labelOf(button);
+            Text label = CodeUi.Label(row.transform, font, text, 14, FontStyle.Normal, CodeUi.TextColor);
             label.alignment = TextAnchor.MiddleRight;
             label.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
+            if (button == Slide) {
+                addCap(row.transform, GameInput.SlideBack);
+                addCap(row.transform, GameInput.SlideForward);
+                return;
+            }
+            addCap(row.transform, button);
+        }
+
+        private static void addCap(Transform row, string button) {
+            Font font = CodeUi.Font;
 
             // the key, as a key cap
             GameObject cap = new GameObject("Key", typeof(RectTransform), typeof(Image), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
-            cap.transform.SetParent(row.transform, false);
+            cap.transform.SetParent(row, false);
             cap.GetComponent<Image>().color = CodeUi.ButtonColor;
             LayoutElement capSize = cap.GetComponent<LayoutElement>();
             capSize.minWidth = 26;

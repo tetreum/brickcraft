@@ -19,6 +19,10 @@ namespace Brickcraft.Bricks
     ///
     /// On a vehicle's brick (see Vehicles.Vehicle) it goes on the vehicle, the same way but on its own cells, however it's
     /// turned. A wheel on the world starts a vehicle there instead of being one of its bricks.
+    ///
+    /// A part with connectors (technic: an axle, a wheel, a pin, see BrickJoints) aimed near a connector of the brick looked
+    /// at that one of its own fits goes there instead, connected: as far along it as the crosshair, R turning it around it
+    /// a quarter turn at a time, T putting it the other way round, G picking another of its connectors that fits.
     /// </summary>
     public class BrickPlacer : MonoBehaviour
     {
@@ -32,6 +36,13 @@ namespace Brickcraft.Bricks
 
         private int rotation;
         private BrickPlacement? target;
+        // connected placement: the other way round, and which of the part's fitting connectors
+        private bool flip;
+        private int connectorChoice;
+        private readonly System.Collections.Generic.List<int> fitting = new System.Collections.Generic.List<int>();
+        // the line of sight this near a connector connects to it, looked at this far past the surface it hits
+        private const float ConnectDistance = 0.15f;
+        private const float LookPast = 0.5f;
 
         private void Awake() {
             ghostMaterial = new Material(Game.Instance.transparentMaterial);
@@ -67,8 +78,18 @@ namespace Brickcraft.Bricks
             if (GameInput.GetButtonDown(GameInput.Rotate)) {
                 rotation = (rotation + 1) % 4;
             }
+            if (GameInput.GetButtonDown(GameInput.Flip)) {
+                flip = !flip;
+            }
+            if (GameInput.GetButtonDown(GameInput.NextConnector)) {
+                connectorChoice++;
+            }
 
             Brick looked = hasHit ? Server.findBrick(hit.collider) : null;
+            if (looked != null && model.connectors.Length > 0 && tickConnected(hit, selectedItem, model, looked)) {
+                target = null;
+                return;
+            }
             if (looked != null && looked.vehicle != null) {
                 target = null;
                 tickVehicle(hit, selectedItem, model, looked.vehicle);
@@ -77,7 +98,8 @@ namespace Brickcraft.Bricks
 
             target = hasHit ? computePlacement(hit, model) : (BrickPlacement?)null;
 
-            bool isValid = target.HasValue && BrickGrid.IsFree(target.Value) && !overlapsPlayer(target.Value);
+            bool isValid = target.HasValue && BrickGrid.IsFree(target.Value) && !overlapsPlayer(target.Value)
+                && !BrickJoints.OverlapsConnected(target.Value.WorldBounds);
 
             updateGhost(isValid);
 
@@ -88,6 +110,39 @@ namespace Brickcraft.Bricks
                     place(selectedItem, target.Value);
                 }
             }
+        }
+
+        // connected to the brick looked at, where the line of sight passes near one of its connectors that fits (holes
+        // are inside bricks: a little past the surface too); false if none is that near
+        private bool tickConnected(RaycastHit hit, UserItem selectedItem, BrickModel model, Brick holder) {
+            Transform eye = Camera.main != null ? Camera.main.transform : null;
+            if (eye == null) {
+                return false;
+            }
+            Vector3 looking = (hit.point - eye.position).normalized;
+            int holderConnector = BrickJoints.NearestFitting(holder, model, eye.position, hit.point + looking * LookPast, ConnectDistance, fitting, out Vector3 nearest);
+            if (holderConnector < 0 || fitting.Count == 0) {
+                return false;
+            }
+            int own = fitting[BrickJoints.Mod(connectorChoice, fitting.Count)];
+            BrickJoint joint = new BrickJoint() {
+                holderConnector = holderConnector,
+                connector = own,
+                slide = BrickJoints.SlideToward(holder, holderConnector, model.connectors[own], nearest),
+                spin = rotation,
+                flip = flip,
+            };
+            BrickJoints.PoseHeldBy(holder, model, joint, out Vector3 position, out Quaternion turned);
+            Transform parent = BrickJoints.ParentOf(holder);
+            ghost.transform.SetPositionAndRotation(parent != null ? parent.TransformPoint(position) : position, parent != null ? parent.rotation * turned : turned);
+            ghost.SetActive(true);
+            bool isValid = BrickJoints.WhyNot(holder, model, joint) == null;
+            setGhostColor(isValid);
+
+            if (isValid && GameInput.GetButtonDown(GameInput.Place)) {
+                Player.Instance.network.CmdConnectBrick(selectedItem.slot, holder.id, joint.holderConnector, joint.connector, joint.slide, joint.spin, joint.flip);
+            }
+            return true;
         }
 
         // on a vehicle: in its cells, against the face looked at like on the world's grid

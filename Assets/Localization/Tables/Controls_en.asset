@@ -198,6 +198,14 @@ MonoBehaviour:
     m_Localized: Down (a plane's nose)
     m_Metadata:
       m_Items: []
+  - m_Id: 250012467191808
+    m_Localized: Flip around (technic)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 250012559466496
+    m_Localized: Next connector (technic)
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

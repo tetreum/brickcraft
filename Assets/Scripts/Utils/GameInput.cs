@@ -29,6 +29,9 @@ namespace Brickcraft
         public const string Interact = "Interact";
         public const string Drop = "Drop";
         public const string FreePlacement = "FreePlacement";
+        /// <summary>Building technic: the part held goes on the other way round, or by another of its connectors (see Bricks.BrickJoints).</summary>
+        public const string Flip = "Flip";
+        public const string NextConnector = "NextConnector";
         public const string Inventory = "Inventory";
         public const string Chat = "Chat";
         public const string PlayerList = "PlayerList";
@@ -99,6 +102,8 @@ namespace Brickcraft
                 new Binding("building", Interact, "controls.interact", KeyCode.E),
                 new Binding("building", Drop, "controls.drop", KeyCode.Q),
                 new Binding("building", FreePlacement, "controls.free_placement", KeyCode.LeftShift, KeyCode.RightShift),
+                new Binding("building", Flip, "controls.flip", KeyCode.T),
+                new Binding("building", NextConnector, "controls.next_connector", KeyCode.G),
                 new Binding("interface", Inventory, "controls.inventory", KeyCode.I),
                 new Binding("interface", Chat, "controls.chat", KeyCode.Return, KeyCode.KeypadEnter),
                 new Binding("interface", PlayerList, "controls.player_list", KeyCode.Tab),

@@ -191,6 +191,105 @@ namespace Brickcraft.Bricks
             return null;
         }
 
+        /// <summary>
+        /// Whether a box in the world (axis aligned) goes into a connected brick: bricks placed on the grid can't go where
+        /// one is (it takes no cells to stop them).
+        /// </summary>
+        public static bool OverlapsConnected(Bounds world) {
+            world.Expand(-OverlapMargin * 2);
+            if (world.extents.x <= 0 || world.extents.y <= 0 || world.extents.z <= 0) {
+                return false;
+            }
+            Physics.SyncTransforms();
+            foreach (Collider collider in Physics.OverlapBox(world.center, world.extents, Quaternion.identity, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)) {
+                Brick brick = Server.findBrick(collider);
+                if (brick != null && brick.joint.HasValue) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// The holder's connector nearest a line of sight (from its start to its end: past the surface looked at, holes
+        /// are inside bricks) that one of the model's connectors fits, within maxDistance of it; those of the model that
+        /// fit it, and the point of it nearest the line. -1 if none is that near.
+        /// </summary>
+        public static int NearestFitting(Brick holder, BrickModel model, Vector3 lineStart, Vector3 lineEnd, float maxDistance,
+                System.Collections.Generic.List<int> fitting, out Vector3 nearest) {
+            fitting.Clear();
+            nearest = lineEnd;
+            if (!CanHold(holder) || model == null || model.connectors.Length == 0) {
+                return -1;
+            }
+            Transform tr = holder.gameObject.transform;
+            int best = -1;
+            float bestDistance = maxDistance;
+            for (int i = 0; i < holder.model.connectors.Length; i++) {
+                Connector c = holder.model.connectors[i];
+                if (!System.Array.Exists(model.connectors, own => Fits(own, c))) {
+                    continue;
+                }
+                float distance = SegmentDistance(lineStart, lineEnd, tr.TransformPoint(c.start), tr.TransformPoint(c.End), out Vector3 onConnector);
+                if (distance <= bestDistance) {
+                    bestDistance = distance;
+                    best = i;
+                    nearest = onConnector;
+                }
+            }
+            if (best >= 0) {
+                for (int i = 0; i < model.connectors.Length; i++) {
+                    if (Fits(model.connectors[i], holder.model.connectors[best])) {
+                        fitting.Add(i);
+                    }
+                }
+            }
+            return best;
+        }
+
+        /// <summary>How near two segments come; onB: the point of the second nearest the first.</summary>
+        public static float SegmentDistance(Vector3 a0, Vector3 a1, Vector3 b0, Vector3 b1, out Vector3 onB) {
+            Vector3 d1 = a1 - a0, d2 = b1 - b0, r = a0 - b0;
+            float a = Vector3.Dot(d1, d1), e = Vector3.Dot(d2, d2), f = Vector3.Dot(d2, r);
+            float s, t;
+            if (a <= 1e-8f && e <= 1e-8f) {
+                s = t = 0;
+            } else if (a <= 1e-8f) {
+                s = 0;
+                t = Mathf.Clamp01(f / e);
+            } else {
+                float c = Vector3.Dot(d1, r);
+                if (e <= 1e-8f) {
+                    t = 0;
+                    s = Mathf.Clamp01(-c / a);
+                } else {
+                    float b = Vector3.Dot(d1, d2), denom = a * e - b * b;
+                    s = denom != 0 ? Mathf.Clamp01((b * f - c * e) / denom) : 0;
+                    t = (b * s + f) / e;
+                    if (t < 0) {
+                        t = 0;
+                        s = Mathf.Clamp01(-c / a);
+                    } else if (t > 1) {
+                        t = 1;
+                        s = Mathf.Clamp01((b - c) / a);
+                    }
+                }
+            }
+            onB = b0 + d2 * t;
+            return Vector3.Distance(a0 + d1 * s, onB);
+        }
+
+        /// <summary>The slide that puts the part nearest a point along the holder's connector, within what they allow.</summary>
+        public static int SlideToward(Brick holder, int holderConnector, Connector own, Vector3 worldPoint) {
+            Connector held = holder.model.connectors[holderConnector];
+            Transform tr = holder.gameObject.transform;
+            Vector3 axis = tr.TransformDirection(held.axis);
+            float along = Vector3.Dot(worldPoint - tr.TransformPoint(held.Middle), axis);
+            int steps = Mathf.RoundToInt(along / (SlideStepLdu * LDraw.LDrawModelBuilder.Scale));
+            int max = MaxSlide(held, own);
+            return Mathf.Clamp(steps, -max, max);
+        }
+
         /// <summary>Stands for what isn't a brick (the terrain, a player) in Blocking's answer.</summary>
         public static readonly Brick Terrain = new Brick() { id = "terrain" };
 

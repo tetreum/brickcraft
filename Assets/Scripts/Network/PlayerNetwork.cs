@@ -580,7 +580,8 @@ namespace Brickcraft.Network
                 return;
             }
             BrickPlacement placement = new BrickPlacement(item.brickModel, origin, rotation);
-            if (!isInReach(placement.WorldBounds.center) || !BrickGrid.IsFree(placement) || BrickPlacer.overlapsPlayer(placement)) {
+            if (!isInReach(placement.WorldBounds.center) || !BrickGrid.IsFree(placement) || BrickPlacer.overlapsPlayer(placement)
+                    || BrickJoints.OverlapsConnected(placement.WorldBounds)) {
                 return;
             }
             Vehicles.VehicleSystem.ServerCreate(item, item.ValidColor(held.Value.color), placement);
@@ -625,7 +626,8 @@ namespace Brickcraft.Network
             }
             BrickPlacement placement = new BrickPlacement(item.brickModel, origin, rotation);
 
-            if (!isInReach(placement.WorldBounds.center) || !BrickGrid.IsFree(placement) || BrickPlacer.overlapsPlayer(placement)) {
+            if (!isInReach(placement.WorldBounds.center) || !BrickGrid.IsFree(placement) || BrickPlacer.overlapsPlayer(placement)
+                    || BrickJoints.OverlapsConnected(placement.WorldBounds)) {
                 return;
             }
 
@@ -651,6 +653,40 @@ namespace Brickcraft.Network
             TargetBrickPlaced();
             Npcs.NpcPerception.MakeNoise(placement.WorldBounds.center, PlaceNoise, health, Npcs.Noise.Place);
             ModScripts.ItemEvent(item.id, "onPlaced", placed, PlayerHandle.For(connectionToClient));
+        }
+
+        /// <summary>
+        /// Connects the part held in the inventory slot (an axle, a wheel...) to a brick, see BrickJoints: by which of
+        /// their connectors, how far along, turned and which way round.
+        /// </summary>
+        [Command]
+        public void CmdConnectBrick(int slot, string holderId, int holderConnector, int connector, int slide, int spin, bool flip) {
+            if (health.isDead || holderId == null || !Server.bricks.TryGetValue(holderId, out Brick holder)) {
+                return;
+            }
+            InventoryItem? held = inventory.ServerGetSlot(slot);
+            if (!held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || item.type != Item.Type.Brick || item.brickModel == null) {
+                return;
+            }
+            BrickJoint joint = new BrickJoint() { holderConnector = holderConnector, connector = connector, slide = slide, spin = BrickJoints.Mod(spin, 4), flip = flip };
+            if (!isInReach(holder.WorldBounds.center) || BrickJoints.WhyNot(holder, item.brickModel, joint) != null) {
+                return;
+            }
+            ConnectedPlayer player = connectionToClient.authenticationData as ConnectedPlayer;
+            Placer placer = Placer.Now(player != null ? player.record.Id : 0);
+            int color = item.ValidColor(held.Value.color);
+            Brick brick = holder.vehicle != null
+                ? Vehicles.VehicleSystem.ServerConnect(item, color, holder, joint)
+                : WorldNetwork.ServerConnectBrick(item, color, holder, joint, placer);
+            if (brick == null) {
+                return;
+            }
+            inventory.ServerRemoveFromSlot(slot, 1);
+            TargetBrickPlaced();
+            Npcs.NpcPerception.MakeNoise(brick.WorldBounds.center, PlaceNoise, health, Npcs.Noise.Place);
+            if (holder.vehicle == null) {
+                ModScripts.ItemEvent(item.id, "onPlaced", BrickHandle.ForBrick(brick, placer), PlayerHandle.For(connectionToClient));
+            }
         }
 
         /// <summary>Puts the attachment held in the inventory slot (a door...) in a brick's slot, see BrickSlot.</summary>

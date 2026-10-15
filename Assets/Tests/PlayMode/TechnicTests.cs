@@ -157,6 +157,54 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator APlayerConnectsAnAxleAndBricksStayOutOfItsWay() {
+            Player player = Player.Instance;
+            PlayerInventory inventory = player.GetComponent<PlayerInventory>();
+            yield return TestGame.Wait(1); // on the ground
+            // a technic brick in front of the player, within reach
+            Item brickItem = item("part_3700"), axleItem = item("part_3706");
+            Transform eye = Camera.main.transform;
+            Vector3Int cell = BrickGrid.WorldToCell(eye.position + eye.forward * 2.5f + Vector3.up);
+            Brick holder = WorldNetwork.ServerPlaceBrick(brickItem, brickItem.color, new BrickPlacement(brickItem.brickModel, cell), Placer.Now(0));
+            yield return null;
+
+            // aimed at its hole: the hole, and how far along it
+            int hole = indexOf(holder.model, false);
+            Transform h = holder.gameObject.transform;
+            Vector3 middle = h.TransformPoint(holder.model.connectors[hole].Middle), along = h.TransformDirection(holder.model.connectors[hole].axis);
+            System.Collections.Generic.List<int> fitting = new System.Collections.Generic.List<int>();
+            Vector3 across = Vector3.Cross(along, Vector3.up).normalized;
+            Assert.AreEqual(hole, BrickJoints.NearestFitting(holder, axleItem.brickModel, middle + across * 2, middle - across * 0.3f, 0.15f, fitting, out Vector3 nearest),
+                "looked at from the side, through the brick");
+            Assert.Less(Vector3.Distance(middle, nearest), 0.01f, "at its middle");
+            Assert.AreEqual(1, fitting.Count, "the axle's one connector fits it");
+            Assert.AreEqual(hole, BrickJoints.NearestFitting(holder, axleItem.brickModel, middle + along * 2, middle, 0.15f, fitting, out nearest), "looked at end on");
+            Assert.AreEqual(2, BrickJoints.SlideToward(holder, hole, axleItem.brickModel.connectors[0], middle + along * 0.4f), "40 cm along: 2 half studs");
+            Assert.AreEqual(-1, BrickJoints.NearestFitting(holder, axleItem.brickModel, middle + Vector3.up * 2 + across, middle + Vector3.up * 2 - across, 0.15f, fitting, out nearest),
+                "too far from it");
+
+            int slot = Player.FirstFastSlot + 4;
+            Assert.IsTrue(inventory.ServerAdd(axleItem.id, axleItem.color, 1, 0, slot));
+            player.network.CmdConnectBrick(slot, holder.id, hole, 0, 2, 0, false);
+            yield return null;
+            Assert.AreEqual(1, Server.connectedTo(holder).Count, "the axle went through it");
+            Assert.IsFalse(inventory.ServerGetSlot(slot).HasValue, "the axle was used");
+            Brick axle = Server.connectedTo(holder)[0];
+
+            // a brick where the axle sticks out: not there
+            Item brick2x2 = Server.items["brick_2x2"];
+            Vector3 end = axle.gameObject.transform.TransformPoint(axle.model.connectors[0].End);
+            Vector3Int there = BrickGrid.WorldToCell(end - along * 0.1f);
+            BrickPlacement onIt = new BrickPlacement(brick2x2.brickModel, there - new Vector3Int(1, 1, 1));
+            Assert.IsTrue(BrickGrid.IsFree(onIt), "free cells: the axle takes none");
+            Assert.IsTrue(BrickJoints.OverlapsConnected(onIt.WorldBounds), "but it's there");
+            Assert.IsTrue(inventory.ServerAdd(brick2x2.id, brick2x2.color, 1, 0, slot));
+            player.network.CmdPlaceBrick(slot, onIt.origin, 0);
+            yield return null;
+            Assert.IsTrue(inventory.ServerGetSlot(slot).HasValue, "not placed into the axle");
+        }
+
+        [UnityTest]
         public IEnumerator WhatDoesntFitDoesntGo() {
             Brick holder = technicBrick();
             Item barWheel = item("part_11208");

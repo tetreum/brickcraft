@@ -195,6 +195,14 @@ MonoBehaviour:
     m_Key: controls.vehicle_down
     m_Metadata:
       m_Items: []
+  - m_Id: 250012467191808
+    m_Key: controls.flip
+    m_Metadata:
+      m_Items: []
+  - m_Id: 250012559466496
+    m_Key: controls.next_connector
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

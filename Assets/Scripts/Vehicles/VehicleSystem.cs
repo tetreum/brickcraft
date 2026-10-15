@@ -174,14 +174,17 @@ namespace Brickcraft.Vehicles
 
         /// <summary>
         /// Whether a placement on a vehicle would go into something that isn't the vehicle (the terrain, the world's
-        /// bricks, players, other vehicles).
+        /// bricks, players, other vehicles) or one of its connected bricks (see Bricks.BrickJoints).
         /// </summary>
         public static bool OverlapsOthers(Vehicle vehicle, BrickPlacement placement) {
             Bounds local = placement.LocalBounds;
             Transform tr = vehicle.transform;
             Vector3 halfSize = local.extents - Vector3.one * 0.02f; // touching is fine
+            Physics.SyncTransforms();
             foreach (Collider collider in Physics.OverlapBox(tr.TransformPoint(local.center), halfSize, tr.rotation, Physics.AllLayers, QueryTriggerInteraction.Ignore)) {
-                if (collider.GetComponentInParent<Vehicle>() != vehicle) {
+                // its own connected bricks (an axle) take no cells: they're in the way too
+                Brick brick = Server.findBrick(collider);
+                if (collider.GetComponentInParent<Vehicle>() != vehicle || (brick != null && brick.joint.HasValue)) {
                     return true;
                 }
             }

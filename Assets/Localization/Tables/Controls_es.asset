@@ -198,6 +198,14 @@ MonoBehaviour:
     m_Localized: "Bajar (el morro de un avi\xF3n)"
     m_Metadata:
       m_Items: []
+  - m_Id: 250012467191808
+    m_Localized: Dar la vuelta (technic)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 250012559466496
+    m_Localized: Siguiente conector (technic)
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

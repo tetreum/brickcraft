@@ -241,7 +241,9 @@ namespace Brickcraft.Tests
             Brick seat = onStuds(top, item(FirstCar.Seat), around(3, 0, topItem.brickModel.heightInPlates, 4), s => FirstCar.Tutorial.steps[6].isDone());
             Assert.IsNotNull(seat, "a seat on the brick, facing along it");
             yield return stepIs(7, "sitting next");
-            Assert.AreEqual(4, seat.vehicle.Drive.WheelCount, "it rolls on its four wheels");
+            // its drive takes in its new parts at the next physics step
+            Vehicle car = seat.vehicle;
+            yield return TestGame.WaitUntil(() => car.Drive.WheelCount == 4, 2, "it rolls on its four wheels");
             yield return sitAndGo(seat, 8, 30, FirstCar.DriveDistance + " metres driven");
         }
 
@@ -371,6 +373,14 @@ namespace Brickcraft.Tests
             yield return stepIs(3, "sitting next");
 
             yield return sitAndGo(seat, 4, 30, FirstBoat.SailDistance + " metres sailed");
+        }
+
+        [UnityTest]
+        public IEnumerator ATutorialsWorldGoesWhenItsLeft() {
+            yield return play(FirstCar.Tutorial);
+            Assert.IsTrue(System.IO.Directory.Exists(game.SaveFolder));
+            yield return game.Stop();
+            yield return TestGame.WaitUntil(() => !System.IO.Directory.Exists(game.SaveFolder), 6, "its world deleted");
         }
 
         [UnityTest]

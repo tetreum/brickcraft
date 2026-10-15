@@ -24,6 +24,9 @@ namespace Brickcraft.World
 
             if (Directory.Exists(Folder)) {
                 foreach (string folder in Directory.GetDirectories(Folder)) {
+                    if (IsTutorialFolder(folder)) {
+                        continue;
+                    }
                     WorldStorage world = WorldStorage.ReadInfo(folder);
                     if (world != null && string.IsNullOrEmpty(world.Tutorial)) {
                         worlds.Add(world);
@@ -64,7 +67,36 @@ namespace Brickcraft.World
 
         /// <summary>The folder of a tutorial's world.</summary>
         public static string TutorialSaveName(string tutorialId) {
-            return "tutorial-" + tutorialId;
+            return TutorialPrefix + tutorialId;
+        }
+
+        private const string TutorialPrefix = "tutorial-";
+
+        private static bool IsTutorialFolder(string folder) {
+            return Path.GetFileName(folder).StartsWith(TutorialPrefix, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Deletes the tutorials' worlds left behind (they go when their game stops; the game may have stopped before
+        /// it could, crashing...). Not while one is played.
+        /// </summary>
+        public static void DeleteTutorialWorlds() {
+            if (!Directory.Exists(Folder)) {
+                return;
+            }
+            foreach (string folder in Directory.GetDirectories(Folder)) {
+                if (!IsTutorialFolder(folder)) {
+                    continue;
+                }
+                try {
+                    Directory.Delete(folder, true);
+                    Debug.Log("Deleted the tutorial's world left in " + folder);
+                } catch (IOException e) {
+                    Debug.LogWarning("A tutorial's world couldn't be deleted: " + folder + " (" + e.Message + ")");
+                } catch (UnauthorizedAccessException e) {
+                    Debug.LogWarning("A tutorial's world couldn't be deleted: " + folder + " (" + e.Message + ")");
+                }
+            }
         }
 
         /// <summary>The mods of the world that aren't installed.</summary>

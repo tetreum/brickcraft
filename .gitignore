@@ -45,3 +45,6 @@ Build.zip
 
 # server settings (may hold a password)
 /server.json
+
+# Claude Code local settings
+/.claude/

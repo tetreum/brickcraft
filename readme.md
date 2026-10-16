@@ -10,6 +10,10 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity with the opt
 
 [![Preview](https://github.com/tetreum/brickcraft/raw/main/Preview/1.png)](https://github.com/tetreum/brickcraft/raw/main/Preview/1.png)
 
+## Download
+
+Latest version binaries are available on https://github.com/tetreum/brickcraft/releases
+
 ## How can i help?
 
 - Character model: It's poorly made, needs a rework to also have clothes and hair separated so clothing system can be added in the future. Since minifigures are patented, the model is an advanced iteration that has things like knees.

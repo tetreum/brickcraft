@@ -183,6 +183,61 @@ namespace Brickcraft.Scripting
         }
     }
 
+    /// <summary>A vehicle as scripts see it (see Vehicles.Vehicle).</summary>
+    [MoonSharpUserData]
+    public class VehicleHandle
+    {
+        [MoonSharpHidden] public Vehicles.Vehicle vehicle;
+
+        public static VehicleHandle For(Vehicles.Vehicle vehicle) {
+            return vehicle != null ? new VehicleHandle() { vehicle = vehicle } : null;
+        }
+
+        /// <summary>It's still in the world (taken apart or unloaded, it isn't).</summary>
+        public bool exists {
+            get { return vehicle != null && vehicle.grid.Count > 0; }
+        }
+
+        /// <summary>Its id, the same every time the world is played.</summary>
+        public string id {
+            get { return vehicle != null ? vehicle.vehicleId : null; }
+        }
+
+        /// <summary>The cell it is in (its first part's), nil if it's gone.</summary>
+        public LuaVector position {
+            get { return exists ? new LuaVector(BrickGrid.WorldToCell(vehicle.transform.position)) : null; }
+        }
+
+        /// <summary>How fast it goes, metres a second.</summary>
+        public double speed {
+            get { return exists ? vehicle.Velocity.magnitude : 0; }
+        }
+
+        /// <summary>How many bricks it's made of.</summary>
+        public int parts {
+            get { return vehicle != null ? vehicle.grid.Count : 0; }
+        }
+
+        /// <summary>Who drives it, nil if nobody does.</summary>
+        public PlayerHandle driver {
+            get {
+                PlayerNetwork player = exists ? vehicle.Driver : null;
+                return player != null ? PlayerHandle.For(player.connectionToClient) : null;
+            }
+        }
+
+        /// <summary>Puts it back on its wheels, above the ground under it (like /reposition).</summary>
+        public void reposition() {
+            if (exists) {
+                Vehicles.VehicleSystem.ServerReposition(vehicle);
+            }
+        }
+
+        public override string ToString() {
+            return "vehicle " + id;
+        }
+    }
+
     /// <summary>A player as scripts see it.</summary>
     [MoonSharpUserData]
     public class PlayerHandle
@@ -208,6 +263,15 @@ namespace Brickcraft.Scripting
                     return null;
                 }
                 return new LuaVector(BrickGrid.WorldToCell(connection.identity.transform.position));
+            }
+        }
+
+        /// <summary>The vehicle it sits in, nil if it isn't in one.</summary>
+        public VehicleHandle vehicle {
+            get {
+                PlayerNetwork player = connection != null && connection.identity != null ? connection.identity.GetComponent<PlayerNetwork>() : null;
+                return player != null && !string.IsNullOrEmpty(player.seatedIn) && Server.bricks.TryGetValue(player.seatedIn, out Brick seat)
+                    ? VehicleHandle.For(seat.vehicle) : null;
             }
         }
 

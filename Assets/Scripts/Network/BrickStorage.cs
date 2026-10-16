@@ -128,7 +128,7 @@ namespace Brickcraft.Network
             if (outside.Count > 0) {
                 items.RemoveAll(stack => stack.slot > entry.slots);
                 WorldNetwork.ServerSetStorage(storage, items);
-                DroppedItems.Spill(outside, storage.placement.WorldBounds.center + Vector3.up * 0.3f);
+                DroppedItems.Spill(outside, storage.WorldBounds.center + Vector3.up * 0.3f);
             }
             conn.Send(new StorageOpenedMessage() {
                 brickId = storage.id,
@@ -185,7 +185,7 @@ namespace Brickcraft.Network
                 }
             }
             if (kept.Count > 0) {
-                DroppedItems.Spill(kept, storage.placement.WorldBounds.center + Vector3.up * 0.3f);
+                DroppedItems.Spill(kept, storage.WorldBounds.center + Vector3.up * 0.3f);
                 WorldNetwork.ServerSetStorage(storage, new List<InventoryItem>());
             }
         }
@@ -199,7 +199,7 @@ namespace Brickcraft.Network
                 bool exists = Server.bricks.ContainsKey(entry.Key);
                 foreach (NetworkConnectionToClient viewer in new List<NetworkConnectionToClient>(entry.Value.viewers)) {
                     bool keep = exists && viewer.identity != null && !viewer.identity.GetComponent<Health>().isDead
-                        && Vector3.Distance(viewer.identity.transform.position, entry.Value.brick.placement.WorldBounds.center) <= MaxDistance
+                        && Vector3.Distance(viewer.identity.transform.position, entry.Value.brick.WorldBounds.center) <= MaxDistance
                         && CanOpen(viewer, entry.Value.brick);
                     if (!keep) {
                         ServerClose(viewer, entry.Key, viewer.isReady);

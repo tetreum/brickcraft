@@ -18,14 +18,17 @@ namespace Brickcraft.World
             get { return Path.Combine(Application.persistentDataPath, "saves"); }
         }
 
-        /// <summary>The saved worlds (just their headers), the last played first.</summary>
+        /// <summary>The saved worlds (just their headers), the last played first; not the tutorials' (see Tutorials).</summary>
         public static List<WorldStorage> List() {
             List<WorldStorage> worlds = new List<WorldStorage>();
 
             if (Directory.Exists(Folder)) {
                 foreach (string folder in Directory.GetDirectories(Folder)) {
+                    if (IsTutorialFolder(folder)) {
+                        continue;
+                    }
                     WorldStorage world = WorldStorage.ReadInfo(folder);
-                    if (world != null) {
+                    if (world != null && string.IsNullOrEmpty(world.Tutorial)) {
                         worlds.Add(world);
                     }
                 }
@@ -46,6 +49,54 @@ namespace Brickcraft.World
             string saveName = freeFolderName(name);
             WorldStorage.Create(Path.Combine(Folder, saveName), name, seed, difficulty, pvp, mods, dayLength);
             return saveName;
+        }
+
+        /// <summary>
+        /// A tutorial's world, new (the one it had before goes): flat (that kind of flat), peaceful, without NPCs, in a
+        /// folder of its own. Returns its save name.
+        /// </summary>
+        public static string CreateTutorial(string tutorialId, string name, TerrainKind terrain = TerrainKind.Flat) {
+            string saveName = TutorialSaveName(tutorialId);
+            string folder = Path.Combine(Folder, saveName);
+            if (Directory.Exists(folder)) {
+                Directory.Delete(folder, true);
+            }
+            WorldStorage.Create(folder, name, 1, Difficulty.Peaceful, false, terrain: terrain, tutorial: tutorialId, npcsOn: false);
+            return saveName;
+        }
+
+        /// <summary>The folder of a tutorial's world.</summary>
+        public static string TutorialSaveName(string tutorialId) {
+            return TutorialPrefix + tutorialId;
+        }
+
+        private const string TutorialPrefix = "tutorial-";
+
+        private static bool IsTutorialFolder(string folder) {
+            return Path.GetFileName(folder).StartsWith(TutorialPrefix, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Deletes the tutorials' worlds left behind (they go when their game stops; the game may have stopped before
+        /// it could, crashing...). Not while one is played.
+        /// </summary>
+        public static void DeleteTutorialWorlds() {
+            if (!Directory.Exists(Folder)) {
+                return;
+            }
+            foreach (string folder in Directory.GetDirectories(Folder)) {
+                if (!IsTutorialFolder(folder)) {
+                    continue;
+                }
+                try {
+                    Directory.Delete(folder, true);
+                    Debug.Log("Deleted the tutorial's world left in " + folder);
+                } catch (IOException e) {
+                    Debug.LogWarning("A tutorial's world couldn't be deleted: " + folder + " (" + e.Message + ")");
+                } catch (UnauthorizedAccessException e) {
+                    Debug.LogWarning("A tutorial's world couldn't be deleted: " + folder + " (" + e.Message + ")");
+                }
+            }
         }
 
         /// <summary>The mods of the world that aren't installed.</summary>

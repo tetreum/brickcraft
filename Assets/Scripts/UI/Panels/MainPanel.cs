@@ -93,6 +93,8 @@ public class MainPanel : MonoBehaviour
             return;
         }
         hasReadCommandLine = true;
+        // the game starts: no tutorial is played yet, the worlds they left (if the game stopped before deleting them) go
+        Brickcraft.World.SavedWorlds.DeleteTutorialWorlds();
 
         string[] args = System.Environment.GetCommandLineArgs();
 
@@ -137,6 +139,14 @@ public class MainPanel : MonoBehaviour
             return;
         }
         Brickcraft.UI.WorldsPanel.Open();
+    }
+
+    // the game's tutorials, each played in a world of its own
+    public void openTutorials () {
+        if (!applyName()) {
+            return;
+        }
+        Brickcraft.UI.TutorialsPanel.Open();
     }
 
     public void playTest() {

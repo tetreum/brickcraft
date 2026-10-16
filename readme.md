@@ -10,6 +10,10 @@ WIP. Combining Lego like bricks + Minecraft buidling style in Unity with the opt
 
 [![Preview](https://github.com/tetreum/brickcraft/raw/main/Preview/1.png)](https://github.com/tetreum/brickcraft/raw/main/Preview/1.png)
 
+## Download
+
+Latest version binaries are available on https://github.com/tetreum/brickcraft/releases
+
 ## How can i help?
 
 - Character model: It's poorly made, needs a rework to also have clothes and hair separated so clothing system can be added in the future. Since minifigures are patented, the model is an advanced iteration that has things like knees.
@@ -38,6 +42,10 @@ Servers are configured in `server.json`, next to the game (next to `Mods/`: the 
 
 The first player to join a save without admins (the host, starting singleplayer or a server) becomes its admin; everyone else joins as a `user`. There are several commands available for actions like role changing, kicking, banning, etc.. Check `/help` in chat.
 
+## Vehicles
+
+Cars, boats and planes, built from bricks starting with a vehicle part (a wheel, a seat, a propeller, a wing; and technic axles, pins and holes), driven from a seat and wired with a screwdriver: see `docs/vehicles.md`. The main menu's Tutorials walk through building a first house (and sleeping in it) and a first car, each in a flat world of its own.
+
 ## Documentation about modding, npcs and more
 
 Check the docs/ directory.
@@ -48,6 +56,8 @@ The game ships a pruned copy of the [LDraw](https://www.ldraw.org) parts library
 
 A model id that's an LDraw part number is read from the library when nothing else has it (see `Bricks.LDraw.LDrawModelBuilder`): its faces facing out (BFC), its own colours (a window's glass) kept and the brick's colour on the rest, in the game's units (a stud is 20 LDU), its pivot in the middle of its footprint, at its bottom. The game's own models (StreamingAssets/BrickModels, custom prefabs) come first.
 
+Where parts connect besides their studs (technic axles, pins and holes, bars) is `connectors.txt` (and where window frames take their glass, `glass.txt`), built from the [LDCad Shadow Library](https://github.com/RolandMelkert/LDCadShadowLibrary) with `Brickcraft > LDraw > Build connectors from LDCad shadow library folder...` (after the library, to rebuild it).
+
 To update the library: unpack library.ldraw.org's complete.zip somewhere, then `Brickcraft > LDraw > Build library from complete.zip folder...` and `Brickcraft > LDraw > Render missing catalogue icons` (it can be run again to go on, rendering takes a while).
 
 
@@ -56,7 +66,8 @@ To update the library: unpack library.ldraw.org's complete.zip somewhere, then `
 - Lua interpreter - MoonSharp, Marco Mastropaolo (BSD 3-Clause, see Assets/Plugins/MoonSharp/LICENSE.txt) - https://www.moonsharp.org/
 - stone-SJH for fixing "Terrain mesh is randomly broken because of brick's top face" bug at https://github.com/tetreum/brickcraft/pull/2
 - World chunk system - Smjert - https://github.com/chraft/chunk-light-tester/
-- Most brick models - https://www.ldraw.org
+- Most brick models - LDraw parts library, LDraw.org and its contributors (CC BY 4.0, see `StreamingAssets/LDraw/CAreadme.txt`) - https://library.ldraw.org/ - LDraw™ is a trademark owned and licensed by the Jessiman Estate (https://www.ldraw.org)
+- Where LDraw parts connect (axles, pins, holes, glass grooves) - LDCad Shadow Library, Roland Melkert and contributors (CC BY-SA 4.0; `StreamingAssets/LDraw/connectors.txt` and `glass.txt` are under it too, see `connectors-LICENSE.md`) - https://github.com/RolandMelkert/LDCadShadowLibrary
 - Some brick models - https://www.mecabricks.com/
 - Tapping sound effect - https://freesound.org/people/rioforce/sounds/233654/
 - Dig + remove block sound effect - https://freesound.org/people/Agaxly/sounds/213005/

@@ -111,6 +111,24 @@ end
 
 The player died; `killer` is the player that killed it, or `nil`. It comes back when it respawns.
 
+### onVehicleEnter(player, vehicle)
+
+The player is about to sit on one of the [vehicle](vehicles.md)'s seats (it clicked it). **Return `false` and it doesn't.**
+
+```lua
+-- nobody drives at night
+function onVehicleEnter(player, vehicle)
+  if world.isNight() then
+    player:message("Too dark to drive")
+    return false
+  end
+end
+```
+
+### onVehicleLeave(player, vehicle)
+
+The player got up from the vehicle's seat (or died, or left the game in it).
+
 ### onHour(hour, day)
 
 An hour of the game began: `hour` from 0 to 23, `day` counting from 1 (see `world.time()`). Every hour is told once, also when admins move time on with `/time` (at most a day's worth); none while the game is paused.

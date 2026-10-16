@@ -36,9 +36,14 @@ namespace Brickcraft.Npcs
 
         private static float nextTry;
 
+        /// <summary>A new server: its first try is soon (Time.unscaledTime starts over in a new play mode).</summary>
+        public static void Reset() {
+            nextTry = 0;
+        }
+
         public static void Update() {
             WorldBehaviour world = WorldBehaviour.Instance;
-            if (!Enabled || world == null || Time.unscaledTime < nextTry) {
+            if (!Enabled || !WorldNetwork.NpcsOn || world == null || Time.unscaledTime < nextTry) {
                 return;
             }
             nextTry = Time.unscaledTime + Interval;

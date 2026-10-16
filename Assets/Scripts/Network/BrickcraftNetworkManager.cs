@@ -180,6 +180,8 @@ namespace Brickcraft.Network
             foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values) {
                 endSession(conn, false);
             }
+            // a tutorial's world is played once: it goes with the game (see SavedWorlds.CreateTutorial)
+            string tutorialWorld = WorldNetwork.Storage != null && !string.IsNullOrEmpty(WorldNetwork.Storage.Tutorial) ? saveName : null;
             ModScripts.Stop();
             LuaUi.StopServer();
             WorldNetwork.StopServer();
@@ -188,6 +190,36 @@ namespace Brickcraft.Network
                 Database = null;
             }
             base.OnStopServer();
+            if (tutorialWorld != null) {
+                StartCoroutine(deleteWorld(tutorialWorld));
+            }
+        }
+
+        // how long a world's files may take to be let go of once it's closed (the players database's)
+        private const float DeleteTimeout = 5;
+
+        // deletes a world as soon as its files are closed
+        private IEnumerator deleteWorld(string world) {
+            float end = Time.realtimeSinceStartup + DeleteTimeout;
+            while (true) {
+                try {
+                    if (Directory.Exists(Path.Combine(SavedWorlds.Folder, world))) {
+                        SavedWorlds.Delete(world);
+                    }
+                    yield break;
+                } catch (IOException e) {
+                    if (Time.realtimeSinceStartup > end) {
+                        Debug.LogWarning("The tutorial's world " + world + " couldn't be deleted (" + e.Message + "): it goes the next time the game starts");
+                        yield break;
+                    }
+                } catch (System.UnauthorizedAccessException e) {
+                    if (Time.realtimeSinceStartup > end) {
+                        Debug.LogWarning("The tutorial's world " + world + " couldn't be deleted (" + e.Message + "): it goes the next time the game starts");
+                        yield break;
+                    }
+                }
+                yield return new WaitForSecondsRealtime(0.2f);
+            }
         }
 
         // writes the changed chunks on a background thread every now and then
@@ -330,6 +362,13 @@ namespace Brickcraft.Network
             inventory.ServerLoad(record.Id, Database.LoadInventory(record.Id));
 
             if (record.TimesJoined == 1 && inventory.items.Count == 0) {
+                // a tutorial's world: what it needs instead, and its finished vehicle to look at
+                Tutorials.Tutorial tutorial = WorldNetwork.Storage != null ? Tutorials.Tutorial.Find(WorldNetwork.Storage.Tutorial) : null;
+                if (tutorial != null) {
+                    tutorial.ServerGive(inventory);
+                    tutorial.ServerBuildDemo(inventory.transform.position);
+                    return;
+                }
                 foreach (StarterItem starter in starterItems) {
                     inventory.ServerAdd(starter.itemId, Server.items.TryGetValue(starter.itemId, out Item item) ? item.color : BrickColor.None, starter.quantity);
                 }

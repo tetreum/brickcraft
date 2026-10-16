@@ -1,0 +1,9 @@
+{
+    "name": "Wiring Tool",
+    "type": "tool",
+    "brickModel": "55298",
+    "bricklinkId": "6246a",
+    "color": 71,
+    "maxStack": 1,
+    "tags": ["wiring"]
+}

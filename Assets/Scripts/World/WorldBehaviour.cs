@@ -108,14 +108,14 @@ namespace Brickcraft.World
 		}
 
 		/// <summary>Sets up the world, chunks are then loaded with <see cref="RequestChunk"/>.</summary>
-		public void Initialize(long seed, WorldChanges worldChanges, Action<Vector2Int> prepare = null)
+		public void Initialize(long seed, TerrainKind terrain, WorldChanges worldChanges, Action<Vector2Int> prepare = null)
 		{
 			Seed = seed;
 			changes = worldChanges;
 			prepareChunk = prepare;
 			generators = new ThreadLocal<CustomChunkGenerator>(() => {
 				CustomChunkGenerator generator = new CustomChunkGenerator();
-				generator.Init(seed);
+				generator.Init(seed, terrain);
 				return generator;
 			});
 
@@ -349,6 +349,10 @@ namespace Brickcraft.World
 			foreach (Network.Projectile shot in Network.Projectile.All) {
 				if (shot != null)
 					addColliderChunks(ChunkAt(shot.transform.position), ColliderRadius);
+			}
+			foreach (Vehicles.Vehicle vehicle in Vehicles.Vehicle.All) {
+				if (vehicle != null)
+					addColliderChunks(ChunkAt(vehicle.transform.position), ColliderRadius);
 			}
 		}
 

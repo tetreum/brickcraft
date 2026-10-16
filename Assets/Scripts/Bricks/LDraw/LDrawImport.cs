@@ -17,6 +17,8 @@ namespace Brickcraft.Bricks.LDraw
         public byte rotation;
         /// <summary>For attachments (doors, glass), 1 + the index of the brick whose slot it goes in; 0 for others.</summary>
         public int attachedTo;
+        /// <summary>For glass, the groove of its frame it's in (see BrickSlot.Seats).</summary>
+        public int seat;
 
         public bool IsAttachment {
             get { return attachedTo > 0; }
@@ -136,7 +138,7 @@ namespace Brickcraft.Bricks.LDraw
         private void attach(LDrawContraption.Part part, Item item, List<BrickPlacement> placements) {
             BrickModel brickModel = item.brickModel;
             Vector3 at = PivotOf(part, brickModel, item);
-            int holder = -1;
+            int holder = -1, seat = 0;
             float nearest = MaxAttachDistance;
             for (int i = 0; i < bricks.Count; i++) {
                 if (bricks[i].IsAttachment || isHolding(i)) {
@@ -146,10 +148,13 @@ namespace Brickcraft.Bricks.LDraw
                 if (slot == null || slot.fits != brickModel.attachesTo) {
                     continue;
                 }
-                float distance = Vector3.Distance(at, SlotPoint(placements[i], slot));
-                if (distance < nearest) {
-                    nearest = distance;
-                    holder = i;
+                for (int s = 0; s < slot.Seats; s++) {
+                    float distance = Vector3.Distance(at, SlotPoint(placements[i], slot, brickModel, s));
+                    if (distance < nearest) {
+                        nearest = distance;
+                        holder = i;
+                        seat = s;
+                    }
                 }
             }
             if (holder < 0) {
@@ -157,7 +162,7 @@ namespace Brickcraft.Bricks.LDraw
                 return;
             }
             placements.Add(placements[holder]);
-            bricks.Add(new ImportedBrick() { itemId = item.id, color = colorOf(part.color, item), rotation = (byte)placements[holder].rotation, attachedTo = holder + 1 });
+            bricks.Add(new ImportedBrick() { itemId = item.id, color = colorOf(part.color, item), rotation = (byte)placements[holder].rotation, attachedTo = holder + 1, seat = seat });
         }
 
         // how far (game units) an attachment can be from a slot and still go in it: files round their numbers
@@ -177,12 +182,12 @@ namespace Brickcraft.Bricks.LDraw
             return model.prefab != null ? model.prefab.GetComponentInChildren<BrickSlot>(true) : null;
         }
 
-        /// <summary>Where a slot's point is for a brick placed so (game units, from the cells' origin: see PivotOf).</summary>
-        public static Vector3 SlotPoint(BrickPlacement placement, BrickSlot slot) {
+        /// <summary>Where a slot's point is for a brick placed so, for that attachment in that seat (game units, from the cells' origin: see PivotOf).</summary>
+        public static Vector3 SlotPoint(BrickPlacement placement, BrickSlot slot, BrickModel attachment = null, int seat = 0) {
             Vector3Int size = placement.Size;
             Vector3 pivot = Vector3.Scale((Vector3)placement.origin + new Vector3(size.x / 2f, 0, size.z / 2f), BrickGrid.CellSize);
             // the prefab's own rotation is in the offset, like when it's spawned (Server.createBrickObject)
-            Vector3 offset = slot.point.position - placement.model.prefab.transform.position;
+            Vector3 offset = slot.PositionFor(attachment, seat) - placement.model.prefab.transform.position;
             return pivot + placement.Rotation * offset;
         }
 

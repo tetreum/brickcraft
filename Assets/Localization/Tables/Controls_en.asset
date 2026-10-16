@@ -186,6 +186,42 @@ MonoBehaviour:
     m_Localized: Caps Lock
     m_Metadata:
       m_Items: []
+  - m_Id: 53865458950144
+    m_Localized: Vehicles
+    m_Metadata:
+      m_Items: []
+  - m_Id: 53865576390656
+    m_Localized: Up (a plane's nose)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 53865576390657
+    m_Localized: Down (a plane's nose)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 250012467191808
+    m_Localized: Flip around (technic)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 250012559466496
+    m_Localized: Next connector (technic)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 274201702031360
+    m_Localized: Slide back (technic)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 274201756557312
+    m_Localized: Slide forward (technic)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 274201756557313
+    m_Localized: Slide along (technic)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 286452521623552
+    m_Localized: Place by a corner
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

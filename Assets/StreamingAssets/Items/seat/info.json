@@ -1,0 +1,7 @@
+{
+    "name": "Seat",
+    "brickModel": "4079",
+    "color": 4,
+    "colors": "all",
+    "tags": ["seat"]
+}

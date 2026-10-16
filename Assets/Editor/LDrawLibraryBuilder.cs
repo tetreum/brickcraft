@@ -26,7 +26,7 @@ public static class LDrawLibraryBuilder
     // minifig parts kept anyway, as the game's tools: pickaxe, torch, handaxe, shovel, mallet, sledgehammer; the
     // conical flask with its green fluid (LDraw's 93549, obsolete for being in two colours, BrickLink's 93549pb01, the HP
     // Potion) and the paint palette with paint drops (printed, the Color Picker)
-    private static readonly HashSet<string> KeptParts = new HashSet<string>() { "3841", "3959", "3835", "3837", "4522b", "75904", "93549", "93551p01" };
+    private static readonly HashSet<string> KeptParts = new HashSet<string>() { "3841", "3959", "3835", "3837", "4522b", "75904", "93549", "93551p01", "4079", "55298" };
     // kept parts that would be left out otherwise (obsolete, printed), with their name
     private static readonly Dictionary<string, string> KeptNames = new Dictionary<string, string>() {
         { "93549", "Minifig Conical Flask with Trans-Bright Green Fluid" },

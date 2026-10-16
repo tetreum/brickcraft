@@ -321,7 +321,8 @@ namespace Brickcraft.Bricks
             }
         }
 
-        // an LDraw part: its colours of their own (glass...) stay theirs, its collider is a box of its size
+        // an LDraw part: its colours of their own (glass...) stay theirs, its collider is a box of its size (but round ones'
+        // is their shape: aimed past a wheel's tyre, the air in its box's corners isn't the wheel)
         private static BrickModel loadLDraw(string id) {
             try {
                 Mesh mesh = LDraw.LDrawModelBuilder.Build(id, out string[] materialNames);
@@ -333,7 +334,7 @@ namespace Brickcraft.Bricks
                 string attachesTo = LDraw.LDrawGlass.GlassFits(catalogPart);
                 Vector3 origin = attachesTo != null ? Vector3.zero : place(mesh, 1); // where its LDraw origin (0, 0, 0) went
                 loaded.Add(mesh);
-                ModelInfo info = new ModelInfo() { parts = new Dictionary<string, int>(), collider = attachesTo != null ? "mesh" : "box" };
+                ModelInfo info = new ModelInfo() { parts = new Dictionary<string, int>(), collider = attachesTo != null || isRound(catalogPart) ? "mesh" : "box" };
                 foreach (string part in materialNames) {
                     if (part != LDraw.LDrawModelBuilder.MainPart && int.TryParse(part.Substring(1), out int ldrawColor)) {
                         BrickColor color = BrickColorPalette.FromLDraw(ldrawColor);
@@ -357,10 +358,19 @@ namespace Brickcraft.Bricks
                     model.footprint = footprint;
                     string takes = LDraw.LDrawGlass.FrameFits(catalogPart);
                     if (takes != null) {
-                        addSlot(template, origin, takes);
+                        BrickSlot slot = addSlot(template, origin, takes);
+                        // its grooves' depths, if it's thin that way (as frames are)
+                        if (bounds.size.z < bounds.size.x && bounds.size.z < bounds.size.y) {
+                            float[] depths = LDraw.LDrawGlass.Seats(id);
+                            slot.depths = new float[depths.Length];
+                            for (int i = 0; i < depths.Length; i++) {
+                                slot.depths[i] = depths[i] * LDraw.LDrawModelBuilder.Scale + origin.z;
+                            }
+                        }
                     }
                 }
                 model.ldrawOrigin = origin;
+                model.connectors = LDraw.LDrawConnectors.For(id, origin);
                 return model;
             } catch (Exception e) {
                 Debug.LogError("Can't read the LDraw part " + id + ": " + e.Message);
@@ -368,14 +378,21 @@ namespace Brickcraft.Bricks
             }
         }
 
+        // wheels and tyres
+        private static bool isRound(LDraw.LDrawPart part) {
+            string category = part != null && part.category != null ? part.category.Trim() : "";
+            return string.Equals(category, "Wheel", StringComparison.OrdinalIgnoreCase) || string.Equals(category, "Tyre", StringComparison.OrdinalIgnoreCase);
+        }
+
         // a slot for an attachment (see BrickSlot), its point there in the model
-        private static void addSlot(GameObject template, Vector3 at, string fits) {
+        private static BrickSlot addSlot(GameObject template, Vector3 at, string fits) {
             Transform point = new GameObject("Slot").transform;
             point.SetParent(template.transform, false);
             point.localPosition = at;
             BrickSlot slot = template.AddComponent<BrickSlot>();
             slot.point = point;
             slot.fits = fits;
+            return slot;
         }
 
         // scaled to the game's units and moved so its pivot is at the center of its footprint, on its bottom; returns

@@ -110,6 +110,11 @@ namespace Brickcraft
         public const int LDrawItemColor = 71;
         /// <summary>The colour of glass parts of the catalogue (Trans-Light Blue), which only can be transparent.</summary>
         public const int LDrawGlassColor = 41;
+        /// <summary>The colour tyres start with (Black): tyres, and wheels with their tyre (or all rubber).</summary>
+        public const int LDrawTyreColor = 0;
+        // a wheel that is (or has) its tyre: "Wheel 22x50 with Integral Smooth Racing Tyre", "Wheel 14x21 Solid Rubber..."
+        private static readonly System.Text.RegularExpressions.Regex TyrePart = new System.Text.RegularExpressions.Regex(
+            @"\b(Tyre|Tire|Rubber)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         // the catalogue's glass: "Glass for Window 1x2x3"..., and windscreens with integral glass (not frames "for Glass")
         private static readonly System.Text.RegularExpressions.Regex GlassPart = new System.Text.RegularExpressions.Regex(
             @"^Glass\b|^Windscreen\b.*\bGlass\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
@@ -123,13 +128,14 @@ namespace Brickcraft
                 }
                 string partId = part.id;
                 bool glass = part.name != null && GlassPart.IsMatch(part.name);
+                bool tyre = IsTyre(part);
                 Item item = new Item() {
                     id = id,
                     name = part.name,
                     type = Item.Type.Brick,
                     folder = Bricks.LDraw.LDrawLibrary.Root,
                     brickModelId = partId,
-                    color = glass ? LDrawGlassColor : LDrawItemColor,
+                    color = glass ? LDrawGlassColor : tyre ? LDrawTyreColor : LDrawItemColor,
                     anyColor = true,
                     transparentOnly = glass,
                     iconColor = LDrawItemColor, // the catalogue's icons, see LDrawLibrary.LoadIcon
@@ -141,6 +147,13 @@ namespace Brickcraft
                 }
                 Server.items[id] = item;
             }
+        }
+
+        /// <summary>Whether a part of the catalogue is round rubber: a tyre, or a wheel with its tyre.</summary>
+        public static bool IsTyre(Bricks.LDraw.LDrawPart part) {
+            string category = part.category != null ? part.category.Trim() : "";
+            return string.Equals(category, "Tyre", StringComparison.OrdinalIgnoreCase)
+                || (string.Equals(category, "Wheel", StringComparison.OrdinalIgnoreCase) && part.name != null && TyrePart.IsMatch(part.name));
         }
 
         // drops can name items loaded after the block's
@@ -233,6 +246,20 @@ namespace Brickcraft
             foreach (string tag in info.tags ?? new string[0]) {
                 if (!string.IsNullOrWhiteSpace(tag)) {
                     item.tags.Add(tag.Trim().ToLowerInvariant());
+                }
+            }
+            if (info.vehicle != null) {
+                item.vehicleRole = Vehicles.VehicleParts.Parse(info.vehicle.role);
+                if (!string.IsNullOrEmpty(info.vehicle.role) && item.vehicleRole == Vehicles.VehicleRole.None) {
+                    Debug.LogError("Item file " + file + " has the vehicle role " + info.vehicle.role + ": it's wheel, seat, propeller, wing or rudder");
+                    return;
+                }
+                if (info.vehicle.mass.HasValue) {
+                    if (info.vehicle.mass.Value <= 0) {
+                        Debug.LogError("Item file " + file + " has the vehicle mass " + info.vehicle.mass.Value + ": more than 0");
+                        return;
+                    }
+                    item.mass = info.vehicle.mass.Value;
                 }
             }
             if (item.iconTexture == null && item.color != BrickColor.None) {

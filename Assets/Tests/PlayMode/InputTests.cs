@@ -74,17 +74,8 @@ namespace Brickcraft.Tests
             }
         }
 
-        // the player still (landed after spawning), so what's placed in front stays in front
         private static IEnumerator standStill() {
-            Vector3 last = player.transform.position;
-            int still = 0;
-            float end = Time.realtimeSinceStartup + 10;
-            while (still < 10) {
-                Assert.Less(Time.realtimeSinceStartup, end, "the player didn't stand still in 10 seconds");
-                yield return null;
-                still = Vector3.Distance(last, player.transform.position) < 0.001f ? still + 1 : 0;
-                last = player.transform.position;
-            }
+            return TestGame.StandStill();
         }
 
         // what the crosshair is on: a brick, or a terrain mesh
@@ -104,6 +95,43 @@ namespace Brickcraft.Tests
             Brick brick = WorldNetwork.ServerPlaceBrick(brickItem, color, placement, Placer.Now(0));
             yield return TestGame.WaitUntil(() => underCrosshair() != null && Server.findBrick(underCrosshair()) == brick, 5, "the brick under the crosshair");
             placed(brick);
+        }
+
+        // where the brick in hand would go now (the placer's preview on the grid)
+        private static BrickPlacement? previewed() {
+            BrickPlacer placer = Object.FindObjectOfType<BrickPlacer>();
+            return (BrickPlacement?)typeof(BrickPlacer).GetField("target", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(placer);
+        }
+
+        [UnityTest]
+        public IEnumerator TheMiddleButtonPutsABrickByItsCornersUntilItsPlaced() {
+            yield return placeInFront("brick_2x2", 1, placed => { });
+            hold(5, "brick_2x2", 3);
+            yield return frames(3);
+            BrickPlacement? centred = previewed();
+            Assert.IsTrue(centred.HasValue, "a preview");
+
+            input.PressAndRelease(mouse.middleButton);
+            yield return frames(2);
+            BrickPlacement? cornered = previewed();
+            Assert.IsTrue(cornered.HasValue);
+            Assert.AreNotEqual(centred.Value.origin, cornered.Value.origin, "by a corner, not centred");
+            for (int press = 0; press < 4; press++) {
+                input.PressAndRelease(mouse.middleButton);
+                yield return frames(2);
+            }
+            Assert.AreEqual(centred.Value.origin, previewed().Value.origin, "round the 4 corners, then centred again");
+
+            input.PressAndRelease(mouse.middleButton);
+            yield return frames(2);
+            Assert.AreEqual(cornered.Value.origin, previewed().Value.origin);
+            input.PressAndRelease(mouse.rightButton); // placed
+            yield return frames(5);
+            Assert.AreEqual(2, quantityIn(5), "placed");
+            Assert.IsNotNull(BrickGrid.GetBrickAt(cornered.Value.origin), "where it was by its corner");
+            BrickPlacer placer = Object.FindObjectOfType<BrickPlacer>();
+            object corner = typeof(BrickPlacer).GetField("corner", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(placer);
+            Assert.AreEqual(0, corner, "centred again for the next one");
         }
 
         private static int quantityOf(int slot) {
@@ -136,6 +164,76 @@ namespace Brickcraft.Tests
             Assert.Less(new Vector2(moved.x, moved.z).magnitude, 0.05f, "typing a w doesn't walk");
             input.PressAndRelease(keyboard.escapeKey);
             yield return frames(2);
+        }
+
+        [UnityTest]
+        public IEnumerator SwimmingIntoABankClimbsOutOfDeepWater() {
+            yield return standStill();
+            BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
+            BlockType water = (BlockType)BlockDatabase.IdOf("still_water");
+            // a pool 6 blocks deep up in the air, its banks level with its water, a ledge to walk onto at +X
+            const int Deep = 6;
+            Vector3Int floor = TestGame.PlayerBlock + new Vector3Int(0, 10, 0);
+            TestGame.Floor(floor, 4, stone);
+            for (int y = 1; y <= Deep; y++) {
+                for (int x = -2; x <= 4; x++) {
+                    for (int z = -2; z <= 2; z++) {
+                        bool inside = x >= -1 && x <= 1 && z >= -1 && z <= 1;
+                        bool ledge = x >= 2 && y == Deep;
+                        if (inside || ledge || x == -2 || x == 2 || Mathf.Abs(z) == 2) {
+                            Assert.IsTrue(WorldNetwork.ServerSetBlock(floor + new Vector3Int(x, y, z), inside ? water : stone, Placer.Now(0)));
+                        }
+                    }
+                }
+            }
+            float bankTop = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + new Vector3Int(2, Deep + 1, 0))).y;
+            Vector3 bankSide = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + new Vector3Int(2, Deep + 1, 0)));
+            yield return TestGame.WaitUntil(() => Physics.Raycast(bankSide + new Vector3(0.4f, 1, 0.4f), Vector3.down, 2), 10, "the bank solid");
+
+            // in the middle of the pool, at its surface, facing the bank
+            Vector3 middle = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + new Vector3Int(0, Deep, 0))) + new Vector3(0.4f, 0.2f, 0.4f);
+            player.network.ServerTeleport(middle);
+            player.transform.rotation = Quaternion.LookRotation(Vector3.right);
+            player.firstPersonController.ResetLook();
+            yield return TestGame.WaitUntil(() => player.firstPersonController.IsSwimming, 5, "swimming");
+
+            input.Press(keyboard.wKey);
+            string trace = "bank top " + bankTop + " side x " + bankSide.x + ": ";
+            float end = Time.time + 8;
+            try {
+                while (!(player.GetComponent<CharacterController>().bounds.min.y > bankTop - 0.05f
+                        && player.transform.position.x > bankSide.x + 0.3f && !player.firstPersonController.IsSwimming)) {
+                    Assert.Less(Time.time, end, "out on the bank: " + trace);
+                    yield return seconds(0.25f);
+                    trace += "[" + player.transform.position.ToString("F2") + " feet " + player.GetComponent<CharacterController>().bounds.min.y.ToString("F2")
+                        + " " + player.firstPersonController.Depth + "]";
+                }
+            } finally {
+                input.Release(keyboard.wKey);
+            }
+            yield return seconds(0.5f);
+            Assert.Greater(player.GetComponent<CharacterController>().bounds.min.y, bankTop - 0.05f, "standing on it");
+        }
+
+        [UnityTest]
+        public IEnumerator EnterOpensTheChatInAVehiclesSeat() {
+            // a seat alone, a vehicle of its own, in the air above the player
+            Item seatItem = Server.items["seat"];
+            Vector3Int cell = BrickGrid.WorldToCell(player.transform.position + Vector3.up * 6);
+            Vehicles.Vehicle vehicle = Vehicles.VehicleSystem.ServerCreate(seatItem, 4, new BrickPlacement(seatItem.brickModel, cell));
+            yield return frames(1);
+            Vehicles.VehicleSystem.ServerSit(player.network, vehicle.grid.GetBrickAt(Vector3Int.zero));
+            yield return frames(2);
+            Assert.AreEqual(Player.FreezeReason.Driving, player.freezeReason, "seated");
+
+            input.PressAndRelease(keyboard.enterKey);
+            yield return frames(2);
+            Assert.IsTrue(GameInput.IsTyping, "the chat is open");
+            input.PressAndRelease(keyboard.escapeKey);
+            yield return frames(2);
+            Assert.IsFalse(GameInput.IsTyping, "the chat closed");
+            Assert.AreEqual(Player.FreezeReason.Driving, player.freezeReason, "still seated");
+            Vehicles.VehicleSystem.ServerStandUp(player.network, Vector3.zero, Vector3.zero);
         }
 
         [UnityTest]

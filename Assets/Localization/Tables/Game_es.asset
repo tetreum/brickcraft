@@ -543,6 +543,64 @@ MonoBehaviour:
       a un mundo) (se ven {2} de sus {3} tri\xE1ngulos)"
     m_Metadata:
       m_Items: []
+  - m_Id: 42835332816896
+    m_Localized: "Eso no es el asiento de un veh\xEDculo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 42835374759936
+    m_Localized: "Ya hay alguien sentado ah\xED."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431938781184
+    m_Localized: "Asiento elegido: haz clic en las ruedas para conectarlas (otra
+      vez para desconectarlas), o clic derecho en \xE9l para sus controles."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918528
+    m_Localized: "Haz clic primero en un asiento de este veh\xEDculo, y luego en
+      las piezas que conectar."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918529
+    m_Localized: "Solo se pueden conectar ruedas, h\xE9lices y alas."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918530
+    m_Localized: '{0}: conectada al asiento.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918531
+    m_Localized: '{0}: desconectada.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 60420665368576
+    m_Localized: "Usa /reposition si te quedas atascado o vuelcas el veh\xEDculo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 60420715700224
+    m_Localized: "Si\xE9ntate en un veh\xEDculo para recolocarlo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186225623040
+    m_Localized: "Aparici\xF3n de PNJ: {0}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186380812288
+    m_Localized: 'Uso: /npcs [on|off]'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186380812289
+    m_Localized: "{0} activ\xF3 los PNJ"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186380812290
+    m_Localized: "{0} desactiv\xF3 los PNJ ({1} eliminados, las mascotas se quedan)"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 406324714921984
+    m_Localized: "Solo quien puso este cartel (o un admin) puede escribir en \xE9l."
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

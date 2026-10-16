@@ -33,6 +33,9 @@ namespace Brickcraft.Network
 
         public static long Seed { get; private set; }
 
+        /// <summary>The world's kind of terrain: generated from the seed, or flat ground (see WorldStorage.Terrain).</summary>
+        public static TerrainKind Terrain { get; private set; }
+
         /// <summary>How hard the world is (saved with it, see WorldStorage), on the server and its clients.</summary>
         public static Difficulty Difficulty { get; private set; }
 
@@ -48,6 +51,19 @@ namespace Brickcraft.Network
             }
         }
         private static bool testScenePvp = true;
+
+        /// <summary>Server: NPCs appear by themselves (see WorldStorage.NpcsOn; the test scene has them).</summary>
+        public static bool NpcsOn {
+            get { return Storage != null ? Storage.NpcsOn : testSceneNpcs; }
+            set {
+                if (Storage != null) {
+                    Storage.SetNpcsOn(value);
+                } else {
+                    testSceneNpcs = value;
+                }
+            }
+        }
+        private static bool testSceneNpcs = true;
 
         /// <summary>The saved world, null in scenes that aren't saved (the test scene).</summary>
         public static WorldStorage Storage { get; private set; }
@@ -85,10 +101,15 @@ namespace Brickcraft.Network
         public static void StartServer(WorldStorage storage, long unsavedSeed, Vector3 spawn) {
             Storage = storage;
             Seed = storage != null ? storage.Seed : unsavedSeed;
+            Terrain = storage != null ? storage.Terrain : TerrainKind.Generated;
             Difficulty = storage != null ? storage.Difficulty : Difficulty.Normal;
             serverChanges = storage != null ? storage.Changes : new WorldChanges();
             interests.Clear();
             serverChunks.Clear();
+            // a game before this one (in the editor, play mode without a domain reload keeps statics) left its areas and
+            // its times: Time.unscaledTime starts over, so a time of the last game would hold this one back
+            lastAreas.Clear();
+            nextServerUpdate = 0;
 
             NetworkServer.RegisterHandler<JoinWorldMessage>(onJoinWorld);
             NetworkServer.RegisterHandler<ViewDistanceMessage>(onViewDistance);
@@ -97,7 +118,7 @@ namespace Brickcraft.Network
 
             WorldBehaviour world = WorldBehaviour.Instance;
             if (world != null) {
-                world.Initialize(Seed, serverChanges, storage != null ? storage.EnsureLoaded : (Action<Vector2Int>)null);
+                world.Initialize(Seed, Terrain, serverChanges, storage != null ? storage.EnsureLoaded : (Action<Vector2Int>)null);
                 world.SpawnChunk = spawnChunk;
                 world.ChunkGenerated += onServerChunkGenerated;
                 world.ChunkUnloaded += onServerChunkUnloaded;
@@ -180,14 +201,29 @@ namespace Brickcraft.Network
         }
 
         /// <summary>
-        /// Puts an attachment (a door...) in a brick's slot, see Bricks.BrickSlot. The caller checks it fits
-        /// and the slot is free.
+        /// Puts an attachment (a door...) in a brick's slot, see Bricks.BrickSlot; glass in that groove of its frame
+        /// (its state). The caller checks it fits and the slot is free.
         /// </summary>
-        public static Brick ServerAttachBrick(Item item, int color, Brick holder, Placer placer) {
-            Brick brick = Server.Instance.spawnBrick(item, color, holder.placement, null, 0, holder.id);
+        public static Brick ServerAttachBrick(Item item, int color, Brick holder, Placer placer, int seat = 0) {
+            Brick brick = Server.Instance.spawnBrick(item, color, holder.placement, null, seat, holder.id);
             serverChanges.AddBrick(toSaved(brick, placer));
             sendPlaced(brick, placer);
             Npcs.Navigation.NavGrid.MarkDirty(holder);
+            return brick;
+        }
+
+        /// <summary>
+        /// A connected brick (an axle through a hole, see Bricks.BrickJoints) held by another. The caller checks it can
+        /// (BrickJoints.WhyNot).
+        /// </summary>
+        public static Brick ServerConnectBrick(Item item, int color, Brick holder, BrickJoint joint, Placer placer) {
+            Brick brick = Server.Instance.spawnConnected(item, color, holder, joint);
+            if (brick == null) {
+                return null;
+            }
+            serverChanges.AddBrick(toSaved(brick, placer));
+            sendPlaced(brick, placer);
+            Npcs.Navigation.NavGrid.MarkDirty(brick);
             return brick;
         }
 
@@ -202,6 +238,8 @@ namespace Brickcraft.Network
                 placedAt = placer.placedAt,
                 state = brick.state,
                 attachedTo = brick.attachedTo,
+                connected = brick.joint.HasValue,
+                joint = brick.joint ?? default(BrickJoint),
             });
         }
 
@@ -221,16 +259,20 @@ namespace Brickcraft.Network
 
         /// <summary>Who placed a brick, nobody (0) if no player did.</summary>
         public static Placer ServerPlacerOf(Brick brick) {
+            if (brick.vehicle != null) {
+                return default(Placer); // vehicles' bricks aren't in the world's changes
+            }
             return serverChanges != null && serverChanges.TryGetBrick(new Guid(brick.id), brick.placement.origin, out SavedBrick saved) ? saved.placer : default(Placer);
         }
 
         /// <summary>
         /// Moves a brick (it keeps its id, colour and placer) and what's attached to it. Players see them
         /// removed and placed again, so those that only have one of the two chunks get the right half.
-        /// False if it doesn't fit there, or it's an attachment (they move with their brick).
+        /// False if it doesn't fit there, or it's an attachment (they move with their brick), or it holds connected bricks
+        /// (see Bricks.BrickJoints: they'd have to go somewhere else too).
         /// </summary>
         public static bool ServerMoveBrick(Brick brick, BrickPlacement to) {
-            if (brick.attachedTo != null) {
+            if (brick.attachedTo != null || brick.vehicle != null || Server.connectedTo(brick).Count > 0) {
                 return false;
             }
             Placer placer = ServerPlacerOf(brick);
@@ -268,6 +310,10 @@ namespace Brickcraft.Network
             if (brick.color == color) {
                 return;
             }
+            if (brick.vehicle != null) {
+                Vehicles.VehicleSystem.ServerSetColor(brick, color);
+                return;
+            }
             Placer placer = ServerPlacerOf(brick);
             Server.Instance.setBrickColor(brick, color);
             serverChanges.AddBrick(toSaved(brick, placer));
@@ -279,8 +325,8 @@ namespace Brickcraft.Network
         }
 
         public static void ServerSetBrickState(Brick brick, int state) {
-            if (brick.state == state) {
-                return;
+            if (brick.state == state || brick.vehicle != null) {
+                return; // vehicles' bricks have no states yet (doors...)
             }
             Placer placer = ServerPlacerOf(brick);
             Server.Instance.setBrickState(brick, state);
@@ -293,8 +339,30 @@ namespace Brickcraft.Network
             });
         }
 
+        /// <summary>
+        /// Writes on a brick of the world (a sign, see Bricks.SignText), the text already cleaned (SignText.Clean); empty
+        /// rubs it out. False for a vehicle's brick (they're not written on yet).
+        /// </summary>
+        public static bool ServerSetBrickText(Brick brick, string text) {
+            if (brick.vehicle != null) {
+                return false;
+            }
+            Placer placer = ServerPlacerOf(brick);
+            Server.Instance.setBrickText(brick, text);
+            serverChanges.AddBrick(toSaved(brick, placer));
+            sendToChunk(WorldChanges.ChunkOfBrick(brick.placement.origin), new BrickTextMessage() {
+                id = brick.id,
+                origin = brick.placement.origin,
+                text = brick.text ?? "",
+            });
+            return true;
+        }
+
         /// <summary>Removes a brick and what's attached to it (which players remove with it). Returns them all.</summary>
         public static List<Brick> ServerRemoveBrick(Brick brick) {
+            if (brick.vehicle != null) {
+                return Vehicles.VehicleSystem.ServerRemove(brick);
+            }
             List<Brick> removed = new List<Brick>();
             // what a chest kept falls around it
             if (BrickStorage.IsStorage(brick)) {
@@ -303,6 +371,9 @@ namespace Brickcraft.Network
             Brick attached = Server.attachmentOf(brick);
             if (attached != null) {
                 removed.AddRange(ServerRemoveBrick(attached));
+            }
+            foreach (Brick held in new List<Brick>(Server.connectedTo(brick))) {
+                removed.AddRange(ServerRemoveBrick(held));
             }
             // whoever slept in it loses their spawn point
             if (Npcs.NpcBeds.IsBed(brick)) {
@@ -563,6 +634,7 @@ namespace Brickcraft.Network
             PlayerSleep.SendStatus(conn);
             conn.Send(new WorldInfoMessage() {
                 seed = Seed,
+                terrain = (byte)Terrain,
                 difficulty = (byte)Difficulty,
                 spawnChunk = interest.spawnChunk,
                 viewDistance = interest.viewDistance,
@@ -603,6 +675,8 @@ namespace Brickcraft.Network
                 placer = placer,
                 state = brick.state,
                 attachedTo = brick.attachedTo != null ? new Guid(brick.attachedTo) : Guid.Empty,
+                joint = brick.joint,
+                text = brick.text,
             };
         }
 
@@ -630,6 +704,7 @@ namespace Brickcraft.Network
             NetworkClient.RegisterHandler<BrickPlacedMessage>(onBrickPlaced);
             NetworkClient.RegisterHandler<BrickRemovedMessage>(onBrickRemoved);
             NetworkClient.RegisterHandler<BrickStateMessage>(onBrickState);
+            NetworkClient.RegisterHandler<BrickTextMessage>(onBrickText);
             NetworkClient.RegisterHandler<BrickColorMessage>(onBrickColor);
             NetworkClient.RegisterHandler<TimeMessage>(onTime);
             NetworkClient.RegisterHandler<SleepStatusMessage>(message => SleepStatus = message);
@@ -752,6 +827,7 @@ namespace Brickcraft.Network
             hasWorldInfo = true;
             ServerMaxViewDistance = message.maxViewDistance > 0 ? message.maxViewDistance : message.viewDistance;
             Difficulty = (Difficulty)message.difficulty;
+            Terrain = (TerrainKind)message.terrain;
 
             WorldBehaviour world = WorldBehaviour.Instance;
             if (world == null) {
@@ -760,7 +836,7 @@ namespace Brickcraft.Network
             world.ViewDistance = message.viewDistance;
             // the host's world was set up by the server
             if (!NetworkServer.active) {
-                world.Initialize(message.seed, clientChanges);
+                world.Initialize(message.seed, (TerrainKind)message.terrain, clientChanges);
                 world.ChunkGenerated += onClientChunkGenerated;
                 world.ChunkUnloaded += onClientChunkUnloaded;
             }
@@ -818,6 +894,7 @@ namespace Brickcraft.Network
                 placer = new Placer() { playerId = message.placedBy, placedAt = message.placedAt },
                 state = message.state,
                 attachedTo = string.IsNullOrEmpty(message.attachedTo) ? Guid.Empty : new Guid(message.attachedTo),
+                joint = message.connected ? message.joint : (BrickJoint?)null,
             };
             clientChanges.AddBrick(brick);
 
@@ -850,6 +927,19 @@ namespace Brickcraft.Network
             }
         }
 
+        private static void onBrickText(BrickTextMessage message) {
+            if (NetworkServer.active) {
+                return;
+            }
+            if (clientChanges.TryGetBrick(new Guid(message.id), message.origin, out SavedBrick saved)) {
+                saved.text = string.IsNullOrEmpty(message.text) ? null : message.text;
+                clientChanges.AddBrick(saved);
+            }
+            if (Server.bricks.TryGetValue(message.id, out Brick brick)) {
+                Server.Instance.setBrickText(brick, message.text);
+            }
+        }
+
         private static void onBrickColor(BrickColorMessage message) {
             if (NetworkServer.active) {
                 return;
@@ -874,23 +964,36 @@ namespace Brickcraft.Network
         // -------- both --------
 
         private static void spawnBricks(List<SavedBrick> bricks) {
-            // attachments after the bricks they go in
+            // attachments after the bricks they go in (connected bricks may hold others: as many rounds as it takes)
             bricks.Sort((a, b) => (a.attachedTo != Guid.Empty).CompareTo(b.attachedTo != Guid.Empty));
-            foreach (SavedBrick saved in bricks) {
-                string id = saved.id.ToString();
-
-                if (Server.bricks.ContainsKey(id)) {
-                    continue;
+            List<SavedBrick> waiting = new List<SavedBrick>(bricks);
+            bool spawned = true;
+            while (spawned && waiting.Count > 0) {
+                spawned = false;
+                foreach (SavedBrick saved in new List<SavedBrick>(waiting)) {
+                    string id = saved.id.ToString();
+                    if (Server.bricks.ContainsKey(id)) {
+                        waiting.Remove(saved);
+                        continue;
+                    }
+                    if (!Server.items.TryGetValue(saved.itemId, out Item item)) {
+                        Debug.LogError("Unknown item " + saved.itemId + " for brick " + id);
+                        waiting.Remove(saved);
+                        continue;
+                    }
+                    string attachedTo = saved.attachedTo != Guid.Empty ? saved.attachedTo.ToString() : null;
+                    if (attachedTo != null && !Server.bricks.ContainsKey(attachedTo)) {
+                        continue; // its brick isn't there (yet)
+                    }
+                    Brick brick = saved.joint.HasValue
+                        ? Server.Instance.spawnConnected(item, saved.color, Server.bricks[attachedTo], saved.joint.Value, id, saved.state)
+                        : Server.Instance.spawnBrick(item, saved.color, new BrickPlacement(item.brickModel, saved.origin, saved.rotation), id, saved.state, attachedTo);
+                    if (brick != null && !string.IsNullOrEmpty(saved.text)) {
+                        Server.Instance.setBrickText(brick, saved.text);
+                    }
+                    waiting.Remove(saved);
+                    spawned = true;
                 }
-                if (!Server.items.TryGetValue(saved.itemId, out Item item)) {
-                    Debug.LogError("Unknown item " + saved.itemId + " for brick " + id);
-                    continue;
-                }
-                string attachedTo = saved.attachedTo != Guid.Empty ? saved.attachedTo.ToString() : null;
-                if (attachedTo != null && !Server.bricks.ContainsKey(attachedTo)) {
-                    continue; // its brick isn't there (yet)
-                }
-                Server.Instance.spawnBrick(item, saved.color, new BrickPlacement(item.brickModel, saved.origin, saved.rotation), id, saved.state, attachedTo);
             }
         }
 

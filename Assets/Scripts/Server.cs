@@ -12,6 +12,9 @@ namespace Brickcraft
     {
         public static Server Instance;
         public static Dictionary<string, Brick> bricks = new Dictionary<string, Brick>();
+
+        /// <summary>A brick was added to this game instance, or removed from it (see bricks).</summary>
+        public static event System.Action BricksChanged;
         // what's attached to each brick (by its id), see attachmentOf
         private static readonly Dictionary<string, Brick> attachments = new Dictionary<string, Brick>();
         // every item has its folder, see ItemDatabase. Ids are slugs, see Slugs
@@ -29,6 +32,7 @@ namespace Brickcraft
             // static state survives scene changes, start every game clean
             bricks.Clear();
             attachments.Clear();
+            connected.Clear();
             BrickGrid.Clear();
 
             checkBrickModels();
@@ -141,19 +145,25 @@ namespace Brickcraft
 
         /// <summary>
         /// Adds a brick to this game instance. In a networked game use Network.WorldNetwork instead,
-        /// which calls this on the server and every client.
+        /// which calls this on the server and every client. A vehicle's (see Vehicles.Vehicle) is placed in its cells,
+        /// under it, instead of the BrickGrid's.
         /// </summary>
-        public Brick spawnBrick(Item item, int color, BrickPlacement placement, string id = null, int state = 0, string attachedTo = null) {
+        public Brick spawnBrick(Item item, int color, BrickPlacement placement, string id = null, int state = 0, string attachedTo = null,
+                Vehicles.Vehicle vehicle = null) {
             color = item.ValidColor(color);
             GameObject brickObj;
-            if (attachedTo != null) {
+            if (vehicle != null) {
+                Transform parent = vehicle.transform;
+                brickObj = createBrickObject(item, color, parent.TransformPoint(placement.LocalPosition), parent.rotation * placement.Rotation);
+                brickObj.transform.SetParent(parent, true);
+            } else if (attachedTo != null) {
                 // in its brick's slot, moving with it
                 if (!bricks.TryGetValue(attachedTo, out Brick holder) || slotOf(holder) == null) {
                     Debug.LogError("The brick " + attachedTo + " that " + item.id + " is attached to isn't there, or has no slot");
                     return null;
                 }
-                Transform point = slotOf(holder).point;
-                brickObj = createBrickObject(item, color, point.position, point.rotation);
+                BrickSlot slot = slotOf(holder);
+                brickObj = createBrickObject(item, color, slot.PositionFor(item.brickModel, state), slot.point.rotation);
                 brickObj.transform.SetParent(holder.gameObject.transform, true);
                 placement = holder.placement;
             } else {
@@ -168,9 +178,12 @@ namespace Brickcraft
             brick.placement = placement;
             brick.state = state;
             brick.attachedTo = attachedTo;
+            brick.vehicle = vehicle;
 
             bricks.Add(brick.id, brick);
-            if (attachedTo == null) {
+            if (vehicle != null) {
+                vehicle.grid.Register(brick);
+            } else if (attachedTo == null) {
                 BrickGrid.Register(brick);
             } else {
                 attachments[attachedTo] = brick;
@@ -180,8 +193,64 @@ namespace Brickcraft
             if (state != 0) {
                 showState(brick, false);
             }
-
+            BricksChanged?.Invoke();
             return brick;
+        }
+
+        // what connected bricks each brick holds (see BrickJoints)
+        private static readonly Dictionary<string, List<Brick>> connected = new Dictionary<string, List<Brick>>();
+
+        /// <summary>
+        /// Adds a connected brick to this game instance (see Bricks.BrickJoints): held by another, where their connectors
+        /// meet, next to it (in the world, or its vehicle). The caller checks it can (BrickJoints.WhyNot). In a networked
+        /// game use WorldNetwork or VehicleSystem, which call this on the server and every client.
+        /// </summary>
+        public Brick spawnConnected(Item item, int color, Brick holder, BrickJoint joint, string id = null, int state = 0) {
+            if (!BrickJoints.IsValid(holder, item.brickModel, joint)) {
+                Debug.LogError("The brick " + (holder != null ? holder.id : "?") + " can't hold " + item.id + " like that");
+                return null;
+            }
+            color = item.ValidColor(color);
+            BrickJoints.PoseHeldBy(holder, item.brickModel, joint, out Vector3 position, out Quaternion rotation);
+            Transform parent = BrickJoints.ParentOf(holder);
+            GameObject brickObj = createBrickObject(item, color, Vector3.zero, Quaternion.identity);
+            brickObj.transform.SetParent(parent, false);
+            brickObj.transform.localPosition = position;
+            brickObj.transform.localRotation = rotation;
+
+            Brick brick = new Brick() {
+                id = id ?? System.Guid.NewGuid().ToString(),
+                itemId = item.id,
+                color = color,
+                gameObject = brickObj,
+                placement = holder.placement,
+                state = state,
+                attachedTo = holder.id,
+                joint = joint,
+                jointPosition = position,
+                jointRotation = rotation,
+                vehicle = holder.vehicle,
+            };
+            bricks.Add(brick.id, brick);
+            if (!connected.TryGetValue(holder.id, out List<Brick> held)) {
+                held = new List<Brick>();
+                connected[holder.id] = held;
+            }
+            held.Add(brick);
+            if (brick.vehicle != null) {
+                brick.vehicle.grid.Register(brick);
+            }
+            brickObj.name = brick.id;
+            if (state != 0) {
+                showState(brick, false);
+            }
+            BricksChanged?.Invoke();
+            return brick;
+        }
+
+        /// <summary>The connected bricks a brick holds (see BrickJoints), none if it holds none.</summary>
+        public static IReadOnlyList<Brick> connectedTo(Brick brick) {
+            return connected.TryGetValue(brick.id, out List<Brick> held) ? held : (IReadOnlyList<Brick>)new Brick[0];
         }
 
         /// <summary>Moves a brick of this game instance, false (and it stays) if the cells there aren't free.</summary>
@@ -213,6 +282,12 @@ namespace Brickcraft
             showState(brick, true);
         }
 
+        /// <summary>What's written on a brick (a sign's), shown on it; null or empty for nothing.</summary>
+        public void setBrickText(Brick brick, string text) {
+            brick.text = string.IsNullOrEmpty(text) ? null : text;
+            SignText.Show(brick);
+        }
+
         private static void showState(Brick brick, bool animate) {
             foreach (IBrickState shown in brick.gameObject.GetComponentsInChildren<IBrickState>()) {
                 shown.ShowState(brick.state, animate);
@@ -229,21 +304,35 @@ namespace Brickcraft
             return attachments.TryGetValue(brick.id, out Brick attached) ? attached : null;
         }
 
-        /// <summary>Removes a brick from this game instance, and what's attached to it.</summary>
+        /// <summary>Removes a brick from this game instance, and what's attached to it (and connected to it, see BrickJoints).</summary>
         public void removeBrick(Brick brick) {
             Brick attached = attachmentOf(brick);
             if (attached != null) {
                 removeBrick(attached);
             }
+            foreach (Brick held in new List<Brick>(connectedTo(brick))) {
+                removeBrick(held);
+            }
+            connected.Remove(brick.id);
             if (!bricks.Remove(brick.id)) {
                 return;
             }
-            if (brick.attachedTo == null) {
+            if (brick.joint.HasValue) {
+                if (brick.attachedTo != null && connected.TryGetValue(brick.attachedTo, out List<Brick> siblings)) {
+                    siblings.Remove(brick);
+                }
+                if (brick.vehicle != null) {
+                    brick.vehicle.grid.Unregister(brick);
+                }
+            } else if (brick.vehicle != null) {
+                brick.vehicle.grid.Unregister(brick);
+            } else if (brick.attachedTo == null) {
                 BrickGrid.Unregister(brick);
             } else if (attachments.TryGetValue(brick.attachedTo, out Brick inSlot) && inSlot == brick) {
                 attachments.Remove(brick.attachedTo);
             }
             Destroy(brick.gameObject);
+            BricksChanged?.Invoke();
         }
 
         public static Brick findBrick(Collider collider) {

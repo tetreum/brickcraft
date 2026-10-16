@@ -124,6 +124,7 @@ namespace Brickcraft.Npcs
         }
 
         public static void Clear() {
+            nextRun = 0; // Time.time starts over in a new play mode
             handle.Complete();
             dispose();
             steered.Clear();

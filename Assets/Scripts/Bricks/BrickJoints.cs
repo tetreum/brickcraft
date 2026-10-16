@@ -1,0 +1,446 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace Brickcraft.Bricks
+{
+    /// <summary>
+    /// How a connected brick (see BrickJoints) is held by another: by which of the holder's connectors and which of its
+    /// own (see Connector), how far along the holder's axis their middles are (half studs, 10 LDU), turned how many
+    /// quarter turns around it, and whether it faces the other way along it. Or on its studs (onStuds): against any of
+    /// its faces on the holder's own grid (see BrickJoints.GridOf), at a cell (origin) turned spin quarter turns, like
+    /// on a vehicle's cells.
+    /// </summary>
+    public struct BrickJoint
+    {
+        public int holderConnector;
+        public int connector;
+        public int slide;
+        public int spin;
+        public bool flip;
+        public bool onStuds;
+        public Vector3Int origin;
+
+        /// <summary>On the holder's studs (or against another of its faces), on its grid.</summary>
+        public static BrickJoint OnStuds(Vector3Int origin, int rotation) {
+            return new BrickJoint() { onStuds = true, origin = origin, spin = BrickJoints.Mod(rotation, 4) };
+        }
+    }
+
+    /// <summary>
+    /// Bricks connected off the grid: an axle through a wheel's hub or a technic brick's hole, a pin in a beam. Such a
+    /// brick is held by another (Brick.attachedTo, its joint Brick.joint), placed where their connectors meet, turned
+    /// in quarter turns around them; it takes no cells, and goes when its holder does. Two connectors fit (see Fits):
+    /// an axle in an axle hole (locked) or in a round hole at least as wide (it spins), a round peg in a round hole as
+    /// wide. Things slide along the ones that slide, the shorter one staying within the longer. Where it goes it may only
+    /// meet what it connects to: its holder, and bricks with a connector that lines up with one of its own and fits.
+    /// A connected brick's studs hold bricks too (an axle through a beam, a brick on the beam): they go on its own grid.
+    /// </summary>
+    public static class BrickJoints
+    {
+        /// <summary>A slide step: half a stud.</summary>
+        public const float SlideStepLdu = 10;
+        // LDU a peg may be narrower or wider than its hole and still fit
+        private const float RadiusTolerance = 0.6f;
+        // connectors line up: their axes this parallel (cosine), this close
+        private const float ParallelCos = 0.999f;
+        private const float LineDistance = 0.01f;
+        // touching what it doesn't connect to is fine, going into it isn't
+        private const float OverlapMargin = 0.03f;
+
+        // -------- fitting --------
+
+        /// <summary>The radius of a connector's longest stretch (a pin's, not its collar's), LDU.</summary>
+        public static float MainRadius(Connector connector) {
+            float radius = 0, longest = -1;
+            foreach (ConnectorSection section in connector.sections) {
+                if (section.length > longest) {
+                    longest = section.length;
+                    radius = section.radius;
+                }
+            }
+            return radius;
+        }
+
+        /// <summary>Whether the two connect (one male, one female); locked: they can't spin (an axle in an axle hole).</summary>
+        public static bool Fits(Connector a, Connector b, out bool locked) {
+            locked = false;
+            if (a == null || b == null || a.male == b.male) {
+                return false;
+            }
+            Connector male = a.male ? a : b, female = a.male ? b : a;
+            if (female.HasAxleShape) {
+                locked = true;
+                return male.HasAxleShape;
+            }
+            float hole = MainRadius(female);
+            if (male.HasAxleShape) {
+                return 6 <= hole + RadiusTolerance;
+            }
+            return Mathf.Abs(MainRadius(male) - hole) <= RadiusTolerance;
+        }
+
+        public static bool Fits(Connector a, Connector b) {
+            return Fits(a, b, out _);
+        }
+
+        /// <summary>How many slide steps either way they may be apart (0: only middle to middle).</summary>
+        public static int MaxSlide(Connector a, Connector b) {
+            if (!a.slide && !b.slide) {
+                return 0;
+            }
+            float ldu = Mathf.Abs(a.Length - b.Length) / LDraw.LDrawModelBuilder.Scale / 2;
+            return Mathf.FloorToInt(ldu / SlideStepLdu + 0.001f);
+        }
+
+        // -------- where --------
+
+        /// <summary>
+        /// Where a brick's object goes (its parent's space: the world's, or its vehicle's) when it's held by a brick whose
+        /// object is there, that way.
+        /// </summary>
+        public static void PoseOf(Vector3 holderPosition, Quaternion holderRotation, BrickModel holderModel, BrickModel model, BrickJoint joint,
+                out Vector3 position, out Quaternion rotation) {
+            if (joint.onStuds) {
+                GridOf(holderPosition, holderRotation, holderModel, out Vector3 grid, out Quaternion turned);
+                BrickPlacement placement = new BrickPlacement(model, joint.origin, joint.spin);
+                position = grid + turned * placement.LocalPosition;
+                rotation = turned * placement.Rotation * PrefabRotation(model);
+                return;
+            }
+            Connector held = holderModel.connectors[joint.holderConnector];
+            Connector own = model.connectors[joint.connector];
+            Vector3 axis = holderRotation * held.axis;
+            Vector3 target = joint.flip ? -axis : axis;
+            Vector3 side = Quaternion.AngleAxis(90 * Mod(joint.spin, 4), target) * (holderRotation * held.side);
+            rotation = Quaternion.LookRotation(target, side) * Quaternion.Inverse(Quaternion.LookRotation(own.axis, own.side));
+            Vector3 middle = holderPosition + holderRotation * held.Middle + axis * (joint.slide * SlideStepLdu * LDraw.LDrawModelBuilder.Scale);
+            position = middle - rotation * own.Middle;
+        }
+
+        /// <summary>
+        /// Where a brick's object is as it was placed (its parent's space), whatever its model shows now (a wheel turning):
+        /// on the grid, on a vehicle's cells, or held by another (Brick.jointPosition, jointRotation).
+        /// </summary>
+        public static void BasePose(Brick brick, out Vector3 position, out Quaternion rotation) {
+            if (brick.joint.HasValue) {
+                position = brick.jointPosition;
+                rotation = brick.jointRotation;
+                return;
+            }
+            rotation = brick.placement.Rotation * PrefabRotation(brick.model);
+            position = brick.vehicle != null ? brick.placement.LocalPosition : brick.placement.Position;
+        }
+
+        /// <summary>
+        /// The grid a brick's studs hold others on (its parent's space): where the cells of a vehicle would start for it
+        /// to be on them at the first cell, unturned.
+        /// </summary>
+        public static void GridOf(Vector3 holderPosition, Quaternion holderRotation, BrickModel holderModel, out Vector3 position, out Quaternion rotation) {
+            rotation = holderRotation * Quaternion.Inverse(PrefabRotation(holderModel));
+            position = holderPosition - rotation * new BrickPlacement(holderModel, Vector3Int.zero).LocalPosition;
+        }
+
+        public static void GridOf(Brick holder, out Vector3 position, out Quaternion rotation) {
+            BasePose(holder, out Vector3 at, out Quaternion turned);
+            GridOf(at, turned, holder.model, out position, out rotation);
+        }
+
+        /// <summary>How a model's object is turned when it's unturned on the grid.</summary>
+        public static Quaternion PrefabRotation(BrickModel model) {
+            return model != null && model.prefab != null ? model.prefab.transform.rotation : Quaternion.identity;
+        }
+
+        /// <summary>Where a brick held by that one, that way, would go (its parent's space).</summary>
+        public static void PoseHeldBy(Brick holder, BrickModel model, BrickJoint joint, out Vector3 position, out Quaternion rotation) {
+            BasePose(holder, out Vector3 at, out Quaternion turned);
+            PoseOf(at, turned, holder.model, model, joint, out position, out rotation);
+        }
+
+        // -------- whether --------
+
+        /// <summary>Whether a brick can hold others: one on the grid, on a vehicle's cells or held itself (not a door in its frame).</summary>
+        public static bool CanHold(Brick holder) {
+            return holder != null && holder.gameObject != null && holder.model != null && holder.model.connectors.Length > 0
+                && (holder.attachedTo == null || holder.joint.HasValue);
+        }
+
+        /// <summary>Whether a brick's studs hold others off the grid: it's connected itself (bricks on the grid have cells).</summary>
+        public static bool HoldsOnStuds(Brick holder) {
+            return holder != null && holder.gameObject != null && holder.model != null && !holder.model.IsAttachment && holder.joint.HasValue;
+        }
+
+        /// <summary>Whether a joint is one a brick can have with that holder (its connectors exist), wherever it goes.</summary>
+        public static bool IsValid(Brick holder, BrickModel model, BrickJoint joint) {
+            if (holder == null || holder.model == null || model == null || model.IsAttachment) {
+                return false;
+            }
+            if (joint.onStuds) {
+                return HoldsOnStuds(holder);
+            }
+            return CanHold(holder) && joint.holderConnector >= 0 && joint.holderConnector < holder.model.connectors.Length
+                && joint.connector >= 0 && joint.connector < model.connectors.Length;
+        }
+
+        /// <summary>
+        /// Why that model can't be held by that brick that way, null if it can: the connectors fit, it's within their
+        /// slide, and where it goes it meets nothing it doesn't connect to.
+        /// </summary>
+        public static string WhyNot(Brick holder, BrickModel model, BrickJoint joint) {
+            if (joint.onStuds) {
+                return whyNotOnStuds(holder, model, joint);
+            }
+            if (!CanHold(holder)) {
+                return "the holder can't hold anything";
+            }
+            if (model == null || model.connectors.Length == 0 || model.IsAttachment) {
+                return "it has nothing to connect with";
+            }
+            if (joint.holderConnector < 0 || joint.holderConnector >= holder.model.connectors.Length || joint.connector < 0 || joint.connector >= model.connectors.Length) {
+                return "no such connector";
+            }
+            Connector held = holder.model.connectors[joint.holderConnector], own = model.connectors[joint.connector];
+            if (!Fits(held, own)) {
+                return "the connectors don't fit";
+            }
+            if (Mathf.Abs(joint.slide) > MaxSlide(held, own)) {
+                return "it slides too far";
+            }
+            PoseHeldBy(holder, model, joint, out Vector3 position, out Quaternion rotation);
+            Transform parent = ParentOf(holder);
+            Vector3 worldPosition = parent != null ? parent.TransformPoint(position) : position;
+            Quaternion worldRotation = parent != null ? parent.rotation * rotation : rotation;
+            Brick blocking = Blocking(model, worldPosition, worldRotation, holder);
+            return blocking != null ? "something's in the way" : null;
+        }
+
+        // against the holder (touching it, not in it), and in nothing else
+        private static string whyNotOnStuds(Brick holder, BrickModel model, BrickJoint joint) {
+            if (!IsValid(holder, model, joint)) {
+                return "the holder can't hold anything on its studs";
+            }
+            Bounds own = new BrickPlacement(holder.model, Vector3Int.zero).LocalBounds;
+            Bounds placed = new BrickPlacement(model, joint.origin, joint.spin).LocalBounds;
+            Bounds inside = placed;
+            inside.Expand(-OverlapMargin * 2);
+            placed.Expand(OverlapMargin * 2);
+            if (!placed.Intersects(own)) {
+                return "it doesn't touch the holder";
+            }
+            if (inside.Intersects(own)) {
+                return "it goes into the holder";
+            }
+            PoseHeldBy(holder, model, joint, out Vector3 position, out Quaternion rotation);
+            Transform parent = ParentOf(holder);
+            Vector3 worldPosition = parent != null ? parent.TransformPoint(position) : position;
+            Quaternion worldRotation = parent != null ? parent.rotation * rotation : rotation;
+            return Blocking(model, worldPosition, worldRotation, holder) != null ? "something's in the way" : null;
+        }
+
+        /// <summary>Where a brick held by that one lives: the world (null) or its vehicle.</summary>
+        public static Transform ParentOf(Brick holder) {
+            return holder.vehicle != null ? holder.vehicle.transform : null;
+        }
+
+        /// <summary>
+        /// The first brick (or the terrain: a brick-less hit gives a dummy) a model there would go into, that it doesn't
+        /// connect to; null if none.
+        /// </summary>
+        public static Brick Blocking(BrickModel model, Vector3 worldPosition, Quaternion worldRotation, Brick holder) {
+            Bounds mesh = MeshBounds(model);
+            Vector3 half = mesh.extents - Vector3.one * OverlapMargin;
+            if (half.x <= 0 || half.y <= 0 || half.z <= 0) {
+                return null;
+            }
+            // bricks just placed or moved are where they are (transforms aren't synced to physics on their own)
+            Physics.SyncTransforms();
+            foreach (Collider collider in Physics.OverlapBox(worldPosition + worldRotation * mesh.center, half, worldRotation, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)) {
+                if (collider.GetComponentInParent<Network.PlayerNetwork>() != null) {
+                    return Terrain;
+                }
+                Brick brick = Server.findBrick(collider);
+                if (brick == null) {
+                    return Terrain;
+                }
+                if (brick == holder || ConnectsTo(model, worldPosition, worldRotation, brick)) {
+                    continue;
+                }
+                return brick;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Whether a box in the world (axis aligned) goes into a connected brick: bricks placed on the grid can't go where
+        /// one is (it takes no cells to stop them).
+        /// </summary>
+        public static bool OverlapsConnected(Bounds world) {
+            world.Expand(-OverlapMargin * 2);
+            if (world.extents.x <= 0 || world.extents.y <= 0 || world.extents.z <= 0) {
+                return false;
+            }
+            Physics.SyncTransforms();
+            foreach (Collider collider in Physics.OverlapBox(world.center, world.extents, Quaternion.identity, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)) {
+                Brick brick = Server.findBrick(collider);
+                if (brick != null && brick.joint.HasValue) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// The holder's connector nearest a line of sight (from its start to its end: past the surface looked at, holes
+        /// are inside bricks) that one of the model's connectors fits, within maxDistance of it; those of the model that
+        /// fit it, and the point of it nearest the line. -1 if none is that near.
+        /// </summary>
+        public static int NearestFitting(Brick holder, BrickModel model, Vector3 lineStart, Vector3 lineEnd, float maxDistance,
+                System.Collections.Generic.List<int> fitting, out Vector3 nearest) {
+            fitting.Clear();
+            nearest = lineEnd;
+            if (!CanHold(holder) || model == null || model.connectors.Length == 0) {
+                return -1;
+            }
+            Transform tr = holder.gameObject.transform;
+            int best = -1;
+            float bestDistance = maxDistance;
+            for (int i = 0; i < holder.model.connectors.Length; i++) {
+                Connector c = holder.model.connectors[i];
+                if (!System.Array.Exists(model.connectors, own => Fits(own, c))) {
+                    continue;
+                }
+                float distance = SegmentDistance(lineStart, lineEnd, tr.TransformPoint(c.start), tr.TransformPoint(c.End), out Vector3 onConnector);
+                if (distance <= bestDistance) {
+                    bestDistance = distance;
+                    best = i;
+                    nearest = onConnector;
+                }
+            }
+            if (best >= 0) {
+                for (int i = 0; i < model.connectors.Length; i++) {
+                    if (Fits(model.connectors[i], holder.model.connectors[best])) {
+                        fitting.Add(i);
+                    }
+                }
+            }
+            return best;
+        }
+
+        /// <summary>How near two segments come; onB: the point of the second nearest the first.</summary>
+        public static float SegmentDistance(Vector3 a0, Vector3 a1, Vector3 b0, Vector3 b1, out Vector3 onB) {
+            Vector3 d1 = a1 - a0, d2 = b1 - b0, r = a0 - b0;
+            float a = Vector3.Dot(d1, d1), e = Vector3.Dot(d2, d2), f = Vector3.Dot(d2, r);
+            float s, t;
+            if (a <= 1e-8f && e <= 1e-8f) {
+                s = t = 0;
+            } else if (a <= 1e-8f) {
+                s = 0;
+                t = Mathf.Clamp01(f / e);
+            } else {
+                float c = Vector3.Dot(d1, r);
+                if (e <= 1e-8f) {
+                    t = 0;
+                    s = Mathf.Clamp01(-c / a);
+                } else {
+                    float b = Vector3.Dot(d1, d2), denom = a * e - b * b;
+                    s = denom != 0 ? Mathf.Clamp01((b * f - c * e) / denom) : 0;
+                    t = (b * s + f) / e;
+                    if (t < 0) {
+                        t = 0;
+                        s = Mathf.Clamp01(-c / a);
+                    } else if (t > 1) {
+                        t = 1;
+                        s = Mathf.Clamp01((b - c) / a);
+                    }
+                }
+            }
+            onB = b0 + d2 * t;
+            return Vector3.Distance(a0 + d1 * s, onB);
+        }
+
+        /// <summary>The slide that puts the part nearest a point along the holder's connector, within what they allow.</summary>
+        public static int SlideToward(Brick holder, int holderConnector, Connector own, Vector3 worldPoint) {
+            Connector held = holder.model.connectors[holderConnector];
+            Transform tr = holder.gameObject.transform;
+            Vector3 axis = tr.TransformDirection(held.axis);
+            float along = Vector3.Dot(worldPoint - tr.TransformPoint(held.Middle), axis);
+            int steps = Mathf.RoundToInt(along / (SlideStepLdu * LDraw.LDrawModelBuilder.Scale));
+            int max = MaxSlide(held, own);
+            return Mathf.Clamp(steps, -max, max);
+        }
+
+        /// <summary>Stands for what isn't a brick (the terrain, a player) in Blocking's answer.</summary>
+        public static readonly Brick Terrain = new Brick() { id = "terrain" };
+
+        /// <summary>Whether a model there has a connector that lines up with one of the brick's and fits it.</summary>
+        public static bool ConnectsTo(BrickModel model, Vector3 worldPosition, Quaternion worldRotation, Brick brick) {
+            if (brick.model == null || brick.gameObject == null || brick.model.connectors.Length == 0) {
+                return false;
+            }
+            Transform other = brick.gameObject.transform;
+            foreach (Connector own in model.connectors) {
+                Vector3 start = worldPosition + worldRotation * own.start, axis = worldRotation * own.axis;
+                foreach (Connector theirs in brick.model.connectors) {
+                    if (!Fits(own, theirs)) {
+                        continue;
+                    }
+                    if (LineUp(start, axis, own.Length, other.TransformPoint(theirs.start), other.TransformDirection(theirs.axis), theirs.Length)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /// <summary>Two connectors (start, unit axis, length) on one line, overlapping along it.</summary>
+        public static bool LineUp(Vector3 startA, Vector3 axisA, float lengthA, Vector3 startB, Vector3 axisB, float lengthB) {
+            if (Mathf.Abs(Vector3.Dot(axisA, axisB)) < ParallelCos) {
+                return false;
+            }
+            Vector3 between = startB - startA;
+            if ((between - axisA * Vector3.Dot(between, axisA)).magnitude > LineDistance * Server.studSize) {
+                return false;
+            }
+            // their stretches along A's axis
+            float a0 = 0, a1 = lengthA;
+            float b0 = Vector3.Dot(between, axisA), b1 = b0 + Vector3.Dot(axisB, axisA) * lengthB;
+            float bMin = Mathf.Min(b0, b1), bMax = Mathf.Max(b0, b1);
+            return Mathf.Min(a1, bMax) - Mathf.Max(a0, bMin) > 0.001f;
+        }
+
+        // the box around a model's meshes, in its own space
+        private static readonly Dictionary<BrickModel, Bounds> meshBounds = new Dictionary<BrickModel, Bounds>();
+
+        public static Bounds MeshBounds(BrickModel model) {
+            if (meshBounds.TryGetValue(model, out Bounds bounds)) {
+                return bounds;
+            }
+            bool any = false;
+            bounds = new Bounds();
+            foreach (MeshFilter filter in model.prefab.GetComponentsInChildren<MeshFilter>(true)) {
+                if (filter.sharedMesh == null) {
+                    continue;
+                }
+                Bounds b = filter.sharedMesh.bounds;
+                if (filter.transform != model.prefab.transform) {
+                    // a child's: its box's corners in the model's space
+                    for (int c = 0; c < 8; c++) {
+                        Vector3 corner = b.center + Vector3.Scale(b.extents, new Vector3((c & 1) == 0 ? -1 : 1, (c & 2) == 0 ? -1 : 1, (c & 4) == 0 ? -1 : 1));
+                        Vector3 p = model.prefab.transform.InverseTransformPoint(filter.transform.TransformPoint(corner));
+                        if (any) { bounds.Encapsulate(p); } else { bounds = new Bounds(p, Vector3.zero); any = true; }
+                    }
+                } else if (any) {
+                    bounds.Encapsulate(b);
+                } else {
+                    bounds = b;
+                    any = true;
+                }
+            }
+            meshBounds[model] = bounds;
+            return bounds;
+        }
+
+        public static int Mod(int value, int by) {
+            return ((value % by) + by) % by;
+        }
+    }
+}

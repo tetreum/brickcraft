@@ -511,6 +511,62 @@ MonoBehaviour:
     m_Key: partslister.model_saved
     m_Metadata:
       m_Items: []
+  - m_Id: 42835332816896
+    m_Key: vehicle.not_seat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 42835374759936
+    m_Key: vehicle.seat_taken
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431938781184
+    m_Key: vehicle.seat_selected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918528
+    m_Key: vehicle.select_seat_first
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918529
+    m_Key: vehicle.cannot_wire
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918530
+    m_Key: vehicle.wired
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918531
+    m_Key: vehicle.unwired
+    m_Metadata:
+      m_Items: []
+  - m_Id: 60420665368576
+    m_Key: vehicle.reposition_hint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 60420715700224
+    m_Key: vehicle.reposition_not_seated
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186225623040
+    m_Key: cmd.npcs_is
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186380812288
+    m_Key: cmd.usage_npcs
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186380812289
+    m_Key: cmd.npcs_turned_on
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186380812290
+    m_Key: cmd.npcs_turned_off
+    m_Metadata:
+      m_Items: []
+  - m_Id: 406324714921984
+    m_Key: sign.not_yours
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

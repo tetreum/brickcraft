@@ -10,8 +10,9 @@ namespace Brickcraft.World
     /// A saved world on disk, owned by the server:
     ///   world.dat                 header: format version, seed, generator version, timestamps,
     ///                             game versions that created and last saved it, name, difficulty,
-    ///                             mods (id and version last played with), PvP, how long a day lasts
-    ///                             and the game's time (see WorldTime)
+    ///                             mods (id and version last played with), PvP, how long a day lasts,
+    ///                             the game's time (see WorldTime), whether NPCs appear, its kind of
+    ///                             terrain and the tutorial it's for (see Tutorials), if any
     ///   regions/r.[x].[z].bcr     changes of each chunk, see <see cref="RegionFile"/>
     ///
     /// The terrain itself is never stored, it's generated again from the seed. Saves only contain
@@ -45,7 +46,7 @@ namespace Brickcraft.World
         /// a migration from the previous one: older saves are upgraded when they're played (see
         /// Migrations.SaveMigrations).
         /// </summary>
-        public const ushort FormatVersion = 10;
+        public const ushort FormatVersion = 17;
 
         public string Folder { get; private set; }
         /// <summary>The format it's saved in, see FormatVersion.</summary>
@@ -68,6 +69,12 @@ namespace Brickcraft.World
         public List<WorldMod> Mods { get; private set; } = new List<WorldMod>();
         /// <summary>Players can hurt each other, chosen when it was created (admins change it with /pvp).</summary>
         public bool Pvp { get; private set; } = true;
+        /// <summary>NPCs appear by themselves (admins turn them off with /npcs: then only pets stay).</summary>
+        public bool NpcsOn { get; private set; } = true;
+        /// <summary>Its terrain: generated from its seed, or flat ground (a tutorial's, see TerrainKind).</summary>
+        public TerrainKind Terrain { get; private set; }
+        /// <summary>The tutorial it's for (see Tutorials.Tutorial.id), empty for a world to play.</summary>
+        public string Tutorial { get; private set; } = "";
         /// <summary>Real seconds a day lasts (admins change it with /daylength), see WorldTime.</summary>
         public float DayLength { get; private set; } = WorldTime.DefaultDayLength;
         /// <summary>The game's time when it was last saved, in days since the world began (see WorldTime).</summary>
@@ -131,13 +138,17 @@ namespace Brickcraft.World
         }
 
         /// <summary>Creates a new world in the folder (nothing is generated until it's played).</summary>
-        public static void Create(string folder, string name, long seed, Difficulty difficulty, bool pvp, List<WorldMod> mods = null, float dayLength = WorldTime.DefaultDayLength) {
+        public static void Create(string folder, string name, long seed, Difficulty difficulty, bool pvp, List<WorldMod> mods = null, float dayLength = WorldTime.DefaultDayLength,
+                TerrainKind terrain = TerrainKind.Generated, string tutorial = null, bool npcsOn = true) {
             WorldStorage storage = new WorldStorage() {
                 Folder = folder,
                 Name = name,
                 Seed = seed,
                 Difficulty = difficulty,
                 Pvp = pvp,
+                Terrain = terrain,
+                Tutorial = tutorial ?? "",
+                NpcsOn = npcsOn,
                 DayLength = dayLength > 0 ? dayLength : WorldTime.DefaultDayLength,
                 GameTime = WorldTime.NewWorldTime,
                 Mods = mods ?? new List<WorldMod>(),
@@ -152,6 +163,12 @@ namespace Brickcraft.World
         /// <summary>Changes whether players can hurt each other, and saves it.</summary>
         public void SetPvp(bool pvp) {
             Pvp = pvp;
+            saveHeader();
+        }
+
+        /// <summary>Changes whether NPCs appear, and saves it.</summary>
+        public void SetNpcsOn(bool npcs) {
+            NpcsOn = npcs;
             saveHeader();
         }
 
@@ -421,6 +438,9 @@ namespace Brickcraft.World
                 Pvp = reader.ReadBoolean();
                 DayLength = reader.ReadSingle();
                 GameTime = reader.ReadDouble();
+                NpcsOn = reader.ReadBoolean();
+                Terrain = (TerrainKind)reader.ReadByte();
+                Tutorial = reader.ReadString();
                 if (!(DayLength > 0)) {
                     DayLength = WorldTime.DefaultDayLength;
                 }
@@ -476,6 +496,9 @@ namespace Brickcraft.World
                 writer.Write(Pvp);
                 writer.Write(DayLength);
                 writer.Write(GameTime);
+                writer.Write(NpcsOn);
+                writer.Write((byte)Terrain);
+                writer.Write(Tutorial ?? "");
             }
 
             if (File.Exists(path)) {

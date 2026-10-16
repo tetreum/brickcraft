@@ -41,6 +41,7 @@ namespace Brickcraft.Network
 
         public static void Clear() {
             drops.Clear();
+            nextCheck = 0; // Time.unscaledTime starts over in a new play mode
         }
 
         /// <summary>Puts a stack on the ground at a local position, moving at that velocity until it lands.</summary>

@@ -540,6 +540,63 @@ MonoBehaviour:
       a world) ({2} of its {3} triangles are seen)
     m_Metadata:
       m_Items: []
+  - m_Id: 42835332816896
+    m_Localized: That isn't a vehicle's seat.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 42835374759936
+    m_Localized: Someone is already sitting there.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431938781184
+    m_Localized: 'Seat picked: click wheels to wire them to it (again to unwire them),
+      or right-click it for its controls.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918528
+    m_Localized: Click a seat of this vehicle first, then the parts to wire to it.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918529
+    m_Localized: Only wheels, propellers and wings can be wired.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918530
+    m_Localized: '{0} wired to the seat.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50431984918531
+    m_Localized: '{0} unwired.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 60420665368576
+    m_Localized: Use /reposition if you get stuck or crash the vehicle.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 60420715700224
+    m_Localized: Sit in a vehicle to reposition it.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186225623040
+    m_Localized: NPCs are {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186380812288
+    m_Localized: 'Usage: /npcs [on|off]'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186380812289
+    m_Localized: '{0} turned NPCs on'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 70186380812290
+    m_Localized: '{0} turned NPCs off ({1} removed, pets stay)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 406324714921984
+    m_Localized: Only whoever placed this sign (or an admin) can write on it.
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

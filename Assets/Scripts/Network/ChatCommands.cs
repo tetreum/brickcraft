@@ -22,6 +22,7 @@ namespace Brickcraft.Network
     ///   /unban NICK|ID
     ///   /tp NICK|ID                 takes you to an online player
     ///   /pvp [on|off]               whether players can hurt each other, saved with the world
+    ///   /npcs [on|off]              whether NPCs appear by themselves (off takes them away, but pets), saved with the world
     ///   /time [day|noon|night|midnight|HH:MM]   shows the game's time, or moves it on to that hour
     ///   /daylength [minutes]        shows or changes how long a day lasts, saved with the world
     ///   /spawnnpc NPC [count]       puts NPCs in front of you (several are a pack)
@@ -29,8 +30,9 @@ namespace Brickcraft.Network
     ///   /navdebug                   draws where NPCs can walk and their paths in the editor's scene view
     ///   /role NICK|ID [role]        shows or changes a player's role (user, admin)
     ///   /additem ITEM[@COLOR] [count] [NICK|ID]   gives items to a player (yourself by default), online or not
+    ///   /reposition                 puts the vehicle you're sitting in back on its wheels, above the ground
     /// NICK|ID is a player name (any case) or, if no name matches, a player id.
-    /// Only admins can use them.
+    /// Only admins can use them, but /reposition.
     /// </summary>
     public static class ChatCommands
     {
@@ -49,6 +51,15 @@ namespace Brickcraft.Network
             string command = parts.Length > 0 ? parts[0].ToLowerInvariant() : "";
             string target = parts.Length > 1 ? parts[1] : null;
             string reason = parts.Length > 2 ? parts[2].Trim() : null;
+
+            // anyone in a vehicle
+            if (command == "reposition") {
+                PlayerNetwork player = sender.identity != null ? sender.identity.GetComponent<PlayerNetwork>() : null;
+                if (player == null || !Vehicles.VehicleSystem.ServerReposition(player)) {
+                    reply(sender, "vehicle.reposition_not_seated");
+                }
+                return;
+            }
 
             if (admin == null || !admin.record.IsAdmin) {
                 reply(sender, "cmd.only_admins");
@@ -96,6 +107,9 @@ namespace Brickcraft.Network
                     break;
                 case "pvp":
                     pvp(sender, admin, target);
+                    break;
+                case "npcs":
+                    npcs(sender, admin, target);
                     break;
                 case "time":
                     time(sender, admin, target);
@@ -264,6 +278,26 @@ namespace Brickcraft.Network
             WorldNetwork.Pvp = value == "on";
             Debug.Log(admin.record.Name + " turned PvP " + value);
             GameTexts.SendToAll(WorldNetwork.Pvp ? "cmd.pvp_turned_on" : "cmd.pvp_turned_off", admin.record.Name);
+        }
+
+        private static void npcs(NetworkConnectionToClient sender, ConnectedPlayer admin, string value) {
+            if (string.IsNullOrEmpty(value)) {
+                reply(sender, "cmd.npcs_is", GameText.Of(WorldNetwork.NpcsOn ? "word.on" : "word.off"));
+                return;
+            }
+            value = value.ToLowerInvariant();
+            if (value != "on" && value != "off") {
+                reply(sender, "cmd.usage_npcs");
+                return;
+            }
+            WorldNetwork.NpcsOn = value == "on";
+            int removed = WorldNetwork.NpcsOn ? 0 : Npcs.NpcSystem.ServerRemoveWild();
+            Debug.Log(admin.record.Name + " turned NPCs " + value);
+            if (WorldNetwork.NpcsOn) {
+                GameTexts.SendToAll("cmd.npcs_turned_on", admin.record.Name);
+            } else {
+                GameTexts.SendToAll("cmd.npcs_turned_off", admin.record.Name, removed);
+            }
         }
 
         // time only goes forward: to the next time it's that hour

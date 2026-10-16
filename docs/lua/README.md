@@ -9,6 +9,7 @@ Mods can script their bricks in Lua ([MoonSharp](https://www.moonsharp.org/), Lu
 | [World](world.md) | `world.*`: spawning bricks, reading and changing world blocks, finding bricks and players. |
 | [Bricks](bricks.md) | What a brick is to a script: its fields, `move` and `remove`. |
 | [Players](players.md) | What a player is to a script: its fields, `message` and `give`. |
+| [Vehicles](vehicles.md) | What a vehicle is to a script: its fields and `reposition`. |
 | [NPCs](npcs.md) | Creatures: NPC scripts and their events (seeing, hearing, thinking), orders like `attack` and `follow`. |
 | [Chat](chat.md) | `chat.*`: messages and event lines in everybody's chat. |
 | [Timer](timer.md) | `timer.*`: running functions later or every so often. |
@@ -20,7 +21,7 @@ Mods can script their bricks in Lua ([MoonSharp](https://www.moonsharp.org/), Lu
 Mods/my_mod/
   items/catapult/script.lua   the catapult's events (onPlaced, onHit, onBroken, onInteract)
   npcs/wolf/script.lua        the wolf's events (onSpawn, onThink, onDamaged, onDeath, onTargetLost, onInteract, onActivity, onHour)
-  scripts/*.lua               the mod's events (onLoad, onPlayerJoined, onPlayerLeft, onChat, onHour...), any number of files
+  scripts/*.lua               the mod's events (onLoad, onPlayerJoined, onPlayerLeft, onChat, onHour, onVehicleEnter...), any number of files
 ```
 
 ```lua

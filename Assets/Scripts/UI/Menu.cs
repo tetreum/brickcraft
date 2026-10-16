@@ -33,6 +33,8 @@ public class Menu : MonoBehaviour {
 		PartsListerView.Closed += PartsListerPanel.Hide;
 		ModelImporterView.WindowRequested += ModelImporterPanel.Open;
 		ColorPickerTool.WindowRequested += ColorPickerPanel.Open;
+		Brickcraft.Bricks.SignText.EditorRequested += SignPanel.Open;
+		Brickcraft.Vehicles.WiringTool.PanelRequested += WiringPanel.Open;
 		ModelImporterView.Opened += ModelImporterPanel.ShowHint;
 		ModelImporterView.Closed += ModelImporterPanel.HideHint;
     }
@@ -52,12 +54,16 @@ public class Menu : MonoBehaviour {
 		PartsListerView.Closed -= PartsListerPanel.Hide;
 		ModelImporterView.WindowRequested -= ModelImporterPanel.Open;
 		ColorPickerTool.WindowRequested -= ColorPickerPanel.Open;
+		Brickcraft.Bricks.SignText.EditorRequested -= SignPanel.Open;
+		Brickcraft.Vehicles.WiringTool.PanelRequested -= WiringPanel.Open;
 		ModelImporterView.Opened -= ModelImporterPanel.ShowHint;
 		ModelImporterView.Closed -= ModelImporterPanel.HideHint;
 	}
 
 	private void onLocalPlayerStarted(LocalPlayerStartedEvent e) {
 		showPanel("PlayerPanel");
+		KeyHints.Show(transform);
+		TutorialGuide.Show(transform);
 	}
 
 	private void onWorldLoadingStarted(WorldLoadingStartedEvent e) {

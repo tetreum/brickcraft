@@ -80,6 +80,26 @@ namespace Brickcraft.Bricks
             }
         }
 
+        /// <summary>
+        /// Position of the pivot in a vehicle (see Vehicles.Vehicle), whose cells start at its own origin: like Position
+        /// without the world's floating origin.
+        /// </summary>
+        public Vector3 LocalPosition {
+            get {
+                Vector3Int size = Size;
+                return Vector3.Scale(origin + new Vector3(size.x / 2f, 0, size.z / 2f), BrickGrid.CellSize);
+            }
+        }
+
+        /// <summary>Its box in a vehicle's own space (see LocalPosition).</summary>
+        public Bounds LocalBounds {
+            get {
+                Bounds bounds = new Bounds();
+                bounds.SetMinMax(Vector3.Scale(origin, BrickGrid.CellSize), Vector3.Scale(origin + Size, BrickGrid.CellSize));
+                return bounds;
+            }
+        }
+
         public Bounds WorldBounds {
             get {
                 Vector3 min = BrickGrid.CellToWorld(origin);

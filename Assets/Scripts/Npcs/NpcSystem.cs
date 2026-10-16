@@ -77,6 +77,8 @@ namespace Brickcraft.Npcs
 
         public static void StartServer() {
             npcs.Clear();
+            nextRefresh = 0;
+            NpcSpawner.Reset();
             activeChunks.Clear();
             Navigation.NavGrid.Start();
             NpcPerception.Clear();
@@ -142,6 +144,15 @@ namespace Brickcraft.Npcs
         }
 
         /// <summary>Takes every NPC out of the world (nobody gets their drops). Returns how many.</summary>
+        /// <summary>Takes every NPC but pets out of the world; how many went.</summary>
+        public static int ServerRemoveWild() {
+            List<Npc> wild = npcs.FindAll(npc => !npc.IsPet);
+            foreach (Npc npc in wild) {
+                NetworkServer.Destroy(npc.gameObject);
+            }
+            return wild.Count;
+        }
+
         public static int ServerRemoveAll() {
             List<Npc> all = new List<Npc>(npcs);
             foreach (Npc npc in all) {
@@ -327,6 +338,7 @@ namespace Brickcraft.Npcs
                 foreach (Vector2Int coords in populated) {
                     changes.SetNpcs(coords, byChunk.TryGetValue(coords, out List<SavedNpc> list) ? list : none);
                     changes.SetDrops(coords, DroppedItems.SavedIn(coords, false)); // items on the ground go with the chunks too
+                    changes.SetVehicles(coords, Vehicles.VehicleSystem.SavedIn(coords, false)); // and vehicles
                 }
             }
             foreach (int owner in petsBack) {
@@ -408,9 +420,13 @@ namespace Brickcraft.Npcs
                 populated.Add(coords);
                 if (changes != null) {
                     foreach (SavedNpc saved in changes.GetNpcs(coords)) {
-                        restore(saved);
+                        // with NPCs off, only pets come back
+                        if (WorldNetwork.NpcsOn || saved.owner != 0) {
+                            restore(saved);
+                        }
                     }
                     DroppedItems.Restore(changes.GetDrops(coords));
+                    Vehicles.VehicleSystem.Restore(changes.GetVehicles(coords));
                 }
             }
         }
@@ -439,9 +455,11 @@ namespace Brickcraft.Npcs
             }
             WorldChanges changes = savedChanges;
             List<SavedDrop> drops = DroppedItems.SavedIn(coords, true);
+            List<SavedVehicle> vehicles = Vehicles.VehicleSystem.SavedIn(coords, true);
             if (wasPopulated && !isStopped && changes != null) {
                 changes.SetNpcs(coords, left);
                 changes.SetDrops(coords, drops);
+                changes.SetVehicles(coords, vehicles);
             }
         }
 

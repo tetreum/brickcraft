@@ -35,9 +35,9 @@ namespace Brickcraft
             get { return network != null && !string.IsNullOrEmpty(network.sleepingIn); }
         }
 
-        /// <summary>It can open the chat: when nothing froze it, or it's only sleeping.</summary>
+        /// <summary>It can open the chat: when nothing froze it, or it's only sleeping or in a vehicle's seat.</summary>
         public bool CanChat {
-            get { return !isFrozen || freezeReason == FreezeReason.Sleeping; }
+            get { return !isFrozen || freezeReason == FreezeReason.Sleeping || freezeReason == FreezeReason.Driving; }
         }
 
         public bool isFrozen {
@@ -152,6 +152,7 @@ namespace Brickcraft
         public void onStartLocalPlayer() {
             Instance = this;
             brickPlacer = gameObject.AddComponent<BrickPlacer>();
+            gameObject.AddComponent<Vehicles.WiringView>();
             health.DeadChanged += onDeadChanged;
             EventManager.LocalPlayerStarted.Raise(new LocalPlayerStartedEvent());
         }
@@ -198,7 +199,8 @@ namespace Brickcraft
                 // with a ranged weapon (and its ammo) the dig button draws it instead; with a color picker it paints
                 bool isDrawing = updateDrawing();
                 bool isPainting = SelectedItem != null && SelectedItem.item.IsColorPicker;
-                bool isDigHeld = !isDrawing && !isPainting && GameInput.GetButton(GameInput.Dig);
+                bool isWiring = SelectedItem != null && SelectedItem.item.IsWiringTool;
+                bool isDigHeld = !isDrawing && !isPainting && !isWiring && GameInput.GetButton(GameInput.Dig);
                 bool isClickingDoor = clickDoors(isDigHeld);
 
                 // the server checks it can be hit (PvP for players...)
@@ -237,6 +239,14 @@ namespace Brickcraft
                 if (!GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Place) && SelectedItem != null && SelectedItem.item.IsModelImporter
                         && !ModelImporterView.IsOpen && ModelImporterView.ClosedFrame != Time.frameCount) {
                     ModelImporterView.RequestWindow(SelectedSlot);
+                }
+
+                // the wiring tool picks a seat and wires parts to it, or opens a seat's controls
+                if (isWiring && !GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Dig)) {
+                    Vehicles.WiringTool.Click(SelectedSlot, lookedBrick);
+                }
+                if (isWiring && !GameInput.IsTyping && GameInput.GetButtonDown(GameInput.Place)) {
+                    Vehicles.WiringTool.Use(SelectedSlot, lookedBrick);
                 }
 
                 // a color picker opens its window, to pick its colour
@@ -306,7 +316,7 @@ namespace Brickcraft
             EventManager.SelectedSlotChanged.Raise(new SelectedSlotChangedEvent() { slot = SelectedSlot });
         }
 
-        // a click on a door opens or closes it, on a bed sleeps in it, on a chest looks inside; true while it may still be one (digging waits for it)
+        // a click on a door opens or closes it, on a bed sleeps in it, on a chest looks inside, on a sign writes on it; true while it may still be one (digging waits for it)
         private bool clickDoors(bool isDigHeld) {
             bool isPressed = isDigHeld && !wasDigHeld;
             bool isReleased = !isDigHeld && wasDigHeld;
@@ -324,8 +334,12 @@ namespace Brickcraft
                 if (isQuick && lookedBrick == clickedDoor) {
                     if (isBed(clickedDoor)) {
                         network.CmdSleep(clickedDoor.id);
+                    } else if (isSeat(clickedDoor)) {
+                        network.CmdSit(clickedDoor.id);
                     } else if (BrickStorage.StorageOf(clickedDoor) != null) {
                         network.CmdOpenStorage(clickedDoor.id);
+                    } else if (isSign(clickedDoor)) {
+                        network.CmdOpenSign(clickedDoor.id);
                     } else {
                         network.CmdToggleDoor(clickedDoor.id);
                     }
@@ -336,14 +350,27 @@ namespace Brickcraft
             return isQuick;
         }
 
-        // a click uses it: a door, a bed, a chest
+        // a click uses it: a door, a bed, a chest, a vehicle's seat
         private static bool isUsable(Brick brick) {
-            return brick.gameObject != null && (brick.gameObject.GetComponentInChildren<BrickDoor>() != null || isBed(brick) || BrickStorage.StorageOf(brick) != null);
+            return brick.gameObject != null && (brick.gameObject.GetComponentInChildren<BrickDoor>() != null || isBed(brick) || isSeat(brick)
+                || BrickStorage.StorageOf(brick) != null || isSign(brick));
+        }
+
+        // a sign of the world: a click writes on it
+        private static bool isSign(Brick brick) {
+            return brick.vehicle == null && Server.items.TryGetValue(brick.itemId, out Item item) && item.IsSign;
+        }
+
+        private static bool isSeat(Brick brick) {
+            return brick.vehicle != null && Server.items.TryGetValue(brick.itemId, out Item item) && item.VehicleRole == Vehicles.VehicleRole.Seat;
         }
 
         private static bool isBed(Brick brick) {
             return Server.items.TryGetValue(brick.itemId, out Item item) && item.tags.Contains(Item.BedTag);
         }
+
+        /// <summary>It was frozen, or isn't any more (see freeze).</summary>
+        public event System.Action FrozenChanged;
 
         public void freeze(FreezeReason reason) {
             if (isFrozen) {
@@ -351,6 +378,7 @@ namespace Brickcraft
             }
             freezeReason = reason;
             firstPersonController.enabled = false;
+            FrozenChanged?.Invoke();
         }
 
         public void unFreeze(FreezeReason reason) {
@@ -374,13 +402,33 @@ namespace Brickcraft
         }
 
         public void unFreeze() {
+            bool was = isFrozen;
             freezeReason = null;
             try {
                 firstPersonController.enabled = true;
             } catch { }
+            if (was) {
+                FrozenChanged?.Invoke();
+            }
         }
 
+        /// <summary>The brick it's looking at (within reach), null if none.</summary>
+        public Brick LookedBrick {
+            get { return lookedBrick; }
+        }
+
+        /// <summary>It looks at another brick now (or at none).</summary>
+        public event System.Action LookedBrickChanged;
+
         void frontRaycast () {
+            Brick before = lookedBrick;
+            raycastFront();
+            if (before != lookedBrick) {
+                LookedBrickChanged?.Invoke();
+            }
+        }
+
+        void raycastFront () {
             lookedBrick = null;
             lookedBlock = null;
             lookedHealth = null;
@@ -609,7 +657,7 @@ namespace Brickcraft
                 return attached;
             }
             if (diggedBrick != null) {
-                return diggedBrick.placement.WorldBounds;
+                return diggedBrick.WorldBounds;
             }
             Vector3Int cell = BrickGrid.BlockToCell(diggedBlock.Value);
             Bounds bounds = new Bounds();

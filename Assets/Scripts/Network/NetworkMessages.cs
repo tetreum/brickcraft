@@ -28,6 +28,8 @@ namespace Brickcraft.Network
     public struct WorldInfoMessage : NetworkMessage
     {
         public long seed;
+        /// <summary>Its kind of terrain (a TerrainKind): generated from the seed, or flat ground (see WorldStorage.Terrain).</summary>
+        public byte terrain;
         public byte difficulty;
         public Vector2Int spawnChunk;
 
@@ -95,6 +97,9 @@ namespace Brickcraft.Network
         public int state;
         /// <summary>The brick it's attached to (see Brick.attachedTo), null for bricks on the grid.</summary>
         public string attachedTo;
+        /// <summary>A connected brick (see Bricks.BrickJoints): how attachedTo holds it.</summary>
+        public bool connected;
+        public Bricks.BrickJoint joint;
     }
 
     /// <summary>Server to client: a brick's state changed (a door opened...), see Brick.state.</summary>
@@ -103,6 +108,14 @@ namespace Brickcraft.Network
         public string id;
         public Vector3Int origin;
         public int state;
+    }
+
+    /// <summary>Server to client: what's written on a brick (a sign) changed, see Brick.text.</summary>
+    public struct BrickTextMessage : NetworkMessage
+    {
+        public string id;
+        public Vector3Int origin;
+        public string text;
     }
 
     /// <summary>Server to client: a brick was painted (see WorldNetwork.ServerSetBrickColor).</summary>

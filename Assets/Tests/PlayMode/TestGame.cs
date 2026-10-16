@@ -45,7 +45,7 @@ namespace Brickcraft.Tests
         public IEnumerator Start() {
             deleteLeftovers();
             GameSettings.RenderDistanceOverride = GameSettings.MinRenderDistance;
-            GameSettings.MasterVolumeOverride = 0; // silent (a test about sound sets its own)
+            GameSettings.MasterVolumeOverride = 0; // silent (a test about sound sets its own), see SilentTests
             BrickcraftNetworkManager.GetOrCreate().PlayWorld(saveName);
             float end = Time.realtimeSinceStartup + StartTimeout;
             while (Player == null) {
@@ -97,7 +97,7 @@ namespace Brickcraft.Tests
         public IEnumerator Delete() {
             yield return Stop();
             GameSettings.RenderDistanceOverride = null;
-            GameSettings.MasterVolumeOverride = null;
+            // still silent: the menu between tests too (see SilentTests)
             for (int attempt = 0; Directory.Exists(SaveFolder); attempt++) {
                 try {
                     Directory.Delete(SaveFolder, true);
@@ -115,6 +115,19 @@ namespace Brickcraft.Tests
             while (!condition()) {
                 Assert.Less(Time.realtimeSinceStartup, end, what + " didn't happen in " + seconds + " seconds");
                 yield return null;
+            }
+        }
+
+        /// <summary>Waits until the player stands still (landed after spawning), so what's in front stays in front.</summary>
+        public static IEnumerator StandStill() {
+            Vector3 last = Brickcraft.Player.Instance.transform.position;
+            int still = 0;
+            float end = Time.realtimeSinceStartup + 10;
+            while (still < 10) {
+                Assert.Less(Time.realtimeSinceStartup, end, "the player didn't stand still in 10 seconds");
+                yield return null;
+                still = Vector3.Distance(last, Brickcraft.Player.Instance.transform.position) < 0.001f ? still + 1 : 0;
+                last = Brickcraft.Player.Instance.transform.position;
             }
         }
 

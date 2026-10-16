@@ -96,7 +96,7 @@ namespace Brickcraft
                 if (brick.IsAttachment) {
                     // in its brick's slot, like the game puts it (Server.spawnBrick)
                     BrickSlot slot = parts[brick.attachedTo - 1].GetComponentInChildren<BrickSlot>(true);
-                    part = Instantiate(brickModel.prefab, slot.point.position, slot.point.rotation * brickModel.prefab.transform.rotation, ghost.transform);
+                    part = Instantiate(brickModel.prefab, slot.PositionFor(brickModel, brick.seat), slot.point.rotation * brickModel.prefab.transform.rotation, ghost.transform);
                 } else {
                     BrickPlacement placement = new BrickPlacement(brickModel, brick.origin, brick.rotation);
                     Vector3Int size = placement.Size;

@@ -21,8 +21,10 @@ namespace Brickcraft.Tutorials
         public TutorialStep[] steps;
         /// <summary>Builds what it builds, finished, beside where the player starts (given), to look at; false if it couldn't. Null if it has none.</summary>
         public Func<UnityEngine.Vector3, bool> buildDemo;
+        /// <summary>Not in the menu's list for now (its worlds still play it).</summary>
+        public bool hidden;
 
-        /// <summary>The game's tutorials, in the order the menu shows them.</summary>
+        /// <summary>The game's tutorials, in the order the menu shows them (but the hidden ones).</summary>
         public static IReadOnlyList<Tutorial> All {
             get { return new[] { FirstHouse.Tutorial, FirstCar.Tutorial, FirstPlane.Tutorial, FirstBoat.Tutorial }; }
         }

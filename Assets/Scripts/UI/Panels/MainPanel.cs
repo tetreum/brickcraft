@@ -36,38 +36,6 @@ public class MainPanel : MonoBehaviour
         }
     }
 
-    private void Awake () {
-        addTutorialsButton();
-    }
-
-    // Tutorials, under Singleplayer: the buttons under it go down to make room
-    private void addTutorialsButton () {
-        RectTransform play = transform.Find("PlayWorld") as RectTransform;
-        RectTransform next = transform.Find("HostGame") as RectTransform;
-        if (play == null || next == null) {
-            return;
-        }
-        Vector2 down = new Vector2(0, next.anchoredPosition.y - play.anchoredPosition.y);
-        foreach (RectTransform child in transform) {
-            if (child.anchorMin == play.anchorMin && child.anchoredPosition.y < play.anchoredPosition.y - 1) {
-                child.anchoredPosition += down;
-            }
-        }
-        GameObject tutorials = Instantiate(play.gameObject, transform);
-        tutorials.SetActive(false); // its label applied again when it's shown, see MenuButton
-        tutorials.name = "Tutorials";
-        tutorials.transform.SetSiblingIndex(play.GetSiblingIndex() + 1);
-        ((RectTransform)tutorials.transform).anchoredPosition = play.anchoredPosition + down;
-        Button button = tutorials.GetComponent<Button>();
-        button.onClick = new Button.ButtonClickedEvent();
-        button.onClick.AddListener(openTutorials);
-        Brickcraft.UI.MenuButton look = tutorials.GetComponent<Brickcraft.UI.MenuButton>();
-        look.label = "Tutorials";
-        look.labelKey = "main.tutorials";
-        look.variant = Brickcraft.UI.MenuButton.Variant.Secondary;
-        tutorials.SetActive(true);
-    }
-
     private void OnEnable () {
         waitForVideo();
         // the music starts with the menu and goes on in the game

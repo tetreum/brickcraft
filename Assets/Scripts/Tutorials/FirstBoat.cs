@@ -46,6 +46,7 @@ namespace Brickcraft.Tutorials
                 },
             },
             buildDemo = start => BuildDemo(start) != null,
+            hidden = true,
         };
 
         /// <summary>On a raft of enough bricks whose middle is under it (lopsided, it rolls over).</summary>

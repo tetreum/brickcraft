@@ -34,6 +34,18 @@
     },
     "entries": [
         {
+            "slug": "mejorando-la-experiencia-de-usuario",
+            "title": {
+                "en": "Improving User Experience",
+                "es": "Mejorando la experiencia de usuario"
+            },
+            "preview": {
+                "en": "Improving the user experience I often complain about how bad the user experience is when you come back to a game you haven't touched in years. You have to rediscover the keys and the mechanics because...",
+                "es": "Mejorando la experiencia de usuario A menudo me quejo de lo mala que es la experiencia de usuario cuando vuelves a un juego que hace años que no tocabas. Tienes que volver a redescubrir las teclas y l..."
+            },
+            "date": "2026-10-16T12:00:00Z"
+        },
+        {
             "slug": "y-llego-la-ia",
             "title": {
                 "en": "And then AI arrived",

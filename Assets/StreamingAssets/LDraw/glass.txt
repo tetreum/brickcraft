@@ -1,0 +1,19 @@
+# Where window frames take their glass: built from the LDCad Shadow Library
+# (github.com/RolandMelkert/LDCadShadowLibrary, by Roland Melkert and contributors) by LDCadConnectorBuilder.
+# Licensed under CC BY-SA 4.0 like it, see connectors-LICENSE.md. Changed from it: only the depths of the frames'
+# female grooves and glass snaps, inherited and moved into each part's space.
+# part  z...  (LDU, LDraw's axes: the glass's middle goes at that depth)
+2349a -17 17 36
+2349b -17 17 36
+2493a -4
+2493b -4
+3233 -4
+3853 -4 4
+4033 -3.5
+4213 36
+51239 5
+60032 -5
+60592 -5
+60593 -5
+60806 -48.5 -31 -14
+87613 -65

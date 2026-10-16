@@ -125,7 +125,7 @@ namespace Brickcraft.Bricks
                 hasHit = true;
                 hit = surface;
             }
-            target = hasHit ? computePlacement(hit, model) : (BrickPlacement?)null;
+            target = hasHit ? computePlacement(hit, model, selectedItem.item.blockType.HasValue) : (BrickPlacement?)null;
 
             bool isValid = target.HasValue && BrickGrid.IsFree(target.Value) && !overlapsPlayer(target.Value)
                 && !BrickJoints.OverlapsConnected(target.Value.WorldBounds);
@@ -282,7 +282,7 @@ namespace Brickcraft.Bricks
                 } else if (normal[axis] < 0) {
                     origin[axis] = adjacent[axis] - size[axis] + 1;
                 } else if (axis == 1) {
-                    origin.y = adjacent.y;
+                    origin.y = rowBeside(hit, adjacent.y, size.y);
                 } else {
                     // any stud: a vehicle's bricks have no blocks to line up with
                     origin[axis] = startAlong(axis, cells[axis], size[axis]);
@@ -317,13 +317,18 @@ namespace Brickcraft.Bricks
                 ghost.SetActive(false);
                 return;
             }
+            // glass: the next connector is the frame's next groove
+            if (GameInput.GetButtonDown(GameInput.NextConnector)) {
+                connectorChoice++;
+            }
+            int seat = BrickJoints.Mod(connectorChoice, slot.Seats);
             bool isValid = Network.PlayerNetwork.CanAttach(model, holder);
-            ghost.transform.SetPositionAndRotation(slot.point.position, slot.point.rotation * model.prefab.transform.rotation);
+            ghost.transform.SetPositionAndRotation(slot.PositionFor(model, seat), slot.point.rotation * model.prefab.transform.rotation);
             ghost.SetActive(true);
             setGhostColor(isValid);
 
             if (isValid && GameInput.GetButtonDown(GameInput.Place)) {
-                Player.Instance.network.CmdAttachBrick(selectedItem.slot, holder.id);
+                Player.Instance.network.CmdAttachBrick(selectedItem.slot, holder.id, seat);
             }
         }
 
@@ -334,7 +339,7 @@ namespace Brickcraft.Bricks
             }
         }
 
-        private BrickPlacement computePlacement(RaycastHit hit, BrickModel model) {
+        private BrickPlacement computePlacement(RaycastHit hit, BrickModel model, bool isBlock) {
             Vector3Int normal = dominantAxis(hit.normal);
             int turns = turnsOn(Quaternion.identity);
             Vector3Int size = BrickPlacement.SizeFor(model, turns);
@@ -342,8 +347,11 @@ namespace Brickcraft.Bricks
             Vector3 gridPoint = BrickGrid.WorldToLocalGrid(hit.point);
             Vector3Int originCell = FloatingOrigin.Cell;
             Vector3Int adjacent = BrickGrid.WorldToCell(hit.point + (Vector3)normal * SurfaceOffset);
-            // on a brick it goes on any of its studs: the block grid is the terrain's
+            // on a brick it goes on any of its studs; on the terrain on any of its studs too, but level with its blocks,
+            // and the terrain's own bricks (dirt...) on its blocks, to be one (a bed snapped so couldn't go right next to
+            // a wall an odd stud along)
             bool snapToBlocks = !GameInput.GetButton(GameInput.FreePlacement) && (hit.collider == null || Server.findBrick(hit.collider) == null);
+            bool snapAcross = snapToBlocks && isBlock && size.x % BrickGrid.StudsPerBlock == 0 && size.z % BrickGrid.StudsPerBlock == 0;
             Vector3Int origin = Vector3Int.zero;
 
             for (int axis = 0; axis < 3; axis++) {
@@ -354,22 +362,34 @@ namespace Brickcraft.Bricks
                     // brick ends right before the face
                     origin[axis] = adjacent[axis] - size[axis] + 1;
                 } else if (axis == 1) {
-                    // placing against a side face, sit on the hovered row
+                    // placing against a side face, sit on the hovered row (level with the brick's, see rowBeside)
                     origin.y = snapToBlocks && size.y % BrickGrid.PlatesPerBlock == 0
                         ? BrickGrid.FloorDiv(adjacent.y, BrickGrid.PlatesPerBlock) * BrickGrid.PlatesPerBlock
-                        : adjacent.y;
+                        : rowBeside(hit, adjacent.y, size.y);
                 } else if (corner != 0) {
                     origin[axis] = originCell[axis] + startAlong(axis, gridPoint[axis], size[axis]);
                 } else {
                     // center the brick on the crosshair
                     float start = gridPoint[axis] - size[axis] / 2f;
-                    origin[axis] = originCell[axis] + (snapToBlocks && size[axis] % BrickGrid.StudsPerBlock == 0
+                    origin[axis] = originCell[axis] + (snapAcross
                         ? Mathf.RoundToInt(start / BrickGrid.StudsPerBlock) * BrickGrid.StudsPerBlock
                         : Mathf.RoundToInt(start));
                 }
             }
 
             return new BrickPlacement(model, origin, turns);
+        }
+
+        // the row a brick that tall goes on against the side of the brick hit, at that row of plates: level with that
+        // brick's bottom, in steps of its own height (a wall's next brick, aimed at the middle of the last one's side,
+        // goes beside it, not a plate up); the row aimed at against anything else
+        private static int rowBeside(RaycastHit hit, int hovered, int height) {
+            Brick beside = hit.collider != null ? Server.findBrick(hit.collider) : null;
+            if (beside == null || beside.joint.HasValue || beside.attachedTo != null || height <= 0) {
+                return hovered;
+            }
+            int bottom = beside.placement.origin.y;
+            return bottom + BrickGrid.FloorDiv(hovered - bottom, height) * height;
         }
 
         // the server places it, and takes the item from our inventory if it could

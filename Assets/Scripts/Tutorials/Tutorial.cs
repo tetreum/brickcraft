@@ -19,12 +19,12 @@ namespace Brickcraft.Tutorials
         /// <summary>What the player gets, in its hotbar from the first slot, one stack a slot.</summary>
         public TutorialItem[] items;
         public TutorialStep[] steps;
-        /// <summary>Builds its finished vehicle beside where the player starts (given), to look at; null if it has none.</summary>
-        public Func<UnityEngine.Vector3, Vehicles.Vehicle> buildDemo;
+        /// <summary>Builds what it builds, finished, beside where the player starts (given), to look at; false if it couldn't. Null if it has none.</summary>
+        public Func<UnityEngine.Vector3, bool> buildDemo;
 
         /// <summary>The game's tutorials, in the order the menu shows them.</summary>
         public static IReadOnlyList<Tutorial> All {
-            get { return new[] { FirstCar.Tutorial, FirstPlane.Tutorial, FirstBoat.Tutorial }; }
+            get { return new[] { FirstHouse.Tutorial, FirstCar.Tutorial, FirstPlane.Tutorial, FirstBoat.Tutorial }; }
         }
 
         /// <summary>The tutorial with that id, null if there's none.</summary>
@@ -43,7 +43,7 @@ namespace Brickcraft.Tutorials
                 return;
             }
             try {
-                if (buildDemo(start) == null) {
+                if (!buildDemo(start)) {
                     UnityEngine.Debug.LogWarning("The tutorial " + id + "'s finished vehicle couldn't be built");
                 }
             } catch (Exception e) {

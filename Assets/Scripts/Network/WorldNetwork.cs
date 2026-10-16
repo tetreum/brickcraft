@@ -201,11 +201,11 @@ namespace Brickcraft.Network
         }
 
         /// <summary>
-        /// Puts an attachment (a door...) in a brick's slot, see Bricks.BrickSlot. The caller checks it fits
-        /// and the slot is free.
+        /// Puts an attachment (a door...) in a brick's slot, see Bricks.BrickSlot; glass in that groove of its frame
+        /// (its state). The caller checks it fits and the slot is free.
         /// </summary>
-        public static Brick ServerAttachBrick(Item item, int color, Brick holder, Placer placer) {
-            Brick brick = Server.Instance.spawnBrick(item, color, holder.placement, null, 0, holder.id);
+        public static Brick ServerAttachBrick(Item item, int color, Brick holder, Placer placer, int seat = 0) {
+            Brick brick = Server.Instance.spawnBrick(item, color, holder.placement, null, seat, holder.id);
             serverChanges.AddBrick(toSaved(brick, placer));
             sendPlaced(brick, placer);
             Npcs.Navigation.NavGrid.MarkDirty(holder);

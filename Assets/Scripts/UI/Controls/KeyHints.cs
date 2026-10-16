@@ -94,6 +94,9 @@ namespace Brickcraft.UI
                     buttons.Add(GameInput.NextConnector);
                     buttons.Add(Slide);
                 }
+            } else if (model != null && model.attachesTo != null && model.attachesTo.StartsWith(Bricks.LDraw.LDrawGlass.FitsPrefix)) {
+                // glass: which groove of its frame
+                buttons.Add(GameInput.NextConnector);
             }
             // nothing in hand: the brick looked at
             Brick looked = player != null && !player.isFrozen && held == null ? player.LookedBrick : null;

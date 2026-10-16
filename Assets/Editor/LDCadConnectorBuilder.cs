@@ -18,11 +18,15 @@ using UnityEngine;
 /// Where it has nothing, the game's own rules fill in: technic primitives it doesn't describe (whole axle holes, peg
 /// hole ends, paired into holes) and, for wheels with nothing at all, a hub through their middle along their thin side
 /// (an axle hole or a pin hole by their name).
+///
+/// It also writes where window frames take their glass (StreamingAssets/LDraw/glass.txt, see Bricks.LDraw.LDrawGlass):
+/// the depths of their female grooves and glass snaps (SNAP_FGR, SNAP_GEN), a frame often having one either side.
 /// </summary>
 public static class LDCadConnectorBuilder
 {
     public const string OutputFile = "connectors.txt";
     public const string LicenseFile = "connectors-LICENSE.md";
+    public const string GlassFile = "glass.txt";
 
     [MenuItem("Brickcraft/LDraw/Build connectors from LDCad shadow library folder...")]
     public static void BuildFromMenu() {
@@ -34,10 +38,12 @@ public static class LDCadConnectorBuilder
         EditorUtility.DisplayDialog("Connectors", result, "OK");
     }
 
-    // a cylinder connection, in the space of the file it's in (LDU, LDraw's axes)
+    // a cylinder connection, in the space of the file it's in (LDU, LDraw's axes); or a groove or another kind of snap
+    // (no sections), only where it is counting
     private class Snap
     {
         public string id;
+        public bool cylinder = true;
         public bool male;
         public string caps = "one";
         public bool slide;
@@ -126,11 +132,20 @@ public static class LDCadConnectorBuilder
         text.Append("# Licensed under CC BY-SA 4.0 like it, see " + LicenseFile + ". Changed from it: inherited, moved and\n");
         text.Append("# scaled into each part's space, studs and anti-studs left out; the game's own rules where it has nothing.\n");
         text.Append("# part  M|F  slide  caps  start x y z  axis x y z  side x y z  sections (shape radius length, ...)  (LDU, LDraw's axes)\n");
-        int parts = 0, connectors = 0;
+        StringBuilder glass = new StringBuilder();
+        glass.Append("# Where window frames take their glass: built from the LDCad Shadow Library\n");
+        glass.Append("# (github.com/RolandMelkert/LDCadShadowLibrary, by Roland Melkert and contributors) by LDCadConnectorBuilder.\n");
+        glass.Append("# Licensed under CC BY-SA 4.0 like it, see " + LicenseFile + ". Changed from it: only the depths of the frames'\n");
+        glass.Append("# female grooves and glass snaps, inherited and moved into each part's space.\n");
+        glass.Append("# part  z...  (LDU, LDraw's axes: the glass's middle goes at that depth)\n");
+        int parts = 0, connectors = 0, frames = 0;
         foreach (LDrawPart part in LDrawLibrary.Catalog) {
             string path = LDrawLibrary.FindFile(part.id + ".dat");
             if (path == null) {
                 continue;
+            }
+            if (LDrawGlass.FrameFits(part) != null && writeSeats(glass, part.id, resolve(path, 0))) {
+                frames++;
             }
             List<Snap> snaps = connections(part, path);
             int before = connectors;
@@ -150,13 +165,40 @@ public static class LDCadConnectorBuilder
         }
         string output = Path.Combine(LDrawLibrary.Root, OutputFile);
         File.WriteAllText(output, text.ToString());
+        File.WriteAllText(Path.Combine(LDrawLibrary.Root, GlassFile), glass.ToString());
         string license = Path.Combine(folder, "LICENSE.md");
         if (File.Exists(license)) {
             File.Copy(license, Path.Combine(LDrawLibrary.Root, LicenseFile), true);
         }
         LDrawConnectors.Reload();
+        LDrawGlass.ClearCache();
         AssetDatabase.Refresh();
-        return parts + " parts of " + LDrawLibrary.Catalog.Count + " have connectors (" + connectors + " in all), written to " + output;
+        return parts + " parts of " + LDrawLibrary.Catalog.Count + " have connectors (" + connectors + " in all), written to " + output
+            + "; " + frames + " window frames say where their glass goes";
+    }
+
+    // a frame's glass depths, its female snaps that aren't cylinders (each once); false if it has none
+    private static bool writeSeats(StringBuilder text, string part, List<Snap> snaps) {
+        List<float> depths = new List<float>();
+        foreach (Snap snap in snaps) {
+            if (snap.cylinder || snap.male) {
+                continue;
+            }
+            float z = Mathf.Round(snap.pos.z * 2) / 2;
+            if (!depths.Contains(z)) {
+                depths.Add(z);
+            }
+        }
+        if (depths.Count == 0) {
+            return false;
+        }
+        depths.Sort();
+        text.Append(part);
+        foreach (float z in depths) {
+            text.Append(' ').Append(num(z));
+        }
+        text.Append('\n');
+        return true;
     }
 
     // ids of the game's own snaps (see BuiltIn), used only where the library has nothing for a part
@@ -417,6 +459,15 @@ public static class LDCadConnectorBuilder
                     foreach (Matrix4x4 at in placements(args)) {
                         snaps.Add(snap.Moved(at));
                     }
+                }
+                break;
+            case "SNAP_FGR":
+            case "SNAP_GEN":
+                // grooves (fingers) and the rest: where they are, and their gender
+                string gender = args.TryGetValue("genderOfs", out string ofs) ? ofs : args.TryGetValue("gender", out string g) ? g : "M";
+                Snap other = new Snap() { cylinder = false, male = gender.Trim().ToUpperInvariant() != "F" };
+                foreach (Matrix4x4 at in placements(args)) {
+                    snaps.Add(other.Moved(at));
                 }
                 break;
             case "SNAP_INCL":

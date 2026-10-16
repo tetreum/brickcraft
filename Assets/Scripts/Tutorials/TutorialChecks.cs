@@ -26,6 +26,31 @@ namespace Brickcraft.Tutorials
             return vehicle != null && demos.Contains(vehicle);
         }
 
+        // the bricks of the world shown finished (a house: see FirstHouse), by id
+        private static readonly HashSet<string> demoBricks = new HashSet<string>();
+
+        /// <summary>That brick of the world is part of a tutorial's finished build, shown: it isn't one the player placed.</summary>
+        public static void MarkDemo(Brick brick) {
+            demoBricks.Add(brick.id);
+        }
+
+        /// <summary>The player's bricks of the world of that item (not a vehicle's, not a demo's).</summary>
+        public static List<Brick> Placed(string itemId) {
+            List<Brick> placed = new List<Brick>();
+            foreach (Brick brick in Server.bricks.Values) {
+                if (brick.itemId == itemId && brick.vehicle == null && !demoBricks.Contains(brick.id)) {
+                    placed.Add(brick);
+                }
+            }
+            return placed;
+        }
+
+        /// <summary>One of the player's bricks of that item is in the slot of one of theirs of the other (a door in its frame).</summary>
+        public static bool IsIn(string itemId, string holderItemId) {
+            return Placed(itemId).Exists(b => b.attachedTo != null && Server.bricks.TryGetValue(b.attachedTo, out Brick holder)
+                && holder.itemId == holderItemId && !demoBricks.Contains(holder.id));
+        }
+
         /// <summary>The vehicle being built: the one with the most bricks (not a demo), null if there's none yet.</summary>
         public static Vehicle Built() {
             Vehicle built = null;

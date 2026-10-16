@@ -715,21 +715,21 @@ namespace Brickcraft.Network
             connect(slot, held.Value, item, holder, BrickJoint.OnStuds(origin, rotation));
         }
 
-        /// <summary>Puts the attachment held in the inventory slot (a door...) in a brick's slot, see BrickSlot.</summary>
+        /// <summary>Puts the attachment held in the inventory slot (a door...) in a brick's slot, see BrickSlot; glass in that groove.</summary>
         [Command]
-        public void CmdAttachBrick(int slot, string holderId) {
+        public void CmdAttachBrick(int slot, string holderId, int seat) {
             if (health.isDead) {
                 return;
             }
             InventoryItem? held = inventory.ServerGetSlot(slot);
             if (!held.HasValue || !Server.items.TryGetValue(held.Value.itemId, out Item item) || item.type != Item.Type.Brick
                 || !Server.bricks.TryGetValue(holderId, out Brick holder) || !CanAttach(item.brickModel, holder)
-                || !isInReach(holder.WorldBounds.center)) {
+                || !isInReach(holder.WorldBounds.center) || seat < 0 || seat >= Server.slotOf(holder).Seats) {
                 return;
             }
             ConnectedPlayer player = connectionToClient.authenticationData as ConnectedPlayer;
             Placer placer = Placer.Now(player != null ? player.record.Id : 0);
-            Brick brick = WorldNetwork.ServerAttachBrick(item, item.ValidColor(held.Value.color), holder, placer);
+            Brick brick = WorldNetwork.ServerAttachBrick(item, item.ValidColor(held.Value.color), holder, placer, seat);
 
             inventory.ServerRemoveFromSlot(slot, 1);
             TargetBrickPlaced();

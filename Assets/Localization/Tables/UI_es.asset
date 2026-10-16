@@ -1040,6 +1040,68 @@ MonoBehaviour:
     m_Localized: Cancelar
     m_Metadata:
       m_Items: []
+  - m_Id: 438771208937472
+    m_Localized: Construye tu primera casa
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852032
+    m_Localized: "Lo b\xE1sico: ladrillos, una puerta, una ventana, una cama y un
+      cofre. Luego pasa la noche en ella."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852033
+    m_Localized: "Detr\xE1s de ti hay una casa terminada: m\xEDrala cuando lo necesites.
+      Coge el marco de la puerta (casilla 1) y ponlo en el suelo: el bot\xF3n derecho
+      coloca lo que llevas, R lo gira."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852034
+    m_Localized: "Coge la puerta (casilla 2) y apunta al marco: va dentro. Col\xF3cala,
+      luego haz clic en ella para abrirla y cerrarla."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852035
+    m_Localized: "Construye las paredes con los ladrillos (casillas 3 y 4): una fila
+      alrededor de una habitaci\xF3n de 10 tetones de largo y 6 de ancho, unida al
+      marco de la puerta, y m\xE1s filas encima. Deja un hueco de 4 tetones en la
+      pared de atr\xE1s desde la segunda fila, para la ventana. El bot\xF3n izquierdo
+      rompe un ladrillo mal puesto."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852036
+    m_Localized: "Pon el marco de la ventana (casilla 5) en el hueco de la pared
+      de atr\xE1s, sobre su primera fila."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852037
+    m_Localized: "Coge el cristal (casilla 6) y apunta al marco de la ventana: va
+      dentro. Col\xF3calo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852038
+    m_Localized: 'Termina las paredes: filas hasta arriba del marco de la puerta,
+      6 ladrillos de alto.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852039
+    m_Localized: Pon la cama (casilla 7) dentro, junto a una pared.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852040
+    m_Localized: "Pon el cofre (casilla 8) dentro: guarda tus cosas. Haz clic en
+      \xE9l para mirar dentro."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852041
+    m_Localized: "Coge la tapa (casilla 9) y apunta al cofre: va encima. Con tapa,
+      solo t\xFA puedes abrirlo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852042
+    m_Localized: "Tu casa est\xE1 terminada, y cae la noche. Haz clic en tu cama
+      para acostarte y dormir hasta la ma\xF1ana."
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

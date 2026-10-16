@@ -45,11 +45,13 @@ namespace Brickcraft.UI
         // for as long as it's there (hidden too)
         private void Awake() {
             Vehicles.Vehicle.AnyChanged += check;
+            Server.BricksChanged += check;
             EventManager.LanguageChanged.Subscribe(onLanguageChanged);
         }
 
         private void OnDestroy() {
             Vehicles.Vehicle.AnyChanged -= check;
+            Server.BricksChanged -= check;
             EventManager.LanguageChanged.Unsubscribe(onLanguageChanged);
             watch(null);
         }

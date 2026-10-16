@@ -21,6 +21,33 @@ namespace Brickcraft.Tutorials
             return vehicle;
         }
 
+        /// <summary>A brick on the world's grid there, marked as a demo's (unless not one); null if the cells aren't free.</summary>
+        public static Brick PlaceWorld(string itemId, Vector3Int cell, int rotation = 0, bool demo = true) {
+            Item item = Server.items[itemId];
+            BrickPlacement placement = new BrickPlacement(item.brickModel, cell, rotation);
+            if (!BrickGrid.IsFree(placement)) {
+                return null;
+            }
+            Brick brick = Network.WorldNetwork.ServerPlaceBrick(item, item.color, placement, World.Placer.Now(0));
+            if (brick != null && demo) {
+                TutorialChecks.MarkDemo(brick);
+            }
+            return brick;
+        }
+
+        /// <summary>An attachment in a brick's slot (a door in its frame), marked as a demo's (unless not one); null if it doesn't fit.</summary>
+        public static Brick AttachWorld(string itemId, Brick holder, bool demo = true) {
+            Item item = Server.items[itemId];
+            if (holder == null || !Network.PlayerNetwork.CanAttach(item.brickModel, holder)) {
+                return null;
+            }
+            Brick brick = Network.WorldNetwork.ServerAttachBrick(item, item.color, holder, World.Placer.Now(0));
+            if (brick != null && demo) {
+                TutorialChecks.MarkDemo(brick);
+            }
+            return brick;
+        }
+
         /// <summary>Gone now (it's destroyed at the end of the frame): out of the way of the next try.</summary>
         public static void TakeBack(Brick brick) {
             GameObject removed = brick.gameObject;

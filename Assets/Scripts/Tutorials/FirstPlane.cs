@@ -51,7 +51,7 @@ namespace Brickcraft.Tutorials
                     overTime = true,
                 },
             },
-            buildDemo = BuildDemo,
+            buildDemo = start => BuildDemo(start) != null,
         };
 
         /// <summary>Pushing the way the plane goes, in the middle of its width (off it, it'd push it round).</summary>

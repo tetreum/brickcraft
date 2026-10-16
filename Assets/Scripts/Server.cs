@@ -12,6 +12,9 @@ namespace Brickcraft
     {
         public static Server Instance;
         public static Dictionary<string, Brick> bricks = new Dictionary<string, Brick>();
+
+        /// <summary>A brick was added to this game instance, or removed from it (see bricks).</summary>
+        public static event System.Action BricksChanged;
         // what's attached to each brick (by its id), see attachmentOf
         private static readonly Dictionary<string, Brick> attachments = new Dictionary<string, Brick>();
         // every item has its folder, see ItemDatabase. Ids are slugs, see Slugs
@@ -159,8 +162,8 @@ namespace Brickcraft
                     Debug.LogError("The brick " + attachedTo + " that " + item.id + " is attached to isn't there, or has no slot");
                     return null;
                 }
-                Transform point = slotOf(holder).point;
-                brickObj = createBrickObject(item, color, point.position, point.rotation);
+                BrickSlot slot = slotOf(holder);
+                brickObj = createBrickObject(item, color, slot.PositionFor(item.brickModel, state), slot.point.rotation);
                 brickObj.transform.SetParent(holder.gameObject.transform, true);
                 placement = holder.placement;
             } else {
@@ -190,7 +193,7 @@ namespace Brickcraft
             if (state != 0) {
                 showState(brick, false);
             }
-
+            BricksChanged?.Invoke();
             return brick;
         }
 
@@ -241,6 +244,7 @@ namespace Brickcraft
             if (state != 0) {
                 showState(brick, false);
             }
+            BricksChanged?.Invoke();
             return brick;
         }
 
@@ -328,6 +332,7 @@ namespace Brickcraft
                 attachments.Remove(brick.attachedTo);
             }
             Destroy(brick.gameObject);
+            BricksChanged?.Invoke();
         }
 
         public static Brick findBrick(Collider collider) {

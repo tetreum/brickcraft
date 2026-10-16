@@ -1040,6 +1040,67 @@ MonoBehaviour:
     m_Localized: Cancel
     m_Metadata:
       m_Items: []
+  - m_Id: 438771208937472
+    m_Localized: Build your first house
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852032
+    m_Localized: 'The basics: bricks, a door, a window, a bed and a chest. Then spend
+      the night in it.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852033
+    m_Localized: 'A finished house stands behind you: look at it whenever you need.
+      Pick the door frame (slot 1) and place it on the ground: the right button places
+      what you hold, R turns it.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852034
+    m_Localized: 'Take the door (slot 2) and aim at the frame: it goes in it. Place
+      it, then click it to open and close it.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852035
+    m_Localized: 'Build the walls with the bricks (slots 3 and 4): a row around a
+      room 10 studs long and 6 wide, joined to the door frame, then more rows on
+      top. Leave a 4-stud gap in the back wall from the second row up, for the window.
+      The left button breaks a brick placed wrong.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852036
+    m_Localized: Place the window frame (slot 5) in the gap of the back wall, on
+      its first row.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852037
+    m_Localized: 'Take the glass (slot 6) and aim at the window frame: it goes in
+      it. Place it.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852038
+    m_Localized: 'Finish the walls: rows up to the top of the door frame, 6 bricks
+      high.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852039
+    m_Localized: Place the bed (slot 7) inside, along a wall.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852040
+    m_Localized: 'Place the chest (slot 8) inside: it keeps your things. Click it
+      to look inside.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852041
+    m_Localized: 'Take the lid (slot 9) and aim at the chest: it goes on it. With
+      a lid, only you can open it.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852042
+    m_Localized: Your house is finished, and night falls. Click your bed to lie in
+      it and sleep until morning.
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

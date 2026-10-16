@@ -89,7 +89,8 @@ namespace Brickcraft.Network
                 }
                 Brick holder = placed[bricks[i].attachedTo - 1];
                 if (holder != null && PlayerNetwork.CanAttach(items[i].brickModel, holder)) {
-                    WorldNetwork.ServerAttachBrick(items[i], items[i].ValidColor(bricks[i].color), holder, placer);
+                    int seat = Mathf.Clamp(bricks[i].seat, 0, Server.slotOf(holder).Seats - 1);
+                    WorldNetwork.ServerAttachBrick(items[i], items[i].ValidColor(bricks[i].color), holder, placer, seat);
                     count++;
                 }
             }

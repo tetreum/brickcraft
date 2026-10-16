@@ -46,8 +46,10 @@ namespace Brickcraft.Tests
             }
             Assert.IsFalse(System.Linq.Enumerable.Any(inventory.items, stack => stack.itemId == "dirt"), "not the usual starter items");
             yield return stepIs(0, "the guide on its first step");
-            Assert.IsNotNull(demo(), "a finished one to look at");
-            Assert.IsNull(TutorialChecks.Built(), "it isn't the one being built");
+            if (tutorial != FirstHouse.Tutorial) {
+                Assert.IsNotNull(demo(), "a finished one to look at");
+                Assert.IsNull(TutorialChecks.Built(), "it isn't the one being built");
+            }
         }
 
         // the tutorial's finished vehicle, shown
@@ -222,6 +224,30 @@ namespace Brickcraft.Tests
             Assert.Greater(vehicle.transform.up.y, 0.8f, "still the right way up: " + trace);
             VehicleControls.Override = null;
             VehicleSystem.ServerStandUp(TestGame.Player.GetComponent<PlayerNetwork>(), Vector3.zero, Vector3.zero);
+        }
+
+        [UnityTest]
+        public IEnumerator TheFirstHouseIsBuiltAndSleptIn() {
+            yield return play(FirstHouse.Tutorial);
+            Assert.IsEmpty(TutorialChecks.Placed(FirstHouse.Frame), "the finished house isn't the player's");
+            Assert.AreEqual(1, System.Linq.Enumerable.Count(Server.bricks.Values, b => b.itemId == FirstHouse.Door), "the finished house: its door");
+            Assert.AreEqual(1, System.Linq.Enumerable.Count(Server.bricks.Values, b => b.itemId == FirstHouse.Lid), "and its chest's lid");
+
+            // the player's house, in front of it: step by step to the night
+            Vector3Int block = TestGame.PlayerBlock;
+            Vector3Int corner = BrickGrid.BlockToCell(new Vector3Int(block.x - 3, CustomChunkGenerator.FlatGrassHeight + 1, block.z + 4));
+            Assert.IsTrue(FirstHouse.Build(corner, false), "the house built");
+            yield return TestGame.WaitUntil(() => UI.TutorialGuide.Step == 9, 5, "the house finished: sleeping next");
+            Assert.AreEqual(36, FirstHouse.WallBricks(), "its walls: 18 bricks 1x6 and 18 1x4");
+            yield return TestGame.WaitUntil(() => !WorldTime.IsDay, 3, "night falling");
+
+            // in the bed till morning
+            Brick bed = TutorialChecks.Placed(FirstHouse.Bed)[0];
+            PlayerNetwork network = TestGame.Player.GetComponent<PlayerNetwork>();
+            network.CmdSleep(bed.id);
+            yield return TestGame.WaitUntil(() => !string.IsNullOrEmpty(network.sleepingIn), 3, "asleep");
+            yield return TestGame.WaitUntil(() => UI.TutorialGuide.Step == 10, 20, "the night slept through");
+            Assert.IsTrue(WorldTime.IsDay, "morning");
         }
 
         [UnityTest]

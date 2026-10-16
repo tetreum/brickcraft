@@ -358,7 +358,15 @@ namespace Brickcraft.Bricks
                     model.footprint = footprint;
                     string takes = LDraw.LDrawGlass.FrameFits(catalogPart);
                     if (takes != null) {
-                        addSlot(template, origin, takes);
+                        BrickSlot slot = addSlot(template, origin, takes);
+                        // its grooves' depths, if it's thin that way (as frames are)
+                        if (bounds.size.z < bounds.size.x && bounds.size.z < bounds.size.y) {
+                            float[] depths = LDraw.LDrawGlass.Seats(id);
+                            slot.depths = new float[depths.Length];
+                            for (int i = 0; i < depths.Length; i++) {
+                                slot.depths[i] = depths[i] * LDraw.LDrawModelBuilder.Scale + origin.z;
+                            }
+                        }
                     }
                 }
                 model.ldrawOrigin = origin;
@@ -377,13 +385,14 @@ namespace Brickcraft.Bricks
         }
 
         // a slot for an attachment (see BrickSlot), its point there in the model
-        private static void addSlot(GameObject template, Vector3 at, string fits) {
+        private static BrickSlot addSlot(GameObject template, Vector3 at, string fits) {
             Transform point = new GameObject("Slot").transform;
             point.SetParent(template.transform, false);
             point.localPosition = at;
             BrickSlot slot = template.AddComponent<BrickSlot>();
             slot.point = point;
             slot.fits = fits;
+            return slot;
         }
 
         // scaled to the game's units and moved so its pivot is at the center of its footprint, on its bottom; returns

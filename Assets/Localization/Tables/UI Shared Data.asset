@@ -987,6 +987,54 @@ MonoBehaviour:
     m_Key: sign.cancel
     m_Metadata:
       m_Items: []
+  - m_Id: 438771208937472
+    m_Key: tutorial.first_house.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852032
+    m_Key: tutorial.first_house.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852033
+    m_Key: tutorial.first_house.frame
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852034
+    m_Key: tutorial.first_house.door
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852035
+    m_Key: tutorial.first_house.walls
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852036
+    m_Key: tutorial.first_house.window
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852037
+    m_Key: tutorial.first_house.glass
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852038
+    m_Key: tutorial.first_house.walls_up
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852039
+    m_Key: tutorial.first_house.bed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852040
+    m_Key: tutorial.first_house.chest
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852041
+    m_Key: tutorial.first_house.lid
+    m_Metadata:
+      m_Items: []
+  - m_Id: 438771271852042
+    m_Key: tutorial.first_house.sleep
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

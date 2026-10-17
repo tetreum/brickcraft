@@ -71,8 +71,11 @@ namespace Brickcraft.Bricks.LDraw
             return parts;
         }
 
-        /// <summary>An LDR, or an MPD (0 FILE sections, the first the main model): its parts, submodels taken apart.</summary>
-        public static List<Part> Parse(string[] lines) {
+        /// <summary>
+        /// An LDR, or an MPD (0 FILE sections, the first the main model): its parts, submodels taken apart, but those
+        /// kept whole (by their name without extension), which are a part of that name.
+        /// </summary>
+        public static List<Part> Parse(string[] lines, Func<string, bool> keepWhole = null) {
             Dictionary<string, List<string>> files = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
             string main = null;
             List<string> current = null;
@@ -104,12 +107,13 @@ namespace Brickcraft.Bricks.LDraw
             }
             List<Part> parts = new List<Part>();
             if (main != null) {
-                take(files, main, Matrix4x4.identity, LDrawModelBuilder.MainColor, parts, 0);
+                take(files, main, Matrix4x4.identity, LDrawModelBuilder.MainColor, parts, 0, keepWhole);
             }
             return parts;
         }
 
-        private static void take(Dictionary<string, List<string>> files, string name, Matrix4x4 matrix, int color, List<Part> parts, int depth) {
+        private static void take(Dictionary<string, List<string>> files, string name, Matrix4x4 matrix, int color, List<Part> parts, int depth,
+                Func<string, bool> keepWhole) {
             if (depth > 16 || !files.TryGetValue(name, out List<string> lines)) {
                 return;
             }
@@ -126,11 +130,11 @@ namespace Brickcraft.Bricks.LDraw
                 m.SetRow(2, new Vector4(num(f[11]), num(f[12]), num(f[13]), num(f[4])));
                 Matrix4x4 placed = matrix * m;
                 string file = string.Join(" ", f, 14, f.Length - 14);
-                if (files.ContainsKey(file)) {
-                    take(files, file, placed, partColor, parts, depth + 1); // a submodel
+                string part = Path.GetFileNameWithoutExtension(file.Replace('\\', '/')).ToLowerInvariant();
+                if (files.ContainsKey(file) && (keepWhole == null || !keepWhole(part))) {
+                    take(files, file, placed, partColor, parts, depth + 1, keepWhole); // a submodel
                     continue;
                 }
-                string part = Path.GetFileNameWithoutExtension(file.Replace('\\', '/')).ToLowerInvariant();
                 parts.Add(new Part() {
                     part = part, color = partColor, position = placed.GetColumn(3),
                     row0 = placed.GetRow(0), row1 = placed.GetRow(1), row2 = placed.GetRow(2),

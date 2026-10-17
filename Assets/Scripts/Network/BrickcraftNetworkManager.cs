@@ -366,7 +366,7 @@ namespace Brickcraft.Network
                 Tutorials.Tutorial tutorial = WorldNetwork.Storage != null ? Tutorials.Tutorial.Find(WorldNetwork.Storage.Tutorial) : null;
                 if (tutorial != null) {
                     tutorial.ServerGive(inventory);
-                    tutorial.ServerBuildDemo(inventory.transform.position);
+                    tutorial.ServerBuildDemo(inventory.transform.position, record.Id);
                     return;
                 }
                 foreach (StarterItem starter in starterItems) {

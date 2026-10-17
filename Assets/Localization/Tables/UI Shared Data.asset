@@ -1035,6 +1035,26 @@ MonoBehaviour:
     m_Key: tutorial.first_house.sleep
     m_Metadata:
       m_Items: []
+  - m_Id: 696202346356736
+    m_Key: tutorial.first_export.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 696202388299776
+    m_Key: tutorial.first_export.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 696202388299778
+    m_Key: tutorial.first_export.use
+    m_Metadata:
+      m_Items: []
+  - m_Id: 696202388299779
+    m_Key: tutorial.first_export.save
+    m_Metadata:
+      m_Items: []
+  - m_Id: 696202388299780
+    m_Key: tutorial.first_export.done
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

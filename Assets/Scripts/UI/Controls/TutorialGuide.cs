@@ -109,7 +109,9 @@ namespace Brickcraft.UI
             if (step != was) {
                 show();
             }
-            panel.SetActive(player == null || !player.isFrozen || player.freezeReason == Player.FreezeReason.Driving);
+            // driving, or listing parts (see PartsListerView), the steps go on there
+            panel.SetActive(player == null || !player.isFrozen || player.freezeReason == Player.FreezeReason.Driving
+                || player.freezeReason == Player.FreezeReason.PartsLister);
         }
 
         private void show() {
@@ -119,7 +121,7 @@ namespace Brickcraft.UI
             bool done = step >= tutorial.steps.Length;
             title.text = Loc.Get(Loc.UI, tutorial.titleKey);
             progress.text = done ? Loc.Get(Loc.UI, "tutorial.all_done") : Loc.Get(Loc.UI, "tutorial.step", step + 1, tutorial.steps.Length);
-            text.text = Loc.Get(Loc.UI, done ? "tutorial.done" : tutorial.steps[step].textKey);
+            text.text = Loc.Get(Loc.UI, done ? tutorial.doneKey : tutorial.steps[step].textKey);
         }
 
         private static TutorialGuide create(Transform root) {

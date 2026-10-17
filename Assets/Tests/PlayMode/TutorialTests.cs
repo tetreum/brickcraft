@@ -46,7 +46,8 @@ namespace Brickcraft.Tests
             }
             Assert.IsFalse(System.Linq.Enumerable.Any(inventory.items, stack => stack.itemId == "dirt"), "not the usual starter items");
             yield return stepIs(0, "the guide on its first step");
-            if (tutorial != FirstHouse.Tutorial) {
+            // the house ones have no vehicle
+            if (tutorial != FirstHouse.Tutorial && tutorial != FirstExport.Tutorial) {
                 Assert.IsNotNull(demo(), "a finished one to look at");
                 Assert.IsNull(TutorialChecks.Built(), "it isn't the one being built");
             }
@@ -248,6 +249,43 @@ namespace Brickcraft.Tests
             yield return TestGame.WaitUntil(() => !string.IsNullOrEmpty(network.sleepingIn), 3, "asleep");
             yield return TestGame.WaitUntil(() => UI.TutorialGuide.Step == 10, 20, "the night slept through");
             Assert.IsTrue(WorldTime.IsDay, "morning");
+        }
+
+        [UnityTest]
+        public IEnumerator TheFirstModelIsListedForRealLife() {
+            yield return play(FirstExport.Tutorial);
+            // the house, all the player's own (the parts lister lists only what it placed)
+            List<Brick> house = new List<Brick>(Server.bricks.Values);
+            Assert.Greater(house.Count, 300, "the house built");
+            int playerId = WorldNetwork.ServerPlacerOf(house[0]).playerId;
+            Assert.AreNotEqual(0, playerId, "placed by the player");
+            Assert.IsTrue(house.TrueForAll(b => WorldNetwork.ServerPlacerOf(b).playerId == playerId), "all of it");
+
+            // the parts lister (in hand from the start) used on the house's nearest brick
+            Vector3 eye = Camera.main.transform.position;
+            Brick nearest = house[0];
+            foreach (Brick brick in house) {
+                if (Vector3.Distance(eye, brick.WorldBounds.center) < Vector3.Distance(eye, nearest.WorldBounds.center)) {
+                    nearest = brick;
+                }
+            }
+            TestGame.Player.GetComponent<PartsLister>().CmdStartOnBrick(Player.FirstFastSlot, nearest.id);
+            yield return TestGame.WaitUntil(() => PartsListerView.IsOpen, 5, "its box around the house");
+            yield return TestGame.WaitUntil(() => UI.TutorialGuide.Step == 1, 3, "saving next");
+
+            // saved: done, its files written
+            string name = "zz_tutorial_test_" + System.Guid.NewGuid().ToString("N").Substring(0, 8);
+            string folder = System.IO.Path.Combine(PartsLister.Folder, name);
+            try {
+                PartsListerView.Current.Save(name);
+                yield return TestGame.WaitUntil(() => UI.TutorialGuide.Step == FirstExport.Tutorial.steps.Length, 10, "saved: all done");
+                Assert.IsTrue(System.IO.File.Exists(System.IO.Path.Combine(folder, name + ".xml")), "its BrickLink wanted list");
+                Assert.IsTrue(System.IO.File.Exists(System.IO.Path.Combine(folder, name + ".ldr")), "and its LDraw model");
+            } finally {
+                if (System.IO.Directory.Exists(folder)) {
+                    System.IO.Directory.Delete(folder, true);
+                }
+            }
         }
 
         [UnityTest]

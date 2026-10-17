@@ -145,6 +145,9 @@ namespace Brickcraft.Network
 
         private const int PlacementsPerMessage = 200;
 
+        /// <summary>Client: a parts list was written (its files' folder), see TargetList.</summary>
+        public static event Action<string> ListSaved;
+
         [Command]
         public void CmdCancel() {
             active = false;
@@ -219,6 +222,7 @@ namespace Brickcraft.Network
             }
             string file = Path.GetFileNameWithoutExtension(path);
             chat(Loc.Get(Loc.Game, "partslister.saved", parts, folder));
+            ListSaved?.Invoke(folder);
             chat(Loc.Get(Loc.Game, "partslister.files", file,
                 colorless > 0 ? " " + Loc.Get(Loc.Game, "partslister.bricklink_colorless", colorless) : "",
                 ldrawColorless > 0 ? " " + Loc.Get(Loc.Game, "partslister.ldraw_colorless", ldrawColorless) : ""));

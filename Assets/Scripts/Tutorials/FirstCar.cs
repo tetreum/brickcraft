@@ -46,7 +46,7 @@ namespace Brickcraft.Tutorials
                     overTime = true,
                 },
             },
-            buildDemo = start => BuildDemo(start) != null,
+            buildDemo = (start, player) => BuildDemo(start) != null,
         };
 
         /// <summary>A finished car behind where the player starts.</summary>

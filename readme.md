@@ -44,11 +44,11 @@ The first player to join a save without admins (the host, starting singleplayer 
 
 ## Vehicles
 
-Cars, boats and planes, built from bricks starting with a vehicle part (a wheel, a seat, a propeller, a wing; and technic axles, pins and holes), driven from a seat and wired with a screwdriver: see `docs/vehicles.md`. The main menu's Tutorials walk through building a first house (and sleeping in it) and a first car, each in a flat world of its own.
+Cars, boats and planes, built from bricks starting with a vehicle part (a wheel, a seat, a propeller, a wing; and technic axles, pins and holes), driven from a seat and wired with a screwdriver: see `docs/vehicles.md`.
 
 ## Documentation about modding, npcs and more
 
-Check the docs/ directory.
+Check the [docs/](docs/) directory.
 
 ## LDraw parts
 
@@ -86,3 +86,6 @@ To update the library: unpack library.ldraw.org's complete.zip somewhere, then `
 - 8-Bit Kung Fu by John Bartmann - https://freemusicarchive.org/music/John_Bartmann/contact
 - Fortsetzung Folgt by Gumbel - https://freemusicarchive.org/music/Gumbel/contact
 - Killing Bosses by Gumbel - https://freemusicarchive.org/music/Gumbel/contact
+
+## Disclaimers
+LEGO® is a trademark of the LEGO Group of companies which does not sponsor, authorize or endorse this application.

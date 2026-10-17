@@ -19,14 +19,19 @@ namespace Brickcraft.Tutorials
         /// <summary>What the player gets, in its hotbar from the first slot, one stack a slot.</summary>
         public TutorialItem[] items;
         public TutorialStep[] steps;
-        /// <summary>Builds what it builds, finished, beside where the player starts (given), to look at; false if it couldn't. Null if it has none.</summary>
-        public Func<UnityEngine.Vector3, bool> buildDemo;
+        /// <summary>
+        /// Builds what it builds, finished, beside where the player starts (given), to look at, as placed by that
+        /// player (its id) if it's to be the player's; false if it couldn't. Null if it has none.
+        /// </summary>
+        public Func<UnityEngine.Vector3, int, bool> buildDemo;
+        /// <summary>What the guide says once it's all done, a key of the UI string table (see UI.TutorialGuide).</summary>
+        public string doneKey = "tutorial.done";
         /// <summary>Not in the menu's list for now (its worlds still play it).</summary>
         public bool hidden;
 
         /// <summary>The game's tutorials, in the order the menu shows them (but the hidden ones).</summary>
         public static IReadOnlyList<Tutorial> All {
-            get { return new[] { FirstHouse.Tutorial, FirstCar.Tutorial, FirstPlane.Tutorial, FirstBoat.Tutorial }; }
+            get { return new[] { FirstHouse.Tutorial, FirstCar.Tutorial, FirstExport.Tutorial, FirstPlane.Tutorial, FirstBoat.Tutorial }; }
         }
 
         /// <summary>The tutorial with that id, null if there's none.</summary>
@@ -39,13 +44,13 @@ namespace Brickcraft.Tutorials
             return null;
         }
 
-        /// <summary>Its finished vehicle, built beside where the player starts (the first time it joins its world).</summary>
-        public void ServerBuildDemo(UnityEngine.Vector3 start) {
+        /// <summary>Its finished vehicle, built beside where the player (its id) starts (the first time it joins its world).</summary>
+        public void ServerBuildDemo(UnityEngine.Vector3 start, int playerId) {
             if (buildDemo == null) {
                 return;
             }
             try {
-                if (!buildDemo(start)) {
+                if (!buildDemo(start, playerId)) {
                     UnityEngine.Debug.LogWarning("The tutorial " + id + "'s finished vehicle couldn't be built");
                 }
             } catch (Exception e) {

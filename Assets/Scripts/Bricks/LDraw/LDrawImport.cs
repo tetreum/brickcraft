@@ -63,7 +63,8 @@ namespace Brickcraft.Bricks.LDraw
             HashSet<Vector3Int> taken = new HashSet<Vector3Int>();
             List<BrickPlacement> placements = new List<BrickPlacement>();
             List<(LDrawContraption.Part part, Item item)> hanging = new List<(LDrawContraption.Part, Item)>();
-            foreach (LDrawContraption.Part part in LDrawContraption.Parse(lines)) {
+            // the game's items made of parts, saved whole (see LDrawWriter.Write), are themselves
+            foreach (LDrawContraption.Part part in LDrawContraption.Parse(lines, name => partsItem(name) != null)) {
                 model.add(part, taken, placements, hanging);
             }
             // once the bricks are there, what hangs from them
@@ -103,8 +104,13 @@ namespace Brickcraft.Bricks.LDraw
             return items;
         }
 
+        // an item made of parts (see LDrawContraption) of that id, null if there's none
+        private static Item partsItem(string id) {
+            return Server.items.TryGetValue(id, out Item item) && item.ldr && item.type == Item.Type.Brick ? item : null;
+        }
+
         private void add(LDrawContraption.Part part, HashSet<Vector3Int> taken, List<BrickPlacement> placements, List<(LDrawContraption.Part, Item)> hanging) {
-            Item item = ownItems.TryGetValue(part.part, out Item own) ? own : PartsList.ItemOfPart(part.part) ?? renumbered(part.part);
+            Item item = partsItem(part.part) ?? (ownItems.TryGetValue(part.part, out Item own) ? own : PartsList.ItemOfPart(part.part) ?? renumbered(part.part));
             BrickModel brickModel = item != null && item.type == Item.Type.Brick ? item.brickModel : null;
             if (brickModel == null) {
                 unknown++;
@@ -196,7 +202,8 @@ namespace Brickcraft.Bricks.LDraw
             Matrix4x4 m = part.Matrix;
             m.SetColumn(3, new Vector4(0, 0, 0, 1));
             Matrix4x4 r = Flip * m * Flip;
-            Vector3 origin = LDrawWriter.OriginOf(brickModel, item.LDrawPart, item.ldrawShape);
+            // an item made of parts: its file's origin is its pivot
+            Vector3 origin = item.ldr ? Vector3.zero : LDrawWriter.OriginOf(brickModel, item.LDrawPart, item.ldrawShape);
             Vector3 ldu = Flip.MultiplyPoint3x4(part.position) - r.MultiplyVector(origin);
             return new Vector3(ldu.x / ToLDU.x, ldu.y / ToLDU.y, ldu.z / ToLDU.z);
         }

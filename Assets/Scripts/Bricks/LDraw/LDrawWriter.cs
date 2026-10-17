@@ -9,8 +9,13 @@ namespace Brickcraft.Bricks.LDraw
     /// <summary>A part where it goes in an LDraw model: its file, colour and transform (LDU, LDraw's axes: Y down).</summary>
     public struct LDrawPlacement
     {
-        /// <summary>Its LDraw part number (without ".dat").</summary>
+        /// <summary>Its LDraw part number (without ".dat"); for a submodel, the item it is.</summary>
         public string part;
+        /// <summary>
+        /// An item made of parts (see LDrawContraption) as a whole: a submodel of the file, named after it, with its
+        /// parts; its origin is the brick's pivot.
+        /// </summary>
+        public bool submodel;
         /// <summary>Its colour, the palette's id (see BrickColor.ldrawId), BrickColor.None for none.</summary>
         public int color;
         public Vector3 position;
@@ -108,9 +113,23 @@ namespace Brickcraft.Bricks.LDraw
 
         /// <summary>Writes the model (an .ldr file) named so; returns how many parts had a colour LDraw doesn't have.</summary>
         public static int Write(string path, string name, IList<LDrawPlacement> placements) {
+            // items made of parts go once each as a submodel (an MPD: 0 FILE sections, the model first)
+            List<string> submodels = new List<string>();
+            foreach (LDrawPlacement placed in placements) {
+                if (placed.submodel && !submodels.Contains(placed.part)) {
+                    submodels.Add(placed.part);
+                }
+            }
+            string file = Path.GetFileName(path);
+            if (submodels.Exists(id => string.Equals(SubmodelFile(id), file, System.StringComparison.OrdinalIgnoreCase))) {
+                file = Path.GetFileNameWithoutExtension(file) + " model" + Path.GetExtension(file);
+            }
             StringBuilder ldr = new StringBuilder();
+            if (submodels.Count > 0) {
+                ldr.Append("0 FILE ").Append(file).Append('\n');
+            }
             ldr.Append("0 ").Append(clean(name)).Append('\n');
-            ldr.Append("0 Name: ").Append(Path.GetFileName(path)).Append('\n');
+            ldr.Append("0 Name: ").Append(file).Append('\n');
             ldr.Append("0 Author: Brickcraft\n");
             ldr.Append("0 BFC CERTIFY CCW\n\n");
             int colorless = 0;
@@ -128,10 +147,40 @@ namespace Brickcraft.Bricks.LDraw
                 number(ldr, placed.row0);
                 number(ldr, placed.row1);
                 number(ldr, placed.row2);
-                ldr.Append(' ').Append(placed.part).Append(".dat\n");
+                ldr.Append(' ').Append(placed.submodel ? SubmodelFile(placed.part) : placed.part + ".dat").Append('\n');
+            }
+            foreach (string id in submodels) {
+                writeSubmodel(ldr, id);
             }
             File.WriteAllText(path, ldr.ToString(), new UTF8Encoding(false));
             return colorless;
+        }
+
+        /// <summary>The file of an item's submodel (see LDrawPlacement.submodel): its id's.</summary>
+        public static string SubmodelFile(string itemId) {
+            return itemId + ".ldr";
+        }
+
+        // an item made of parts, its section: its parts as its model.ldr has them (16 is the colour it's given)
+        private static void writeSubmodel(StringBuilder ldr, string id) {
+            Server.items.TryGetValue(id, out Item item);
+            ldr.Append("\n0 FILE ").Append(SubmodelFile(id)).Append('\n');
+            ldr.Append("0 ").Append(clean(item != null ? item.name : id)).Append('\n');
+            ldr.Append("0 Name: ").Append(SubmodelFile(id)).Append('\n');
+            ldr.Append("0 Author: Brickcraft\n");
+            ldr.Append("0 BFC CERTIFY CCW\n\n");
+            List<LDrawContraption.Part> parts = LDrawContraption.PartsOf(item);
+            if (parts == null) {
+                return;
+            }
+            foreach (LDrawContraption.Part part in parts) {
+                ldr.Append("1 ").Append(part.color);
+                number(ldr, part.position);
+                number(ldr, part.row0);
+                number(ldr, part.row1);
+                number(ldr, part.row2);
+                ldr.Append(' ').Append(part.part).Append(".dat\n");
+            }
         }
 
         // " x y z" to a hundredth (positions far in the world carry float errors)

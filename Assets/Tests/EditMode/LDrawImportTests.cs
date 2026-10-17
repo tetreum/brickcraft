@@ -59,6 +59,36 @@ namespace Brickcraft.Tests
             Assert.AreEqual(new Vector3Int(10, 6, 10), model.Size);
         }
 
+        [Test]
+        public void ItemsMadeOfPartsComeBackWhole() {
+            // a brick, and a bed (made of the parts of its model.ldr) turned a quarter, written like the parts lister does:
+            // the bed as a submodel of its own (see PartsList.Placements)
+            Item brick = item("part_3001"), bed = item("bed");
+            Assume.That(bed.ldr, "the bed is made of parts");
+            int red = BrickColorPalette.FromLDraw(4).id;
+            Vector3 corner = BrickGrid.CellToWorld(Vector3Int.zero);
+            BrickPlacement brickAt = new BrickPlacement(brick.brickModel, new Vector3Int(0, 0, 0), 0);
+            BrickPlacement bedAt = new BrickPlacement(bed.brickModel, new Vector3Int(6, 0, 2), 1);
+            LDrawPlacement bedPlaced = LDrawWriter.Place(bed.id, bed.color, bedAt.Position, bedAt.Rotation, Vector3.zero, corner);
+            bedPlaced.submodel = true;
+            LDrawWriter.Write(file, "test", new List<LDrawPlacement>() {
+                LDrawWriter.Place(brick.LDrawPart, red, brickAt.Position, brickAt.Rotation, LDrawWriter.OriginOf(brick.brickModel, brick.LDrawPart, brick.ldrawShape), corner),
+                bedPlaced,
+            });
+            string[] lines = File.ReadAllLines(file);
+
+            // LDraw tools see a model and the bed's submodel, with all its parts
+            Assert.Contains("0 FILE " + LDrawWriter.SubmodelFile(bed.id), lines);
+            Assert.AreEqual(1 + LDrawContraption.PartsOf(bed).Count, LDrawContraption.Parse(lines).Count, "the brick and the bed's parts");
+
+            // and it comes back a bed, where it was
+            LDrawImport model = LDrawImport.Read(lines);
+            Assert.AreEqual(0, model.Skipped);
+            Assert.AreEqual(2, model.bricks.Count);
+            AssertBrick(model.bricks[0], "part_3001", red, new Vector3Int(0, 0, 0), 0);
+            AssertBrick(model.bricks[1], "bed", bed.color, new Vector3Int(6, 0, 2), 1);
+        }
+
         private static void AssertBrick(ImportedBrick brick, string itemId, int color, Vector3Int origin, int rotation) {
             Assert.AreEqual(itemId, brick.itemId);
             Assert.AreEqual(color, brick.color, itemId + "'s colour");

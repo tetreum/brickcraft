@@ -313,16 +313,10 @@ namespace Brickcraft.Network
             if (parts == null) {
                 return;
             }
-            // its file's origin is the brick's pivot
-            LDrawPlacement pivot = LDrawWriter.Place("", color, position, rotation, Vector3.zero, corner);
-            Matrix4x4 at = new LDrawContraption.Part() { position = pivot.position, row0 = pivot.row0, row1 = pivot.row1, row2 = pivot.row2 }.Matrix;
-            foreach (LDrawContraption.Part part in parts) {
-                Matrix4x4 m = at * part.Matrix;
-                placements.Add(new LDrawPlacement() {
-                    part = part.part, color = paletteColor(part.color, color),
-                    position = m.GetColumn(3), row0 = m.GetRow(0), row1 = m.GetRow(1), row2 = m.GetRow(2),
-                });
-            }
+            // as a whole, a submodel of the file whose origin is the brick's pivot (see LDrawWriter.Write)
+            LDrawPlacement pivot = LDrawWriter.Place(item.id, color, position, rotation, Vector3.zero, corner);
+            pivot.submodel = true;
+            placements.Add(pivot);
         }
 
         // a contraption's part's colour in the palette: 16 is the brick's

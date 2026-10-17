@@ -58,7 +58,7 @@ namespace Brickcraft.Tutorials
                     overTime = true,
                 },
             },
-            buildDemo = BuildDemo,
+            buildDemo = (start, player) => BuildDemo(start),
         };
 
         /// <summary>The player's wall bricks placed.</summary>

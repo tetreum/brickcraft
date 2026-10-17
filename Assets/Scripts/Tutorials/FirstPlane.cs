@@ -51,7 +51,7 @@ namespace Brickcraft.Tutorials
                     overTime = true,
                 },
             },
-            buildDemo = start => BuildDemo(start) != null,
+            buildDemo = (start, player) => BuildDemo(start) != null,
             hidden = true,
         };
 

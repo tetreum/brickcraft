@@ -1102,6 +1102,39 @@ MonoBehaviour:
       para acostarte y dormir hasta la ma\xF1ana."
     m_Metadata:
       m_Items: []
+  - m_Id: 696202346356736
+    m_Localized: Exporta tu primer modelo a la vida real
+    m_Metadata:
+      m_Items: []
+  - m_Id: 696202388299776
+    m_Localized: Convierte una casa construida en el juego en una lista de piezas
+      LEGO reales que puedes comprar, y en un modelo que abren otras herramientas
+      de LEGO.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 696202388299778
+    m_Localized: "Delante de ti hay una casa, construida como si fuera tuya. Con
+      el listador de piezas en la mano (casilla 1), que lista las piezas LEGO reales
+      de lo que has construido, ac\xE9rcate a la casa y \xFAsalo en cualquiera de
+      sus ladrillos con el bot\xF3n derecho."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 696202388299779
+    m_Localized: "La caja azul es lo que se lista: tiene que abarcar toda la casa.
+      Vuela a su alrededor (bot\xF3n derecho para mirar, las teclas de movimiento
+      para moverte) y aleja cualquier cara que corte la casa, con la rueda del rat\xF3n
+      o los botones + del panel. Luego ponle un nombre a la lista y pulsa Guardar
+      lista de piezas. (\xBFLa has cerrado? Vuelve a usar el listador en la casa.)"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 696202388299780
+    m_Localized: "\xA1Guardada! El chat te dice la carpeta de sus ficheros (su ruta
+      est\xE1 copiada: p\xE9gala en tu explorador de archivos). El fichero .xml es
+      una wanted list de BrickLink: s\xFAbelo en bricklink.com/v2/wanted/upload.page
+      para comprar todas sus piezas. El fichero .ldr se abre en herramientas de LDraw
+      como Studio o LeoCAD."
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

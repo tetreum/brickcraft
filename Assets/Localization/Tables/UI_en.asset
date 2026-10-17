@@ -1101,6 +1101,36 @@ MonoBehaviour:
       it and sleep until morning.
     m_Metadata:
       m_Items: []
+  - m_Id: 696202346356736
+    m_Localized: Export your first model to real life
+    m_Metadata:
+      m_Items: []
+  - m_Id: 696202388299776
+    m_Localized: Turn a house built in the game into a list of real LEGO parts you
+      can buy, and a model other LEGO tools open.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 696202388299778
+    m_Localized: In front of you stands a house, built as if by you. With the parts
+      lister in your hand (slot 1), which lists the real LEGO parts of what you built,
+      walk up to the house and use it on any of its bricks with the right button.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 696202388299779
+    m_Localized: 'The blue box is what gets listed: it must hold the whole house.
+      Fly around it (right mouse to look, the movement keys to move) and push out
+      any face that cuts through the house, with the mouse wheel or the panel''s
+      + buttons. Then name the list and click Save parts list. (Closed it? Use the
+      parts lister on the house again.)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 696202388299780
+    m_Localized: 'Saved! The chat tells you the folder of its files (its path is
+      copied: paste it in your file explorer). The .xml file is a BrickLink wanted
+      list: upload it at bricklink.com/v2/wanted/upload.page to buy all its parts.
+      The .ldr file opens in LDraw tools like Studio or LeoCAD.'
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

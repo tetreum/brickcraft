@@ -336,7 +336,7 @@ namespace Brickcraft.Bricks.LDraw
                 }
                 placed.Add(new ImportedBrick() {
                     itemId = brick.itemId, color = brick.color, origin = corner + min, rotation = (byte)((brick.rotation + turns) % 4),
-                    attachedTo = brick.attachedTo,
+                    attachedTo = brick.attachedTo, seat = brick.seat,
                 });
             }
             return placed;

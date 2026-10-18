@@ -175,14 +175,14 @@ namespace Brickcraft.Tests
                 "1 4 400 -24 0 1 0 0 0 1 0 0 0 1 notapart.dat",    // not a part the game has
                 "1 4 600 -24 0 1 0 0 0 0 -1 0 1 0 3001.dat",       // lying on its side
                 "1 4 800 -24 0 -1 0 0 0 1 0 0 0 1 3001.dat",       // mirrored: symmetric, the same brick
-                "1 4 1000 -8 10 1 0 0 0 1 0 0 0 1 3023.dat",       // an old number: LDraw has 3023a and 3023b now
+                "1 4 1000 -8 10 1 0 0 0 1 0 0 0 1 3023.dat",       // an old number: moved to 3023b (see LDrawLibrary.MainPart)
                 "1 4 1200 -26 0 1 0 0 0 1 0 0 0 1 3001.dat",       // a quarter plate up: in the nearest plate
             };
             LDrawImport model = LDrawImport.Read(lines);
 
             Assert.AreEqual(4, model.bricks.Count);
             Assert.AreEqual(0, model.bricks[1].rotation, "mirrored, not turned");
-            Assert.AreEqual("part_3023a", model.bricks[2].itemId);
+            Assert.AreEqual("part_3023b", model.bricks[2].itemId, "the part it is now");
             Assert.AreEqual(model.bricks[0].origin.y, model.bricks[3].origin.y, "snapped to the plate");
             Assert.AreEqual(1, model.overlapping);
             Assert.AreEqual(2, model.offGrid);
@@ -228,6 +228,20 @@ namespace Brickcraft.Tests
             Assert.AreEqual(4, model.bricks.Count);
             Assert.AreEqual(0, model.Skipped);
             Assert.AreEqual(new Vector3Int(8, 6, 2), model.Size, "two walls of two bricks, one on the other");
+        }
+
+        [Test]
+        public void AliasesAndMovedPartsAreThePartTheyAreNow() {
+            // LDraw's aliases (aliases.txt): BrickLink's 42611 is the tyre 51011, an old number of the brick 2x4 is 3001
+            Assume.That(LDrawLibrary.MainPart("42611"), Is.EqualTo("51011"), "the aliases are there");
+            Assert.AreEqual("part_51011", Network.PartsList.ItemOfPart("42611").id);
+            Assert.AreEqual(LDrawLibrary.FindFile("51011.dat"), LDrawLibrary.FindFile("42611.dat"), "its shape, the part's");
+            Assert.AreEqual("3001", LDrawLibrary.MainPart("3001"), "a part is itself");
+
+            LDrawImport model = LDrawImport.Read(new[] { "0 an old one", "1 4 0 0 0 1 0 0 0 1 0 0 0 1 3556.dat" });
+            Assert.AreEqual(0, model.Skipped, "not unknown");
+            Assert.AreEqual(1, model.bricks.Count);
+            Assert.AreEqual("part_3001", model.bricks[0].itemId);
         }
     }
 }

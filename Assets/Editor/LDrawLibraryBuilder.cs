@@ -13,7 +13,8 @@ using UnityEngine;
 /// Builds the game's LDraw library (StreamingAssets/LDraw) from an unpacked library.ldraw.org complete.zip: the
 /// catalogue (catalog.json: every part but subparts, primitives, aliases, moved and obsolete ones, printed parts,
 /// stickers, minifigs and other figures (but the minifig tools of KeptParts), sheets of fabric, cardboard or plastic, and other systems: Duplo, Quatro, Primo, Modulex, Znap, Scala, Homemaker, Belville, Fabuland, Clikits, Constraction), the files they use (subparts
-/// and primitives, low resolution where LDraw has them) in library.zip, in lowercase, and LDraw's license files.
+/// and primitives, low resolution where LDraw has them) in library.zip, in lowercase, and LDraw's license files; and
+/// the part numbers that are another part now (aliases.txt, see WriteAliases).
 /// Run again with a newer library to update it.
 /// </summary>
 public static class LDrawLibraryBuilder
@@ -81,9 +82,69 @@ public static class LDrawLibraryBuilder
             }
         }
         File.WriteAllText(Path.Combine(target, LDrawLibrary.CatalogFile), JsonConvert.SerializeObject(catalog, Formatting.Indented));
+        int aliases = WriteAliases(source);
         LDrawLibrary.Reload();
         AssetDatabase.Refresh();
-        return "LDraw library: " + catalog.Count + " parts in the catalogue, " + copied.Count + " files in " + LDrawLibrary.ZipFile;
+        return "LDraw library: " + catalog.Count + " parts in the catalogue, " + copied.Count + " files in " + LDrawLibrary.ZipFile
+            + ", " + aliases + " aliases and moved parts in " + LDrawLibrary.AliasesFile;
+    }
+
+    [MenuItem("Brickcraft/LDraw/Build aliases from complete.zip folder...")]
+    public static void BuildAliasesFromMenu() {
+        string folder = EditorUtility.OpenFolderPanel("The unpacked LDraw library (the folder with parts and p)", "", "");
+        if (!string.IsNullOrEmpty(folder)) {
+            int aliases = WriteAliases(folder);
+            LDrawLibrary.Reload();
+            AssetDatabase.Refresh();
+            Debug.Log("LDraw aliases: " + aliases + " in " + LDrawLibrary.AliasesFile);
+        }
+    }
+
+    // a part line putting a file where it is, unturned: "1 colour 0 0 0 1 0 0 0 1 0 0 0 1 file"
+    private static readonly Regex Unmoved = new Regex(@"^1\s+\S+\s+0\s+0\s+0\s+1\s+0\s+0\s+0\s+1\s+0\s+0\s+0\s+1\s+(\S+)\s*$");
+
+    /// <summary>
+    /// Writes aliases.txt (see LDrawLibrary.MainPart) from that library folder: each part number that's another part
+    /// now (an alias, its description starting "=", or a moved part, "~Moved to"), with that part, when its file is
+    /// only that part unturned; returns how many.
+    /// </summary>
+    public static int WriteAliases(string source) {
+        System.Text.StringBuilder text = new System.Text.StringBuilder();
+        text.Append("# LDraw part numbers that are another part now (aliases and moved parts): alias part.\n");
+        text.Append("# From the LDraw library (library.ldraw.org, CC BY 4.0, see CAreadme.txt) by LDrawLibraryBuilder.\n");
+        int count = 0;
+        List<string> files = new List<string>(Directory.GetFiles(Path.Combine(source, "parts"), "*.dat"));
+        files.Sort(System.StringComparer.OrdinalIgnoreCase);
+        foreach (string file in files) {
+            string description = null, target = null;
+            int parts = 0;
+            foreach (string raw in File.ReadLines(file)) {
+                string line = raw.Trim();
+                if (description == null && line.StartsWith("0")) {
+                    description = line.Length > 1 ? line.Substring(1).Trim() : "";
+                    if (!description.StartsWith("=") && !description.StartsWith("~Moved to")) {
+                        break;
+                    }
+                    continue;
+                }
+                if (line.StartsWith("1 ") || line.StartsWith("1\t")) {
+                    parts++;
+                    Match unmoved = Unmoved.Match(line);
+                    target = unmoved.Success ? unmoved.Groups[1].Value : null;
+                }
+            }
+            if (parts != 1 || target == null || !target.EndsWith(".dat", System.StringComparison.OrdinalIgnoreCase)) {
+                continue;
+            }
+            string alias = Path.GetFileNameWithoutExtension(file).ToLowerInvariant();
+            string main = Path.GetFileNameWithoutExtension(target.Replace('\\', '/')).ToLowerInvariant();
+            if (alias != main && Slug.IsMatch(alias)) {
+                text.Append(alias).Append(' ').Append(main).Append('\n');
+                count++;
+            }
+        }
+        File.WriteAllText(Path.Combine(LDrawLibrary.Root, LDrawLibrary.AliasesFile), text.ToString(), new System.Text.UTF8Encoding(false));
+        return count;
     }
 
     // the terrain's block: a 2x2 brick

@@ -23,6 +23,8 @@ namespace Brickcraft.Bricks.LDraw
     /// editor's LDraw menu).
     /// Its parts are brick models (see LDrawModelBuilder, BrickModels) and its catalogue's are items (ItemDatabase).
     /// Primitives are read low resolution (p/8) where there's one: LDraw's studs have no logo already.
+    /// Part numbers that are another part now (LDraw's aliases, "=", and moved parts, "~Moved to") aren't in it but in
+    /// aliases.txt, with the part they are (see MainPart): a model using one gets that part.
     ///
     /// LDraw is licensed CC BY 4.0 (see StreamingAssets/LDraw/CAreadme.txt).
     /// </summary>
@@ -33,6 +35,48 @@ namespace Brickcraft.Bricks.LDraw
         public const string ZipFile = "library.zip";
         /// <summary>The catalogue's icons ([part].png, see the editor's LDraw menu).</summary>
         public const string IconsFile = "icons.zip";
+        /// <summary>Part numbers that are another part now: "alias part" lines (see MainPart).</summary>
+        public const string AliasesFile = "aliases.txt";
+
+        // the aliases.txt read (null: not yet)
+        private static Dictionary<string, string> aliases;
+
+        /// <summary>
+        /// The part a part number is (lowercase, without ".dat"): for an alias or a moved part, the one it is now
+        /// (followed until one that isn't), else the number itself.
+        /// </summary>
+        public static string MainPart(string id) {
+            if (string.IsNullOrEmpty(id)) {
+                return id;
+            }
+            loadAliases();
+            string part = id.ToLowerInvariant();
+            for (int i = 0; i < 8 && aliases.TryGetValue(part, out string next); i++) {
+                part = next;
+            }
+            return part;
+        }
+
+        private static void loadAliases() {
+            if (aliases != null) {
+                return;
+            }
+            aliases = new Dictionary<string, string>();
+            string path = Path.Combine(Root, AliasesFile);
+            if (!File.Exists(path)) {
+                return;
+            }
+            foreach (string raw in File.ReadAllLines(path)) {
+                string line = raw.Trim();
+                if (line.Length == 0 || line.StartsWith("#")) {
+                    continue;
+                }
+                string[] f = line.Split((char[])null, System.StringSplitOptions.RemoveEmptyEntries);
+                if (f.Length >= 2) {
+                    aliases[f[0].ToLowerInvariant()] = f[1].ToLowerInvariant();
+                }
+            }
+        }
 
         private static List<LDrawPart> catalog;
         private static Dictionary<string, LDrawPart> byId;
@@ -63,6 +107,7 @@ namespace Brickcraft.Bricks.LDraw
         public static void Reload() {
             catalog = null;
             byId = null;
+            aliases = null;
             LDrawGlass.ClearCache();
             files.Clear();
             if (zip != null) {
@@ -193,6 +238,14 @@ namespace Brickcraft.Bricks.LDraw
                 if (Entries.ContainsKey(candidate)) {
                     found = candidate;
                     break;
+                }
+            }
+            // a part number that's another part now: that part's file
+            if (found == null && name.EndsWith(".dat") && name.IndexOf('/') < 0) {
+                string part = name.Substring(0, name.Length - 4);
+                string main = MainPart(part);
+                if (main != part) {
+                    found = FindFile(main + ".dat");
                 }
             }
             files[name] = found;

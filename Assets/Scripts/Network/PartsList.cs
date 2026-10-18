@@ -362,7 +362,10 @@ namespace Brickcraft.Network
             }
         }
 
-        /// <summary>The game's item of an LDraw part: its catalogue item, or one of the game's made of it (the door 7102), null if none.</summary>
+        /// <summary>
+        /// The game's item of an LDraw part: its catalogue item, or one of the game's made of it (the door 7102), or for
+        /// an alias or a moved part the one of the part it is now (see LDrawLibrary.MainPart); null if none.
+        /// </summary>
         public static Item ItemOfPart(string part) {
             if (Server.items.TryGetValue(ItemDatabase.LDrawItemPrefix + part, out Item item)) {
                 return item;
@@ -372,7 +375,9 @@ namespace Brickcraft.Network
                     return other;
                 }
             }
-            return null;
+            // a part number that's another part now (an alias, a moved part): that part's item
+            string main = LDrawLibrary.MainPart(part);
+            return main != part ? ItemOfPart(main) : null;
         }
 
         private static void add(Dictionary<string, PartsListRow> rows, string brickModel, int color, string name, string bricklinkPart) {

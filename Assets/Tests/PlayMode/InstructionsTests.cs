@@ -51,6 +51,9 @@ namespace Brickcraft.Tests
 
         [UnityTest]
         public IEnumerator AModelsInstructionsHaveACoverAPageAStepAndItsParts() {
+            if (!TestGame.CanRender) {
+                Assert.Ignore("HDRP can't render on " + SystemInfo.graphicsDeviceType + " (the CI's Linux machines)");
+            }
             // a wall two rows high: 4 red bricks 2x4, then 4 blue ones
             List<string> lines = new List<string>() { "0 wall", "0 Name: wall.ldr" };
             for (int x = 0; x < 4; x++) {

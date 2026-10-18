@@ -51,12 +51,19 @@ namespace Brickcraft.Tests
 
             Assert.AreEqual(0, model.Skipped);
             Assert.AreEqual(4, model.bricks.Count);
-            // its box from its lowest corner: (2, 0, 0) is (0, 0, 0)
-            AssertBrick(model.bricks[0], "part_3001", red, new Vector3Int(0, 0, 0), 0);
-            AssertBrick(model.bricks[1], "part_3001", blue, new Vector3Int(8, 3, 2), 1);
-            AssertBrick(model.bricks[2], "part_3020", red, new Vector3Int(0, 3, 0), 3);
-            AssertBrick(model.bricks[3], "part_3003", blue, new Vector3Int(4, 0, 8), 2);
+            // its box from its lowest corner: (2, 0, 0) is (0, 0, 0); in its building steps' order (see LDrawSteps)
+            AssertBrick(at(model, new Vector3Int(0, 0, 0)), "part_3001", red, new Vector3Int(0, 0, 0), 0);
+            AssertBrick(at(model, new Vector3Int(8, 3, 2)), "part_3001", blue, new Vector3Int(8, 3, 2), 1);
+            AssertBrick(at(model, new Vector3Int(0, 3, 0)), "part_3020", red, new Vector3Int(0, 3, 0), 3);
+            AssertBrick(at(model, new Vector3Int(4, 0, 8)), "part_3003", blue, new Vector3Int(4, 0, 8), 2);
             Assert.AreEqual(new Vector3Int(10, 6, 10), model.Size);
+        }
+
+        // the brick of the model there
+        private static ImportedBrick at(LDrawImport model, Vector3Int origin) {
+            ImportedBrick found = model.bricks.Find(b => b.origin == origin);
+            Assert.IsNotNull(found.itemId, "a brick at " + origin);
+            return found;
         }
 
         [Test]

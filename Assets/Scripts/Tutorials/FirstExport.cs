@@ -29,7 +29,7 @@ namespace Brickcraft.Tutorials
         private static bool saved;
 
         static FirstExport() {
-            PartsLister.ListSaved += folder => saved = true;
+            PartsLister.ListSaved += (model, name) => saved = true;
         }
 
         public static readonly Tutorial Tutorial = new Tutorial() {

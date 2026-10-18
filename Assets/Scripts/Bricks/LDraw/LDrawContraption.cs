@@ -76,8 +76,21 @@ namespace Brickcraft.Bricks.LDraw
         /// kept whole (by their name without extension), which are a part of that name.
         /// </summary>
         public static List<Part> Parse(string[] lines, Func<string, bool> keepWhole = null) {
+            Dictionary<string, List<string>> files = Files(lines, out string main);
+            List<Part> parts = new List<Part>();
+            if (main != null) {
+                take(files, main, Matrix4x4.identity, LDrawModelBuilder.MainColor, parts, 0, keepWhole);
+            }
+            return parts;
+        }
+
+        /// <summary>
+        /// An LDR's lines, or an MPD's by section (0 FILE, by name): its main model (the first section, "" for an LDR,
+        /// null if it has no lines) and every section's lines, trimmed.
+        /// </summary>
+        public static Dictionary<string, List<string>> Files(string[] lines, out string main) {
             Dictionary<string, List<string>> files = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-            string main = null;
+            main = null;
             List<string> current = null;
             foreach (string raw in lines) {
                 string line = raw.Trim();
@@ -105,11 +118,30 @@ namespace Brickcraft.Bricks.LDraw
                 }
                 current.Add(line);
             }
-            List<Part> parts = new List<Part>();
-            if (main != null) {
-                take(files, main, Matrix4x4.identity, LDrawModelBuilder.MainColor, parts, 0, keepWhole);
+            return files;
+        }
+
+        /// <summary>
+        /// A part line ("1 colour x y z a b c d e f g h i file"): the part where it is in its file, its colour (16 the
+        /// one it's given) and the file it names; false for other lines.
+        /// </summary>
+        public static bool ReadPart(string line, out Part part, out string file) {
+            part = default(Part);
+            file = null;
+            string[] f = line.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            if (f.Length < 15 || f[0] != "1") {
+                return false;
             }
-            return parts;
+            int color = int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int c) ? c : LDrawModelBuilder.MainColor;
+            file = string.Join(" ", f, 14, f.Length - 14);
+            part = new Part() {
+                part = Path.GetFileNameWithoutExtension(file.Replace('\\', '/')).ToLowerInvariant(), color = color,
+                position = new Vector3(num(f[2]), num(f[3]), num(f[4])),
+                row0 = new Vector3(num(f[5]), num(f[6]), num(f[7])),
+                row1 = new Vector3(num(f[8]), num(f[9]), num(f[10])),
+                row2 = new Vector3(num(f[11]), num(f[12]), num(f[13])),
+            };
+            return true;
         }
 
         private static void take(Dictionary<string, List<string>> files, string name, Matrix4x4 matrix, int color, List<Part> parts, int depth,
@@ -118,25 +150,17 @@ namespace Brickcraft.Bricks.LDraw
                 return;
             }
             foreach (string line in lines) {
-                string[] f = line.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
-                if (f.Length < 15 || f[0] != "1") {
+                if (!ReadPart(line, out Part read, out string file)) {
                     continue;
                 }
-                int code = int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int c) ? c : LDrawModelBuilder.MainColor;
-                int partColor = code == LDrawModelBuilder.MainColor ? color : code;
-                Matrix4x4 m = Matrix4x4.identity;
-                m.SetRow(0, new Vector4(num(f[5]), num(f[6]), num(f[7]), num(f[2])));
-                m.SetRow(1, new Vector4(num(f[8]), num(f[9]), num(f[10]), num(f[3])));
-                m.SetRow(2, new Vector4(num(f[11]), num(f[12]), num(f[13]), num(f[4])));
-                Matrix4x4 placed = matrix * m;
-                string file = string.Join(" ", f, 14, f.Length - 14);
-                string part = Path.GetFileNameWithoutExtension(file.Replace('\\', '/')).ToLowerInvariant();
-                if (files.ContainsKey(file) && (keepWhole == null || !keepWhole(part))) {
+                int partColor = read.color == LDrawModelBuilder.MainColor ? color : read.color;
+                Matrix4x4 placed = matrix * read.Matrix;
+                if (files.ContainsKey(file) && (keepWhole == null || !keepWhole(read.part))) {
                     take(files, file, placed, partColor, parts, depth + 1, keepWhole); // a submodel
                     continue;
                 }
                 parts.Add(new Part() {
-                    part = part, color = partColor, position = placed.GetColumn(3),
+                    part = read.part, color = partColor, position = placed.GetColumn(3),
                     row0 = placed.GetRow(0), row1 = placed.GetRow(1), row2 = placed.GetRow(2),
                 });
             }

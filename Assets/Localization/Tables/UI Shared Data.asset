@@ -1063,6 +1063,42 @@ MonoBehaviour:
     m_Key: partslister.ldraw_viewer
     m_Metadata:
       m_Items: []
+  - m_Id: 1368872062803968
+    m_Key: instructions.info
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1368872121524224
+    m_Key: instructions.parts
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239296856064
+    m_Key: partslister.make_instructions
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604800
+    m_Key: partslister.make_model
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604801
+    m_Key: instructions.making
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604802
+    m_Key: instructions.page
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604803
+    m_Key: instructions.none
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604804
+    m_Key: instructions.previous
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604805
+    m_Key: instructions.next
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

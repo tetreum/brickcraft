@@ -119,13 +119,16 @@ namespace Brickcraft
             Closed?.Invoke();
         }
 
-        /// <summary>Saves the parts list of what's in the box under that name, its files' (the server answers with it).</summary>
-        public void Save(string name) {
+        /// <summary>
+        /// Saves the parts list of what's in the box under that name, its files' (the server answers with it); with
+        /// makeModel, its creation's model too (see PartsLister.Save).
+        /// </summary>
+        public void Save(string name, bool makeModel = true) {
             if (string.IsNullOrWhiteSpace(name)) {
                 return; // a list needs a name
             }
             if (owner != null) {
-                owner.Save(Min, Max, name.Trim());
+                owner.Save(Min, Max, name.Trim(), makeModel);
             }
             Close();
         }

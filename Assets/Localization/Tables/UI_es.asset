@@ -1143,6 +1143,42 @@ MonoBehaviour:
     m_Localized: Visor 3D
     m_Metadata:
       m_Items: []
+  - m_Id: 1368872062803968
+    m_Localized: '{0} piezas, {1} pasos'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1368872121524224
+    m_Localized: Piezas
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239296856064
+    m_Localized: Instrucciones
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604800
+    m_Localized: Modelo optimizado
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604801
+    m_Localized: Creando las instrucciones... {0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604802
+    m_Localized: "P\xE1gina {0} de {1}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604803
+    m_Localized: "A\xFAn no hay instrucciones"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604804
+    m_Localized: Anterior
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604805
+    m_Localized: Siguiente
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

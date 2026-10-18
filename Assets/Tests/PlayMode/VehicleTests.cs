@@ -526,6 +526,8 @@ namespace Brickcraft.Tests
             Vector3 start = vehicle.transform.position;
             Brick aWheel = vehicle.grid.GetBrickAt(Vector3Int.zero);
             Quaternion built = aWheel.gameObject.transform.localRotation;
+            Vector3 builtPosition = aWheel.gameObject.transform.localPosition;
+            int builtObject = aWheel.gameObject.GetInstanceID();
             VehicleControls.Override = new VehicleInput() { throttle = 0.5f };
             try {
                 yield return TestGame.Wait(1.5f);
@@ -563,7 +565,14 @@ namespace Brickcraft.Tests
             }
             Assert.IsFalse(vehicle.IsSimulated, "the vehicle coming to rest: " + vehicle.Body.velocity + " " + vehicle.Body.angularVelocity + " at " + vehicle.transform.position + " floor " + top);
             yield return TestGame.Wait(1);
-            Assert.Less(Quaternion.Angle(built, aWheel.gameObject.transform.localRotation), 0.01f, "stopped, its wheels as they were built");
+            // (it failed on the CI once, a quarter turn off: what's what, to tell why)
+            Transform now = aWheel.gameObject.transform;
+            Assert.Less(Quaternion.Angle(built, now.localRotation), 0.01f, "stopped, its wheels as they were built: built " + built.eulerAngles
+                + " now " + now.localRotation.eulerAngles + ", at " + builtPosition + " now " + now.localPosition
+                + (now.gameObject.GetInstanceID() == builtObject ? ", the same object" : ", another object (spawned again)")
+                + "; " + aWheel.itemId + (aWheel.joint.HasValue ? " joint spin " + aWheel.joint.Value.spin + " on " + aWheel.attachedTo : " on the grid")
+                + "; the vehicle " + (vehicle.IsSimulated ? "simulated" : "at rest") + " at " + vehicle.transform.position + " turned " + vehicle.transform.eulerAngles
+                + ", moving " + vehicle.Velocity + ", its parts " + vehicle.grid.Count);
         }
     }
 }

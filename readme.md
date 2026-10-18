@@ -21,6 +21,12 @@ Latest version binaries are available on https://github.com/tetreum/brickcraft/r
 - Improve post processing visuals: Current visuals are clearly not toon.
 
 
+## Build your models in real life
+
+Brickcraft let's you export your creations in LDraw format and it can as well create building instructions to recreate your model in real life:
+[![Preview](https://github.com/tetreum/brickcraft/raw/main/Preview/building_instructions.png)](https://github.com/tetreum/brickcraft/raw/main/Preview/building_instructions.png)
+
+
 ## Multiplayer
 
 Servers are configured in `server.json`, next to the game (next to `Mods/`: the project's folder in the editor, next to `[Game]_Data` in builds), read every time one starts and written with the defaults the first time:
@@ -55,6 +61,8 @@ Check the [docs/](docs/) directory.
 The game ships a pruned copy of the [LDraw](https://www.ldraw.org) parts library (CC BY 4.0, see `StreamingAssets/LDraw/CAreadme.txt`): `StreamingAssets/LDraw/library.zip` holds the catalogue's parts, the subparts and primitives they use (low resolution primitives where LDraw has them; LDraw's studs have no logos), and `catalog.json` lists the catalogue: every part but minifigs and other figures, stickers, printed parts, sheets, other systems than the bricks, subparts, primitives, aliases and moved or obsolete parts. Every part of the catalogue is a brick item, `part_[part number]` (like `part_3001`, "Brick 2 x 4"), of any colour, tagged `ldraw` and its LDraw category; their icons are in `icons.zip`, loaded when shown.
 
 A model id that's an LDraw part number is read from the library when nothing else has it (see `Bricks.LDraw.LDrawModelBuilder`): its faces facing out (BFC), its own colours (a window's glass) kept and the brick's colour on the rest, in the game's units (a stud is 20 LDU), its pivot in the middle of its footprint, at its bottom. The game's own models (StreamingAssets/BrickModels, custom prefabs) come first.
+
+The parts lister can also make building instructions of what it lists: its LDraw model gets building steps (`0 STEP`, made layer by layer when a model has none, see `Bricks.LDraw.LDrawSteps`), each rendered with its new parts outlined (`Bricks.Instructions.StepRenderer`) and laid out on pages (`UI.InstructionBook`, the `Resources/UI/InstructionPage` prefab) saved as images next to the list, which the game shows too.
 
 Where parts connect besides their studs (technic axles, pins and holes, bars) is `connectors.txt` (and where window frames take their glass, `glass.txt`), built from the [LDCad Shadow Library](https://github.com/RolandMelkert/LDCadShadowLibrary) with `Brickcraft > LDraw > Build connectors from LDCad shadow library folder...` (after the library, to rebuild it).
 

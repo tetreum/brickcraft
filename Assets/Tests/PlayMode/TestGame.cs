@@ -118,6 +118,18 @@ namespace Brickcraft.Tests
             }
         }
 
+        /// <summary>
+        /// Whether a camera can render here: HDRP doesn't on OpenGL (the CI's Linux machines) or without a graphics
+        /// device, and it logs an error for each try, which fails a test. Tests of what's rendered are skipped then.
+        /// </summary>
+        public static bool CanRender {
+            get {
+                UnityEngine.Rendering.GraphicsDeviceType device = SystemInfo.graphicsDeviceType;
+                return device != UnityEngine.Rendering.GraphicsDeviceType.Null && device != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore
+                    && device != UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3;
+            }
+        }
+
         /// <summary>Waits until the player stands still (landed after spawning), so what's in front stays in front.</summary>
         public static IEnumerator StandStill() {
             Vector3 last = Brickcraft.Player.Instance.transform.position;

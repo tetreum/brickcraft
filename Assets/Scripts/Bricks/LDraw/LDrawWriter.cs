@@ -83,10 +83,16 @@ namespace Brickcraft.Bricks.LDraw
             return origin.HasValue ? pivotToShape + origin.Value : model.LDrawOrigin;
         }
 
-        // the bottom of the middle of a model's shape, from its pivot (game units): every mesh of its prefab
+        // the bottom of the middle of a model's shape, from its pivot (game units)
         private static Vector3 bottomMiddleOf(BrickModel model) {
+            Bounds? shape = ShapeOf(model);
+            return shape.HasValue ? new Vector3(shape.Value.center.x, shape.Value.min.y, shape.Value.center.z) : Vector3.zero;
+        }
+
+        /// <summary>The box around a model's shape (every mesh of its prefab), from its pivot, in game units; null if it has none.</summary>
+        public static Bounds? ShapeOf(BrickModel model) {
             if (model.prefab == null) {
-                return Vector3.zero;
+                return null;
             }
             Transform root = model.prefab.transform;
             bool any = false;
@@ -108,10 +114,13 @@ namespace Brickcraft.Bricks.LDraw
                     }
                 }
             }
-            return any ? new Vector3(bounds.center.x, bounds.min.y, bounds.center.z) : Vector3.zero;
+            return any ? bounds : (Bounds?)null;
         }
 
-        /// <summary>Writes the model (an .ldr file) named so; returns how many parts had a colour LDraw doesn't have.</summary>
+        /// <summary>
+        /// Writes the model (an .ldr file) named so, with building steps (see LDrawSteps); returns how many parts had a
+        /// colour LDraw doesn't have.
+        /// </summary>
         public static int Write(string path, string name, IList<LDrawPlacement> placements) {
             // items made of parts go once each as a submodel (an MPD: 0 FILE sections, the model first)
             List<string> submodels = new List<string>();
@@ -152,7 +161,9 @@ namespace Brickcraft.Bricks.LDraw
             foreach (string id in submodels) {
                 writeSubmodel(ldr, id);
             }
-            File.WriteAllText(path, ldr.ToString(), new UTF8Encoding(false));
+            // with building steps, for instructions (see LDrawSteps)
+            List<string> stepped = LDrawSteps.WithSteps(ldr.ToString().Split('\n'));
+            File.WriteAllText(path, string.Join("\n", stepped), new UTF8Encoding(false));
             return colorless;
         }
 

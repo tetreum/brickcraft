@@ -34,7 +34,7 @@ namespace Brickcraft.Bricks.LDraw
 
         private struct Line
         {
-            // 1: another file; 3 or 4: a face
+            // 1: another file; 2: an edge (a and b); 3 or 4: a face
             public int type;
             public int color;
             public Matrix4x4 matrix;
@@ -51,6 +51,116 @@ namespace Brickcraft.Bricks.LDraw
         /// <summary>Forgets the files read (their memory), the next build reads them again.</summary>
         public static void ClearCache() {
             parsed.Clear();
+            fileBounds.Clear();
+        }
+
+        // the box around each file's faces, in its own space (null: it has none), worked out so far
+        private static readonly Dictionary<string, Bounds?> fileBounds = new Dictionary<string, Bounds?>();
+
+        /// <summary>
+        /// A part's edges (LDraw's lines, type 2) as a mesh of lines, in the game's units and axes around where its LDraw
+        /// origin is, like Build's faces; null if the library hasn't it or it has none. Building instructions draw
+        /// them (see Instructions.StepRenderer).
+        /// </summary>
+        public static Mesh BuildEdges(string partId) {
+            string path = LDrawLibrary.FindFile(partId + ".dat");
+            if (path == null) {
+                return null;
+            }
+            List<Vector3> points = new List<Vector3>();
+            collectEdges(path, Matrix4x4.Scale(new Vector3(Scale, -Scale, Scale)), points, 0);
+            if (points.Count == 0) {
+                return null;
+            }
+            Mesh mesh = new Mesh();
+            mesh.name = partId + " edges";
+            if (points.Count > 65000) {
+                mesh.indexFormat = IndexFormat.UInt32;
+            }
+            mesh.SetVertices(points);
+            int[] indexes = new int[points.Count];
+            for (int i = 0; i < indexes.Length; i++) {
+                indexes[i] = i;
+            }
+            mesh.SetIndices(indexes, MeshTopology.Lines, 0);
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        private static void collectEdges(string path, Matrix4x4 matrix, List<Vector3> points, int depth) {
+            LDrawFile file = depth <= 32 ? parse(path) : null;
+            if (file == null) {
+                return;
+            }
+            foreach (Line line in file.lines) {
+                if (line.type == 1) {
+                    string child = LDrawLibrary.FindFile(line.file);
+                    if (child != null) {
+                        collectEdges(child, matrix * line.matrix, points, depth + 1);
+                    }
+                } else if (line.type == 2) {
+                    points.Add(matrix.MultiplyPoint3x4(line.a));
+                    points.Add(matrix.MultiplyPoint3x4(line.b));
+                }
+            }
+        }
+
+        /// <summary>
+        /// The box around a part's faces (its part number), in LDU with LDraw's axes (Y down) from its origin; null if
+        /// the library hasn't it or it has no faces. Cheaper than Build: no mesh.
+        /// </summary>
+        public static Bounds? BoundsOf(string partId) {
+            string path = LDrawLibrary.FindFile(partId + ".dat");
+            return path != null ? boundsOfFile(path, 0) : null;
+        }
+
+        private static Bounds? boundsOfFile(string path, int depth) {
+            if (fileBounds.TryGetValue(path, out Bounds? known)) {
+                return known;
+            }
+            fileBounds[path] = null; // a file using itself adds nothing
+            LDrawFile file = depth <= 32 ? parse(path) : null;
+            Bounds? bounds = null;
+            if (file != null) {
+                foreach (Line line in file.lines) {
+                    if (line.type == 1) {
+                        string child = LDrawLibrary.FindFile(line.file);
+                        Bounds? inner = child != null ? boundsOfFile(child, depth + 1) : null;
+                        if (inner.HasValue) {
+                            bounds = Encapsulate(bounds, inner.Value, line.matrix);
+                        }
+                    } else if (line.type == 3 || line.type == 4) {
+                        bounds = Encapsulate(bounds, line.a);
+                        bounds = Encapsulate(bounds, line.b);
+                        bounds = Encapsulate(bounds, line.c);
+                        if (line.type == 4) {
+                            bounds = Encapsulate(bounds, line.d);
+                        }
+                    }
+                }
+            }
+            fileBounds[path] = bounds;
+            return bounds;
+        }
+
+        /// <summary>A box (or none yet) grown to hold that point.</summary>
+        public static Bounds? Encapsulate(Bounds? bounds, Vector3 point) {
+            if (!bounds.HasValue) {
+                return new Bounds(point, Vector3.zero);
+            }
+            Bounds grown = bounds.Value;
+            grown.Encapsulate(point);
+            return grown;
+        }
+
+        /// <summary>A box (or none yet) grown to hold another, moved and turned by that matrix (its eight corners).</summary>
+        public static Bounds? Encapsulate(Bounds? bounds, Bounds other, Matrix4x4 matrix) {
+            for (int corner = 0; corner < 8; corner++) {
+                Vector3 point = other.center + Vector3.Scale(other.extents,
+                    new Vector3((corner & 1) == 0 ? -1 : 1, (corner & 2) == 0 ? -1 : 1, (corner & 4) == 0 ? -1 : 1));
+                bounds = Encapsulate(bounds, matrix.MultiplyPoint3x4(point));
+            }
+            return bounds;
         }
 
         // the faces gathered, by part ("main" or "c[colour]"), in LDraw's space
@@ -129,8 +239,8 @@ namespace Brickcraft.Bricks.LDraw
                     collect(child, childMatrix, lineColor, inverted ^ mirrored ^ line.invert, certified, parts, depth + 1);
                     continue;
                 }
-                if (lineColor == EdgeColor) {
-                    continue;
+                if (line.type == 2 || lineColor == EdgeColor) {
+                    continue; // edges aren't faces (see BuildEdges)
                 }
                 string key = lineColor == MainColor ? MainPart : "c" + lineColor;
                 if (!parts.TryGetValue(key, out Faces faces)) {
@@ -285,6 +395,11 @@ namespace Brickcraft.Bricks.LDraw
                                 file = string.Join(" ", f, 14, f.Length - 14), invert = invertNext,
                             });
                             invertNext = false;
+                            break;
+                        case "2":
+                            if (f.Length >= 8) {
+                                file.lines.Add(new Line() { type = 2, color = colorOf(f[1]), a = point(f, 2), b = point(f, 5) });
+                            }
                             break;
                         case "3":
                             if (f.Length >= 11) {

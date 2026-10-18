@@ -145,8 +145,8 @@ namespace Brickcraft.Network
 
         private const int PlacementsPerMessage = 200;
 
-        /// <summary>Client: a parts list was written (its files' folder), see TargetList.</summary>
-        public static event Action<string> ListSaved;
+        /// <summary>Client: a parts list was written (its LDraw model's path, and the name the player gave it), see TargetList.</summary>
+        public static event Action<string, string> ListSaved;
 
         [Command]
         public void CmdCancel() {
@@ -222,13 +222,14 @@ namespace Brickcraft.Network
             }
             string file = Path.GetFileNameWithoutExtension(path);
             chat(Loc.Get(Loc.Game, "partslister.saved", parts, folder));
-            ListSaved?.Invoke(folder);
+            ListSaved?.Invoke(Path.ChangeExtension(path, ".ldr"), pendingName);
             chat(Loc.Get(Loc.Game, "partslister.files", file,
                 colorless > 0 ? " " + Loc.Get(Loc.Game, "partslister.bricklink_colorless", colorless) : "",
                 ldrawColorless > 0 ? " " + Loc.Get(Loc.Game, "partslister.ldraw_colorless", ldrawColorless) : ""));
 
-            // the creation as a model of its own, a mod ready to copy (it takes a moment: hidden faces are looked for)
-            if (creation.Count > 0) {
+            // the creation as a model of its own, a mod ready to copy (it takes a moment: hidden faces are looked for), if
+            // the player wants it
+            if (creation.Count > 0 && pendingMakesModel) {
                 chat(Loc.Get(Loc.Game, "partslister.making_model"));
                 StartCoroutine(Bricks.CreationModel.Make(creation, placements, pendingName, GetComponent<PlayerNetwork>().playerName, Path.Combine(folder, "mod"), result => chat(result)));
             }
@@ -236,12 +237,17 @@ namespace Brickcraft.Network
 
         // -------- client --------
 
-        // client: the name the player gave the list it's waiting for
+        // client: the name the player gave the list it's waiting for, and whether its creation's model is made
         private string pendingName;
+        private bool pendingMakesModel;
 
-        /// <summary>Client: the view saves the box (see PartsListerView), under that name (its files').</summary>
-        public void Save(Vector3Int min, Vector3Int max, string name) {
+        /// <summary>
+        /// Client: the view saves the box (see PartsListerView), under that name (its files'); with makeModel, its
+        /// creation is made a model of its own too (see CreationModel).
+        /// </summary>
+        public void Save(Vector3Int min, Vector3Int max, string name, bool makeModel = true) {
             pendingName = name;
+            pendingMakesModel = makeModel;
             placementsReceived.Clear();
             partsReceived.Clear();
             CmdSave(min, max);

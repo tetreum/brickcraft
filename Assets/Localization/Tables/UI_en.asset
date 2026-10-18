@@ -1139,6 +1139,42 @@ MonoBehaviour:
     m_Localized: 3D viewer
     m_Metadata:
       m_Items: []
+  - m_Id: 1368872062803968
+    m_Localized: '{0} parts, {1} steps'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1368872121524224
+    m_Localized: Parts
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239296856064
+    m_Localized: Building instructions
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604800
+    m_Localized: Optimized model
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604801
+    m_Localized: Making the instructions... {0}%
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604802
+    m_Localized: Page {0} of {1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604803
+    m_Localized: There are no instructions yet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604804
+    m_Localized: Previous
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1370239334604805
+    m_Localized: Next
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

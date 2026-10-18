@@ -8,8 +8,10 @@ namespace Brickcraft.UI
     /// The parts lister's panel on the right (see PartsListerView), in the Canvas prefab: how to move around, the box's
     /// size, a − and + for each of its faces, the list's name (needed: it names its files) and the buttons that save the
     /// parts list or cancel. A folder by its heading opens the parts lists' folder, and two buttons at its bottom open
-    /// where its files go next: BrickLink's wanted list upload (the .xml) and LDraw's model viewer (the .ldr). Its
-    /// fixed texts are LocalizedText.
+    /// where its files go next: BrickLink's wanted list upload (the .xml) and LDraw's model viewer (the .ldr). Two
+    /// switches the player sets (kept for next time) decide what saving makes besides: its building instructions (see
+    /// InstructionBook, shown once made in InstructionsPanel) and its creation's optimized model (see CreationModel).
+    /// Its fixed texts are LocalizedText.
     /// </summary>
     public class PartsListerPanel : MonoBehaviour
     {
@@ -29,6 +31,13 @@ namespace Brickcraft.UI
         public Button folderButton;
         public Button brickLinkButton;
         public Button ldrawButton;
+        /// <summary>Whether saving makes the building instructions too.</summary>
+        public Toggle instructionsToggle;
+        /// <summary>Whether saving makes the creation's optimized model (an item of its own) too.</summary>
+        public Toggle modelToggle;
+
+        private const string InstructionsPref = "PartsLister.Instructions";
+        private const string ModelPref = "PartsLister.Model";
 
         private void Awake() {
             for (int face = 0; face < growButtons.Length; face++) {
@@ -40,9 +49,14 @@ namespace Brickcraft.UI
             listName.onValueChanged.AddListener(value => refresh());
             saveButton.onClick.AddListener(() => {
                 if (PartsListerView.Current != null) {
-                    PartsListerView.Current.Save(listName.text);
+                    PartsListerView.Current.Save(listName.text, modelToggle.isOn);
                 }
             });
+            instructionsToggle.SetIsOnWithoutNotify(PlayerPrefs.GetInt(InstructionsPref, 0) == 1);
+            modelToggle.SetIsOnWithoutNotify(PlayerPrefs.GetInt(ModelPref, 1) == 1);
+            instructionsToggle.onValueChanged.AddListener(on => PlayerPrefs.SetInt(InstructionsPref, on ? 1 : 0));
+            modelToggle.onValueChanged.AddListener(on => PlayerPrefs.SetInt(ModelPref, on ? 1 : 0));
+            Network.PartsLister.ListSaved += onListSaved;
             cancelButton.onClick.AddListener(() => {
                 if (PartsListerView.Current != null) {
                     PartsListerView.Current.Cancel();
@@ -51,6 +65,29 @@ namespace Brickcraft.UI
             folderButton.onClick.AddListener(openFolder);
             brickLinkButton.onClick.AddListener(() => Application.OpenURL(BrickLinkUpload));
             ldrawButton.onClick.AddListener(() => Application.OpenURL(LDrawViewer));
+        }
+
+        private void OnDestroy() {
+            Network.PartsLister.ListSaved -= onListSaved;
+        }
+
+        // a list saved: its instructions made, if wanted, then shown (how far it got meanwhile, while it's open)
+        private void onListSaved(string model, string name) {
+            if (!instructionsToggle.isOn || Menu.Instance == null) {
+                return;
+            }
+            InstructionsPanel.ShowProgress(name, 0);
+            Menu.Instance.StartCoroutine(InstructionBook.Make(model, name,
+                progress => {
+                    if (InstructionsPanel.IsOpen) {
+                        InstructionsPanel.ShowProgress(name, progress);
+                    }
+                },
+                folder => {
+                    if (folder != null) {
+                        InstructionsPanel.Open(name, folder);
+                    }
+                }));
         }
 
         public static void Show() {

@@ -581,6 +581,29 @@ namespace Brickcraft.World.CustomGenerator
             return result;
         }
 
+        /// <summary>Below this lake intensity a river or lake carves (see GenerateRiver).</summary>
+        public const double RiverIntensity = 0.2;
+        /// <summary>At or below this cave density a cave carves (see GenerateTerrain; only where the ground is solid).</summary>
+        public const double CaveDensity = -0.6;
+
+        /// <summary>The biome of a world column, without generating its chunk (see CalcBiomeType), for lookups.</summary>
+        public BIOME_TYPE BiomeAt(int worldX, int worldZ) {
+            InitGen();
+            return CalcBiomeType(worldX, worldZ);
+        }
+
+        /// <summary>Whether a river or lake carves at that world column, without generating its chunk (see CalcLakeIntensity).</summary>
+        public bool IsRiverAt(double worldX, double worldZ) {
+            InitGen();
+            return CalcLakeIntensity(worldX, worldZ) < RiverIntensity;
+        }
+
+        /// <summary>Whether a cave carves at that world block, without generating its chunk (see CalcCaveDensity).</summary>
+        public bool IsCaveAt(double worldX, double worldY, double worldZ) {
+            InitGen();
+            return CalcCaveDensity(worldX, worldY, worldZ) <= CaveDensity;
+        }
+
         private void GenerateInnerLayer(int x, int y, int z, BIOME_TYPE type, Chunk c)
         {
             c.SetType(x, y, z, BlockType.Stone, false);

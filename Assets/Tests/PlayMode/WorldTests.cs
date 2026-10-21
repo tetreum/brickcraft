@@ -333,6 +333,34 @@ namespace Brickcraft.Tests
             Assert.IsTrue(built, "a town's bricks appeared once its ground was there");
         }
 
+        [UnityTest]
+        public IEnumerator AdminsCanAskWhereTheClosestThingIs() {
+            string languageKey = "settings." + GameSettings.LanguageSetting;
+            string saved = PlayerPrefs.HasKey(languageKey) ? PlayerPrefs.GetString(languageKey) : null;
+            List<Events.ChatLineReceivedEvent> lines = new List<Events.ChatLineReceivedEvent>();
+            Action<Events.ChatLineReceivedEvent> received = line => lines.Add(line);
+            Events.EventManager.ChatLineReceived.Subscribe(received);
+            try {
+                GameSettings.Language = "en";
+                ChatCommands.Run(Mirror.NetworkServer.localConnection, "/closest desert");
+                yield return TestGame.WaitUntil(() => lines.Count > 0, 10, "the answer to /closest desert");
+                Assert.AreEqual(ChatCommands.ServerName, lines[0].sender);
+                StringAssert.Contains("Desert", lines[0].text);
+
+                lines.Clear();
+                ChatCommands.Run(Mirror.NetworkServer.localConnection, "/closest nonsense");
+                yield return TestGame.WaitUntil(() => lines.Count > 0, 10, "the usage of /closest");
+                StringAssert.Contains("/closest", lines[0].text);
+            } finally {
+                Events.EventManager.ChatLineReceived.Unsubscribe(received);
+                GameSettings.Language = saved ?? GameSettings.SystemLanguage;
+                if (saved == null) {
+                    PlayerPrefs.DeleteKey(languageKey);
+                    PlayerPrefs.Save();
+                }
+            }
+        }
+
         // moves the player (server) and keeps it from dying of the trip
         private static void Teleport(Vector3 position) {
             Combat.Health health = TestGame.Player.GetComponent<Combat.Health>();

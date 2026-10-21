@@ -103,7 +103,7 @@ MonoBehaviour:
     m_Localized: 'Unknown command. Commands: /players, /kick NICK|ID [reason], /ban
       NICK|ID [reason], /unban NICK|ID, /tp NICK|ID, /pvp [on|off], /time [day|noon|night|midnight|HH:MM],
       /daylength [minutes], /spawnnpc NPC [count], /removenpcs, /navdebug, /role
-      NICK|ID [role], /additem ITEM[@COLOR] [count] [NICK|ID]'
+      NICK|ID [role], /additem ITEM[@COLOR] [count] [NICK|ID], /closest THING'
     m_Metadata:
       m_Items: []
   - m_Id: 8270190993420
@@ -597,6 +597,47 @@ MonoBehaviour:
     m_Localized: Only whoever placed this sign (or an admin) can write on it.
     m_Metadata:
       m_Items: []
+  - m_Id: 2467677088768000
+    m_Localized: Cave
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677164265472
+    m_Localized: Desert
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677164265473
+    m_Localized: Closest {0} at {1}, {2} (about {3} {3:plural:block|blocks} away)
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479012
+  - m_Id: 2467677168459776
+    m_Localized: Lake
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459777
+    m_Localized: Mountains
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459778
+    m_Localized: No {0} within {1} blocks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459779
+    m_Localized: River
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459780
+    m_Localized: Snow
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459781
+    m_Localized: Town
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459782
+    m_Localized: 'Usage: /closest town|river|lake|cave|desert|snow|mountains'
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:
@@ -617,3 +658,4 @@ MonoBehaviour:
         - id: 8270589452327
         - id: 8270589452328
         - id: 8270589452336
+        - id: 2467677164265473

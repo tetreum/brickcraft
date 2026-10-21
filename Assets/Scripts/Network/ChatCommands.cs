@@ -31,6 +31,8 @@ namespace Brickcraft.Network
     ///   /role NICK|ID [role]        shows or changes a player's role (user, admin)
     ///   /additem ITEM[@COLOR] [count] [NICK|ID]   gives items to a player (yourself by default), online or not
     ///   /reposition                 puts the vehicle you're sitting in back on its wheels, above the ground
+    ///   /closest THING              where the closest one of what the world generated is: town, river,
+    ///                               lake, cave, desert, snow or mountains (see World.Closest)
     /// NICK|ID is a player name (any case) or, if no name matches, a player id.
     /// Only admins can use them, but /reposition.
     /// </summary>
@@ -136,6 +138,13 @@ namespace Brickcraft.Network
                         reply(sender, "cmd.usage_unban");
                     } else {
                         unban(sender, target);
+                    }
+                    break;
+                case "closest":
+                    if (target == null) {
+                        reply(sender, "cmd.usage_closest");
+                    } else {
+                        closest(sender, target);
                     }
                     break;
                 default:
@@ -497,6 +506,42 @@ namespace Brickcraft.Network
                 } else {
                     reply(conn, "cmd.gave_you", admin.record.Name, count, item);
                 }
+            }
+        }
+
+        // the closest of what the world generated (a town, a river...), from where the player is (see World.Closest)
+        private static void closest(NetworkConnectionToClient sender, string name) {
+            string kind = World.Closest.KindOf(name);
+            if (kind == null || sender.identity == null) {
+                reply(sender, "cmd.usage_closest");
+                return;
+            }
+            Vector3Int from = BrickGrid.CellToBlock(BrickGrid.WorldToCell(sender.identity.transform.position));
+            if (!World.Closest.Find(kind, from, out Vector3Int found)) {
+                reply(sender, "cmd.closest_none", word(kind), World.Closest.Range);
+                return;
+            }
+            int distance = Mathf.RoundToInt(Vector2.Distance(new Vector2(from.x, from.z), new Vector2(found.x, found.z)));
+            reply(sender, "cmd.closest_found", word(kind), found.x, found.z, distance);
+        }
+
+        // the word for one of the things /closest knows (see World.Closest.Kinds)
+        private static GameText word(string kind) {
+            switch (kind) {
+                case "river":
+                    return GameText.Of("cmd.closest_river");
+                case "lake":
+                    return GameText.Of("cmd.closest_lake");
+                case "cave":
+                    return GameText.Of("cmd.closest_cave");
+                case "desert":
+                    return GameText.Of("cmd.closest_desert");
+                case "snow":
+                    return GameText.Of("cmd.closest_snow");
+                case "mountains":
+                    return GameText.Of("cmd.closest_mountains");
+                default:
+                    return GameText.Of("cmd.closest_town");
             }
         }
 

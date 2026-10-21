@@ -103,7 +103,7 @@ MonoBehaviour:
     m_Localized: 'Comando desconocido. Comandos: /players, /kick NICK|ID [motivo],
       /ban NICK|ID [motivo], /unban NICK|ID, /tp NICK|ID, /pvp [on|off], /time [day|noon|night|midnight|HH:MM],
       /daylength [minutos], /spawnnpc NPC [cantidad], /removenpcs, /navdebug, /role
-      NICK|ID [rol], /additem OBJETO[@COLOR] [cantidad] [NICK|ID]'
+      NICK|ID [rol], /additem OBJETO[@COLOR] [cantidad] [NICK|ID], /closest THING'
     m_Metadata:
       m_Items: []
   - m_Id: 8270190993420
@@ -601,6 +601,47 @@ MonoBehaviour:
     m_Localized: "Solo quien puso este cartel (o un admin) puede escribir en \xE9l."
     m_Metadata:
       m_Items: []
+  - m_Id: 2467677088768000
+    m_Localized: Cueva
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677164265472
+    m_Localized: Desierto
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677164265473
+    m_Localized: "Lo m\xE1s cercano: {0} en {1}, {2} (a unos {3} {3:plural:bloque|bloques})"
+    m_Metadata:
+      m_Items:
+      - rid: 8627787809188479013
+  - m_Id: 2467677168459776
+    m_Localized: Lago
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459777
+    m_Localized: "Monta\xF1as"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459778
+    m_Localized: No hay {0} en {1} bloques
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459779
+    m_Localized: "R\xEDo"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459780
+    m_Localized: Nieve
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459781
+    m_Localized: Pueblo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459782
+    m_Localized: 'Uso: /closest town|river|lake|cave|desert|snow|mountains'
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:
@@ -621,3 +662,4 @@ MonoBehaviour:
         - id: 8270589452327
         - id: 8270589452328
         - id: 8270589452336
+        - id: 2467677164265473

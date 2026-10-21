@@ -284,10 +284,41 @@ namespace Brickcraft.Network
             rotation = start != null ? start.rotation : Quaternion.identity;
 
             if (start == null && WorldBehaviour.Instance != null && WorldBehaviour.Instance.IsGenerated(WorldBehaviour.ChunkAt(position))) {
-                // drop players just above the ground instead of from the sky
+                // drop players just above the ground instead of from the sky, on dry ground where there is (not in water)
+                position = dryGround(position);
                 position.y = WorldBehaviour.Instance.GetSurfaceHeight(position) + SpawnHeightAboveGround;
             }
             return position;
+        }
+
+        // how far from the spawn a dry spot is looked for, in blocks (see dryGround)
+        private const int SpawnSearchBlocks = 24;
+
+        // that position if its ground is dry, or the nearest dry ground within SpawnSearchBlocks (players shouldn't
+        // be dropped in water, where swimming makes it hard to get out: see FirstPersonController)
+        private static Vector3 dryGround(Vector3 position) {
+            WorldBehaviour world = WorldBehaviour.Instance;
+            Vector3Int at = BrickGrid.CellToBlock(BrickGrid.WorldToCell(position));
+            for (int radius = 0; radius <= SpawnSearchBlocks; radius++) {
+                for (int x = -radius; x <= radius; x++) {
+                    for (int z = -radius; z <= radius; z++) {
+                        if (Mathf.Max(Mathf.Abs(x), Mathf.Abs(z)) != radius) {
+                            continue;
+                        }
+                        int bx = at.x + x, bz = at.z + z;
+                        int surface = world.SurfaceBlockY(bx, bz);
+                        if (surface <= 0) {
+                            continue; // the world isn't there
+                        }
+                        BlockType under = world.GetBlockType(bx, surface - 1, bz);
+                        if (under == BlockType.Water || under == BlockType.Still_Water || under == BlockType.Ice) {
+                            continue; // in water: not there
+                        }
+                        return BrickGrid.CellToWorld(BrickGrid.BlockToCell(new Vector3Int(bx, surface, bz)), new Vector3(1, 0, 1));
+                    }
+                }
+            }
+            return position; // no dry ground near: the spot as it is
         }
 
         public override void OnServerAddPlayer(NetworkConnectionToClient conn) {

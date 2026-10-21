@@ -402,6 +402,26 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator PlayersDoNotSpawnInWater() {
+            yield return TestGame.StandStill();
+            World.WorldBehaviour world = World.WorldBehaviour.Instance;
+            BrickcraftNetworkManager manager = BrickcraftNetworkManager.Instance;
+            BlockType water = (BlockType)BlockDatabase.IdOf("still_water");
+
+            Vector3Int spawn = BrickGrid.CellToBlock(BrickGrid.WorldToCell(FloatingOrigin.ToLocal(manager.defaultSpawnPosition)));
+            int surface = world.SurfaceBlockY(spawn.x, spawn.z);
+            Assert.Greater(surface, 0, "the spawn's ground");
+            // the spawn's column is water: the player must not appear there
+            Assert.IsTrue(WorldNetwork.ServerSetBlock(new Vector3Int(spawn.x, surface - 1, spawn.z), water, Placer.Now(0)));
+            yield return null;
+
+            Vector3 at = manager.ServerSpawnPosition(out Quaternion rotation);
+            Vector3Int block = BrickGrid.CellToBlock(BrickGrid.WorldToCell(at));
+            int ground = world.SurfaceBlockY(block.x, block.z);
+            Assert.AreNotEqual(water, world.GetBlockType(block.x, ground - 1, block.z), "not spawned over water");
+        }
+
+        [UnityTest]
         public IEnumerator AdminsCanTeleportToCoordinates() {
             yield return TestGame.StandStill();
             Vector3Int block = TestGame.PlayerBlock + new Vector3Int(64, 0, 64);

@@ -217,8 +217,7 @@ namespace Brickcraft
             return true;
         }
 
-        // the top of what's right ahead (its feet over it), if it's a bank it can climb onto: higher than a step, within
-        // reach, flat, with room on it for the player
+        // the top of what's right ahead (its feet over it), if it's a bank it can climb onto: within reach, flat, with room on it
         private bool bankAhead(float feet, out float top)
         {
             top = 0;
@@ -229,8 +228,8 @@ namespace Brickcraft
                 return false; // in what's ahead: too high
             if (!Physics.Raycast(from, Vector3.down, out RaycastHit hit, m_ClimbReach, ~0, QueryTriggerInteraction.Ignore))
                 return false;
-            if (hit.normal.y < 0.7f || hit.point.y <= feet + m_StepHeight)
-                return false; // a slope, or low enough to walk up
+            if (hit.normal.y < 0.7f)
+                return false; // a slope
             top = hit.point.y;
             Vector3 bottom = new Vector3(ahead.x, top + radius + 0.05f, ahead.z);
             Vector3 head = bottom + Vector3.up*Mathf.Max(0, m_CharacterController.height - radius*2);

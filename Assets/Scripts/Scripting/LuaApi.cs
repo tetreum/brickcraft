@@ -23,6 +23,7 @@ namespace Brickcraft.Scripting
     ///   world.isLoaded(position)                   whether that part of the world is loaded (changes need it)
     ///   timer.after(seconds, fn), timer.every(seconds, fn), timer.cancel(id)
     ///   ui.*                                       popups, toasts, titles and HUD panels, see LuaUi
+    ///   chat.say(text), chat.event(text), chat.command(name, usage, fn)   everyone's chat, and commands of the mod's own
     /// Bricks (BrickHandle) also have move(position) and remove(), players (PlayerHandle) give(item, count, color).
     /// Positions are grid cells: {x =, y =, z =} tables or what bricks and players return.
     /// Modders' documentation is in docs/lua (a page per section): keep it in step with this.
@@ -47,6 +48,36 @@ namespace Brickcraft.Scripting
         private static readonly List<Timer> timers = new List<Timer>();
         private static int nextTimerId = 1;
 
+        // a command a mod added (see chat.command): its name, how it's listed, and what it runs
+        private class Command
+        {
+            public string name;
+            public string usage;
+            public Script script;
+            public DynValue function;
+        }
+
+        private static readonly Dictionary<string, Command> commands = new Dictionary<string, Command>();
+
+        /// <summary>Runs the mod command with that name with that text, if a mod added one; false if none did (see Network.ChatCommands).</summary>
+        public static bool TryCommand(string name, NetworkConnectionToClient sender, string args) {
+            Command command;
+            if (!commands.TryGetValue(name, out command)) {
+                return false;
+            }
+            ModScripts.CallFunction(command.script, command.function, "command /" + name, new object[] { PlayerHandle.For(sender), args ?? "" });
+            return true;
+        }
+
+        /// <summary>How the mods' commands are listed, for the unknown-command reply (see Network.ChatCommands).</summary>
+        public static List<string> CommandUsages() {
+            List<string> usages = new List<string>();
+            foreach (Command command in commands.Values) {
+                usages.Add(command.usage);
+            }
+            return usages;
+        }
+
         public static void Install(Script script, ModInfo mod) {
             script.Globals["log"] = DynValue.NewCallback((context, args) => {
                 string[] parts = new string[args.Count];
@@ -66,6 +97,7 @@ namespace Brickcraft.Scripting
         /// <summary>Forgets the timers, when the scripts stop.</summary>
         public static void Reset() {
             timers.Clear();
+            commands.Clear();
             LuaUi.Reset();
         }
 
@@ -328,7 +360,31 @@ namespace Brickcraft.Scripting
                 }
                 return DynValue.Nil;
             });
+            chat["command"] = DynValue.NewCallback((context, args) => addCommand(script, args));
             return chat;
+        }
+
+        // chat.command(name, usage, fn): a mod's own chat command, run on the server with the player and the
+        // text after it (see Network.ChatCommands). usage is how it's listed (/name if none is given).
+        private static DynValue addCommand(Script script, CallbackArguments args) {
+            string name = args.AsType(0, "command", DataType.String).String.Trim().ToLowerInvariant();
+            DynValue function;
+            string usage;
+            if (args.Count > 1 && args[1].Type == DataType.String) {
+                usage = args[1].String;
+                function = args.AsType(2, "command", DataType.Function);
+            } else {
+                usage = "/" + name;
+                function = args.AsType(1, "command", DataType.Function);
+            }
+            if (name.Length == 0 || name.IndexOf(' ') >= 0) {
+                throw new ScriptRuntimeException("A command's name can't be empty or have spaces");
+            }
+            if (ChatCommands.Knows(name) || commands.ContainsKey(name)) {
+                throw new ScriptRuntimeException("There's already a command /" + name);
+            }
+            commands[name] = new Command() { name = name, usage = usage, script = script, function = function };
+            return DynValue.Nil;
         }
 
         private static Table createTimer(Script script, ModInfo mod) {

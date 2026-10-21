@@ -34,7 +34,7 @@ namespace Brickcraft.Network
     ///   /closest THING              where the closest one of what the world generated is: town, river,
     ///                               lake, cave, desert, snow or mountains (see World.Closest)
     /// NICK|ID is a player name (any case) or, if no name matches, a player id.
-    /// Only admins can use them, but /reposition.
+    /// Only admins can use them, but /reposition; mods add their own (see Scripting.LuaApi).
     /// </summary>
     public static class ChatCommands
     {
@@ -42,6 +42,110 @@ namespace Brickcraft.Network
 
         private const float DisconnectDelay = 0.5f;
         private const int MaxAddedItems = 10000;
+
+        /// <summary>What a command does, with the text after it split in two (its target and the rest).</summary>
+        public delegate void Command(NetworkConnectionToClient sender, ConnectedPlayer admin, string target, string reason);
+
+        // a command: its word, how it's shown in the list, whether it's admins only, and what it does
+        private class Entry
+        {
+            public string name;
+            public string usage;
+            public bool admin;
+            public Command run;
+        }
+
+        // the game's commands, in the order they're listed; mods add theirs (see Scripting.LuaApi)
+        private static readonly List<Entry> game = new List<Entry>();
+        private static readonly Dictionary<string, Entry> byName = new Dictionary<string, Entry>();
+
+        static ChatCommands() {
+            Register("players", "/players", true, (sender, admin, target, reason) => listPlayers(sender));
+            Register("kick", "/kick NICK|ID [reason]", true, (sender, admin, target, reason) => {
+                if (target == null) {
+                    reply(sender, "cmd.usage_kick");
+                } else {
+                    kick(sender, admin, target, reason);
+                }
+            });
+            Register("ban", "/ban NICK|ID [reason]", true, (sender, admin, target, reason) => {
+                if (target == null) {
+                    reply(sender, "cmd.usage_ban");
+                } else {
+                    ban(sender, admin, target, reason);
+                }
+            });
+            Register("unban", "/unban NICK|ID", true, (sender, admin, target, reason) => {
+                if (target == null) {
+                    reply(sender, "cmd.usage_unban");
+                } else {
+                    unban(sender, target);
+                }
+            });
+            Register("role", "/role NICK|ID [role]", true, (sender, admin, target, reason) => {
+                if (target == null) {
+                    reply(sender, "cmd.usage_role", PlayerRoles.User, PlayerRoles.Admin);
+                } else {
+                    role(sender, admin, target, reason);
+                }
+            });
+            Register("additem", "/additem ITEM[@COLOR] [count] [NICK|ID]", true, (sender, admin, target, reason) => {
+                if (target == null) {
+                    reply(sender, "cmd.usage_additem");
+                } else {
+                    addItem(sender, admin, target, reason);
+                }
+            });
+            Register("tp", "/tp NICK|ID", true, (sender, admin, target, reason) => {
+                if (target == null) {
+                    reply(sender, "cmd.usage_tp");
+                } else {
+                    teleport(sender, admin, target);
+                }
+            });
+            Register("pvp", "/pvp [on|off]", true, (sender, admin, target, reason) => pvp(sender, admin, target));
+            Register("npcs", "/npcs [on|off]", true, (sender, admin, target, reason) => npcs(sender, admin, target));
+            Register("time", "/time [day|noon|night|midnight|HH:MM]", true, (sender, admin, target, reason) => time(sender, admin, target));
+            Register("daylength", "/daylength [minutes]", true, (sender, admin, target, reason) => dayLength(sender, admin, target));
+            Register("spawnnpc", "/spawnnpc NPC [count]", true, (sender, admin, target, reason) => {
+                if (target == null) {
+                    reply(sender, "cmd.usage_spawnnpc");
+                } else {
+                    spawnNpc(sender, target, reason);
+                }
+            });
+            Register("removenpcs", "/removenpcs", true, (sender, admin, target, reason) =>
+                reply(sender, "cmd.removed_npcs", Npcs.NpcSystem.ServerRemoveAll()));
+            Register("navdebug", "/navdebug", true, (sender, admin, target, reason) => {
+                Npcs.Navigation.NavGrid.DebugDraw = !Npcs.Navigation.NavGrid.DebugDraw;
+                reply(sender, Npcs.Navigation.NavGrid.DebugDraw ? "cmd.navdebug_on" : "cmd.navdebug_off");
+            });
+            Register("closest", "/closest town|river|lake|cave|desert|snow|mountains", true, (sender, admin, target, reason) => {
+                if (target == null) {
+                    reply(sender, "cmd.usage_closest");
+                } else {
+                    closest(sender, target);
+                }
+            });
+            // anyone in a vehicle
+            Register("reposition", "/reposition", false, (sender, admin, target, reason) => {
+                PlayerNetwork player = sender.identity != null ? sender.identity.GetComponent<PlayerNetwork>() : null;
+                if (player == null || !Vehicles.VehicleSystem.ServerReposition(player)) {
+                    reply(sender, "vehicle.reposition_not_seated");
+                }
+            });
+        }
+
+        private static void Register(string name, string usage, bool admin, Command run) {
+            Entry entry = new Entry() { name = name, usage = usage, admin = admin, run = run };
+            game.Add(entry);
+            byName[name] = entry;
+        }
+
+        /// <summary>Whether the game has a command by that name, so a mod doesn't take it (see Scripting.LuaApi).</summary>
+        public static bool Knows(string name) {
+            return byName.ContainsKey(name);
+        }
 
         public static bool IsCommand(string text) {
             return text.StartsWith("/");
@@ -54,103 +158,36 @@ namespace Brickcraft.Network
             string target = parts.Length > 1 ? parts[1] : null;
             string reason = parts.Length > 2 ? parts[2].Trim() : null;
 
-            // anyone in a vehicle
-            if (command == "reposition") {
-                PlayerNetwork player = sender.identity != null ? sender.identity.GetComponent<PlayerNetwork>() : null;
-                if (player == null || !Vehicles.VehicleSystem.ServerReposition(player)) {
-                    reply(sender, "vehicle.reposition_not_seated");
+            Entry entry;
+            if (!byName.TryGetValue(command, out entry)) {
+                // a mod's command, or nothing anybody knows (see Scripting.LuaApi)
+                if (!Scripting.LuaApi.TryCommand(command, sender, argsOf(text))) {
+                    reply(sender, "cmd.unknown", commandList());
                 }
                 return;
             }
-
-            if (admin == null || !admin.record.IsAdmin) {
+            if (entry.admin && (admin == null || !admin.record.IsAdmin)) {
                 reply(sender, "cmd.only_admins");
                 return;
             }
+            entry.run(sender, admin, target, reason);
+        }
 
-            switch (command) {
-                case "players":
-                    listPlayers(sender);
-                    break;
-                case "kick":
-                    if (target == null) {
-                        reply(sender, "cmd.usage_kick");
-                    } else {
-                        kick(sender, admin, target, reason);
-                    }
-                    break;
-                case "ban":
-                    if (target == null) {
-                        reply(sender, "cmd.usage_ban");
-                    } else {
-                        ban(sender, admin, target, reason);
-                    }
-                    break;
-                case "role":
-                    if (target == null) {
-                        reply(sender, "cmd.usage_role", PlayerRoles.User, PlayerRoles.Admin);
-                    } else {
-                        role(sender, admin, target, reason);
-                    }
-                    break;
-                case "additem":
-                    if (target == null) {
-                        reply(sender, "cmd.usage_additem");
-                    } else {
-                        addItem(sender, admin, target, reason);
-                    }
-                    break;
-                case "tp":
-                    if (target == null) {
-                        reply(sender, "cmd.usage_tp");
-                    } else {
-                        teleport(sender, admin, target);
-                    }
-                    break;
-                case "pvp":
-                    pvp(sender, admin, target);
-                    break;
-                case "npcs":
-                    npcs(sender, admin, target);
-                    break;
-                case "time":
-                    time(sender, admin, target);
-                    break;
-                case "daylength":
-                    dayLength(sender, admin, target);
-                    break;
-                case "spawnnpc":
-                    if (target == null) {
-                        reply(sender, "cmd.usage_spawnnpc");
-                    } else {
-                        spawnNpc(sender, target, reason);
-                    }
-                    break;
-                case "removenpcs":
-                    reply(sender, "cmd.removed_npcs", Npcs.NpcSystem.ServerRemoveAll());
-                    break;
-                case "navdebug":
-                    Npcs.Navigation.NavGrid.DebugDraw = !Npcs.Navigation.NavGrid.DebugDraw;
-                    reply(sender, Npcs.Navigation.NavGrid.DebugDraw ? "cmd.navdebug_on" : "cmd.navdebug_off");
-                    break;
-                case "unban":
-                    if (target == null) {
-                        reply(sender, "cmd.usage_unban");
-                    } else {
-                        unban(sender, target);
-                    }
-                    break;
-                case "closest":
-                    if (target == null) {
-                        reply(sender, "cmd.usage_closest");
-                    } else {
-                        closest(sender, target);
-                    }
-                    break;
-                default:
-                    reply(sender, "cmd.unknown");
-                    break;
+        // what follows the command word: the arguments a mod's command gets (see Scripting.LuaApi)
+        private static string argsOf(string text) {
+            int space = text.IndexOf(' ');
+            return space >= 0 ? text.Substring(space + 1).Trim() : "";
+        }
+
+        // every command there is, the game's and the mods', for the unknown-command reply
+        private static string commandList() {
+            List<string> usages = new List<string>();
+            foreach (Entry entry in game) {
+                usages.Add(entry.usage);
             }
+            usages.AddRange(Scripting.LuaApi.CommandUsages());
+            usages.Sort(StringComparer.OrdinalIgnoreCase);
+            return string.Join(", ", usages);
         }
 
         private static void listPlayers(NetworkConnectionToClient sender) {

@@ -100,10 +100,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8270190993419
-    m_Localized: 'Comando desconocido. Comandos: /players, /kick NICK|ID [motivo],
-      /ban NICK|ID [motivo], /unban NICK|ID, /tp NICK|ID, /pvp [on|off], /time [day|noon|night|midnight|HH:MM],
-      /daylength [minutos], /spawnnpc NPC [cantidad], /removenpcs, /navdebug, /role
-      NICK|ID [rol], /additem OBJETO[@COLOR] [cantidad] [NICK|ID], /closest THING'
+    m_Localized: 'Comando desconocido. Comandos: {0}'
     m_Metadata:
       m_Items: []
   - m_Id: 8270190993420

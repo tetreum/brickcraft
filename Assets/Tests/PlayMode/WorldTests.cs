@@ -1,8 +1,12 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using Brickcraft.Bricks;
+using Brickcraft.Bricks.LDraw;
 using Brickcraft.Network;
 using Brickcraft.Npcs;
 using Brickcraft.World;
+using Brickcraft.World.Towns;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -288,6 +292,69 @@ namespace Brickcraft.Tests
 
             Assert.IsTrue(WorldNetwork.ServerSetBlock(source, BlockType.Air, null));
             yield return TestGame.WaitUntil(() => BlockDatabase.Get(TestGame.Block(source + new Vector3Int(0, 0, 7))).fluid == null, 10, "the water drying up");
+        }
+
+        [UnityTest]
+        public IEnumerator TownsAreBuiltWhereTheSeedPutsThem() {
+            long seed = WorldNetwork.Seed;
+            List<LDrawImport> buildings = TownBuildings.All;
+            Assume.That(buildings.Count, Is.GreaterThan(0), "buildings to build with");
+
+            Vector2Int spawnChunk = WorldBehaviour.ChunkAt(TestGame.Player.transform.position);
+            int spawnRegionX = BrickGrid.FloorDiv(spawnChunk.x, TownPlanner.SpanChunks);
+            int spawnRegionZ = BrickGrid.FloorDiv(spawnChunk.y, TownPlanner.SpanChunks);
+
+            bool built = false;
+            int towns = 0;
+
+            for (int dx = -1; dx <= 1 && !built; dx++) {
+                for (int dz = -1; dz <= 1 && !built; dz++) {
+                    int regionX = spawnRegionX + dx, regionZ = spawnRegionZ + dz;
+                    TownPlan plan = TownPlanner.Plan(seed, buildings, regionX, regionZ);
+                    if (plan == null) {
+                        continue;
+                    }
+                    towns++;
+
+                    // go to the town's middle: the server generates what it stands on
+                    int centerChunkX = regionX * TownPlanner.SpanChunks + TownPlanner.SpanChunks / 2;
+                    int centerChunkZ = regionZ * TownPlanner.SpanChunks + TownPlanner.SpanChunks / 2;
+                    Vector3Int block = new Vector3Int(centerChunkX * 16 + 8, 100, centerChunkZ * 16 + 8);
+                    Teleport(BrickGrid.CellToWorld(BrickGrid.BlockToCell(block)));
+
+                    List<Vector2Int> needed = TownPlacer.NeededChunks(plan, buildings);
+                    yield return WaitFor(() => allGenerated(needed), 30);
+                    TownPlacer.PlaceRegion(regionX, regionZ);
+                    built = WorldNetwork.ServerHasGeneratedBricks(needed);
+                }
+            }
+
+            Assume.That(towns, Is.GreaterThan(0), "a town near the spawn");
+            Assert.IsTrue(built, "a town's bricks appeared once its ground was there");
+        }
+
+        // moves the player (server) and keeps it from dying of the trip
+        private static void Teleport(Vector3 position) {
+            Combat.Health health = TestGame.Player.GetComponent<Combat.Health>();
+            health.health = health.maxHealth;
+            TestGame.Player.GetComponent<PlayerNetwork>().ServerTeleport(position);
+        }
+
+        private static bool allGenerated(List<Vector2Int> chunks) {
+            foreach (Vector2Int coords in chunks) {
+                if (!WorldBehaviour.Instance.IsGenerated(coords)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // waits for the condition, without failing (the caller decides what a timeout means)
+        private static IEnumerator WaitFor(Func<bool> condition, float seconds) {
+            float end = Time.realtimeSinceStartup + seconds;
+            while (!condition() && Time.realtimeSinceStartup < end) {
+                yield return null;
+            }
         }
     }
 }

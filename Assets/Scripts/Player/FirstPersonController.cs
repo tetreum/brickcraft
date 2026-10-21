@@ -180,18 +180,19 @@ namespace Brickcraft
             }
         }
 
-        // swimming into a bank whose top is within reach, with room on it: it climbs up the bank to its top, then onto it.
-        // Letting go of forward stops it (it falls back in). False when it isn't climbing.
+        // in water against a bank whose top is within reach, with room on it: it climbs up the bank to its top, then onto it,
+// holding forward or jump (letting go stops it, it falls back in). False when it isn't climbing.
         private bool climbOut()
         {
             float feet = m_CharacterController.bounds.min.y;
+            bool holding = m_Input.y > 0 || GameInput.GetButton(GameInput.Jump);
             if (float.IsNaN(m_ClimbTo))
             {
-                if (!IsSwimming || m_Input.y <= 0 || !bankAhead(feet, out float top))
+                if (Depth == WaterDepth.None || !holding || !bankAhead(feet, out float top))
                     return false;
                 m_ClimbTo = top;
             }
-            if (m_Input.y <= 0)
+            if (!holding)
             {
                 m_ClimbTo = float.NaN;
                 return false;
@@ -217,7 +218,7 @@ namespace Brickcraft
             return true;
         }
 
-        // the top of what's right ahead (its feet over it), if it's a bank it can climb onto: within reach, flat, with room on it
+        // the top of what's right ahead (its feet over it), if it's a bank it can climb onto: higher than its feet, within reach, flat, with room on it
         private bool bankAhead(float feet, out float top)
         {
             top = 0;
@@ -228,8 +229,8 @@ namespace Brickcraft
                 return false; // in what's ahead: too high
             if (!Physics.Raycast(from, Vector3.down, out RaycastHit hit, m_ClimbReach, ~0, QueryTriggerInteraction.Ignore))
                 return false;
-            if (hit.normal.y < 0.7f)
-                return false; // a slope
+            if (hit.normal.y < 0.7f || hit.point.y <= feet + 0.02f)
+                return false; // a slope, or not a climb (the ground it stands on)
             top = hit.point.y;
             Vector3 bottom = new Vector3(ahead.x, top + radius + 0.05f, ahead.z);
             Vector3 head = bottom + Vector3.up*Mathf.Max(0, m_CharacterController.height - radius*2);

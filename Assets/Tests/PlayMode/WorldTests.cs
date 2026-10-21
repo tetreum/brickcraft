@@ -334,6 +334,18 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator AdminsCanTeleportToCoordinates() {
+            yield return TestGame.StandStill();
+            Vector3Int block = TestGame.PlayerBlock + new Vector3Int(64, 0, 64);
+
+            ChatCommands.Run(Mirror.NetworkServer.localConnection, "/tp " + block.x + " " + block.y + " " + block.z);
+            yield return TestGame.WaitUntil(() => {
+                Vector3Int at = BrickGrid.CellToBlock(BrickGrid.WorldToCell(TestGame.Player.transform.position));
+                return Mathf.Abs(at.x - block.x) <= 1 && Mathf.Abs(at.z - block.z) <= 1;
+            }, 10, "the player at those coordinates");
+        }
+
+        [UnityTest]
         public IEnumerator AdminsCanAskWhereTheClosestThingIs() {
             string languageKey = "settings." + GameSettings.LanguageSetting;
             string saved = PlayerPrefs.HasKey(languageKey) ? PlayerPrefs.GetString(languageKey) : null;

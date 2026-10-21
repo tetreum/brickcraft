@@ -80,7 +80,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8270190993414
-    m_Localized: 'Uso: /tp NICK|ID'
+    m_Localized: 'Uso: /tp NICK|ID | X Y Z'
     m_Metadata:
       m_Items: []
   - m_Id: 8270190993415
@@ -637,6 +637,10 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 2467677168459782
     m_Localized: 'Uso: /closest town|river|lake|cave|desert|snow|mountains'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2500399718981632
+    m_Localized: Teletransportado a {0}, {1}, {2}
     m_Metadata:
       m_Items: []
   references:

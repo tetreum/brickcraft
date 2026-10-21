@@ -20,7 +20,7 @@ namespace Brickcraft.Network
     ///   /kick NICK|ID [reason]      disconnects an online player
     ///   /ban NICK|ID [reason]       bans a player (and its machine), online or not
     ///   /unban NICK|ID
-    ///   /tp NICK|ID                 takes you to an online player
+    ///   /tp NICK|ID | X Y Z         takes you to an online player, or to those block coordinates
     ///   /pvp [on|off]               whether players can hurt each other, saved with the world
     ///   /npcs [on|off]              whether NPCs appear by themselves (off takes them away, but pets), saved with the world
     ///   /time [day|noon|night|midnight|HH:MM]   shows the game's time, or moves it on to that hour
@@ -96,11 +96,11 @@ namespace Brickcraft.Network
                     addItem(sender, admin, target, reason);
                 }
             });
-            Register("tp", "/tp NICK|ID", true, (sender, admin, target, reason) => {
+            Register("tp", "/tp NICK|ID | X Y Z", true, (sender, admin, target, reason) => {
                 if (target == null) {
                     reply(sender, "cmd.usage_tp");
                 } else {
-                    teleport(sender, admin, target);
+                    teleport(sender, admin, target, reason);
                 }
             });
             Register("pvp", "/pvp [on|off]", true, (sender, admin, target, reason) => pvp(sender, admin, target));
@@ -387,7 +387,21 @@ namespace Brickcraft.Network
             GameTexts.SendToAll("cmd.day_length_set", admin.record.Name, Math.Round((double)minutes, 1));
         }
 
-        private static void teleport(NetworkConnectionToClient sender, ConnectedPlayer admin, string target) {
+        private static void teleport(NetworkConnectionToClient sender, ConnectedPlayer admin, string target, string reason) {
+            if (coordinates(target, reason, out Vector3Int block)) {
+                if (sender.identity == null) {
+                    reply(sender, "cmd.still_joining");
+                    return;
+                }
+                // the middle of the block's top, so the player stands on it
+                Vector3 position = Bricks.BrickGrid.CellToWorld(Bricks.BrickGrid.BlockToCell(block),
+                    new Vector3(Bricks.BrickGrid.StudsPerBlock / 2f, Bricks.BrickGrid.PlatesPerBlock, Bricks.BrickGrid.StudsPerBlock / 2f));
+                sender.identity.GetComponent<PlayerNetwork>().ServerTeleport(position);
+                Debug.Log(admin.record.Name + " teleported to " + block.x + ", " + block.y + ", " + block.z);
+                reply(sender, "cmd.teleported_to", block.x, block.y, block.z);
+                return;
+            }
+
             NetworkConnectionToClient conn = findOnline(target, out ConnectedPlayer player);
 
             if (conn == null) {
@@ -405,6 +419,20 @@ namespace Brickcraft.Network
             sender.identity.GetComponent<PlayerNetwork>().ServerTeleport(conn.identity.transform.position);
             Debug.Log(admin.record.Name + " teleported to " + player.record.Name);
             reply(sender, "cmd.teleported", player.record.Name);
+        }
+
+        // whether the target and what follows it are block coordinates (X Y Z), see /tp
+        private static bool coordinates(string target, string reason, out Vector3Int block) {
+            block = default(Vector3Int);
+            string[] parts = ((target ?? "") + " " + (reason ?? "")).Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 3) {
+                return false;
+            }
+            if (!int.TryParse(parts[0], out int x) || !int.TryParse(parts[1], out int y) || !int.TryParse(parts[2], out int z)) {
+                return false;
+            }
+            block = new Vector3Int(x, Mathf.Clamp(y, 0, World.Chunk.NumSlices * World.Chunk.SliceHeight - 1), z);
+            return true;
         }
 
         private static void role(NetworkConnectionToClient sender, ConnectedPlayer admin, string target, string newRole) {

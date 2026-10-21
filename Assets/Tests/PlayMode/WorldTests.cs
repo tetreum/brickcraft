@@ -334,6 +334,45 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator TheNewWorldFormStacksWithoutGaps() {
+            UI.WorldsPanel.Open();
+            yield return null;
+            UI.WorldsPanel worlds = UnityEngine.Object.FindObjectOfType<UI.WorldsPanel>();
+            Assume.That(worlds, Is.Not.Null, "the worlds panel");
+            worlds.newWorldButton.onClick.Invoke();
+            Canvas.ForceUpdateCanvases();
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+
+            Transform create = worlds.transform.Find("Window/Create");
+            Transform rows = create.Find("Rows");
+            Transform title = create.Find("ModsTitle");
+            Transform mods = create.Find("Mods");
+            Transform createWorld = create.Find("CreateWorld");
+
+            // the mods title is right under the last option, the list under the title, above the buttons and in order
+            Assert.Greater(bottomOf(rows), topOf(title), "the options above the mods title, not under it");
+            Assert.Greater(bottomOf(title), topOf(mods), "the title above the list");
+            Assert.Greater(bottomOf(mods), topOf(createWorld), "the list above the buttons");
+            Assert.Greater(topOf(rows), topOf(title), "the rows above the mods");
+            Assert.Less(bottomOf(rows) - topOf(title), topOf(rows) - bottomOf(rows) + 1f, "the title right under the options");
+
+            Menu.Instance.hidePanel(UI.WorldsPanel.PanelName);
+        }
+
+        private static float topOf(Transform t) {
+            Vector3[] corners = new Vector3[4];
+            (t as RectTransform).GetWorldCorners(corners);
+            return corners[2].y;
+        }
+
+        private static float bottomOf(Transform t) {
+            Vector3[] corners = new Vector3[4];
+            (t as RectTransform).GetWorldCorners(corners);
+            return corners[0].y;
+        }
+
+        [UnityTest]
         public IEnumerator AdminsCanTeleportToCoordinates() {
             yield return TestGame.StandStill();
             Vector3Int block = TestGame.PlayerBlock + new Vector3Int(64, 0, 64);

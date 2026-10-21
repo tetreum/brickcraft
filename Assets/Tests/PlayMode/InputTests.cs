@@ -237,6 +237,24 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator TheChatDarkensWhileTyping() {
+            UI.ChatPanel chat = Object.FindObjectOfType<UI.ChatPanel>();
+            Assume.That(chat, Is.Not.Null, "the chat panel");
+            Assume.That(chat.background, Is.Not.Null, "the chat's backdrop");
+            Assert.AreEqual(0f, chat.background.color.a, 0.001f, "clear while not typing");
+
+            input.PressAndRelease(keyboard.enterKey);
+            yield return frames(2);
+            Assert.IsTrue(GameInput.IsTyping, "the chat is open");
+            Assert.Greater(chat.background.color.a, 0.3f, "darker while typing");
+
+            input.PressAndRelease(keyboard.escapeKey);
+            yield return frames(2);
+            Assert.IsFalse(GameInput.IsTyping, "the chat closed");
+            Assert.AreEqual(0f, chat.background.color.a, 0.001f, "clear again");
+        }
+
+        [UnityTest]
         public IEnumerator TheMouseTurnsThePlayer() {
             float before = player.transform.eulerAngles.y;
             input.Set(mouse.delta, new Vector2(100, 0));

@@ -361,6 +361,30 @@ namespace Brickcraft.Tests
             }
         }
 
+        [UnityTest]
+        public IEnumerator CoordinatesShowWhereThePlayerIs() {
+            UI.PlayerPanel panel = UI.PlayerPanel.Instance;
+            Assume.That(panel, Is.Not.Null, "the player panel on the canvas");
+            bool saved = GameSettings.ShowCoordinates;
+            try {
+                yield return TestGame.StandStill();
+
+                GameSettings.ShowCoordinates = true;
+                yield return null;
+                Assert.IsTrue(panel.coordinates.gameObject.activeSelf, "shown when the setting is on");
+
+                Vector3Int block = BrickGrid.CellToBlock(BrickGrid.WorldToCell(TestGame.Player.transform.position));
+                string expected = "X: " + block.x + "   Y: " + block.y + "   Z: " + block.z;
+                yield return TestGame.WaitUntil(() => panel.coordinates.text == expected, 5, "the coordinates of the player");
+
+                GameSettings.ShowCoordinates = false;
+                yield return null;
+                Assert.IsFalse(panel.coordinates.gameObject.activeSelf, "hidden when the setting is off");
+            } finally {
+                GameSettings.ShowCoordinates = saved;
+            }
+        }
+
         // moves the player (server) and keeps it from dying of the trip
         private static void Teleport(Vector3 position) {
             Combat.Health health = TestGame.Player.GetComponent<Combat.Health>();

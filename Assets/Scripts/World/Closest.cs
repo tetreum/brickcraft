@@ -1,25 +1,24 @@
-using System.Collections.Generic;
 using Brickcraft.Bricks;
-using Brickcraft.Bricks.LDraw;
 using Brickcraft.Network;
 using Brickcraft.World.CustomGenerator;
-using Brickcraft.World.Towns;
 using UnityEngine;
 
 namespace Brickcraft.World
 {
     /// <summary>
     /// Finds the closest of what the world generated, for the admins' /closest command: a town, a river or
-    /// lake, a cave, or a biome (desert, snow, mountains). The world's seed decides the towns (see
-    /// Towns.TownPlanner) and the terrain's features (see CustomChunkGenerator), so those are found without
-    /// loading the world, out to <see cref="Range"/> blocks; a cave is looked for in the chunks that are loaded.
+    /// lake, a cave, or a biome (desert, snow, mountains). A town is where its bricks stand, so it can't point
+    /// at one the terrain didn't let stand (see Towns.TownPlacer); the rest are quiet lookups of the seed's
+    /// terrain (see CustomChunkGenerator), answered with the height the world has there when it's loaded.
     /// </summary>
     public static class Closest
     {
-        /// <summary>How far out to look, in blocks (a town nearer than this is always found).</summary>
+        /// <summary>How far out to look, in blocks.</summary>
         public const int Range = 2048;
         /// <summary>Blocks a chunk is wide, see WorldBehaviour.ChunkAt.</summary>
         private const int BlocksPerChunk = 16;
+        /// <summary>The first block above the sea (see GenerateTerrain): water whose surface is higher is a river or lake.</summary>
+        private const int SeaLevel = 64;
 
         /// <summary>What can be looked for, as the command takes it.</summary>
         public static readonly string[] Kinds = { "town", "river", "lake", "cave", "desert", "snow", "mountains" };
@@ -63,7 +62,28 @@ namespace Brickcraft.World
             return findTerrain(kind, from, out found);
         }
 
-        // rivers, lakes and biomes, from the seed, without loading any chunk
+        // a town is where its bricks are: the world's own (see Network.WorldNetwork), so it's one that really stands
+        private static bool findTown(Vector3Int from, out Vector3Int found) {
+            found = default(Vector3Int);
+            long best = long.MaxValue;
+            bool any = false;
+            foreach (Brick brick in Server.bricks.Values) {
+                if (brick == null || brick.vehicle != null || WorldNetwork.ServerPlacerOf(brick).playerId != 0) {
+                    continue; // a player's, or a vehicle's
+                }
+                Vector3Int block = BrickGrid.CellToBlock(brick.placement.origin);
+                long dx = block.x - from.x, dz = block.z - from.z;
+                long distance = dx * dx + dz * dz;
+                if (distance < best) {
+                    best = distance;
+                    found = block;
+                    any = true;
+                }
+            }
+            return any;
+        }
+
+        // rivers, lakes and biomes, from the seed, without loading any chunk; the height is read when it's loaded
         private static bool findTerrain(string kind, Vector3Int from, out Vector3Int found) {
             found = default(Vector3Int);
             CustomChunkGenerator gen = generatorOf();
@@ -83,7 +103,7 @@ namespace Brickcraft.World
                         long distance = (long)dx * dx + (long)dz * dz;
                         if (distance < best) {
                             best = distance;
-                            found = new Vector3Int(x, from.y, z);
+                            found = new Vector3Int(x, heightAt(x, z, from.y), z);
                             any = true;
                         }
                     }
@@ -111,47 +131,10 @@ namespace Brickcraft.World
             }
         }
 
-        // the closest town's middle, from the seed (see TownPlanner), without loading any chunk
-        private static bool findTown(Vector3Int from, out Vector3Int found) {
-            found = default(Vector3Int);
-            List<LDrawImport> buildings = TownBuildings.All;
-            if (buildings.Count == 0) {
-                return false;
-            }
-            const int region = TownPlanner.SpanChunks * BlocksPerChunk;
-            int regionX = BrickGrid.FloorDiv(from.x, region);
-            int regionZ = BrickGrid.FloorDiv(from.z, region);
-            int most = Range / region + 1;
-
-            for (int radius = 0; radius <= most; radius++) {
-                long best = long.MaxValue;
-                bool any = false;
-                for (int dx = -radius; dx <= radius; dx++) {
-                    for (int dz = -radius; dz <= radius; dz++) {
-                        if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dz)) != radius) {
-                            continue;
-                        }
-                        if (TownPlanner.Plan(WorldNetwork.Seed, buildings, regionX + dx, regionZ + dz) == null) {
-                            continue;
-                        }
-                        // its middle chunk's middle, in blocks
-                        int chunkX = (regionX + dx) * TownPlanner.SpanChunks + TownPlanner.SpanChunks / 2;
-                        int chunkZ = (regionZ + dz) * TownPlanner.SpanChunks + TownPlanner.SpanChunks / 2;
-                        int x = chunkX * BlocksPerChunk + BlocksPerChunk / 2;
-                        int z = chunkZ * BlocksPerChunk + BlocksPerChunk / 2;
-                        long distance = (long)(x - from.x) * (x - from.x) + (long)(z - from.z) * (z - from.z);
-                        if (distance < best) {
-                            best = distance;
-                            found = new Vector3Int(x, from.y, z);
-                            any = true;
-                        }
-                    }
-                }
-                if (any) {
-                    return true;
-                }
-            }
-            return false;
+        // the world's ground height at that column, where it's loaded; the fallback otherwise
+        private static int heightAt(int x, int z, int fallback) {
+            int surface = WorldBehaviour.Instance != null ? WorldBehaviour.Instance.SurfaceBlockY(x, z) : 0;
+            return surface > 0 ? surface : fallback;
         }
 
         // caves, in the chunks that are loaded (a cave carves stone above the sea, see GenerateTerrain)
@@ -198,12 +181,12 @@ namespace Brickcraft.World
             for (int x = 0; x < BlocksPerChunk; x++) {
                 for (int z = 0; z < BlocksPerChunk; z++) {
                     int bx = chunk.x * BlocksPerChunk + x, bz = chunk.y * BlocksPerChunk + z;
-                    int surface = surfaceY(world, bx, bz);
-                    if (surface <= 65) {
+                    int surface = heightAt(bx, bz, 0);
+                    if (surface <= SeaLevel) {
                         continue; // under the sea: no cave carves there
                     }
                     // a cave carves the stone above the sea (see GenerateTerrain): an air pocket under the surface
-                    for (int y = 64; y <= surface - 2; y++) {
+                    for (int y = SeaLevel; y <= surface - 2; y++) {
                         if (world.GetBlockType(bx, y, bz) != BlockType.Air) {
                             continue;
                         }
@@ -218,17 +201,6 @@ namespace Brickcraft.World
                 }
             }
             return any;
-        }
-
-        // the first block above the ground at that column, 0 if the world isn't loaded there
-        private static int surfaceY(WorldBehaviour world, int x, int z) {
-            for (int y = Chunk.NumSlices * Chunk.SliceHeight - 1; y > 0; y--) {
-                BlockType type = world.GetBlockType(x, y, z);
-                if (type != BlockType.Air && type != BlockType.NULL) {
-                    return y + 1;
-                }
-            }
-            return 0;
         }
 
         // one generator per seed, for the terrain's features

@@ -1,13 +1,11 @@
-using Brickcraft.Bricks;
 using Brickcraft.World;
 using Brickcraft.World.CustomGenerator;
-using Brickcraft.World.Towns;
 using NUnit.Framework;
 using UnityEngine;
 
 namespace Brickcraft.Tests
 {
-    /// <summary>The /closest lookup: what it knows, and that what it finds really is there (see World.Closest).</summary>
+    /// <summary>The /closest lookup from the seed: what it knows, and that the terrain it finds is there (see World.Closest).</summary>
     public class ClosestTests
     {
         [SetUp]
@@ -27,11 +25,10 @@ namespace Brickcraft.Tests
         public void WhatItFindsIsWhereItSays() {
             CustomChunkGenerator gen = new CustomChunkGenerator();
             gen.Init(Network.WorldNetwork.Seed);
-            Vector3Int from = new Vector3Int(0, 64, 0);
 
             for (int rx = 0; rx < 3; rx++) {
                 for (int rz = 0; rz < 3; rz++) {
-                    from = new Vector3Int(rx * 300, 64, rz * 300);
+                    Vector3Int from = new Vector3Int(rx * 300, 64, rz * 300);
                     foreach (string kind in new[] { "river", "desert", "snow", "mountains" }) {
                         bool found = Closest.Find(kind, from, out Vector3Int at);
                         if (!found) {
@@ -55,17 +52,6 @@ namespace Brickcraft.Tests
                     }
                 }
             }
-        }
-
-        [Test]
-        public void ATownIsFoundAtATown() {
-            bool found = Closest.Find("town", new Vector3Int(0, 64, 0), out Vector3Int at);
-            Assume.That(found, "a town within range of the origin");
-
-            int region = TownPlanner.SpanChunks * 16;
-            int regionX = BrickGrid.FloorDiv(at.x, region);
-            int regionZ = BrickGrid.FloorDiv(at.z, region);
-            Assert.IsNotNull(TownPlanner.Plan(Network.WorldNetwork.Seed, TownBuildings.All, regionX, regionZ), "a town at " + at);
         }
     }
 }

@@ -385,6 +385,45 @@ namespace Brickcraft.Tests
             }
         }
 
+        [UnityTest]
+        public IEnumerator TheClosestTownIsOneThatStands() {
+            long seed = WorldNetwork.Seed;
+            List<LDrawImport> buildings = TownBuildings.All;
+            Assume.That(buildings.Count, Is.GreaterThan(0), "buildings to build with");
+
+            Vector2Int spawnChunk = WorldBehaviour.ChunkAt(TestGame.Player.transform.position);
+            int spawnRegionX = BrickGrid.FloorDiv(spawnChunk.x, TownPlanner.SpanChunks);
+            int spawnRegionZ = BrickGrid.FloorDiv(spawnChunk.y, TownPlanner.SpanChunks);
+
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    int regionX = spawnRegionX + dx, regionZ = spawnRegionZ + dz;
+                    TownPlan plan = TownPlanner.Plan(seed, buildings, regionX, regionZ);
+                    if (plan == null) {
+                        continue; // no town planned here
+                    }
+                    // go to its middle: the server generates what it stands on, and builds it
+                    int centerChunkX = regionX * TownPlanner.SpanChunks + TownPlanner.SpanChunks / 2;
+                    int centerChunkZ = regionZ * TownPlanner.SpanChunks + TownPlanner.SpanChunks / 2;
+                    Vector3Int middle = new Vector3Int(centerChunkX * 16 + 8, 100, centerChunkZ * 16 + 8);
+                    Teleport(BrickGrid.CellToWorld(BrickGrid.BlockToCell(middle)));
+
+                    List<Vector2Int> needed = TownPlacer.NeededChunks(plan, buildings);
+                    yield return WaitFor(() => allGenerated(needed), 30);
+                    yield return null;
+
+                    Vector3Int at = BrickGrid.CellToBlock(BrickGrid.WorldToCell(TestGame.Player.transform.position));
+                    if (Closest.Find("town", at, out Vector3Int town)) {
+                        Assert.Greater(town.y, 0, "the town's height");
+                        long ax = town.x - at.x, az = town.z - at.z;
+                        Assert.Less((long)Mathf.Sqrt(ax * ax + az * az), 300, "near where it was looked for");
+                        yield break;
+                    }
+                }
+            }
+            Assert.Ignore("no town near the spawn to check");
+        }
+
         // moves the player (server) and keeps it from dying of the trip
         private static void Teleport(Vector3 position) {
             Combat.Health health = TestGame.Player.GetComponent<Combat.Health>();

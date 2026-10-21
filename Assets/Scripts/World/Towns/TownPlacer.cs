@@ -18,6 +18,8 @@ namespace Brickcraft.World.Towns
     {
         /// <summary>How much the ground under one building can rise, in blocks, before its site is skipped.</summary>
         private const int MaxSlope = 4;
+        /// <summary>How far a town may shift to find ground (see chooseShift), in chunks (see NeededChunks).</summary>
+        private const int ShiftChunks = 4;
 
         // regions whose town is placed (or has none) this session, so it isn't looked at for every chunk
         private static readonly HashSet<long> done = new HashSet<long>();
@@ -91,8 +93,8 @@ namespace Brickcraft.World.Towns
             HashSet<Vector2Int> seen = new HashSet<Vector2Int>();
             foreach (TownBuilding tb in plan.buildings) {
                 Vector3Int size = buildings[tb.building].SizeTurned(tb.turns);
-                Vector2Int from = ChunkOfCell(tb.corner);
-                Vector2Int to = ChunkOfCell(tb.corner + size - Vector3Int.one);
+                Vector2Int from = ChunkOfCell(tb.corner) - new Vector2Int(ShiftChunks, ShiftChunks);
+                Vector2Int to = ChunkOfCell(tb.corner + size - Vector3Int.one) + new Vector2Int(ShiftChunks, ShiftChunks);
                 for (int x = from.x; x <= to.x; x++) {
                     for (int z = from.y; z <= to.y; z++) {
                         Vector2Int coords = new Vector2Int(x, z);
@@ -110,17 +112,20 @@ namespace Brickcraft.World.Towns
             List<SavedBrick> bricks = new List<SavedBrick>();
             int brickIndex = 0;
             int placedBuildings = 0;
+            Vector3Int shift = chooseShift(plan, buildings);
 
             foreach (TownBuilding tb in plan.buildings) {
                 LDrawImport model = buildings[tb.building];
-                if (!site(model, tb, out int baseY, out BlockType pad)) {
+                TownBuilding shifted = tb;
+                shifted.corner = tb.corner + shift;
+                if (!site(model, shifted, out int baseY, out BlockType pad)) {
                     continue; // too rough, or something grows there
                 }
-                level(model, tb, baseY, pad);
+                level(model, shifted, baseY, pad);
                 placedBuildings++;
 
                 List<ImportedBrick> placed = model.Placed(
-                    tb.corner + new Vector3Int(0, baseY * BrickGrid.PlatesPerBlock, 0), tb.turns);
+                    shifted.corner + new Vector3Int(0, baseY * BrickGrid.PlatesPerBlock, 0), tb.turns);
                 Guid[] ids = new Guid[placed.Count];
                 for (int i = 0; i < placed.Count; i++) {
                     ids[i] = TownPlanner.BrickId(seed, regionX, regionZ, brickIndex + i);
@@ -159,6 +164,45 @@ namespace Brickcraft.World.Towns
                 WorldNetwork.ServerPlaceGeneratedBricks(bricks);
             }
             return placedBuildings;
+        }
+
+        /// <summary>
+        /// Where the town stands: the first shift of the whole layout around its planned middle at which every
+        /// building has ground (see site), so a plan over water or a cliff moves to the shore or the plain. The
+        /// shift that fits the most if none fits them all (a building that still doesn't is left out).
+        /// </summary>
+        private static Vector3Int chooseShift(TownPlan plan, List<LDrawImport> buildings) {
+            const int step = 32; // blocks between one candidate and the next
+            const int reach = 64; // how far the layout may move, in blocks
+            Vector3Int best = default(Vector3Int);
+            int bestFit = -1;
+
+            for (int radius = 0; radius <= reach; radius += step) {
+                for (int dx = -radius; dx <= radius; dx += step) {
+                    for (int dz = -radius; dz <= radius; dz += step) {
+                        if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dz)) != radius) {
+                            continue;
+                        }
+                        Vector3Int shift = new Vector3Int(dx * 2, 0, dz * 2); // blocks to cells
+                        int fit = 0;
+                        foreach (TownBuilding tb in plan.buildings) {
+                            TownBuilding shifted = tb;
+                            shifted.corner = tb.corner + shift;
+                            if (site(buildings[tb.building], shifted, out int unusedY, out BlockType unusedPad)) {
+                                fit++;
+                            }
+                        }
+                        if (fit > bestFit) {
+                            bestFit = fit;
+                            best = shift;
+                        }
+                        if (fit == plan.buildings.Count) {
+                            return shift;
+                        }
+                    }
+                }
+            }
+            return bestFit >= 1 ? best : default(Vector3Int);
         }
 
         /// <summary>Whether a building fits there, and the block height its floor sits at, and the pad's block.</summary>

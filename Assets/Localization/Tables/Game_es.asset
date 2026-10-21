@@ -607,7 +607,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 2467677164265473
-    m_Localized: "Lo m\xE1s cercano: {0} en {1}, {2} (a unos {3} {3:plural:bloque|bloques})"
+    m_Localized: "Lo m\xE1s cercano: {0} en {1}, {2}, {3} (a unos {4} {4:plural:bloque|bloques})"
     m_Metadata:
       m_Items:
       - rid: 8627787809188479013
@@ -620,7 +620,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 2467677168459778
-    m_Localized: No hay {0} en {1} bloques
+    m_Localized: No hay {0} cerca
     m_Metadata:
       m_Items: []
   - m_Id: 2467677168459779

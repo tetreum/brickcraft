@@ -555,11 +555,11 @@ namespace Brickcraft.Network
             }
             Vector3Int from = BrickGrid.CellToBlock(BrickGrid.WorldToCell(sender.identity.transform.position));
             if (!World.Closest.Find(kind, from, out Vector3Int found)) {
-                reply(sender, "cmd.closest_none", word(kind), World.Closest.Range);
+                reply(sender, "cmd.closest_none", word(kind));
                 return;
             }
             int distance = Mathf.RoundToInt(Vector2.Distance(new Vector2(from.x, from.z), new Vector2(found.x, found.z)));
-            reply(sender, "cmd.closest_found", word(kind), found.x, found.z, distance);
+            reply(sender, "cmd.closest_found", word(kind), found.x, found.y, found.z, distance);
         }
 
         // the word for one of the things /closest knows (see World.Closest.Kinds)

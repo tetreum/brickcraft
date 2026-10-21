@@ -603,7 +603,8 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 2467677164265473
-    m_Localized: Closest {0} at {1}, {2} (about {3} {3:plural:block|blocks} away)
+    m_Localized: Closest {0} at {1}, {2}, {3} (about {4} {4:plural:block|blocks}
+      away)
     m_Metadata:
       m_Items:
       - rid: 8627787809188479012
@@ -616,7 +617,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 2467677168459778
-    m_Localized: No {0} within {1} blocks
+    m_Localized: No {0} nearby
     m_Metadata:
       m_Items: []
   - m_Id: 2467677168459779

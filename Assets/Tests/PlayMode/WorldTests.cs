@@ -373,6 +373,34 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator SettingsTabsSizeToTheirOptions() {
+            UI.SettingsPanel.Open();
+            yield return null;
+            UI.SettingsPanel settings = UnityEngine.Object.FindObjectOfType<UI.SettingsPanel>();
+            Assume.That(settings, Is.Not.Null, "the settings panel");
+
+            foreach (GameObject tab in settings.tabViews) {
+                tab.SetActive(true);
+                Canvas.ForceUpdateCanvases();
+                Transform rows = tab.transform.Find("Rows");
+
+                if (rows == null) {
+                    continue; // the Controls tab lays its bindings out itself
+                }
+                RectTransform rect = rows as RectTransform;
+                int options = 0;
+                foreach (Transform option in rows) {
+                    options++;
+                    Assert.AreEqual(93f, (option as RectTransform).rect.height, 1f, tab.name + ": a row is 93 tall");
+                }
+                float expected = options * 93f + Mathf.Max(0, options - 1) * 6f;
+                Assert.AreEqual(expected, rect.rect.height, 1f, tab.name + " is as tall as its options");
+                tab.SetActive(false);
+            }
+            Menu.Instance.hidePanel(UI.SettingsPanel.PanelName);
+        }
+
+        [UnityTest]
         public IEnumerator AdminsCanTeleportToCoordinates() {
             yield return TestGame.StandStill();
             Vector3Int block = TestGame.PlayerBlock + new Vector3Int(64, 0, 64);

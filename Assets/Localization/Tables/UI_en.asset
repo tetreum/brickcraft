@@ -247,30 +247,6 @@ MonoBehaviour:
     m_Localized: Players can hurt each other.
     m_Metadata:
       m_Items: []
-  - m_Id: 3441280409621
-    m_Localized: Day Length
-    m_Metadata:
-      m_Items: []
-  - m_Id: 3441284603904
-    m_Localized: How long a day and its night last.
-    m_Metadata:
-      m_Items: []
-  - m_Id: 3441284603905
-    m_Localized: 10 min
-    m_Metadata:
-      m_Items: []
-  - m_Id: 3441284603906
-    m_Localized: 20 min
-    m_Metadata:
-      m_Items: []
-  - m_Id: 3441284603907
-    m_Localized: 30 min
-    m_Metadata:
-      m_Items: []
-  - m_Id: 3441284603908
-    m_Localized: 60 min
-    m_Metadata:
-      m_Items: []
   - m_Id: 3441284603909
     m_Localized: Back
     m_Metadata:

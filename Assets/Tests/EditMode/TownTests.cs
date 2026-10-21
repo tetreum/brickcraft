@@ -18,7 +18,7 @@ namespace Brickcraft.Tests
 
         [Test]
         public void TheBuildingsAreReadAndSized() {
-            List<LDrawImport> buildings = TownBuildings.All;
+            List<LDrawImport> buildings = TownBuildings.LoadAll();
 
             Assert.Greater(buildings.Count, 0, "the buildings folder has models the game knows");
             foreach (LDrawImport building in buildings) {
@@ -31,7 +31,7 @@ namespace Brickcraft.Tests
 
         [Test]
         public void TheSameSeedAndRegionGiveTheSameTown() {
-            List<LDrawImport> buildings = TownBuildings.All;
+            List<LDrawImport> buildings = TownBuildings.LoadAll();
             Vector2Int region = aRegionWithATown(buildings, 12345);
             Assume.That(region.x != int.MinValue, "a region with a town");
 
@@ -48,7 +48,7 @@ namespace Brickcraft.Tests
 
         [Test]
         public void ATownKeepsToItsRegionAndTheBlockGrid() {
-            List<LDrawImport> buildings = TownBuildings.All;
+            List<LDrawImport> buildings = TownBuildings.LoadAll();
 
             for (int rx = -4; rx <= 4; rx++) {
                 for (int rz = -4; rz <= 4; rz++) {
@@ -78,7 +78,7 @@ namespace Brickcraft.Tests
 
         [Test]
         public void ASecondTownIsNotTheSameAsTheFirst() {
-            List<LDrawImport> buildings = TownBuildings.All;
+            List<LDrawImport> buildings = TownBuildings.LoadAll();
             bool differ = false;
             for (int rx = -8; rx <= 8 && !differ; rx++) {
                 for (int rz = -8; rz <= 8 && !differ; rz++) {

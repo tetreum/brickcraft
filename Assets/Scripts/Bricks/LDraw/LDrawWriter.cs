@@ -67,20 +67,26 @@ namespace Brickcraft.Bricks.LDraw
                 part = shape;
             }
             if (!origins.TryGetValue(part, out Vector3? origin)) {
-                origin = null;
-                if (LDrawLibrary.HasPart(part)) {
-                    Mesh mesh = LDrawModelBuilder.Build(part, out string[] names);
-                    if (mesh != null && mesh.vertexCount > 0) {
-                        Bounds bounds = mesh.bounds;
-                        origin = new Vector3(-bounds.center.x, -bounds.min.y, -bounds.center.z) / LDrawModelBuilder.Scale;
-                    }
-                    Object.DestroyImmediate(mesh); // outside play mode too (tests)
-                }
+                origin = LDrawLibrary.HasPart(part) ? MainThread.Run(() => buildOrigin(part)) : null;
                 origins[part] = origin;
             }
-            // bricks on the grid have their pivot there already; attachments' is their hinge
-            Vector3 pivotToShape = model.IsAttachment ? bottomMiddleOf(model) / LDrawModelBuilder.Scale : Vector3.zero;
+            // bricks on the grid have their pivot there already; attachments' is their hinge (a prefab: the main thread)
+            Vector3 pivotToShape = model.IsAttachment ? MainThread.Run(() => bottomMiddleOf(model) / LDrawModelBuilder.Scale) : Vector3.zero;
             return origin.HasValue ? pivotToShape + origin.Value : model.LDrawOrigin;
+        }
+
+        // a part's shape as a mesh (a prefab's vertices): the main thread only (see MainThread)
+        private static Vector3? buildOrigin(string part) {
+            Mesh mesh = LDrawModelBuilder.Build(part, out string[] names);
+            Vector3? origin = null;
+            if (mesh != null && mesh.vertexCount > 0) {
+                Bounds bounds = mesh.bounds;
+                origin = new Vector3(-bounds.center.x, -bounds.min.y, -bounds.center.z) / LDrawModelBuilder.Scale;
+            }
+            if (mesh != null) {
+                Object.DestroyImmediate(mesh); // outside play mode too (tests)
+            }
+            return origin;
         }
 
         // the bottom of the middle of a model's shape, from its pivot (game units)

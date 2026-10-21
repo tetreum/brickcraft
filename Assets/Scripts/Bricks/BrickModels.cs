@@ -170,6 +170,10 @@ namespace Brickcraft.Bricks
             if (cache.TryGetValue(id, out model) && (model == null || model.prefab != null)) {
                 return model;
             }
+            // reading it loads a prefab or builds a mesh (Unity's): a background thread queues it on the main one
+            if (!MainThread.IsMain) {
+                return MainThread.Run(() => Get(id));
+            }
             string folder;
             KeyValuePair<AssetBundle, string> bundled;
             if (modFiles.TryGetValue(id, out folder)) {

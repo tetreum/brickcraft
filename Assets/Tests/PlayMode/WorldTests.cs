@@ -297,6 +297,7 @@ namespace Brickcraft.Tests
         [UnityTest]
         public IEnumerator TownsAreBuiltWhereTheSeedPutsThem() {
             long seed = WorldNetwork.Seed;
+            yield return TestGame.WaitUntil(() => TownBuildings.All != null, 20, "the town buildings to be read");
             List<LDrawImport> buildings = TownBuildings.All;
             Assume.That(buildings.Count, Is.GreaterThan(0), "buildings to build with");
 
@@ -467,6 +468,7 @@ namespace Brickcraft.Tests
         [UnityTest]
         public IEnumerator TheClosestTownIsOneThatStands() {
             long seed = WorldNetwork.Seed;
+            yield return TestGame.WaitUntil(() => TownBuildings.All != null, 20, "the town buildings to be read");
             List<LDrawImport> buildings = TownBuildings.All;
             Assume.That(buildings.Count, Is.GreaterThan(0), "buildings to build with");
 

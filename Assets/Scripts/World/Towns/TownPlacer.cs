@@ -24,9 +24,13 @@ namespace Brickcraft.World.Towns
         // regions whose town is placed (or has none) this session, so it isn't looked at for every chunk
         private static readonly HashSet<long> done = new HashSet<long>();
 
+        // regions whose town isn't placed yet because the buildings or their ground weren't ready (see Update)
+        private static readonly HashSet<long> waiting = new HashSet<long>();
+
         /// <summary>A game is starting: nothing is placed yet.</summary>
         public static void Reset() {
             done.Clear();
+            waiting.Clear();
         }
 
         /// <summary>A chunk was generated on the server (main thread): a town that needed it may go in now.</summary>
@@ -36,28 +40,53 @@ namespace Brickcraft.World.Towns
             }
             int regionX = BrickGrid.FloorDiv(chunk.X, TownPlanner.SpanChunks);
             int regionZ = BrickGrid.FloorDiv(chunk.Z, TownPlanner.SpanChunks);
-            long key = Key(regionX, regionZ);
-            if (done.Contains(key)) {
+            if (!tryPlace(regionX, regionZ)) {
+                waiting.Add(Key(regionX, regionZ)); // the buildings or its ground aren't ready: retried (see Update)
+            }
+        }
+
+        /// <summary>Retries the towns that waited for the buildings to be read (the main thread, every frame).</summary>
+        public static void Update() {
+            if (waiting.Count == 0) {
                 return;
             }
+            List<long> keys = new List<long>(waiting);
+            foreach (long key in keys) {
+                int regionX = (int)(key >> 32);
+                int regionZ = (int)key;
+                if (tryPlace(regionX, regionZ)) {
+                    waiting.Remove(key);
+                }
+            }
+        }
 
+        // whether that region is dealt with (its town placed, none there, or it was already); false to retry later
+        private static bool tryPlace(int regionX, int regionZ) {
+            long key = Key(regionX, regionZ);
+            if (done.Contains(key)) {
+                return true;
+            }
             List<LDrawImport> buildings = TownBuildings.All;
+            if (buildings == null) {
+                return false; // still being read on a background thread (see TownBuildings.Preload)
+            }
             TownPlan plan = TownPlanner.Plan(WorldNetwork.Seed, buildings, regionX, regionZ);
             if (plan == null) {
                 done.Add(key); // this region has none
-                return;
+                return true;
             }
             List<Vector2Int> needed = NeededChunks(plan, buildings);
             foreach (Vector2Int coords in needed) {
                 if (!WorldBehaviour.Instance.IsGenerated(coords)) {
-                    return; // terrain it stands on isn't all there yet
+                    return false; // terrain it stands on isn't all there yet
                 }
             }
             done.Add(key);
             if (WorldNetwork.ServerHasGeneratedBricks(needed)) {
-                return; // it was placed in a past session (its bricks came back from the save)
+                return true; // it was placed in a past session (its bricks came back from the save)
             }
             place(WorldNetwork.Seed, plan, buildings, regionX, regionZ);
+            return true;
         }
 
         /// <summary>

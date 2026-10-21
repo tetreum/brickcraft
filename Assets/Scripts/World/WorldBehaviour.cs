@@ -221,6 +221,8 @@ namespace Brickcraft.World
 		// -------- meshing --------
 
 		void Update () {
+			MainThread.Pump(); // the background read of the towns' buildings (see TownBuildings.Preload)
+			Towns.TownPlacer.Update();
 			finishGeneratedChunks();
 
 			if (!Seed.HasValue)

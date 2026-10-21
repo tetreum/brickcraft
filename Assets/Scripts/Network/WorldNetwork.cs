@@ -108,6 +108,7 @@ namespace Brickcraft.Network
             interests.Clear();
             serverChunks.Clear();
             TownPlacer.Reset();
+            TownBuildings.Preload();
             // a game before this one (in the editor, play mode without a domain reload keeps statics) left its areas and
             // its times: Time.unscaledTime starts over, so a time of the last game would hold this one back
             lastAreas.Clear();

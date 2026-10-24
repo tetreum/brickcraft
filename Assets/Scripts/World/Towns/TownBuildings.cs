@@ -136,12 +136,17 @@ namespace Brickcraft.World.Towns
             return models;
         }
 
-        // the main thread: reads the brick models of those parts, so parsing them later doesn't touch Unity
+        // the main thread: reads the brick models of those parts, so parsing them later doesn't touch Unity. One that
+        // can't be read is skipped (the building that uses it then fails alone, in ReadParts)
         private static void warm(List<string> parts) {
             foreach (string part in parts) {
-                Item item = Network.PartsList.ItemOfPart(part);
-                if (item != null) {
-                    _ = item.brickModel;
+                try {
+                    Item item = Network.PartsList.ItemOfPart(part);
+                    if (item != null) {
+                        _ = item.brickModel;
+                    }
+                } catch (System.Exception e) {
+                    Debug.LogWarning("Couldn't read the brick model of the part " + part + ": " + e.Message);
                 }
             }
         }

@@ -49,7 +49,8 @@ namespace Brickcraft.Bricks.LDraw
             };
         }
 
-        // LDraw parts' origins worked out so far (from their shape), by part number
+        // LDraw parts' origins worked out so far (from their shape), by part number; locked, the towns' buildings are
+        // read on a background thread (see Towns.TownBuildings), but not while waiting for the main thread (a deadlock)
         private static readonly System.Collections.Generic.Dictionary<string, Vector3?> origins = new System.Collections.Generic.Dictionary<string, Vector3?>();
 
         /// <summary>
@@ -66,9 +67,16 @@ namespace Brickcraft.Bricks.LDraw
             if (!LDrawLibrary.HasPart(part) && !string.IsNullOrEmpty(shape)) {
                 part = shape;
             }
-            if (!origins.TryGetValue(part, out Vector3? origin)) {
+            Vector3? origin;
+            bool known;
+            lock (origins) {
+                known = origins.TryGetValue(part, out origin);
+            }
+            if (!known) {
                 origin = LDrawLibrary.HasPart(part) ? MainThread.Run(() => buildOrigin(part)) : null;
-                origins[part] = origin;
+                lock (origins) {
+                    origins[part] = origin;
+                }
             }
             // bricks on the grid have their pivot there already; attachments' is their hinge (a prefab: the main thread)
             Vector3 pivotToShape = model.IsAttachment ? MainThread.Run(() => bottomMiddleOf(model) / LDrawModelBuilder.Scale) : Vector3.zero;

@@ -92,7 +92,8 @@ namespace Brickcraft.World.Towns
         /// <summary>
         /// Server: the town of that region, placed if the terrain it stands on is all generated and it isn't
         /// already there (see OnServerChunkGenerated); how many of its buildings went. Nothing for a region
-        /// without a town, or one whose ground isn't there yet (see NeededChunks). Also the way a test builds
+        /// without a town, one whose ground isn't there yet (see NeededChunks), or while the buildings are still
+        /// being read (see TownBuildings.All). Also the way a test builds
         /// one, without waiting for the chunks to stream in.
         /// </summary>
         public static int PlaceRegion(int regionX, int regionZ) {
@@ -100,6 +101,9 @@ namespace Brickcraft.World.Towns
                 return 0;
             }
             List<LDrawImport> buildings = TownBuildings.All;
+            if (buildings == null) {
+                return 0; // still being read on a background thread (see TownBuildings.Preload)
+            }
             TownPlan plan = TownPlanner.Plan(WorldNetwork.Seed, buildings, regionX, regionZ);
             if (plan == null) {
                 return 0;

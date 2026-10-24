@@ -30,23 +30,32 @@ namespace Brickcraft
             get { return mainThreadId == 0 || Thread.CurrentThread.ManagedThreadId == mainThreadId; }
         }
 
-        /// <summary>Runs it on the main thread and returns its result, waiting if this isn't the main thread.</summary>
+        /// <summary>
+        /// Runs it on the main thread and returns its result, waiting if this isn't the main thread. If it throws, the
+        /// exception is thrown here (the waiting thread's), not in the main thread's Pump.
+        /// </summary>
         public static T Run<T>(Func<T> work) {
             if (IsMain) {
                 return work();
             }
             T result = default(T);
+            Exception failure = null;
             using (ManualResetEvent done = new ManualResetEvent(false)) {
                 lock (sync) {
                     pending.Enqueue(() => {
                         try {
                             result = work();
+                        } catch (Exception e) {
+                            failure = e;
                         } finally {
                             done.Set();
                         }
                     });
                 }
                 done.WaitOne();
+            }
+            if (failure != null) {
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw(); // its own stack trace
             }
             return result;
         }
@@ -59,7 +68,10 @@ namespace Brickcraft
             });
         }
 
-        /// <summary>Runs what background threads queued; the main thread calls this every frame.</summary>
+        /// <summary>
+        /// Runs what background threads queued; the main thread calls this every frame. It doesn't throw: what the work
+        /// throws goes back to the thread that queued it (see Run).
+        /// </summary>
         public static void Pump() {
             if (mainThreadId != 0 && Thread.CurrentThread.ManagedThreadId != mainThreadId) {
                 return;

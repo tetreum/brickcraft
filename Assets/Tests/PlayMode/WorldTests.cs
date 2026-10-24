@@ -1,8 +1,12 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using Brickcraft.Bricks;
+using Brickcraft.Bricks.LDraw;
 using Brickcraft.Network;
 using Brickcraft.Npcs;
 using Brickcraft.World;
+using Brickcraft.World.Towns;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -288,6 +292,261 @@ namespace Brickcraft.Tests
 
             Assert.IsTrue(WorldNetwork.ServerSetBlock(source, BlockType.Air, null));
             yield return TestGame.WaitUntil(() => BlockDatabase.Get(TestGame.Block(source + new Vector3Int(0, 0, 7))).fluid == null, 10, "the water drying up");
+        }
+
+        [UnityTest]
+        public IEnumerator TownsAreBuiltWhereTheSeedPutsThem() {
+            long seed = WorldNetwork.Seed;
+            yield return TestGame.WaitUntil(() => TownBuildings.All != null, 20, "the town buildings to be read");
+            List<LDrawImport> buildings = TownBuildings.All;
+            Assume.That(buildings.Count, Is.GreaterThan(0), "buildings to build with");
+
+            Vector2Int spawnChunk = WorldBehaviour.ChunkAt(TestGame.Player.transform.position);
+            int spawnRegionX = BrickGrid.FloorDiv(spawnChunk.x, TownPlanner.SpanChunks);
+            int spawnRegionZ = BrickGrid.FloorDiv(spawnChunk.y, TownPlanner.SpanChunks);
+
+            bool built = false;
+            int towns = 0;
+
+            for (int dx = -1; dx <= 1 && !built; dx++) {
+                for (int dz = -1; dz <= 1 && !built; dz++) {
+                    int regionX = spawnRegionX + dx, regionZ = spawnRegionZ + dz;
+                    TownPlan plan = TownPlanner.Plan(seed, buildings, regionX, regionZ);
+                    if (plan == null) {
+                        continue;
+                    }
+                    towns++;
+
+                    // go to the town's middle: the server generates what it stands on
+                    int centerChunkX = regionX * TownPlanner.SpanChunks + TownPlanner.SpanChunks / 2;
+                    int centerChunkZ = regionZ * TownPlanner.SpanChunks + TownPlanner.SpanChunks / 2;
+                    Vector3Int block = new Vector3Int(centerChunkX * 16 + 8, 100, centerChunkZ * 16 + 8);
+                    Teleport(BrickGrid.CellToWorld(BrickGrid.BlockToCell(block)));
+
+                    List<Vector2Int> needed = TownPlacer.NeededChunks(plan, buildings);
+                    yield return WaitFor(() => allGenerated(needed), 30);
+                    TownPlacer.PlaceRegion(regionX, regionZ);
+                    built = WorldNetwork.ServerHasGeneratedBricks(needed);
+                }
+            }
+
+            Assume.That(towns, Is.GreaterThan(0), "a town near the spawn");
+            Assert.IsTrue(built, "a town's bricks appeared once its ground was there");
+        }
+
+        [UnityTest]
+        public IEnumerator TheNewWorldFormStacksWithoutGaps() {
+            UI.WorldsPanel.Open();
+            yield return null;
+            UI.WorldsPanel worlds = UnityEngine.Object.FindObjectOfType<UI.WorldsPanel>();
+            Assume.That(worlds, Is.Not.Null, "the worlds panel");
+            worlds.newWorldButton.onClick.Invoke();
+            Canvas.ForceUpdateCanvases();
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+
+            Transform create = worlds.transform.Find("Window/Create");
+            Transform rows = create.Find("Rows");
+            Transform title = create.Find("ModsTitle");
+            Transform mods = create.Find("Mods");
+            Transform createWorld = create.Find("CreateWorld");
+
+            // the mods title is right under the last option, the list under the title, above the buttons and in order
+            Assert.Greater(bottomOf(rows), topOf(title), "the options above the mods title, not under it");
+            Assert.Greater(bottomOf(title), topOf(mods), "the title above the list");
+            Assert.Greater(bottomOf(mods), topOf(createWorld), "the list above the buttons");
+            Assert.Greater(topOf(rows), topOf(title), "the rows above the mods");
+            Assert.Less(bottomOf(rows) - topOf(title), topOf(rows) - bottomOf(rows) + 1f, "the title right under the options");
+
+            Menu.Instance.hidePanel(UI.WorldsPanel.PanelName);
+        }
+
+        private static float topOf(Transform t) {
+            Vector3[] corners = new Vector3[4];
+            (t as RectTransform).GetWorldCorners(corners);
+            return corners[2].y;
+        }
+
+        private static float bottomOf(Transform t) {
+            Vector3[] corners = new Vector3[4];
+            (t as RectTransform).GetWorldCorners(corners);
+            return corners[0].y;
+        }
+
+        [UnityTest]
+        public IEnumerator SettingsTabsSizeToTheirOptions() {
+            UI.SettingsPanel.Open();
+            yield return null;
+            UI.SettingsPanel settings = UnityEngine.Object.FindObjectOfType<UI.SettingsPanel>();
+            Assume.That(settings, Is.Not.Null, "the settings panel");
+
+            foreach (GameObject tab in settings.tabViews) {
+                tab.SetActive(true);
+                Canvas.ForceUpdateCanvases();
+                Transform rows = tab.transform.Find("Rows");
+
+                if (rows == null) {
+                    continue; // the Controls tab lays its bindings out itself
+                }
+                RectTransform rect = rows as RectTransform;
+                int options = 0;
+                foreach (Transform option in rows) {
+                    options++;
+                    Assert.AreEqual(93f, (option as RectTransform).rect.height, 1f, tab.name + ": a row is 93 tall");
+                }
+                float expected = options * 93f + Mathf.Max(0, options - 1) * 6f;
+                Assert.AreEqual(expected, rect.rect.height, 1f, tab.name + " is as tall as its options");
+                tab.SetActive(false);
+            }
+            Menu.Instance.hidePanel(UI.SettingsPanel.PanelName);
+        }
+
+        [UnityTest]
+        public IEnumerator PlayersDoNotSpawnInWater() {
+            yield return TestGame.StandStill();
+            World.WorldBehaviour world = World.WorldBehaviour.Instance;
+            BrickcraftNetworkManager manager = BrickcraftNetworkManager.Instance;
+            BlockType water = (BlockType)BlockDatabase.IdOf("still_water");
+
+            Vector3Int spawn = BrickGrid.CellToBlock(BrickGrid.WorldToCell(FloatingOrigin.ToLocal(manager.defaultSpawnPosition)));
+            int surface = world.SurfaceBlockY(spawn.x, spawn.z);
+            Assert.Greater(surface, 0, "the spawn's ground");
+            // the spawn's column is water: the player must not appear there
+            Assert.IsTrue(WorldNetwork.ServerSetBlock(new Vector3Int(spawn.x, surface - 1, spawn.z), water, Placer.Now(0)));
+            yield return null;
+
+            Vector3 at = manager.ServerSpawnPosition(out Quaternion rotation);
+            Vector3Int block = BrickGrid.CellToBlock(BrickGrid.WorldToCell(at));
+            int ground = world.SurfaceBlockY(block.x, block.z);
+            Assert.AreNotEqual(water, world.GetBlockType(block.x, ground - 1, block.z), "not spawned over water");
+        }
+
+        [UnityTest]
+        public IEnumerator AdminsCanTeleportToCoordinates() {
+            yield return TestGame.StandStill();
+            Vector3Int block = TestGame.PlayerBlock + new Vector3Int(64, 0, 64);
+
+            ChatCommands.Run(Mirror.NetworkServer.localConnection, "/tp " + block.x + " " + block.y + " " + block.z);
+            yield return TestGame.WaitUntil(() => {
+                Vector3Int at = BrickGrid.CellToBlock(BrickGrid.WorldToCell(TestGame.Player.transform.position));
+                return Mathf.Abs(at.x - block.x) <= 1 && Mathf.Abs(at.z - block.z) <= 1;
+            }, 10, "the player at those coordinates");
+        }
+
+        [UnityTest]
+        public IEnumerator AdminsCanAskWhereTheClosestThingIs() {
+            string languageKey = "settings." + GameSettings.LanguageSetting;
+            string saved = PlayerPrefs.HasKey(languageKey) ? PlayerPrefs.GetString(languageKey) : null;
+            List<Events.ChatLineReceivedEvent> lines = new List<Events.ChatLineReceivedEvent>();
+            Action<Events.ChatLineReceivedEvent> received = line => lines.Add(line);
+            Events.EventManager.ChatLineReceived.Subscribe(received);
+            try {
+                GameSettings.Language = "en";
+                ChatCommands.Run(Mirror.NetworkServer.localConnection, "/closest desert");
+                yield return TestGame.WaitUntil(() => lines.Count > 0, 10, "the answer to /closest desert");
+                Assert.AreEqual(ChatCommands.ServerName, lines[0].sender);
+                StringAssert.Contains("Desert", lines[0].text);
+
+                lines.Clear();
+                ChatCommands.Run(Mirror.NetworkServer.localConnection, "/closest nonsense");
+                yield return TestGame.WaitUntil(() => lines.Count > 0, 10, "the usage of /closest");
+                StringAssert.Contains("/closest", lines[0].text);
+            } finally {
+                Events.EventManager.ChatLineReceived.Unsubscribe(received);
+                GameSettings.Language = saved ?? GameSettings.SystemLanguage;
+                if (saved == null) {
+                    PlayerPrefs.DeleteKey(languageKey);
+                    PlayerPrefs.Save();
+                }
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator CoordinatesShowWhereThePlayerIs() {
+            UI.PlayerPanel panel = UI.PlayerPanel.Instance;
+            Assume.That(panel, Is.Not.Null, "the player panel on the canvas");
+            bool saved = GameSettings.ShowCoordinates;
+            try {
+                yield return TestGame.StandStill();
+
+                GameSettings.ShowCoordinates = true;
+                yield return null;
+                Assert.IsTrue(panel.coordinates.gameObject.activeSelf, "shown when the setting is on");
+
+                Vector3Int block = BrickGrid.CellToBlock(BrickGrid.WorldToCell(TestGame.Player.transform.position));
+                string expected = "X: " + block.x + "   Y: " + block.y + "   Z: " + block.z;
+                yield return TestGame.WaitUntil(() => panel.coordinates.text == expected, 5, "the coordinates of the player");
+
+                GameSettings.ShowCoordinates = false;
+                yield return null;
+                Assert.IsFalse(panel.coordinates.gameObject.activeSelf, "hidden when the setting is off");
+            } finally {
+                GameSettings.ShowCoordinates = saved;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator TheClosestTownIsOneThatStands() {
+            long seed = WorldNetwork.Seed;
+            yield return TestGame.WaitUntil(() => TownBuildings.All != null, 20, "the town buildings to be read");
+            List<LDrawImport> buildings = TownBuildings.All;
+            Assume.That(buildings.Count, Is.GreaterThan(0), "buildings to build with");
+
+            Vector2Int spawnChunk = WorldBehaviour.ChunkAt(TestGame.Player.transform.position);
+            int spawnRegionX = BrickGrid.FloorDiv(spawnChunk.x, TownPlanner.SpanChunks);
+            int spawnRegionZ = BrickGrid.FloorDiv(spawnChunk.y, TownPlanner.SpanChunks);
+
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    int regionX = spawnRegionX + dx, regionZ = spawnRegionZ + dz;
+                    TownPlan plan = TownPlanner.Plan(seed, buildings, regionX, regionZ);
+                    if (plan == null) {
+                        continue; // no town planned here
+                    }
+                    // go to its middle: the server generates what it stands on, and builds it
+                    int centerChunkX = regionX * TownPlanner.SpanChunks + TownPlanner.SpanChunks / 2;
+                    int centerChunkZ = regionZ * TownPlanner.SpanChunks + TownPlanner.SpanChunks / 2;
+                    Vector3Int middle = new Vector3Int(centerChunkX * 16 + 8, 100, centerChunkZ * 16 + 8);
+                    Teleport(BrickGrid.CellToWorld(BrickGrid.BlockToCell(middle)));
+
+                    List<Vector2Int> needed = TownPlacer.NeededChunks(plan, buildings);
+                    yield return WaitFor(() => allGenerated(needed), 30);
+                    yield return null;
+
+                    Vector3Int at = BrickGrid.CellToBlock(BrickGrid.WorldToCell(TestGame.Player.transform.position));
+                    if (Closest.Find("town", at, out Vector3Int town)) {
+                        Assert.Greater(town.y, 0, "the town's height");
+                        long ax = town.x - at.x, az = town.z - at.z;
+                        Assert.Less((long)Mathf.Sqrt(ax * ax + az * az), 300, "near where it was looked for");
+                        yield break;
+                    }
+                }
+            }
+            Assert.Ignore("no town near the spawn to check");
+        }
+
+        // moves the player (server) and keeps it from dying of the trip
+        private static void Teleport(Vector3 position) {
+            Combat.Health health = TestGame.Player.GetComponent<Combat.Health>();
+            health.health = health.maxHealth;
+            TestGame.Player.GetComponent<PlayerNetwork>().ServerTeleport(position);
+        }
+
+        private static bool allGenerated(List<Vector2Int> chunks) {
+            foreach (Vector2Int coords in chunks) {
+                if (!WorldBehaviour.Instance.IsGenerated(coords)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // waits for the condition, without failing (the caller decides what a timeout means)
+        private static IEnumerator WaitFor(Func<bool> condition, float seconds) {
+            float end = Time.realtimeSinceStartup + seconds;
+            while (!condition() && Time.realtimeSinceStartup < end) {
+                yield return null;
+            }
         }
     }
 }

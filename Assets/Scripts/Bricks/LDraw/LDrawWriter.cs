@@ -49,7 +49,8 @@ namespace Brickcraft.Bricks.LDraw
             };
         }
 
-        // LDraw parts' origins worked out so far (from their shape), by part number
+        // LDraw parts' origins worked out so far (from their shape), by part number; locked, the towns' buildings are
+        // read on a background thread (see Towns.TownBuildings), but not while waiting for the main thread (a deadlock)
         private static readonly System.Collections.Generic.Dictionary<string, Vector3?> origins = new System.Collections.Generic.Dictionary<string, Vector3?>();
 
         /// <summary>
@@ -66,21 +67,34 @@ namespace Brickcraft.Bricks.LDraw
             if (!LDrawLibrary.HasPart(part) && !string.IsNullOrEmpty(shape)) {
                 part = shape;
             }
-            if (!origins.TryGetValue(part, out Vector3? origin)) {
-                origin = null;
-                if (LDrawLibrary.HasPart(part)) {
-                    Mesh mesh = LDrawModelBuilder.Build(part, out string[] names);
-                    if (mesh != null && mesh.vertexCount > 0) {
-                        Bounds bounds = mesh.bounds;
-                        origin = new Vector3(-bounds.center.x, -bounds.min.y, -bounds.center.z) / LDrawModelBuilder.Scale;
-                    }
-                    Object.DestroyImmediate(mesh); // outside play mode too (tests)
-                }
-                origins[part] = origin;
+            Vector3? origin;
+            bool known;
+            lock (origins) {
+                known = origins.TryGetValue(part, out origin);
             }
-            // bricks on the grid have their pivot there already; attachments' is their hinge
-            Vector3 pivotToShape = model.IsAttachment ? bottomMiddleOf(model) / LDrawModelBuilder.Scale : Vector3.zero;
+            if (!known) {
+                origin = LDrawLibrary.HasPart(part) ? MainThread.Run(() => buildOrigin(part)) : null;
+                lock (origins) {
+                    origins[part] = origin;
+                }
+            }
+            // bricks on the grid have their pivot there already; attachments' is their hinge (a prefab: the main thread)
+            Vector3 pivotToShape = model.IsAttachment ? MainThread.Run(() => bottomMiddleOf(model) / LDrawModelBuilder.Scale) : Vector3.zero;
             return origin.HasValue ? pivotToShape + origin.Value : model.LDrawOrigin;
+        }
+
+        // a part's shape as a mesh (a prefab's vertices): the main thread only (see MainThread)
+        private static Vector3? buildOrigin(string part) {
+            Mesh mesh = LDrawModelBuilder.Build(part, out string[] names);
+            Vector3? origin = null;
+            if (mesh != null && mesh.vertexCount > 0) {
+                Bounds bounds = mesh.bounds;
+                origin = new Vector3(-bounds.center.x, -bounds.min.y, -bounds.center.z) / LDrawModelBuilder.Scale;
+            }
+            if (mesh != null) {
+                Object.DestroyImmediate(mesh); // outside play mode too (tests)
+            }
+            return origin;
         }
 
         // the bottom of the middle of a model's shape, from its pivot (game units)

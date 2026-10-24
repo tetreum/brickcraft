@@ -58,22 +58,48 @@ namespace Brickcraft.Bricks.LDraw
         }
 
         public static LDrawImport Read(string[] lines) {
+            LDrawImport model = ReadParts(lines);
+            model.Attach();
+            return model;
+        }
+
+        /// <summary>
+        /// Reads the file's parts into bricks on the grid (the parts it can place, see the class comment). Safe to
+        /// call on a background thread: the game's items are only read. The attachments wait for <see cref="Attach"/>.
+        /// </summary>
+        public static LDrawImport ReadParts(string[] lines) {
             LDrawImport model = new LDrawImport();
             model.ownItems = findOwnItems();
             HashSet<Vector3Int> taken = new HashSet<Vector3Int>();
-            List<BrickPlacement> placements = new List<BrickPlacement>();
-            List<(LDrawContraption.Part part, Item item)> hanging = new List<(LDrawContraption.Part, Item)>();
+            model.placements = new List<BrickPlacement>();
+            model.hanging = new List<(LDrawContraption.Part part, Item item)>();
             // the game's items made of parts, saved whole (see LDrawWriter.Write), are themselves
             foreach (LDrawContraption.Part part in LDrawContraption.Parse(lines, name => partsItem(name) != null)) {
-                model.add(part, taken, placements, hanging);
+                model.add(part, taken, model.placements, model.hanging);
             }
-            // once the bricks are there, what hangs from them
-            foreach ((LDrawContraption.Part part, Item item) in hanging) {
-                model.attach(part, item, placements);
-            }
-            model.moveToCorner(placements);
             return model;
         }
+
+        /// <summary>
+        /// Puts the attachments in the slots of the bricks of the model where they hang, and the bricks' origins at
+        /// the box's lowest corner. The main thread only: it reads the bricks' prefabs (see ReadParts).
+        /// </summary>
+        public void Attach() {
+            if (attached) {
+                return;
+            }
+            attached = true;
+            foreach ((LDrawContraption.Part part, Item item) in hanging) {
+                attach(part, item, placements);
+            }
+            moveToCorner(placements);
+            hanging = null;
+            placements = null;
+        }
+
+        private List<BrickPlacement> placements;
+        private List<(LDrawContraption.Part part, Item item)> hanging;
+        private bool attached;
 
         // an old part number LDraw now has lettered versions of (3023 is 3023a and 3023b, the same shape): the first one's item
         private static Item renumbered(string part) {
@@ -185,11 +211,19 @@ namespace Brickcraft.Bricks.LDraw
 
         /// <summary>A model's slot (see BrickSlot), null if it has none.</summary>
         public static BrickSlot SlotOf(BrickModel model) {
-            return model.prefab != null ? model.prefab.GetComponentInChildren<BrickSlot>(true) : null;
+            if (model.prefab == null) {
+                return null;
+            }
+            // reading the prefab is the main thread's (see MainThread): a parse on a background thread queues it
+            return MainThread.Run(() => model.prefab.GetComponentInChildren<BrickSlot>(true));
         }
 
         /// <summary>Where a slot's point is for a brick placed so, for that attachment in that seat (game units, from the cells' origin: see PivotOf).</summary>
         public static Vector3 SlotPoint(BrickPlacement placement, BrickSlot slot, BrickModel attachment = null, int seat = 0) {
+            return MainThread.Run(() => slotPoint(placement, slot, attachment, seat));
+        }
+
+        private static Vector3 slotPoint(BrickPlacement placement, BrickSlot slot, BrickModel attachment, int seat) {
             Vector3Int size = placement.Size;
             Vector3 pivot = Vector3.Scale((Vector3)placement.origin + new Vector3(size.x / 2f, 0, size.z / 2f), BrickGrid.CellSize);
             // the prefab's own rotation is in the offset, like when it's spawned (Server.createBrickObject)

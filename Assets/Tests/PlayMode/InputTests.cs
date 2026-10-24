@@ -216,6 +216,65 @@ namespace Brickcraft.Tests
         }
 
         [UnityTest]
+        public IEnumerator ClimbingOutOntoABankOneBlockAboveTheWater() {
+            yield return standStill();
+            BlockType stone = (BlockType)BlockDatabase.IdOf("stone");
+            BlockType water = (BlockType)BlockDatabase.IdOf("still_water");
+            BlockType grass = (BlockType)BlockDatabase.IdOf("grass");
+            // a stone floor in the air, a 2-deep pool in its middle, and beside it (+X) a bank whose grass is one
+            // block over the water's top
+            const int Deep = 3;
+            Vector3Int floor = TestGame.PlayerBlock + new Vector3Int(0, 10, 0);
+            TestGame.Floor(floor, 4, stone);
+            for (int y = 1; y <= Deep + 1; y++) {
+                for (int x = -2; x <= 4; x++) {
+                    for (int z = -2; z <= 2; z++) {
+                        bool inside = x >= -1 && x <= 1 && z >= -1 && z <= 1 && y <= Deep;
+                        bool backWall = (x == -2 || Mathf.Abs(z) == 2) && y <= Deep;
+                        bool bank = x == 2 && y <= Deep + 1; // solid it can climb (grass on top, one block over the water)
+                        bool landSide = x >= 3 && y == Deep + 1; // the land beside it
+                        if (inside || backWall || bank || landSide) {
+                            BlockType type = inside ? water : y == Deep + 1 ? grass : stone;
+                            Assert.IsTrue(WorldNetwork.ServerSetBlock(floor + new Vector3Int(x, y, z), type, Placer.Now(0)));
+                        }
+                    }
+                }
+            }
+            Vector3Int land = floor + new Vector3Int(3, Deep + 2, 0);
+            float landTop = BrickGrid.CellToWorld(BrickGrid.BlockToCell(land)).y;
+            float waterTop = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + new Vector3Int(0, Deep + 1, 0))).y;
+            yield return TestGame.WaitUntil(() => Physics.Raycast(BrickGrid.CellToWorld(BrickGrid.BlockToCell(land)) + new Vector3(0.4f, 1, 0.4f), Vector3.down, 2),
+                10, "the bank solid");
+
+            // on the pool's bottom in its middle, facing the bank (clearly swimming)
+            CharacterController controller = player.GetComponent<CharacterController>();
+            Vector3 middle = BrickGrid.CellToWorld(BrickGrid.BlockToCell(floor + new Vector3Int(0, 1, 0))) + new Vector3(0.398f, controller.height / 2 + 0.05f, 0.398f);
+            player.network.ServerTeleport(middle);
+            player.transform.rotation = Quaternion.LookRotation(Vector3.right);
+            player.firstPersonController.ResetLook();
+            yield return TestGame.WaitUntil(() => player.firstPersonController.IsSwimming, 12, "swimming");
+
+            // holding forward and jump must climb onto it, not just bob at the surface
+            input.Press(keyboard.wKey);
+            input.Press(keyboard.spaceKey);
+            string trace = "water top " + waterTop + " land top " + landTop + ": ";
+            float end = Time.time + 10;
+            try {
+                while (!(player.GetComponent<CharacterController>().bounds.min.y > landTop - 0.05f
+                        && player.transform.position.x > BrickGrid.CellToWorld(BrickGrid.BlockToCell(land)).x + 0.3f)) {
+                    Assert.Less(Time.time, end, "out on the bank: " + trace);
+                    yield return seconds(0.25f);
+                    trace += "[" + player.transform.position.ToString("F2") + " feet " + player.GetComponent<CharacterController>().bounds.min.y.ToString("F2")
+                        + " " + player.firstPersonController.Depth + "]";
+                }
+            } finally {
+                input.Release(keyboard.wKey);
+                input.Release(keyboard.spaceKey);
+            }
+            Assert.Greater(player.GetComponent<CharacterController>().bounds.min.y, waterTop + 0.05f, "out of the water");
+        }
+
+        [UnityTest]
         public IEnumerator EnterOpensTheChatInAVehiclesSeat() {
             // a seat alone, a vehicle of its own, in the air above the player
             Item seatItem = Server.items["seat"];
@@ -234,6 +293,24 @@ namespace Brickcraft.Tests
             Assert.IsFalse(GameInput.IsTyping, "the chat closed");
             Assert.AreEqual(Player.FreezeReason.Driving, player.freezeReason, "still seated");
             Vehicles.VehicleSystem.ServerStandUp(player.network, Vector3.zero, Vector3.zero);
+        }
+
+        [UnityTest]
+        public IEnumerator TheChatDarkensWhileTyping() {
+            UI.ChatPanel chat = Object.FindObjectOfType<UI.ChatPanel>();
+            Assume.That(chat, Is.Not.Null, "the chat panel");
+            Assume.That(chat.background, Is.Not.Null, "the chat's backdrop");
+            Assert.AreEqual(0f, chat.background.color.a, 0.001f, "clear while not typing");
+
+            input.PressAndRelease(keyboard.enterKey);
+            yield return frames(2);
+            Assert.IsTrue(GameInput.IsTyping, "the chat is open");
+            Assert.Greater(chat.background.color.a, 0.3f, "darker while typing");
+
+            input.PressAndRelease(keyboard.escapeKey);
+            yield return frames(2);
+            Assert.IsFalse(GameInput.IsTyping, "the chat closed");
+            Assert.AreEqual(0f, chat.background.color.a, 0.001f, "clear again");
         }
 
         [UnityTest]

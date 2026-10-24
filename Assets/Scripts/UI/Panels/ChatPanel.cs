@@ -21,6 +21,11 @@ namespace Brickcraft.UI
 
         public Text log;
         public InputField input;
+        /// <summary>Behind the log and the input: darker while typing (see open/close), so the chat reads better.</summary>
+        public Image background;
+
+        /// <summary>How dark the chat's background goes while typing.</summary>
+        private const float TypingAlpha = 0.7f;
 
         private struct Line
         {
@@ -58,6 +63,7 @@ namespace Brickcraft.UI
             input.characterLimit = Network.ChatMessage.MaxLength;
             input.gameObject.SetActive(false);
             log.supportRichText = false; // so nobody can style their messages
+            setBackground(0f);
         }
 
         private void OnDisable() {
@@ -93,6 +99,7 @@ namespace Brickcraft.UI
             input.gameObject.SetActive(true);
             input.text = "";
             input.ActivateInputField();
+            setBackground(TypingAlpha);
         }
 
         private void close() {
@@ -101,6 +108,7 @@ namespace Brickcraft.UI
 
             input.DeactivateInputField();
             input.gameObject.SetActive(false);
+            setBackground(0f);
             if (EventSystem.current != null) {
                 EventSystem.current.SetSelectedGameObject(null);
             }
@@ -114,6 +122,13 @@ namespace Brickcraft.UI
 
             if (text.Length > 0 && Player.Instance != null) {
                 Player.Instance.network.CmdChat(text);
+            }
+        }
+
+        // the whole chat's backdrop, darker while typing (see open/close)
+        private void setBackground(float alpha) {
+            if (background != null) {
+                background.color = new Color(0f, 0f, 0f, alpha);
             }
         }
 

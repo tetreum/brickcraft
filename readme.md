@@ -52,6 +52,10 @@ The first player to join a save without admins (the host, starting singleplayer 
 
 Cars, boats and planes, built from bricks starting with a vehicle part (a wheel, a seat, a propeller, a wing; and technic axles, pins and holes), driven from a seat and wired with a screwdriver: see `docs/vehicles.md`.
 
+## Towns
+
+Worlds generated from a seed have towns: a few buildings standing together, drawn at random from the LDraw models in `StreamingAssets/Buildings`, placed by the server as the chunks load: see `docs/towns.md`.
+
 ## Documentation about modding, npcs and more
 
 Check the [docs/](docs/) directory.

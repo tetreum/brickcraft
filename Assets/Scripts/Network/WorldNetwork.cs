@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Brickcraft.Bricks;
 using Brickcraft.World;
+using Brickcraft.World.Towns;
 using Mirror;
 using UnityEngine;
 
@@ -106,6 +107,8 @@ namespace Brickcraft.Network
             serverChanges = storage != null ? storage.Changes : new WorldChanges();
             interests.Clear();
             serverChunks.Clear();
+            TownPlacer.Reset();
+            TownBuildings.Preload();
             // a game before this one (in the editor, play mode without a domain reload keeps statics) left its areas and
             // its times: Time.unscaledTime starts over, so a time of the last game would hold this one back
             lastAreas.Clear();
@@ -198,6 +201,51 @@ namespace Brickcraft.Network
             sendPlaced(brick, placer);
             Npcs.Navigation.NavGrid.MarkDirty(brick);
             return brick;
+        }
+
+        /// <summary>
+        /// Server: bricks the world itself placed (a town's, see World.Towns.TownPlacer). They're saved and sent
+        /// like a player's, but by nobody's hand; one already there (a reload) isn't spawned twice.
+        /// </summary>
+        public static void ServerPlaceGeneratedBricks(List<SavedBrick> bricks) {
+            List<SavedBrick> added = new List<SavedBrick>();
+            foreach (SavedBrick brick in bricks) {
+                serverChanges.AddBrick(brick);
+                if (!Server.bricks.ContainsKey(brick.id.ToString())) {
+                    added.Add(brick);
+                }
+            }
+            spawnBricks(added);
+            foreach (SavedBrick brick in added) {
+                sendToChunk(WorldChanges.ChunkOfBrick(brick.origin), new BrickPlacedMessage() {
+                    id = brick.id.ToString(),
+                    itemId = brick.itemId,
+                    color = brick.color,
+                    origin = brick.origin,
+                    rotation = brick.rotation,
+                    placedBy = brick.placer.playerId,
+                    placedAt = brick.placer.placedAt,
+                    state = brick.state,
+                    attachedTo = brick.attachedTo != Guid.Empty ? brick.attachedTo.ToString() : null,
+                    connected = brick.joint.HasValue,
+                    joint = brick.joint ?? default(BrickJoint),
+                });
+            }
+        }
+
+        /// <summary>Server: whether any of those chunks has a brick the world generated (a town's), see Towns.TownPlacer.</summary>
+        public static bool ServerHasGeneratedBricks(List<Vector2Int> chunks) {
+            if (serverChanges == null) {
+                return false;
+            }
+            foreach (Vector2Int coords in chunks) {
+                foreach (SavedBrick brick in serverChanges.GetBricks(coords)) {
+                    if (brick.placer.playerId == 0) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         /// <summary>
@@ -657,6 +705,7 @@ namespace Brickcraft.Network
 
         // the bricks of a chunk are game objects, they live while the chunk is loaded
         private static void onServerChunkGenerated(Chunk chunk) {
+            TownPlacer.OnServerChunkGenerated(chunk);
             spawnBricks(serverChanges.GetBricks(new Vector2Int(chunk.X, chunk.Z)));
             FluidSimulator.ChunkGenerated(chunk);
         }

@@ -21,3 +21,29 @@ function onBroken(brick, player)
   chat.event(player.name .. " broke the dragon's egg")
 end
 ```
+
+## chat.command(name, usage, fn)
+
+Adds a command of the mod's own: when a player types `/name ...`, `fn(player, args)` runs on the server (`player` may be `nil`, `args` is the text after the command). `usage` is how it's listed in the game's unknown-command reply; without it, `/name` is shown. A name the game already has (`/kick`, `/closest`...) can't be taken, and neither can another mod's.
+
+**Everyone can run it** (like `/reposition`): check the player yourself (its `id` is in `players.db`) if it should be admins only.
+
+```lua
+chat.command("where", "/where", function(player, args)
+  if player == nil then return end
+  player:message("You're at " .. tostring(player.position))
+end)
+```
+
+Commands are added when the mod's scripts load and forgotten when the server stops. `/` messages aren't passed to [`onChat`](events.md); a command no one knows shows the game's reply, which lists the mods' commands too.
+
+```lua
+-- what follows "!heal" goes to the command as args
+chat.command("heal", "/heal AMOUNT", function(player, args)
+  local amount = tonumber(args)
+  if player ~= nil and amount ~= nil then
+    player:heal(amount)
+    chat.event(player.name .. " was healed")
+  end
+end)
+```

@@ -223,22 +223,6 @@ MonoBehaviour:
     m_Localized: "El volumen de la m\xFAsica."
     m_Metadata:
       m_Items: []
-  - m_Id: 3441284603905
-    m_Localized: 10 min
-    m_Metadata:
-      m_Items: []
-  - m_Id: 3441284603906
-    m_Localized: 20 min
-    m_Metadata:
-      m_Items: []
-  - m_Id: 3441284603907
-    m_Localized: 30 min
-    m_Metadata:
-      m_Items: []
-  - m_Id: 3441284603908
-    m_Localized: 60 min
-    m_Metadata:
-      m_Items: []
   - m_Id: 3441284603909
     m_Localized: Volver
     m_Metadata:
@@ -251,10 +235,6 @@ MonoBehaviour:
     m_Localized: Crear mundo nuevo
     m_Metadata:
       m_Items: []
-  - m_Id: 3441280409621
-    m_Localized: "Duraci\xF3n del d\xEDa"
-    m_Metadata:
-      m_Items: []
   - m_Id: 3441280409614
     m_Localized: Dificultad
     m_Metadata:
@@ -265,10 +245,6 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 3441280409615
     m_Localized: "Lo dif\xEDcil que es el mundo."
-    m_Metadata:
-      m_Items: []
-  - m_Id: 3441284603904
-    m_Localized: "Lo que duran un d\xEDa y su noche."
     m_Metadata:
       m_Items: []
   - m_Id: 3441284603911

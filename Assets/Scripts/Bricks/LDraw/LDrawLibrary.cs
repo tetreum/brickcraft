@@ -41,6 +41,11 @@ namespace Brickcraft.Bricks.LDraw
         // the aliases.txt read (null: not yet)
         private static Dictionary<string, string> aliases;
 
+        // guards the caches and the archives: the towns' buildings are read on a background thread (see
+        // Towns.TownBuildings) while the main thread uses the library too. Nothing holds it while waiting for the
+        // main thread (see MainThread), so it can't deadlock.
+        private static readonly object sync = new object();
+
         /// <summary>
         /// The part a part number is (lowercase, without ".dat"): for an alias or a moved part, the one it is now
         /// (followed until one that isn't), else the number itself.
@@ -49,12 +54,14 @@ namespace Brickcraft.Bricks.LDraw
             if (string.IsNullOrEmpty(id)) {
                 return id;
             }
-            loadAliases();
-            string part = id.ToLowerInvariant();
-            for (int i = 0; i < 8 && aliases.TryGetValue(part, out string next); i++) {
-                part = next;
+            lock (sync) {
+                loadAliases();
+                string part = id.ToLowerInvariant();
+                for (int i = 0; i < 8 && aliases.TryGetValue(part, out string next); i++) {
+                    part = next;
+                }
+                return part;
             }
-            return part;
         }
 
         private static void loadAliases() {
@@ -88,8 +95,10 @@ namespace Brickcraft.Bricks.LDraw
         /// <summary>The catalogue's parts (empty without the library).</summary>
         public static IReadOnlyList<LDrawPart> Catalog {
             get {
-                load();
-                return catalog;
+                lock (sync) {
+                    load();
+                    return catalog;
+                }
             }
         }
 
@@ -99,26 +108,30 @@ namespace Brickcraft.Bricks.LDraw
         }
 
         public static LDrawPart CatalogPart(string id) {
-            load();
-            return id != null && byId.TryGetValue(id, out LDrawPart part) ? part : null;
+            lock (sync) {
+                load();
+                return id != null && byId.TryGetValue(id, out LDrawPart part) ? part : null;
+            }
         }
 
         /// <summary>Forgets the catalogue (it's read again when needed).</summary>
         public static void Reload() {
-            catalog = null;
-            byId = null;
-            aliases = null;
-            LDrawGlass.ClearCache();
-            files.Clear();
-            if (zip != null) {
-                zip.Dispose();
-                zip = null;
+            lock (sync) {
+                catalog = null;
+                byId = null;
+                aliases = null;
+                LDrawGlass.ClearCache();
+                files.Clear();
+                if (zip != null) {
+                    zip.Dispose();
+                    zip = null;
+                }
+                if (icons != null) {
+                    icons.Dispose();
+                    icons = null;
+                }
+                entries = null;
             }
-            if (icons != null) {
-                icons.Dispose();
-                icons = null;
-            }
-            entries = null;
         }
 
         private static ZipArchive zip;
@@ -154,18 +167,20 @@ namespace Brickcraft.Bricks.LDraw
                 return null;
             }
             try {
-                if (icons == null) {
-                    icons = System.IO.Compression.ZipFile.OpenRead(path);
-                }
-                ZipArchiveEntry entry = icons.GetEntry(partId + ".png");
-                if (entry == null) {
-                    return null;
-                }
                 byte[] bytes;
-                using (Stream stream = entry.Open())
-                using (MemoryStream memory = new MemoryStream()) {
-                    stream.CopyTo(memory);
-                    bytes = memory.ToArray();
+                lock (sync) {
+                    if (icons == null) {
+                        icons = System.IO.Compression.ZipFile.OpenRead(path);
+                    }
+                    ZipArchiveEntry entry = icons.GetEntry(partId + ".png");
+                    if (entry == null) {
+                        return null;
+                    }
+                    using (Stream stream = entry.Open())
+                    using (MemoryStream memory = new MemoryStream()) {
+                        stream.CopyTo(memory);
+                        bytes = memory.ToArray();
+                    }
                 }
                 Texture2D icon = new Texture2D(2, 2, TextureFormat.RGBA32, false);
                 icon.name = partId;
@@ -180,16 +195,25 @@ namespace Brickcraft.Bricks.LDraw
 
         /// <summary>The lines of a library file (a name FindFile gave).</summary>
         public static IEnumerable<string> ReadLines(string file) {
-            if (!Entries.TryGetValue(file, out ZipArchiveEntry entry)) {
+            string text = readText(file);
+            if (text == null) {
                 yield break;
-            }
-            // read whole: entries of one archive can't be read at the same time, and files use other files
-            string text;
-            using (StreamReader reader = new StreamReader(entry.Open())) {
-                text = reader.ReadToEnd();
             }
             foreach (string line in text.Split('\n')) {
                 yield return line;
+            }
+        }
+
+        // a library file whole, null if it isn't there: entries of one archive can't be read at the same time (by two
+        // threads, or a file and the files it uses), so it's read in one go, under the lock and not while yielding
+        private static string readText(string file) {
+            lock (sync) {
+                if (!Entries.TryGetValue(file, out ZipArchiveEntry entry)) {
+                    return null;
+                }
+                using (StreamReader reader = new StreamReader(entry.Open())) {
+                    return reader.ReadToEnd();
+                }
             }
         }
 
@@ -221,6 +245,12 @@ namespace Brickcraft.Bricks.LDraw
         /// the library hasn't it: a part (parts/), a subpart (parts/s/) or a primitive (p/8/, low resolution, before p/).
         /// </summary>
         public static string FindFile(string reference) {
+            lock (sync) {
+                return findFile(reference);
+            }
+        }
+
+        private static string findFile(string reference) {
             string name = reference.Trim().Replace('\\', '/').ToLowerInvariant();
             if (files.TryGetValue(name, out string found)) {
                 return found;
@@ -245,7 +275,7 @@ namespace Brickcraft.Bricks.LDraw
                 string part = name.Substring(0, name.Length - 4);
                 string main = MainPart(part);
                 if (main != part) {
-                    found = FindFile(main + ".dat");
+                    found = findFile(main + ".dat");
                 }
             }
             files[name] = found;

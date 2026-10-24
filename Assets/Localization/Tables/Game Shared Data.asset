@@ -567,6 +567,50 @@ MonoBehaviour:
     m_Key: sign.not_yours
     m_Metadata:
       m_Items: []
+  - m_Id: 2467677088768000
+    m_Key: cmd.closest_cave
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677164265472
+    m_Key: cmd.closest_desert
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677164265473
+    m_Key: cmd.closest_found
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459776
+    m_Key: cmd.closest_lake
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459777
+    m_Key: cmd.closest_mountains
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459778
+    m_Key: cmd.closest_none
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459779
+    m_Key: cmd.closest_river
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459780
+    m_Key: cmd.closest_snow
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459781
+    m_Key: cmd.closest_town
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2467677168459782
+    m_Key: cmd.usage_closest
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2500399718981632
+    m_Key: cmd.teleported_to
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

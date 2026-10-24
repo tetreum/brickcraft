@@ -243,30 +243,6 @@ MonoBehaviour:
     m_Key: worlds.players_can_hurt_each_other
     m_Metadata:
       m_Items: []
-  - m_Id: 3441280409621
-    m_Key: worlds.day_length
-    m_Metadata:
-      m_Items: []
-  - m_Id: 3441284603904
-    m_Key: worlds.how_long_a_day_and_its_night_last
-    m_Metadata:
-      m_Items: []
-  - m_Id: 3441284603905
-    m_Key: worlds.10_min
-    m_Metadata:
-      m_Items: []
-  - m_Id: 3441284603906
-    m_Key: worlds.20_min
-    m_Metadata:
-      m_Items: []
-  - m_Id: 3441284603907
-    m_Key: worlds.30_min
-    m_Metadata:
-      m_Items: []
-  - m_Id: 3441284603908
-    m_Key: worlds.60_min
-    m_Metadata:
-      m_Items: []
   - m_Id: 3441284603909
     m_Key: worlds.back
     m_Metadata:

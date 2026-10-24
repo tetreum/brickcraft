@@ -221,6 +221,8 @@ namespace Brickcraft.World
 		// -------- meshing --------
 
 		void Update () {
+			MainThread.Pump(); // the background read of the towns' buildings (see TownBuildings.Preload)
+			Towns.TownPlacer.Update();
 			finishGeneratedChunks();
 
 			if (!Seed.HasValue)
@@ -494,6 +496,13 @@ namespace Brickcraft.World
 		public BlockType GetBlockType(Vector3Int block)
 		{
 			return GetBlockType(block.x, block.y, block.z);
+		}
+
+	 /// <summary>The block's height at that column (the first block above its ground, see Chunk.HeightMap), 0 where the world isn't loaded.</summary>
+		public int SurfaceBlockY(int x, int z)
+		{
+			Chunk chunk = GetChunk(x >> 4, z >> 4);
+			return chunk != null ? chunk.HeightMap[x & 0xF, z & 0xF] : 0;
 		}
 
 		/// <summary>Colour of a block (see Chunk.GetColor), BrickColor.None where it has none or isn't loaded.</summary>
